@@ -11,8 +11,7 @@
 </head>
 <body data-page="chat">
 <div id="app">
-  <header id="titlebar" data-tauri-drag-region>
-    <span></span>
+  <header id="titlebar">
     <div class="window-controls-cluster">
       <button type="button" id="win-min" class="win-control-btn" title="Minimize" aria-label="Minimize"><span class="icon" data-icon="win-min" data-size="14"></span></button>
       <button type="button" id="win-max" class="win-control-btn" title="Maximize" aria-label="Maximize"><span class="icon win-icon-max" data-icon="win-max" data-size="14"></span><span class="icon win-icon-restore" data-icon="win-restore" data-size="14"></span></button>
@@ -30,6 +29,18 @@
       </div>
     </div>
     <button type="button" id="side-toggle" title="Hide sidebar (Ctrl+\)" aria-label="Hide sidebar"><span class="icon" data-icon="sidebar" data-size="18"></span></button>
+    <div class="side-model">
+      <div id="model-wrap">
+              <button type="button" class="ghost-btn chip-btn" id="model-chip" aria-haspopup="true" aria-expanded="false"><span class="lbl">Model</span><span id="model-chip-label" class="val">General</span><span class="icon" data-icon="chevron-down" data-size="16"></span></button>
+              <div id="model-menu" hidden role="menu">
+                <button type="button" id="btn-general" class="matrix-btn active-mode" data-preset="general" role="menuitem"><span class="m-name">General</span><span class="m-sub">qwen3-14b</span></button>
+                <button type="button" id="btn-code" class="matrix-btn" data-preset="coding" role="menuitem"><span class="m-name">Coding and finance</span><span class="m-sub">qwen3.8-27b</span></button>
+                <button type="button" id="btn-visual" class="matrix-btn" data-preset="visual" role="menuitem"><span class="m-name">Visual</span><span class="m-sub">qwen3-vl-8b</span></button>
+                <button type="button" id="btn-abliterated" class="matrix-btn" data-preset="abliterated" role="menuitem"><span class="m-name">Abliterated</span><span class="m-sub">qwen3-14b, no refusals</span></button>
+                <button type="button" id="btn-auto" class="matrix-btn" data-preset="auto" role="menuitem" disabled><span class="m-name">Auto router</span><span class="m-sub">not available yet</span></button>
+              </div>
+            </div>
+    </div>
     <button type="button" id="new-chat" class="side-btn primary"><span class="icon" data-icon="plus"></span>New chat</button>
     <div class="nav-group">
       <button type="button" class="nav-item" data-page="artifacts" aria-pressed="false"><span class="icon" data-icon="artifacts"></span>Artifacts</button>
@@ -52,20 +63,11 @@
     <!-- CHAT: conversation left, workspace tabs right (artifacts, System; every tab closable) -->
     <section id="page-chat" class="page" aria-label="Chat">
       <div id="center-workspace">
-        <div class="col-head">
-          <span class="col-title" id="chat-title">New chat</span>
+        <div class="col-head" data-tauri-drag-region>
+          <span class="col-title" id="chat-title" data-tauri-drag-region>New chat</span>
           <div class="tools">
-            <button type="button" class="ghost-btn" id="ws-toggle" aria-pressed="true" title="Show or hide the workspace (Ctrl+B)">Workspace</button>
-            <div id="model-wrap">
-              <button type="button" class="ghost-btn chip-btn" id="model-chip" aria-haspopup="true" aria-expanded="false"><span id="model-chip-label">General</span><span class="icon" data-icon="chevron-down" data-size="16"></span></button>
-              <div id="model-menu" hidden role="menu">
-                <button type="button" id="btn-general" class="matrix-btn active-mode" data-preset="general" role="menuitem"><span class="m-name">General</span><span class="m-sub">qwen3-14b</span></button>
-                <button type="button" id="btn-code" class="matrix-btn" data-preset="coding" role="menuitem"><span class="m-name">Coding and finance</span><span class="m-sub">qwen3.8-27b</span></button>
-                <button type="button" id="btn-visual" class="matrix-btn" data-preset="visual" role="menuitem"><span class="m-name">Visual</span><span class="m-sub">qwen3-vl-8b</span></button>
-                <button type="button" id="btn-abliterated" class="matrix-btn" data-preset="abliterated" role="menuitem"><span class="m-name">Abliterated</span><span class="m-sub">qwen3-14b, no refusals</span></button>
-                <button type="button" id="btn-auto" class="matrix-btn" data-preset="auto" role="menuitem" disabled><span class="m-name">Auto router</span><span class="m-sub">not available yet</span></button>
-              </div>
-            </div>
+            <button type="button" class="icon-btn" id="ws-toggle" aria-pressed="true" title="Show or hide the workspace (Ctrl+B)" aria-label="Show or hide the workspace"><span class="icon" data-icon="sidebar"></span></button>
+            
           </div>
         </div>
         <div id="chat-host">
@@ -93,7 +95,7 @@
       </div>
       <div id="ws-split" role="separator" aria-orientation="vertical" aria-label="Resize workspace" tabindex="0"></div>
       <aside id="workspace" aria-label="Workspace">
-        <div id="ws-tabs" role="tablist"></div>
+        <div id="ws-tabs" role="tablist" data-tauri-drag-region></div>
         <div id="ws-body">
           <div id="ws-system" class="ws-pane" role="tabpanel" hidden>
             <div class="sys-hero">
@@ -146,7 +148,7 @@
     <section id="page-code" class="page" aria-label="Code">
       <aside id="cli-left" class="cli-col">
         <section class="cli-panel" aria-label="Files">
-          <div class="panel-head"><span>Files</span><span id="cli-project" class="sub"></span></div>
+          <div class="panel-head" data-tauri-drag-region><span>Files</span><span id="cli-project" class="sub"></span></div>
           <div id="cli-tree" class="cli-body"></div>
         </section>
         <section class="cli-panel cli-fixed" aria-label="Context">
@@ -158,7 +160,7 @@
       </aside>
       <div id="cli-split-left" class="cli-split" role="separator" aria-orientation="vertical" aria-label="Resize files column" tabindex="0"></div>
       <section id="cli-session" aria-label="Session">
-        <div class="panel-head">
+        <div class="panel-head" data-tauri-drag-region>
           <span>Session</span>
           <span class="wb-controls">
             <button type="button" id="cli-toggle-left" class="wb-btn" aria-pressed="true" title="Show or hide the files column">Files</button>
@@ -171,7 +173,7 @@
       <div id="cli-split-right" class="cli-split" role="separator" aria-orientation="vertical" aria-label="Resize changes column" tabindex="0"></div>
       <aside id="cli-right" class="cli-col">
         <section class="cli-panel" aria-label="Tasks">
-          <div class="panel-head"><span>Tasks</span><span id="cli-tasks-count" class="sub"></span></div>
+          <div class="panel-head" data-tauri-drag-region><span>Tasks</span><span id="cli-tasks-count" class="sub"></span></div>
           <div id="cli-tasks" class="cli-body"></div>
         </section>
         <section class="cli-panel" aria-label="Changes">

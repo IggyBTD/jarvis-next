@@ -22,12 +22,11 @@ summary { list-style: none; }
 summary::-webkit-details-marker { display: none; }
 
 /* ---- shell: the sidebar runs the full height, the title bar belongs to the content ------- */
-#app { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); grid-template-rows: 40px minmax(0, 1fr); height: 100%; }
+#app { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: 100%; }
 body.side-off #app { grid-template-columns: 0 minmax(0, 1fr); }
 body.side-off #sidebar { visibility: hidden; }
-#sidebar { grid-column: 1; grid-row: 1 / span 2; display: flex; flex-direction: column; min-height: 0; background: var(--sidebar); border-right: 1px solid var(--line); padding: 0 var(--s-2) var(--s-2); overflow: hidden; }
-#titlebar { grid-column: 2; grid-row: 1; display: flex; align-items: center; justify-content: space-between; padding-left: var(--s-4); user-select: none; position: relative; z-index: 60; }
-body.side-off #titlebar { padding-left: 52px; }
+#sidebar { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; min-height: 0; background: var(--sidebar); border-right: 1px solid var(--line); padding: 0 var(--s-2) var(--s-2); overflow: hidden; }
+#titlebar { position: fixed; top: 0; right: 0; z-index: 60; display: flex; user-select: none; }
 .side-top { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 0 0 var(--s-2); user-select: none; }
 .brand { display: inline-flex; align-items: center; gap: var(--s-2); font: 600 var(--fs-md)/1 var(--display); letter-spacing: 0.01em; pointer-events: none; }
 .brand i { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
@@ -79,7 +78,7 @@ body.side-off #side-toggle { left: 8px; }
 .svc[data-state="error"]::before { background: var(--danger); border-color: var(--danger); }
 
 /* ---- pages ------------------------------------------------------------------------------ */
-#main { grid-column: 2; grid-row: 2; min-width: 0; min-height: 0; position: relative; }
+#main { grid-column: 2; grid-row: 1; min-width: 0; min-height: 0; position: relative; }
 .page { position: absolute; inset: 0; display: none; min-width: 0; min-height: 0; }
 body[data-page="chat"] #page-chat { display: grid; }
 body[data-page="code"] #page-code { display: grid; }
@@ -602,3 +601,56 @@ button[data-active] { background: var(--accent-wash); }
 /* window controls: restore replaces maximise while the window is maximised (after .icon so it wins) */
 .win-control-btn .win-icon-restore, .win-control-btn.is-maximized .win-icon-max { display: none; }
 .win-control-btn.is-maximized .win-icon-restore { display: inline-flex; }
+
+/* ===== Phase 3: one 40 px title strip across both panes, one divider ===== */
+:root { --wc-w: 140px; --strip-h: 40px; }
+.window-controls-cluster { height: var(--strip-h); }
+.col-head { height: var(--strip-h); border-bottom: 0; padding: 0 var(--s-4); }
+#ws-tabs { height: var(--strip-h); border-bottom: 0; padding: 0 var(--s-2) 0 var(--s-2); align-items: flex-end; gap: 2px; position: relative; z-index: 1; }
+#page-chat::after { content: ""; position: absolute; left: 0; right: 0; top: calc(var(--strip-h) - 1px); height: 1px; background: var(--border); pointer-events: none; z-index: 0; }
+.ws-tab { height: 32px; }
+.ws-tab[aria-selected="true"] { height: 33px; margin-bottom: -1px; background: var(--bg); border-color: var(--border); }
+body:not(.ws-off) #ws-tabs { padding-right: var(--wc-w); }
+body.ws-off .col-head { padding-right: var(--wc-w); }
+.side-top { height: var(--strip-h); }
+#side-toggle { top: 4px; }
+.panel-head { height: var(--strip-h); }
+#cli-session .panel-head { height: var(--strip-h); }
+#cli-right .panel-head:first-child { padding-right: var(--wc-w); }
+#page-code[data-right="off"] #cli-session .panel-head { padding-right: var(--wc-w); }
+@media (max-width: 1280px) { #cli-session .panel-head { padding-right: var(--wc-w); } }
+#page-artifacts .page-inner, #page-settings .page-inner { padding-top: calc(var(--strip-h) + var(--s-4)); }
+.ws-pane:has(> .av) { overflow: hidden; }
+
+/* thin scrollbars on scrollable regions only */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: var(--r-sm); border: 0; background-clip: border-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--surface-4); }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+
+/* model selector lives in the sidebar header: a muted label inside the control, the value in full text */
+.side-model { position: relative; margin-top: var(--s-1); }
+.side-model .chip-btn { width: 100%; height: 36px; justify-content: flex-start; gap: var(--s-2); border-radius: var(--r-sm); padding: 0 var(--s-3); background: var(--surface-2); border: 1px solid var(--border); }
+.side-model .chip-btn::before { display: none; }
+.side-model .chip-btn .lbl { color: var(--text-3); font-size: var(--fs-2); }
+.side-model .chip-btn .val { color: var(--text); font-size: var(--fs-3); flex: 1; text-align: left; }
+.side-model .chip-btn .icon { margin-left: auto; color: var(--text-3); }
+#model-menu { left: 0; right: 0; min-width: 0; top: calc(100% + var(--s-1)); }
+.icon-btn { background: transparent; border: 0; color: var(--text-3); }
+.icon-btn:hover { background: var(--surface-3); }
+#ws-toggle .icon { transform: scaleX(-1); }
+
+/* spacing rhythm in the chat column */
+#chat-output { gap: var(--s-5); }
+.chat-meta { margin-top: var(--s-2); }
+
+/* radius roles: bubbles lg, cards and the input md, buttons and tabs sm */
+#composer, .artifact-card, .sys-tile, .sys-list, .set-card, .art-tile, .cli-col, #model-info-body, .tool-card, .code-box, .md pre, .cores-grid .core-node, .cli-float-panel, #model-menu, #command-palette, #app-menu { border-radius: var(--r-md); }
+.chip-btn, .attach-chip { border-radius: var(--r-sm); }
+.ws-tab { border-radius: var(--r-sm) var(--r-sm) 0 0; }
+.mode-switch, .mode-thumb, .mode-btn, .tool-btn, .send-btn, .stop-btn { border-radius: var(--r-sm); }
+#app-tip { background: var(--surface-3); color: var(--text); border: 1px solid var(--border); border-radius: var(--r-sm); font-size: var(--fs-2); }
+
+/* sidebar bottom: the widget keeps 16 px from the window edge and 12 px from the status row */
+#sidebar { padding-bottom: var(--s-4); }
+#side-foot { gap: var(--s-3); }
