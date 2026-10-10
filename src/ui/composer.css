@@ -1,5 +1,5 @@
 /* Input dock: a box that holds only the text, and a 32 tall row of buttons under it. 24 to the window edge. */
-#composer-dock { position: relative; flex: none; display: flex; flex-direction: column; gap: var(--s-2); width: min(var(--measure), calc(100% - 2 * var(--pane-gutter))); margin: 0 auto var(--pane-gutter); }
+#composer-dock { position: relative; flex: none; display: flex; flex-direction: column; gap: var(--s-2); width: min(var(--measure), calc(100% - 2 * var(--chat-gutter))); margin: 0 auto var(--pane-gutter); }
 #composer { position: relative; display: flex; align-items: center; min-height: 56px; /* optical: one line of 24 with 16 above and below */ padding: var(--s-3); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out); }
 #composer:focus-within { border-color: var(--border-strong); box-shadow: 0 0 0 3px var(--accent-wash); /* optical: focus glow */ }
 .chat-input { display: block; width: 100%; max-height: 192px; /* 8 lines of 24 */ min-height: var(--lh-md); resize: none; background: transparent; border: 0; color: var(--text); font: 400 var(--fs-5)/var(--lh-md) var(--sans); padding: 0; user-select: text; scrollbar-gutter: stable; }
