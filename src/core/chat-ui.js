@@ -318,7 +318,7 @@ async function send() {
     const memoryContext = await buildContext(text);
     const context = [speech ? `${memoryContext}
 
-<voice-mode>This reply will be spoken aloud.</voice-mode>`.trim() : memoryContext, projectInstructionsContext(), projectContext(session.project), skillsContext()].filter(Boolean).join('\n\n');
+<voice-mode>This reply will be spoken aloud.</voice-mode>`.trim() : memoryContext, projectInstructionsContext(), projectContext(session.project), skillsContext(), titleNote()].filter(Boolean).join('\n\n');
     let spoken = ''; // text of the rounds already finished, so speech sees one growing text
     for (let round = 0; ; round++) {
       latest = { content: '', reasoning: '' };
@@ -535,42 +535,31 @@ function saveSoon() {
     session.name ||= sessionTitle(history);
     session.mode ||= currentPage() === 'code' ? 'code' : 'chat';
     saveSession({ ...session, updated: Date.now(), messages: history.length }, history)
-      .then(() => { document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')); maybeName(); })
+      .then(() => document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')))
       .catch(() => { /* a plain browser cannot save */ });
   }, 400);
 }
 const announceName = (animate) => document.dispatchEvent(new CustomEvent('jarvis:session-name', { detail: { id: session.id, name: session.name, animate } }));
 const startSession = (keep = {}) => { session = { id: newSessionId(), name: '', created: Date.now(), ...keep }; announceName(false); };
 
-// The model names the chat after the first reply, then looks again every 10 of the user's messages and
-// renames only if the title no longer fits. It runs behind the scenes (nothing appears in the conversation)
-// and never touches a name the user chose.
-let naming = false;
-async function maybeName() {
-  if (naming || working || session.manual || !history.length) return;
-  const users = history.filter((m) => m.role === 'user' && !m.summary).length;
-  const first = !session.named;
-  if (first ? !users : users - (session.namedAt ?? 0) < 10) return;
-  const talk = history.filter((m) => (m.role === 'user' || m.role === 'assistant') && !m.tool_calls && messageText(m.content));
-  if (!talk.some((m) => m.role === 'assistant')) return;
-  const id = session.id;
-  const text = (first ? talk.slice(0, 6) : talk.slice(-10)).map((m) => `${m.role === 'user' ? 'User' : 'JARVIS'}: ${messageText(m.content).slice(0, 300)}`).join('\n');
-  const ask = first
-    ? `Name this conversation. Reply with only a title of 2 to 5 words: no quotes, no full stop, no preamble.\n\n${text}`
-    : `This conversation is titled "${session.name}". Does that title still fit what it is about now? If it does, reply with only the word KEEP. If not, reply with only a new title of 2 to 5 words: no quotes, no full stop, no preamble.\n\n${text}`;
-  naming = true;
-  const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), 45000);
-  try {
-    const { reply } = await chat([{ role: 'user', content: ask }], { tools: null, signal: ctl.signal });
-    if (session.id !== id || session.manual) return;
-    const answer = reply.trim().split('\n').pop().trim().replace(/^[\s"'`*#]+|[\s"'`*.]+$/g, '');
-    session.named = true;
-    session.namedAt = users;
-    if (answer && !/^keep$/i.test(answer) && answer.length <= 60 && answer !== session.name) { session.name = answer; announceName(true); }
-    saveSoon();
-  } catch { /* no model to ask right now: the first line of the chat stays as its name */ } finally { clearTimeout(timer); naming = false; }
+// The model names the chat itself: it is asked (in the turn's context) to start its reply with a <jarvis-title> tag
+// after the first exchange and again every 10 of the user's messages, only when the old name no longer fits.
+// llm-client.js cuts the tag out of the reply and announces it; nothing of it reaches the conversation.
+const userCount = () => history.filter((m) => m.role === 'user' && !m.summary).length;
+function titleNote() {
+  if (session.manual) return '';
+  const users = userCount(); // this turn's message is already in the history
+  if (!session.named) return '<chat-title>This chat has no name yet. Start your reply with <jarvis-title>a name of 2 to 5 words</jarvis-title> on its own, before any other text. The app removes the tag and the user never sees it. Do not mention it.</chat-title>';
+  if (users - (session.namedAt ?? 0) >= 10) return `<chat-title>The chat is named "${session.name.replaceAll('"', "'")}". Judge whether that still fits what the conversation is about now. Only if it no longer fits, start your reply with <jarvis-title>a new name of 2 to 5 words</jarvis-title> before any other text; otherwise write no tag at all. The app removes the tag and the user never sees it. Do not mention it.</chat-title>`;
+  return '';
 }
+onEvent((e) => {
+  if (e.type !== 'title' || session.manual || !e.title || e.title.length > 60) return;
+  session.named = true;
+  session.namedAt = userCount();
+  if (e.title !== session.name) { session.name = e.title; announceName(true); }
+  saveSoon();
+});
 const ago = (ms) => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
 let lastListing = [];
 

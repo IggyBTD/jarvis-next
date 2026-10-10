@@ -23,7 +23,7 @@
 .t-val .mono-data { font: inherit; white-space: nowrap; }
 .t-val .mono-data.na { color: var(--text-3); font-size: var(--fs-5); }
 .t-sub { font: 400 var(--fs-1)/var(--lh-xs) var(--sans); color: var(--text-3); text-align: right; }
-.spark { display: block; width: 100%; flex: 1 1 auto; min-height: var(--h-lg); pointer-events: none; }
+.spark { display: block; width: 100%; flex: 1 1 auto; min-height: var(--h-lg); max-height: 80px; pointer-events: none; }
 .spark path.area { fill: var(--surface-4); stroke: none; }
 .spark path.line { fill: none; stroke: var(--accent-mid); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .spark[data-level="mid"] path.line { stroke: var(--warm); }

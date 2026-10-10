@@ -116,7 +116,16 @@ export function syncModel() {
 
 // --- chat ----------------------------------------------------------------
 // Hides <think> blocks (closed or still open) that some Qwen3 builds inline.
-const visibleText = (text) => text.replace(/<think>[\s\S]*?(<\/think>|$)/g, '').trim();
+// The model may start its reply with <jarvis-title>a name for this chat</jarvis-title>. The app uses it and never shows it:
+// complete tags are cut out, and so is a tag still being written (including a bare "<jar" at the very end).
+const TITLE_TAG = '<jarvis-title>';
+function withoutTitle(text) {
+  let t = text.replace(/<jarvis-title>[\s\S]*?<\/jarvis-title>\s*/g, '').replace(/<jarvis-title>[\s\S]*$/, '');
+  for (let n = Math.min(TITLE_TAG.length - 1, t.length); n > 0; n -= 1) if (TITLE_TAG.startsWith(t.slice(-n))) { t = t.slice(0, -n); break; }
+  return t;
+}
+export const titleIn = (text) => /<jarvis-title>([\s\S]*?)<\/jarvis-title>/.exec(text)?.[1].trim().replace(/^[\s"'`*#]+|[\s"'`*.]+$/g, '') || '';
+const visibleText = (text) => withoutTitle(text.replace(/<think>[\s\S]*?(<\/think>|$)/g, '')).trim();
 
 // Streams a reply. onDelta({ content, reasoning, thinking }) fires on every chunk:
 // content is the visible reply so far, reasoning the model's thinking so far.
@@ -188,5 +197,7 @@ ${context}` : systemPrompt }, ...messages.map(({ summary, shown, ...m }) => m)],
     promptTps: promptTokens && ttft ? promptTokens / ttft : null,
   };
   emit({ type: 'stats', model: preset.model, stats });
+  const title = titleIn(content.replace(/<think>[\s\S]*?<\/think>/g, ''));
+  if (title) emit({ type: 'title', title });
   return { reply: visibleText(content), toolCalls: toolCalls.result(), preset, stats };
 }

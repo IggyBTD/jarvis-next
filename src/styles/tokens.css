@@ -72,7 +72,7 @@
   --lh-lg: 28px;    /* 20 */
   --lh-prose: 28px; /* assistant prose at 16 */
   --sans:  'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
-  --serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --serif: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
   --mono:  'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
 
   /* icons: the glyph sits inside a control */

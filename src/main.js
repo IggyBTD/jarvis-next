@@ -4,9 +4,9 @@
 import '@fontsource/ibm-plex-sans/latin-400.css';
 import '@fontsource/ibm-plex-sans/latin-500.css';
 import '@fontsource/ibm-plex-sans/latin-600.css';
-import '@fontsource/source-serif-4/latin-400.css';
-import '@fontsource/source-serif-4/latin-400-italic.css';
-import '@fontsource/source-serif-4/latin-600.css';
+import '@fontsource/ibm-plex-serif/latin-400.css';
+import '@fontsource/ibm-plex-serif/latin-400-italic.css';
+import '@fontsource/ibm-plex-serif/latin-600.css';
 import '@fontsource/jetbrains-mono/latin-400.css';
 import '@fontsource/jetbrains-mono/latin-500.css';
 import { initTelemetry } from './core/telemetry-view.js';

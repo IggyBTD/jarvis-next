@@ -43,14 +43,16 @@ export async function install({ chat = true, telemetry = true } = {}) {
       if (!u.includes(':1234')) return real(url, opts);
       if (u.endsWith('/api/v1/models') && !opts) return json({ models: [{ key: 'qwen/qwen3-14b', type: 'llm', display_name: 'Qwen3 14B', size_bytes: 1.2e10, params_string: '14B', quantization: { name: 'Q6_K' }, max_context_length: 32768, loaded_instances: [{ id: 'qwen/qwen3-14b', config: { context_length: 32768 } }] }] });
       if (u.endsWith('/chat/completions')) {
-        const last = String(JSON.parse(opts.body).messages.at(-1).content);
+        const msgs = JSON.parse(opts.body).messages;
+        const last = String(msgs.at(-1).content);
+        const titled = /<chat-title>/.test(String(msgs[0].content)) ? '<jarvis-title>Plain talk about CPUs</jarvis-title>' : '';
         const enc = new TextEncoder();
         return new Response(new ReadableStream({
           async start(c) {
             const send = (d) => c.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: d }] })}\n\n`));
             if (/Name this conversation/.test(last)) { send({ content: '"Peak CPU load chart."' }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
             if (/still fit/.test(last)) { send({ content: 'KEEP' }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
-            if (/plain/i.test(last)) { send({ content: 'A plain answer.' }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
+            if (/plain/i.test(last)) { send({ content: titled.slice(0, 20) }); send({ content: `${titled.slice(20)}A plain answer.` }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
             if (/chart/i.test(last)) { send({ content: CHART }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
             await new Promise((r) => setTimeout(r, 60000)); // stays "thinking"
             c.close();
