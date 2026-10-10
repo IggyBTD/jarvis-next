@@ -7,12 +7,18 @@ mod voice;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  // Draw the interface on the integrated GPU, not the discrete one, so the LLM keeps the VRAM.
+  // Keep every GPU free for the LLM: the interface is drawn by the CPU (WebView2's software renderer),
+  // so neither the discrete nor the integrated GPU holds memory for it. Set JARVIS_GPU=low to draw on the
+  // integrated GPU instead (smoother on a slow CPU), or JARVIS_GPU=any to leave WebView2 alone.
   // WebView2 reads this variable when it creates its environment, which happens after this line.
-  // The switch is Chromium's own: the browser engine inside WebView2 picks the low-power adapter.
+  let flags = match std::env::var("JARVIS_GPU").as_deref() {
+    Ok("any") => "",
+    Ok("low") => "--force_low_power_gpu",
+    _ => "--disable-gpu",
+  };
   let switches = std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").unwrap_or_default();
-  if !switches.contains("--force_low_power_gpu") {
-    let joined = if switches.trim().is_empty() { "--force_low_power_gpu".to_string() } else { format!("{switches} --force_low_power_gpu") };
+  if !flags.is_empty() && !switches.contains(flags) {
+    let joined = if switches.trim().is_empty() { flags.to_string() } else { format!("{switches} {flags}") };
     std::env::set_var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", joined);
   }
   tauri::Builder::default()
