@@ -1,0 +1,58 @@
+/* System pane: a 12-column dashboard. Gap 16, outer padding 24, card padding 16, rows 48 tall. */
+#ws-system { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s-4); align-content: start; padding: var(--pane-gutter); }
+.sys-hero { display: contents; }
+.sys-block, .sys-split { grid-column: 1 / -1; }
+
+/* stat cards: label 16, 4, value 28, 4, caption 16, 12, sparkline across the full inner width */
+.sys-tile { grid-column: span 4; display: flex; flex-direction: column; padding: var(--card-pad); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; min-width: 0; }
+.sys-tile .t-name { font: 600 var(--fs-2)/var(--lh-xs) var(--sans); color: var(--text-3); }
+.sys-tile .t-val { margin-top: var(--s-1); font: 400 var(--fs-6)/var(--lh-lg) var(--mono); letter-spacing: -0.02em; color: var(--text); white-space: nowrap; }
+.sys-tile .t-val .mono-data { font: inherit; white-space: nowrap; }
+.sys-tile .t-val .mono-data.na { color: var(--text-3); font-size: var(--fs-5); }
+.sys-tile .t-sub { margin-top: var(--s-1); font: 400 var(--fs-1)/var(--lh-xs) var(--sans); color: var(--text-3); }
+.spark { display: block; width: 100%; height: var(--h-md); margin-top: var(--s-3); pointer-events: none; }
+.spark path.area { fill: var(--surface-4); stroke: none; }
+.spark path.line { fill: none; stroke: var(--accent-mid); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.spark[data-level="mid"] path.line { stroke: var(--warm); }
+.spark[data-level="mid"] path.area { fill: var(--warm-wash); }
+.spark[data-level="high"] path.line { stroke: var(--danger); }
+.spark[data-level="high"] path.area { fill: var(--danger-wash); }
+
+/* section labels: 12 text in a 24 line, 24 above (16 grid gap + 8), 8 below */
+.sys-block { margin-top: var(--s-2); }
+.sys-block h3 { display: flex; justify-content: space-between; align-items: center; height: var(--lh-md); margin-bottom: var(--s-2); font: 600 var(--fs-2)/var(--lh-md) var(--sans); color: var(--text-3); }
+.sys-block h3 .sub { font-weight: 400; }
+
+/* cores and heat: two cards of the same height side by side */
+.sys-split { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-4); align-items: stretch; }
+.sys-split > .sys-block { grid-column: auto; margin-top: 0; display: flex; flex-direction: column; }
+.sys-split > .sys-block .sys-list { flex: 1; display: flex; flex-direction: column; }
+.sys-split > .sys-block .sys-list .metric-group { flex: 1; }
+.cores-grid { display: grid; grid-template-columns: repeat(2, var(--h-lg)); gap: var(--s-2); padding: var(--card-pad); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); flex: 1; align-content: start; }
+.core-node { position: relative; width: var(--h-lg); height: var(--h-lg); background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; }
+.core-num { position: absolute; top: var(--s-1); right: var(--s-1); font: 400 var(--fs-1)/var(--s-3) var(--mono); color: var(--text-3); }
+.core-load-val { position: absolute; left: 0; right: 0; top: 14px; /* optical: percent sits below the core number */ text-align: center; font: 600 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text); white-space: nowrap; }
+.core-track { position: absolute; left: var(--s-1); right: var(--s-1); bottom: var(--s-1); height: var(--s-1); background: var(--surface-3); border-radius: 2px; /* optical: half of a 4px track */ overflow: hidden; }
+.core-node-fill { height: 100%; width: 100%; background: var(--accent-mid); transform-origin: left; transition: transform var(--dur) var(--ease-out); }
+
+/* metric rows: 48 tall = 8 + label 20 + 8 + bar 4 + 8, dividers between, value in mono on the right */
+.sys-list { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); padding: 0 var(--card-pad); }
+.metric-group { min-height: 48px; /* optical: row tier of 48 */ padding: var(--s-2) 0; display: flex; flex-direction: column; justify-content: center; gap: var(--s-2); }
+.metric-group + .metric-group { border-top: 1px solid var(--border); }
+.metric-label { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2); height: var(--lh-sm); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); color: var(--text-2); }
+.metric-label .mono-data { color: var(--text); font-size: var(--fs-3); font-weight: 600; }
+.progress-bar { height: var(--s-1); background: var(--surface-3); border-radius: 2px; /* optical: half of a 4px track */ overflow: hidden; flex: none; }
+.progress-fill { height: 100%; width: 100%; background: var(--accent-mid); transform-origin: left; transition: transform var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out); }
+.progress-fill.unavailable { background: var(--border-strong); }
+
+/* loaded models: a definition grid kept to a readable width */
+#model-info-body { max-width: 640px; padding: var(--card-pad); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); }
+.model-card + .model-card { margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--border); }
+.model-card-head { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2); margin-bottom: var(--s-3); }
+.model-name { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quant-pill { display: inline-flex; align-items: center; height: var(--lh-md); padding: 0 var(--s-2); border: 1px solid var(--border-strong); border-radius: var(--r-pill); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-2); }
+.model-stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3) var(--s-4); }
+.model-stat { display: flex; flex-direction: column; min-width: 0; }
+.model-stat-label { font: 400 var(--fs-1)/var(--lh-xs) var(--sans); color: var(--text-3); }
+.model-stat-value { font: 400 var(--fs-3)/var(--lh-sm) var(--mono); }
+.model-note { font-size: var(--fs-3); line-height: var(--lh-sm); color: var(--text-3); padding: var(--s-2) 0; }

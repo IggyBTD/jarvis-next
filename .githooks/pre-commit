@@ -1,0 +1,2 @@
+#!/bin/sh
+npm run lint:spacing --silent || { echo "spacing lint failed: fix the values above, or mark a deliberate one with /* optical: reason */"; exit 1; }

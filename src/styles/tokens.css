@@ -39,21 +39,46 @@
 
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.5);
 
-  /* radius scale: only these three (50% stays for round dots) */
+  /* radius scale: only these (50% stays for round dots) */
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 20px;
+  --r-pill: 999px;
 
-  /* spacing scale, 4 px base */
-  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px;
+  /* spacing scale, 4 px base: the only values allowed in margin, padding and gap */
+  --s-0: 0;
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
 
-  /* type scale: 11 12 13 14 16 20, nothing else */
+  /* control heights: three tiers, nothing else */
+  --h-sm: 28px;
+  --h-md: 32px;
+  --h-lg: 40px;
+
+  /* structure */
+  --strip-h: 40px;           /* title strip across both panes */
+  --sidebar-w: 264px;
+  --measure: 720px;          /* chat column */
+  --pane-gutter: 24px;
+  --sidebar-gutter: 16px;
+  --card-pad: 16px;
+  --wc-w: 120px;             /* three window buttons of 40 */
+  --ws-w: 44%;
+
+  /* type scale: 11 12 13 14 16 20, each with one line height */
   --fs-1: 11px; --fs-2: 12px; --fs-3: 13px; --fs-4: 14px; --fs-5: 16px; --fs-6: 20px;
+  --lh-xs: 16px;    /* 11 and 12 */
+  --lh-sm: 20px;    /* 13 and 14 */
+  --lh-md: 24px;    /* 14 to 16 */
+  --lh-lg: 28px;    /* 20 */
+  --lh-prose: 28px; /* assistant prose at 16 */
   --sans:  'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
   --serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --mono:  'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
 
-  /* icons */
+  /* icons: the glyph sits inside a control */
+  --icon-sm: 16px;
+  --icon-md: 18px;
+  --icon-lg: 20px;
   --icon-size: 18px;
   --icon-box: 32px;
   --icon-stroke: 1.5;
@@ -62,24 +87,7 @@
   --dur-fast: 150ms; --dur: 200ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* names used by older rules, kept as aliases so there is one source of truth */
-  --canvas: var(--bg);
-  --sidebar: var(--surface-1);
-  --card: var(--surface-2);
-  --hover: var(--surface-3);
-  --active: var(--surface-4);
-  --line: var(--border);
-  --line-strong: var(--border-strong);
-  --text-1: var(--text);
-  --accent-soft: var(--accent-wash);
-  --warn: var(--warm);
-  --warn-soft: var(--warm-wash);
-  --danger-soft: var(--danger-wash);
-  --ok-soft: var(--ok-wash);
   --bar: var(--accent-mid);
-  --fs-xs: var(--fs-2); --fs-sm: var(--fs-3); --fs-md: var(--fs-4); --fs-lg: var(--fs-5); --fs-xl: var(--fs-6); --fs-2xl: var(--fs-6);
-  --display: var(--sans);
-  --r-1: var(--r-sm); --r-2: var(--r-md); --r-3: var(--r-lg);
 }
 
 /* light twin */

@@ -24,3 +24,5 @@ import './core/shell.js';
 
 // Dev only: Ctrl+Shift+I opens the icon switcher. Vite drops this branch from production builds.
 if (import.meta.env.DEV) import('./dev/icon-switcher.js');
+// Dev only: Ctrl+Shift+G draws the 4 px grid and every element's box.
+if (import.meta.env.DEV) import('./dev/grid-overlay.js');

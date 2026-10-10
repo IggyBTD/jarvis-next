@@ -1,0 +1,53 @@
+/* Input dock: a box that holds only the text, and a 32 tall row of buttons under it. 24 to the window edge. */
+#composer-dock { position: relative; flex: none; display: flex; flex-direction: column; gap: var(--s-2); width: min(var(--measure), calc(100% - 2 * var(--pane-gutter))); margin: 0 auto var(--pane-gutter); }
+#composer { position: relative; display: flex; align-items: center; min-height: 56px; /* optical: one line of 24 with 16 above and below */ padding: var(--s-3); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out); }
+#composer:focus-within { border-color: var(--border-strong); box-shadow: 0 0 0 3px var(--accent-wash); /* optical: focus glow */ }
+.chat-input { display: block; width: 100%; max-height: 192px; /* 8 lines of 24 */ min-height: var(--lh-md); resize: none; background: transparent; border: 0; color: var(--text); font: 400 var(--fs-5)/var(--lh-md) var(--sans); padding: 0; user-select: text; scrollbar-gutter: stable; }
+.chat-input::placeholder { color: var(--text-3); }
+.chat-input:focus, .chat-input:focus-visible { outline: none; }
+
+/* the row under the box: tools on the left, counter and send on the right, all 32 and 8 apart */
+.composer-bar { display: flex; align-items: center; gap: var(--s-2); height: var(--h-md); }
+.composer-bar .grow { flex: 1; }
+.tool-btn { position: relative; width: var(--h-md); height: var(--h-md); display: grid; place-items: center; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-3); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+.tool-btn:hover { background: var(--surface-3); color: var(--text-2); }
+.tool-btn.is-off#dock-web, .tool-btn.is-off#dock-link { color: var(--warm); }
+#dock-mic[data-active], #dock-mic.is-on { background: var(--warm-wash); }
+#dock-mic[data-active] .icon, #dock-mic.is-on .icon { color: var(--warm); }
+#dock-mic.is-on::after { border-color: var(--warm); }
+.tool-btn.recording { background: var(--warm); }
+.tool-btn.recording .icon { color: var(--on-accent); }
+.dock-badge { position: absolute; top: 0; right: 0; min-width: var(--s-4); height: var(--s-4); padding: 0 var(--s-1); border-radius: var(--r-sm); background: var(--accent); color: var(--on-accent); font: 400 var(--fs-1)/var(--s-4) var(--mono); text-align: center; }
+#ctx-meter { font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); padding: 0 var(--s-2); }
+.send-btn, .stop-btn { position: relative; width: var(--h-md); height: var(--h-md); display: grid; place-items: center; border: 0; border-radius: var(--r-sm); transition: background-color var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out); }
+.send-btn { background: var(--accent); }
+.send-btn:hover { opacity: 0.88; }
+.send-btn .icon, .send-btn:hover .icon, .send-btn:active .icon { color: var(--on-accent); }
+.stop-btn { background: var(--surface-3); border: 1px solid var(--border); }
+.stop-btn:hover { background: var(--surface-4); }
+.stop-btn .icon { color: var(--text-2); }
+.stop-btn:hover .icon { color: var(--text); }
+.stop-btn::after { content: ""; position: absolute; inset: 0; border-radius: var(--r-sm); border: 1.5px solid var(--text-3); /* optical: 1.5px ring */ animation: ring-out 1.6s ease-out infinite; }
+body:has(#dock-stop:not([hidden])) #send-btn { display: none; }
+
+/* attachments and the voice wave sit above the box, never inside it */
+#attach-row { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+#attach-row:empty { display: none; }
+.attach-chip { display: inline-flex; align-items: center; height: var(--h-sm); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-sm); background: var(--surface-1); color: var(--text-2); font-size: var(--fs-2); line-height: var(--lh-xs); }
+button.attach-chip:hover { color: var(--danger); border-color: var(--danger); }
+.attach-chip.busy { color: var(--text-3); }
+.attach-chip.error { color: var(--danger); border-color: var(--danger); background: var(--danger-wash); }
+#voice-wave { display: block; width: 100%; height: 48px; border-radius: var(--r-md); opacity: 0.6; transition: opacity var(--dur) var(--ease-out); }
+#voice-wave.on { opacity: 1; background: var(--warm-wash); }
+
+/* the "/" menu opens above the box */
+#command-palette { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--s-2)); z-index: 30; display: flex; flex-direction: column; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--r-md); box-shadow: var(--shadow); overflow: hidden; font-size: var(--fs-3); line-height: var(--lh-sm); }
+#command-palette ul { list-style: none; max-height: min(40vh, 336px); overflow-y: auto; padding: var(--s-1); }
+#command-palette li { display: flex; align-items: baseline; gap: var(--s-4); min-height: var(--h-md); padding: var(--s-1) var(--s-2); border-radius: var(--r-sm); cursor: pointer; }
+#command-palette li.active { background: var(--accent-wash); }
+#command-palette .cp-name { flex: none; min-width: 128px; font-family: var(--mono); color: var(--text-2); white-space: nowrap; }
+#command-palette .cp-name b { font-weight: 600; color: var(--accent); }
+#command-palette .cp-desc { flex: 1; min-width: 0; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#command-palette li.cp-empty { color: var(--text-3); cursor: default; }
+#command-palette .cp-usage { padding: var(--s-1) var(--s-4); border-top: 1px solid var(--border); color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#command-palette .cp-usage:empty { display: none; }

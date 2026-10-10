@@ -69,7 +69,7 @@ syncChip();
 
 // --- composer ---------------------------------------------------------------------
 $('send-btn').addEventListener('click', () => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })));
-input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = `${Math.min(input.scrollHeight, 224)}px`; });
+input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = `${Math.min(input.scrollHeight, 192)}px`; });
 const ctx = $('ctx-meter');
 const paintCtx = () => {
   const { ctxUsed, ctxMax } = getModelHealth();

@@ -6,16 +6,23 @@
   <meta name="color-scheme" content="light dark">
   <title>JARVIS</title>
   <link rel="stylesheet" href="/src/styles/tokens.css">
-  <link rel="stylesheet" href="/src/ui/app.css">
+  <link rel="stylesheet" href="/src/ui/base.css">
+  <link rel="stylesheet" href="/src/ui/shell.css">
+  <link rel="stylesheet" href="/src/ui/chat.css">
+  <link rel="stylesheet" href="/src/ui/composer.css">
+  <link rel="stylesheet" href="/src/ui/workspace.css">
+  <link rel="stylesheet" href="/src/ui/system.css">
+  <link rel="stylesheet" href="/src/ui/code.css">
+  <link rel="stylesheet" href="/src/ui/pages.css">
   <link rel="stylesheet" href="/src/ui/icons.css">
 </head>
 <body data-page="chat">
 <div id="app">
   <header id="titlebar">
     <div class="window-controls-cluster">
-      <button type="button" id="win-min" class="win-control-btn" title="Minimize" aria-label="Minimize"><span class="icon" data-icon="win-min" data-size="14"></span></button>
-      <button type="button" id="win-max" class="win-control-btn" title="Maximize" aria-label="Maximize"><span class="icon win-icon-max" data-icon="win-max" data-size="14"></span><span class="icon win-icon-restore" data-icon="win-restore" data-size="14"></span></button>
-      <button type="button" id="win-close" class="win-control-btn close-btn" title="Close" aria-label="Close"><span class="icon" data-icon="win-close" data-size="14"></span></button>
+      <button type="button" id="win-min" class="win-control-btn" title="Minimize" aria-label="Minimize"><span class="icon" data-icon="win-min"></span></button>
+      <button type="button" id="win-max" class="win-control-btn" title="Maximize" aria-label="Maximize"><span class="icon win-icon-max" data-icon="win-max"></span><span class="icon win-icon-restore" data-icon="win-restore"></span></button>
+      <button type="button" id="win-close" class="win-control-btn close-btn" title="Close" aria-label="Close"><span class="icon" data-icon="win-close"></span></button>
     </div>
   </header>
 
@@ -24,14 +31,14 @@
       <span class="brand"><span class="mark" aria-hidden="true"></span>JARVIS</span>
       <div class="mode-switch" role="group" aria-label="Chat or code">
         <span class="mode-thumb" aria-hidden="true"></span>
-        <button type="button" class="mode-btn" data-page="chat" aria-pressed="true" title="Chat" aria-label="Chat"><span class="icon" data-icon="chat" data-size="18"></span></button>
-        <button type="button" class="mode-btn" data-page="code" aria-pressed="false" title="Code" aria-label="Code"><span class="icon" data-icon="code" data-size="18"></span></button>
+        <button type="button" class="mode-btn" data-page="chat" aria-pressed="true" title="Chat" aria-label="Chat"><span class="icon" data-icon="chat"></span></button>
+        <button type="button" class="mode-btn" data-page="code" aria-pressed="false" title="Code" aria-label="Code"><span class="icon" data-icon="code"></span></button>
       </div>
+      <button type="button" id="side-toggle" title="Hide sidebar (Ctrl+\)" aria-label="Hide sidebar"><span class="icon" data-icon="sidebar" ></span></button>
     </div>
-    <button type="button" id="side-toggle" title="Hide sidebar (Ctrl+\)" aria-label="Hide sidebar"><span class="icon" data-icon="sidebar" data-size="18"></span></button>
     <div class="side-model">
       <div id="model-wrap">
-              <button type="button" class="ghost-btn chip-btn" id="model-chip" aria-haspopup="true" aria-expanded="false"><span class="lbl">Model</span><span id="model-chip-label" class="val">General</span><span class="icon" data-icon="chevron-down" data-size="16"></span></button>
+              <button type="button" class="chip-btn" id="model-chip" aria-haspopup="true" aria-expanded="false"><span class="lbl">Model</span><span id="model-chip-label" class="val">General</span><span class="icon" data-icon="chevron-down" data-size="16"></span></button>
               <div id="model-menu" hidden role="menu">
                 <button type="button" id="btn-general" class="matrix-btn active-mode" data-preset="general" role="menuitem"><span class="m-name">General</span><span class="m-sub">qwen3-14b</span></button>
                 <button type="button" id="btn-code" class="matrix-btn" data-preset="coding" role="menuitem"><span class="m-name">Coding and finance</span><span class="m-sub">qwen3.8-27b</span></button>
@@ -74,21 +81,23 @@
           <div id="chat-stack">
             <div id="chat-empty"><span class="mark mark-lg" aria-hidden="true"></span><h2><span id="greet">Hello</span><b>.</b></h2><p id="greet-sub">Running locally on this PC.</p><div class="machine" id="machine"></div></div>
             <div id="chat-output" role="log" aria-live="polite" aria-label="Conversation"></div>
-            <div id="composer">
-              <div id="attach-row" aria-live="polite"></div>
-              <canvas id="voice-wave" aria-hidden="true" hidden></canvas>
-              <textarea id="hud-chat-input" class="chat-input" rows="1" placeholder="Message JARVIS" aria-label="Message JARVIS. Enter sends, Shift and Enter start a new line." autocomplete="off" spellcheck="false"></textarea>
-              <div class="composer-bar">
-                <button id="dock-attach" class="tool-btn" type="button" title="Attach files" aria-label="Attach files"><span class="icon" data-icon="attach"></span></button>
-                <button id="dock-mic" class="tool-btn" type="button" title="Microphone"><span class="icon" data-icon="mic"></span></button>
-                <button id="dock-web" class="tool-btn" type="button" title="Internet access"><span class="icon" data-icon="globe"></span></button>
-                <button id="dock-link" class="tool-btn" type="button" title="Network link"><span class="icon" data-icon="wifi"></span></button>
-                <span class="grow"></span>
-                <span id="ctx-meter" title="Context used"></span>
-                <button id="dock-stop" class="stop-btn" type="button" hidden title="Stop (Ctrl+.)" aria-label="Stop the reply"><span class="icon" data-icon="stop" data-size="18"></span></button>
-                <button id="send-btn" class="send-btn" type="button" title="Send (Enter)" aria-label="Send"><span class="icon" data-icon="send" data-size="18"></span></button>
+            <div id="composer-dock">
+            <div id="attach-row" aria-live="polite"></div>
+            <canvas id="voice-wave" aria-hidden="true" hidden></canvas>
+              <div id="composer">
+                <textarea id="hud-chat-input" class="chat-input" rows="1" placeholder="Message JARVIS" aria-label="Message JARVIS. Enter sends, Shift and Enter start a new line." autocomplete="off" spellcheck="false"></textarea>
               </div>
-              <input type="file" id="attach-input" multiple hidden>
+            <div class="composer-bar">
+              <button id="dock-attach" class="tool-btn" type="button" title="Attach files" aria-label="Attach files"><span class="icon" data-icon="attach"></span></button>
+              <button id="dock-mic" class="tool-btn" type="button" title="Microphone"><span class="icon" data-icon="mic"></span></button>
+              <button id="dock-web" class="tool-btn" type="button" title="Internet access"><span class="icon" data-icon="globe"></span></button>
+              <button id="dock-link" class="tool-btn" type="button" title="Network link"><span class="icon" data-icon="wifi"></span></button>
+              <span class="grow"></span>
+              <span id="ctx-meter" title="Context used"></span>
+              <button id="dock-stop" class="stop-btn" type="button" hidden title="Stop (Ctrl+.)" aria-label="Stop the reply"><span class="icon" data-icon="stop"></span></button>
+              <button id="send-btn" class="send-btn" type="button" title="Send (Enter)" aria-label="Send"><span class="icon" data-icon="send"></span></button>
+            </div>
+            <input type="file" id="attach-input" multiple hidden>
             </div>
           </div>
         </div>

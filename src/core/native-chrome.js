@@ -39,7 +39,7 @@ function showTip(el) {
   const t = tip.getBoundingClientRect();
   const x = Math.min(Math.max(8, r.left + r.width / 2 - t.width / 2), window.innerWidth - t.width - 8);
   // Inside the composer the tip sits above the whole box, so it can never cover the text being typed.
-  const box = el.closest('#composer')?.getBoundingClientRect();
+  const box = el.closest('.composer-bar') ? document.getElementById('composer').getBoundingClientRect() : null;
   const above = (box ? box.top : r.top) - t.height - 8;
   const y = above >= 8 ? above : r.bottom + 8;
   tip.style.translate = `${Math.round(x)}px ${Math.round(y)}px`;

@@ -48,7 +48,7 @@ function setMetric(id, barId, value, max, unit, digits = 1) {
     const ratio = ok ? Math.min(1, value / max) : 0;
     bar.style.transform = `scaleX(${ratio})`;
     // teal above 75 %, red above 90 %; free disk space is the other way round, so it keeps the accent
-    bar.dataset.level = ok && barId !== 'ssd-space-bar' ? (ratio > 0.9 ? 'high' : ratio > 0.7 ? 'mid' : '') : '';
+    bar.dataset.level = ok && !['ssd-space-bar', 'ram-freq-bar', 'wifi-speed-bar'].includes(barId) ? (ratio > 0.9 ? 'high' : ratio > 0.7 ? 'mid' : '') : '';
   }
 }
 
