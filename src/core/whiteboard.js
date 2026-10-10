@@ -219,9 +219,13 @@ function paint() {
     return tab;
   }));
   tabs.forEach((t) => { t.pane.hidden = t.id !== active; });
+  tabsEl.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   empty.hidden = tabs.size > 0;
   syncCards();
 }
+
+// The wheel scrolls the tab strip sideways when there are more tabs than room.
+tabsEl.addEventListener('wheel', (e) => { if (tabsEl.scrollWidth > tabsEl.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX) && !e.ctrlKey) { tabsEl.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
 
 function activate(id) {
   if (!tabs.has(id)) return;

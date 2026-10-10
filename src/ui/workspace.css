@@ -1,16 +1,16 @@
 /* Workspace (right pane): tabs in the title strip, then the artifact or the System dashboard. */
 #workspace { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg); }
 #ws-tabs { display: flex; align-items: center; gap: var(--s-1); height: var(--strip-h); padding: 0 var(--s-4); overflow-x: auto; flex: none; position: relative; z-index: 1; }
-body:not(.ws-off) #ws-tabs { padding-right: var(--wc-w); }
+body:not(.ws-off) #ws-tabs { margin-right: var(--wc-w); /* the strip ends where the window buttons begin, so tabs scroll in their own room */ }
 #ws-tabs::-webkit-scrollbar { height: 0; }
 /* tabs are centred in the strip, so they share its centre line with everything else in it */
-.ws-tab { display: flex; align-items: center; height: var(--h-md); max-width: 224px; padding: 0 var(--s-1) 0 0; border-radius: var(--r-sm); background: transparent; color: var(--text-2); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); flex: none; }
+.ws-tab { display: flex; align-items: center; height: var(--h-md); flex: 0 1 auto; min-width: 88px; max-width: 224px; padding: 0 var(--s-1) 0 0; border-radius: var(--r-sm); background: transparent; color: var(--text-2); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
 .ws-tab:hover { background: var(--surface-3); color: var(--text); }
 .ws-tab[aria-selected="true"] { background: var(--surface-3); color: var(--text); }
-.ws-tab .t-label { display: flex; align-items: center; gap: var(--s-2); height: 100%; padding: 0 var(--s-2) 0 var(--s-3); border: 0; background: none; color: inherit; font: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 176px; }
+.ws-tab .t-label { display: flex; align-items: center; gap: var(--s-2); height: 100%; padding: 0 var(--s-2) 0 var(--s-3); border: 0; background: none; color: inherit; font: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 176px; min-width: 0; flex: 1; }
 .ws-tab .t-label::before { content: ""; width: var(--s-2); height: var(--s-2); border-radius: 2px; /* optical: a 8px square mark */ background: var(--text-3); flex: none; }
 .ws-tab[aria-selected="true"] .t-label::before { background: var(--accent); }
-.ws-tab .t-x { width: var(--h-sm); height: var(--h-sm); display: grid; place-items: center; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-3); }
+.ws-tab .t-x { flex: none; width: var(--h-sm); height: var(--h-sm); display: grid; place-items: center; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-3); }
 .ws-tab .t-x:hover { background: var(--surface-4); color: var(--text); }
 .ws-tab .t-x .icon { width: var(--icon-sm); height: var(--icon-sm); color: inherit; }
 #ws-body { flex: 1; min-height: 0; position: relative; }
