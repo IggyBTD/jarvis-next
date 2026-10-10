@@ -661,3 +661,17 @@ body.ws-off .col-head { padding-right: var(--wc-w); }
 .av-bar { justify-content: flex-end; }
 .chat-meta { opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); font-size: var(--fs-2); color: var(--text-3); }
 .chat-line:hover .chat-meta, .chat-line:focus-within .chat-meta { opacity: 1; }
+
+/* ===== Phase 6: typography. Sans for the interface, serif for what the assistant writes, mono for numbers ===== */
+body { font: 400 var(--fs-4)/1.5 var(--sans); }
+.chat-line.assistant { font-family: var(--serif); font-size: var(--fs-5); line-height: 1.6; }
+.chat-line.assistant .md code, .chat-line.assistant .md pre, .chat-line.assistant .code-box, .chat-line.assistant .tool-card { font-family: var(--mono); }
+.chat-line.assistant .md h1, .chat-line.assistant .md h2, .chat-line.assistant .md h3, .chat-line.assistant .md h4 { font-family: var(--serif); font-weight: 600; }
+.chat-line.assistant .md th { font-family: var(--sans); }
+.chat-line.user .chat-text, .chat-input, .chat-line.pending, .chat-line.system { font-family: var(--sans); }
+.chat-line.system, .chat-line.pending { font-family: var(--mono); }
+.chat-line.pending .chat-text { font-family: var(--sans); }
+.mono-data, .t-val, #ctx-meter, .chat-meta, .av-ver, .mini-row .mono-data, .metric-label .mono-data, .model-stat-value, .core-load-val, .core-num, .cli-row, .cli-tag, .quant-pill, .code-head, .set-row kbd, .panel-head .sub, .ac-state, .a-sub, .m-sub { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.chat-meta { font-size: var(--fs-2); }
+.sys-tile .t-val { font-family: var(--mono); font-weight: 400; letter-spacing: -0.02em; }
+#chat-empty h2 { font-family: var(--serif); font-weight: 400; }
