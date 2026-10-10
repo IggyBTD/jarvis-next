@@ -1,0 +1,107 @@
+/* Design tokens. Every colour, radius, space, size and font in the app comes from here.
+   Dark is the home theme: neutrals tinted toward the accent hue (about 210 degrees) so the accent
+   belongs to the palette. A light twin follows Windows (or the Settings choice).
+   Idle icons and borders use --accent-dim or --text-3. --accent is for the one active or primary
+   thing in a region. Glow only on things that are on (focus, streaming, listening). */
+
+:root {
+  color-scheme: dark light;
+
+  /* surfaces and lines */
+  --bg:            #0A0E14;
+  --surface-1:     #0F141B;
+  --surface-2:     #131A23;
+  --surface-3:     #1A222D;
+  --surface-4:     #232E3C;
+  --border:        rgba(56, 189, 248, 0.14);
+  --border-strong: rgba(56, 189, 248, 0.28);
+
+  /* text, at least 4.5:1 on --bg (see docs/contrast.md) */
+  --text:   #E6EDF3;
+  --text-2: #A9B6C4;
+  --text-3: #7C8A99;
+
+  /* accent: arc-reactor blue, three value steps */
+  --accent:      #38BDF8;
+  --accent-mid:  #2B8FBF;
+  --accent-dim:  #1E6F9A;
+  --accent-wash: rgba(56, 189, 248, 0.10);
+  --on-accent:   #04121C;
+
+  /* warm counterpoint: mic-active, warnings, the spike in a chart */
+  --warm:   #F5A524;
+  --danger: #E5484D;
+  --on-danger: #FFFFFF;
+  --ok:     #56C28A;      /* added lines and services that are up only */
+  --warm-wash:   rgba(245, 165, 36, 0.14);
+  --danger-wash: rgba(229, 72, 77, 0.14);
+  --ok-wash:     rgba(86, 194, 138, 0.14);
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.5);
+
+  /* radius scale: only these three (50% stays for round dots) */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 20px;
+
+  /* spacing scale, 4 px base */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px;
+
+  /* type scale: 11 12 13 14 16 20, nothing else */
+  --fs-1: 11px; --fs-2: 12px; --fs-3: 13px; --fs-4: 14px; --fs-5: 16px; --fs-6: 20px;
+  --sans:  'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --mono:  'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+
+  /* icons */
+  --icon-size: 18px;
+  --icon-box: 32px;
+  --icon-stroke: 1.5;
+
+  /* motion */
+  --dur-fast: 150ms; --dur: 200ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* names used by older rules, kept as aliases so there is one source of truth */
+  --canvas: var(--bg);
+  --sidebar: var(--surface-1);
+  --card: var(--surface-2);
+  --hover: var(--surface-3);
+  --active: var(--surface-4);
+  --line: var(--border);
+  --line-strong: var(--border-strong);
+  --text-1: var(--text);
+  --accent-soft: var(--accent-wash);
+  --warn: var(--warm);
+  --warn-soft: var(--warm-wash);
+  --danger-soft: var(--danger-wash);
+  --ok-soft: var(--ok-wash);
+  --bar: var(--accent-mid);
+  --fs-xs: var(--fs-2); --fs-sm: var(--fs-3); --fs-md: var(--fs-4); --fs-lg: var(--fs-5); --fs-xl: var(--fs-6); --fs-2xl: var(--fs-6);
+  --display: var(--sans);
+  --r-1: var(--r-sm); --r-2: var(--r-md); --r-3: var(--r-lg);
+}
+
+/* light twin */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #F6F9FC; --surface-1: #EDF2F7; --surface-2: #FFFFFF; --surface-3: #E3EAF2; --surface-4: #D6E0EB;
+    --border: rgba(14, 90, 140, 0.16); --border-strong: rgba(14, 90, 140, 0.32);
+    --text: #0E1722; --text-2: #3F5062; --text-3: #566679;
+    --accent: #0B6EA8; --accent-mid: #2478A8; --accent-dim: #3D7FA6; --accent-wash: rgba(11, 110, 168, 0.10); --on-accent: #FFFFFF;
+    --warm: #A15C00; --danger: #C9342F; --ok: #2E7D50;
+    --warm-wash: rgba(161, 92, 0, 0.12); --danger-wash: rgba(201, 52, 47, 0.12); --ok-wash: rgba(46, 125, 80, 0.12);
+    --shadow: 0 1px 2px rgba(14, 23, 34, 0.06), 0 8px 24px rgba(14, 23, 34, 0.12);
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F6F9FC; --surface-1: #EDF2F7; --surface-2: #FFFFFF; --surface-3: #E3EAF2; --surface-4: #D6E0EB;
+  --border: rgba(14, 90, 140, 0.16); --border-strong: rgba(14, 90, 140, 0.32);
+  --text: #0E1722; --text-2: #3F5062; --text-3: #566679;
+  --accent: #0B6EA8; --accent-mid: #2478A8; --accent-dim: #3D7FA6; --accent-wash: rgba(11, 110, 168, 0.10); --on-accent: #FFFFFF;
+  --warm: #A15C00; --danger: #C9342F; --ok: #2E7D50;
+  --warm-wash: rgba(161, 92, 0, 0.12); --danger-wash: rgba(201, 52, 47, 0.12); --ok-wash: rgba(46, 125, 80, 0.12);
+  --shadow: 0 1px 2px rgba(14, 23, 34, 0.06), 0 8px 24px rgba(14, 23, 34, 0.12);
+}
+:root[data-theme="dark"] { color-scheme: dark; }
