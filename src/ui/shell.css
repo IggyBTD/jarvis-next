@@ -36,7 +36,8 @@ body.side-off #sidebar { visibility: hidden; }
 
 #side-toggle { width: var(--h-md); height: var(--h-md); flex: none; display: grid; place-items: center; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-2); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
 #side-toggle:hover { background: var(--surface-3); color: var(--text); }
-body.side-off #side-toggle { position: fixed; top: var(--s-1); left: var(--s-2); z-index: 70; }
+body.side-off #side-toggle { position: fixed; top: var(--s-1); left: var(--s-2); z-index: 70; visibility: visible; /* the sidebar around it is hidden, the way back is not */ }
+body.side-off .col-head, body.side-off #cli-left .panel-head { padding-left: 48px; /* optical: clears the 32 button at 8 */ }
 
 /* model select (32) and New chat (40) sit in the gutter, 8 apart */
 .side-model { position: relative; margin: var(--s-2) var(--sidebar-gutter) 0; }
