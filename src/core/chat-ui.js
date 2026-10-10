@@ -255,6 +255,7 @@ async function send() {
   if (hasImages() && getMode() !== 'visual') selectMode('visual');
   const { content, names } = takeAsContent(skillText ?? text);
   lastSent = text;
+  document.dispatchEvent(new CustomEvent('jarvis:message-sent'));
 
   setWorking(true);
   try { await maybeCompact(); } catch (e) { console.warn('[jarvis] compaction failed:', e); } // between turns, so no index shifts mid-turn
