@@ -13,7 +13,9 @@ import { estimateTokens, shouldCompact, trimToolResults, findCut, summaryRequest
 import { workContext, setPlanMode, isPlanMode, getTasks, setTasks, formatTasks, taskSummary } from './work-state.js';
 import { projectInstructionsContext } from './project-instructions.js';
 import { loadSkills, skillsContext, findSkill, skillPrompt, getSkills } from './skills.js';
-import { newSessionId, sessionTitle, saveSession, listSessions, loadSession, toMarkdown, exportSession, textOf as messageText } from './sessions.js';
+import { newSessionId, sessionTitle, saveSession, listSessions, loadSession, deleteSession, patchSession, copySession, toMarkdown, exportSession, textOf as messageText } from './sessions.js';
+import { projectContext } from './projects.js';
+import { currentPage } from './whiteboard-mode.js';
 import { handleCommandKey } from './command-palette.js';
 import { buildContext } from './memory-client.js';
 import { openArtifact, applyBoardSpec, isArtifactOpen, syncCards } from './whiteboard.js';
@@ -316,7 +318,7 @@ async function send() {
     const memoryContext = await buildContext(text);
     const context = [speech ? `${memoryContext}
 
-<voice-mode>This reply will be spoken aloud.</voice-mode>`.trim() : memoryContext, projectInstructionsContext(), skillsContext()].filter(Boolean).join('\n\n');
+<voice-mode>This reply will be spoken aloud.</voice-mode>`.trim() : memoryContext, projectInstructionsContext(), projectContext(session.project), skillsContext()].filter(Boolean).join('\n\n');
     let spoken = ''; // text of the rounds already finished, so speech sees one growing text
     for (let round = 0; ; round++) {
       latest = { content: '', reasoning: '' };
@@ -531,10 +533,44 @@ function saveSoon() {
   saveTimer = setTimeout(() => {
     if (!history.length) return;
     session.name ||= sessionTitle(history);
-    saveSession({ ...session, updated: Date.now(), messages: history.length }, history).catch(() => { /* a plain browser cannot save */ });
+    session.mode ||= currentPage() === 'code' ? 'code' : 'chat';
+    saveSession({ ...session, updated: Date.now(), messages: history.length }, history)
+      .then(() => { document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')); maybeName(); })
+      .catch(() => { /* a plain browser cannot save */ });
   }, 400);
 }
-const startSession = () => { session = { id: newSessionId(), name: '', created: Date.now() }; };
+const announceName = (animate) => document.dispatchEvent(new CustomEvent('jarvis:session-name', { detail: { id: session.id, name: session.name, animate } }));
+const startSession = (keep = {}) => { session = { id: newSessionId(), name: '', created: Date.now(), ...keep }; announceName(false); };
+
+// The model names the chat after the first reply, then looks again every 10 of the user's messages and
+// renames only if the title no longer fits. It runs behind the scenes (nothing appears in the conversation)
+// and never touches a name the user chose.
+let naming = false;
+async function maybeName() {
+  if (naming || working || session.manual || !history.length) return;
+  const users = history.filter((m) => m.role === 'user' && !m.summary).length;
+  const first = !session.named;
+  if (first ? !users : users - (session.namedAt ?? 0) < 10) return;
+  const talk = history.filter((m) => (m.role === 'user' || m.role === 'assistant') && !m.tool_calls && messageText(m.content));
+  if (!talk.some((m) => m.role === 'assistant')) return;
+  const id = session.id;
+  const text = (first ? talk.slice(0, 6) : talk.slice(-10)).map((m) => `${m.role === 'user' ? 'User' : 'JARVIS'}: ${messageText(m.content).slice(0, 300)}`).join('\n');
+  const ask = first
+    ? `Name this conversation. Reply with only a title of 2 to 5 words: no quotes, no full stop, no preamble.\n\n${text}`
+    : `This conversation is titled "${session.name}". Does that title still fit what it is about now? If it does, reply with only the word KEEP. If not, reply with only a new title of 2 to 5 words: no quotes, no full stop, no preamble.\n\n${text}`;
+  naming = true;
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 45000);
+  try {
+    const { reply } = await chat([{ role: 'user', content: ask }], { tools: null, signal: ctl.signal });
+    if (session.id !== id || session.manual) return;
+    const answer = reply.trim().split('\n').pop().trim().replace(/^[\s"'`*#]+|[\s"'`*.]+$/g, '');
+    session.named = true;
+    session.namedAt = users;
+    if (answer && !/^keep$/i.test(answer) && answer.length <= 60 && answer !== session.name) { session.name = answer; announceName(true); }
+    saveSoon();
+  } catch { /* no model to ask right now: the first line of the chat stays as its name */ } finally { clearTimeout(timer); naming = false; }
+}
 const ago = (ms) => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
 let lastListing = [];
 
@@ -573,7 +609,9 @@ async function resumeCommand(arg) {
   history.length = 0;
   history.push(...saved);
   turnEdits.clear();
-  session = { id: pick.id, name: pick.name, created: pick.created ?? Date.now() };
+  const { updated, messages, ...meta } = pick;
+  session = { ...meta, created: pick.created ?? Date.now() };
+  announceName(false);
   lastSent = '';
   lastUsed = 0;
   turn = null;
@@ -618,6 +656,43 @@ function btw(question) {
     .then(({ reply }) => { body.textContent = reply || '(no answer)'; })
     .catch((e) => { body.textContent = `Could not answer: ${e.message ?? e}`; });
 }
+
+// --- actions on saved chats, asked for by the sidebar and the Projects page --------------------------
+const toast = (text) => document.dispatchEvent(new CustomEvent('jarvis:toast', { detail: { text } }));
+document.addEventListener('jarvis:session-op', async (e) => {
+  const { op, id = session.id, ...rest } = e.detail;
+  const mine = id === session.id;
+  const changed = () => document.dispatchEvent(new CustomEvent('jarvis:sessions-changed'));
+  try {
+    if (op === 'patch') {
+      if (mine) {
+        Object.assign(session, rest.patch);
+        if (rest.patch.name !== undefined) announceName(true);
+        if (history.length) saveSoon();
+      } else await patchSession(id, rest.patch);
+      changed();
+    } else if (op === 'delete') {
+      if (working && mine) { toast('JARVIS is busy. Stop it first.'); return; }
+      if (mine) await runCommand('/clear');
+      await deleteSession(id);
+      changed();
+    } else if (op === 'duplicate') {
+      if (mine && history.length) await saveSession({ ...session, updated: Date.now(), messages: history.length }, history);
+      await copySession(id);
+      changed();
+      toast('Chat duplicated');
+    } else if (op === 'export') {
+      if (mine) { toast(await exportCommand()); return; }
+      const meta = (await listSessions()).find((s) => s.id === id);
+      toast(`Saved to ${await exportSession(id, toMarkdown(meta?.name ?? 'Chat', await loadSession(id)))}`);
+    } else if (op === 'new') {
+      if (working) { toast('JARVIS is busy. Stop it first.'); return; }
+      await runCommand('/clear');
+      session.project = rest.project;
+      if (rest.mode) session.mode = rest.mode;
+    }
+  } catch (err) { toast(`Could not do that: ${err.message ?? err}`); }
+});
 
 // --- transcript clicks: artifact cards, code copy, inert links ----------
 async function copyText(text) {
@@ -723,6 +798,8 @@ registerCommandHost({
   rename: (name) => {
     if (!name) return `This session is called "${session.name || sessionTitle(history)}". Usage: /rename <name>`;
     session.name = name.slice(0, 80);
+    session.manual = true;
+    announceName(true);
     saveSoon();
     return `Renamed to "${session.name}".`;
   },
@@ -732,7 +809,8 @@ registerCommandHost({
     session.name ||= sessionTitle(history);
     await saveSession({ ...session, updated: Date.now(), messages: history.length }, history); // keep the original as it is
     const original = session.name;
-    session = { id: newSessionId(), name: name || `${original} (branch)`, created: Date.now() };
+    session = { id: newSessionId(), name: name || `${original} (branch)`, created: Date.now(), project: session.project, manual: !!name };
+    announceName(false);
     saveSoon();
     return `Branched. You are now in "${session.name}"; "${original}" is saved as it was (/resume to go back).`;
   },

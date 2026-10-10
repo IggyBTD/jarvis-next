@@ -28,3 +28,21 @@
 #app-menu button { height: var(--h-md); padding: 0 var(--s-4); border: 0; border-radius: var(--r-sm); background: none; color: var(--text); font-size: var(--fs-3); text-align: left; }
 #app-menu button:hover:not(:disabled), #app-menu button:focus-visible { background: var(--surface-3); outline: none; }
 #app-menu button:disabled { color: var(--text-3); }
+#app-menu .menu-sep { height: 1px; margin: var(--s-1) 0; background: var(--border); flex: none; }
+#app-menu button[data-tone="danger"] { color: var(--danger); }
+#app-menu button[data-tone="danger"]:hover:not(:disabled) { background: var(--danger-wash); }
+
+/* Projects */
+.proj-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); margin-bottom: var(--s-4); }
+.proj-head h1 { margin-bottom: 0; }
+.proj-head h2 { font: 600 var(--fs-5)/var(--lh-md) var(--sans); }
+.proj-name { width: 100%; height: var(--h-lg); margin-bottom: var(--s-4); padding: 0; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text); font: 400 var(--fs-6)/var(--lh-lg) var(--serif); }
+.proj-name:focus-visible { outline: none; border-bottom-color: var(--accent); }
+.proj-notes { width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface-1); color: var(--text); font: 400 var(--fs-4)/var(--lh-sm) var(--sans); resize: vertical; margin-bottom: var(--s-3); }
+.proj-notes:focus-visible { outline: none; border-color: var(--accent); }
+.proj-chats { display: flex; flex-direction: column; }
+.proj-row { display: flex; align-items: center; gap: var(--s-3); height: var(--h-lg); padding: 0 var(--s-2); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-2); text-align: left; }
+.proj-row:hover { background: var(--surface-3); color: var(--text); }
+.proj-row .ci-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.av-btn.danger { color: var(--danger); border-color: var(--danger); }
+.av-btn.danger:hover { background: var(--danger-wash); color: var(--danger); }

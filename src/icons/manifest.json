@@ -27,7 +27,12 @@
     "win-close",
     "cpu",
     "gpu",
-    "ram"
+    "ram",
+    "search",
+    "folder",
+    "pin",
+    "trash",
+    "edit"
   ],
   "sets": {
     "phosphor": {

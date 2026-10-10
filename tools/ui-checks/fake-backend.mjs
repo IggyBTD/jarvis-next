@@ -16,7 +16,16 @@ const CHART = [
 ].join('\n');
 
 export async function install({ chat = true, telemetry = true } = {}) {
-  window.__TAURI_INTERNALS__ = { transformCallback: (cb) => { window.__cbs = (window.__cbs || []).concat(cb); return window.__cbs.length; }, invoke: async () => 1, unregisterCallback() {} };
+  window.__TAURI_INTERNALS__ = { transformCallback: (cb) => { window.__cbs = (window.__cbs || []).concat(cb); return window.__cbs.length; }, invoke: async (cmd, a) => {
+    const db = (window.__sessions ||= new Map());
+    if (cmd === 'session_save') db.set(a.id, { meta: JSON.parse(a.meta), history: a.history });
+    else if (cmd === 'session_list') return [...db.values()].map((v) => v.meta);
+    else if (cmd === 'session_load') return db.get(a.id).history;
+    else if (cmd === 'session_delete') db.delete(a.id);
+    else if (cmd === 'session_export') return `C:/fake/${a.id}.md`;
+    else return 1;
+    return null;
+  }, unregisterCallback() {} };
   if (telemetry) {
     const urls = [...new Set(performance.getEntriesByType('resource').map((r) => r.name).filter((n) => n.includes('telemetry-view.js')))];
     for (const u of urls) { const m = await import(u); await m.initTelemetry(); }
@@ -39,6 +48,9 @@ export async function install({ chat = true, telemetry = true } = {}) {
         return new Response(new ReadableStream({
           async start(c) {
             const send = (d) => c.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: d }] })}\n\n`));
+            if (/Name this conversation/.test(last)) { send({ content: '"Peak CPU load chart."' }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
+            if (/still fit/.test(last)) { send({ content: 'KEEP' }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
+            if (/plain/i.test(last)) { send({ content: 'A plain answer.' }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
             if (/chart/i.test(last)) { send({ content: CHART }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
             await new Promise((r) => setTimeout(r, 60000)); // stays "thinking"
             c.close();

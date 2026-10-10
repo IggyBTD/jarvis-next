@@ -50,11 +50,13 @@
     </div>
     <button type="button" id="new-chat" class="side-btn primary"><span class="icon" data-icon="plus"></span>New chat</button>
     <div class="nav-group">
+      <button type="button" class="nav-item" data-page="projects" aria-pressed="false"><span class="icon" data-icon="folder"></span>Projects</button>
       <button type="button" class="nav-item" data-page="artifacts" aria-pressed="false"><span class="icon" data-icon="artifacts"></span>Artifacts</button>
       <button type="button" class="nav-item" id="nav-system" aria-pressed="false"><span class="icon" data-icon="system"></span>System</button>
       <button type="button" class="nav-item" data-page="settings" aria-pressed="false"><span class="icon" data-icon="settings"></span>Settings</button>
     </div>
-    <div class="side-label">Recent chats</div>
+    <div class="side-label"><span>Chats</span><button type="button" id="chat-search-btn" class="icon-btn" aria-pressed="false" title="Search chats" aria-label="Search chats"><span class="icon" data-icon="search"></span></button></div>
+    <input type="search" id="chat-search" placeholder="Search chats" aria-label="Search chats" autocomplete="off" spellcheck="false" hidden>
     <div id="chat-list" role="list"></div>
     <div id="side-foot">
       <div id="mini-sys" aria-label="Live system readout">
@@ -107,47 +109,12 @@
         <div id="ws-tabs" role="tablist" data-tauri-drag-region></div>
         <div id="ws-body">
           <div id="ws-system" class="ws-pane" role="tabpanel" hidden>
-            <div class="sys-hero">
-              <div class="sys-tile"><span class="t-name">Processor</span><div class="t-val"><span id="cpu-val" class="mono-data na">N/A</span></div><span class="t-sub">last minute</span><svg class="spark" data-key="cpu" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"></svg></div>
-              <div class="sys-tile"><span class="t-name">Graphics</span><div class="t-val"><span id="gpu-compute-val" class="mono-data na">N/A</span></div><span class="t-sub">last minute</span><svg class="spark" data-key="gpu" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"></svg></div>
-              <div class="sys-tile"><span class="t-name">Memory</span><div class="t-val"><span id="ram-val" class="mono-data na">N/A</span></div><span class="t-sub">in use</span><svg class="spark" data-key="ram" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"></svg></div>
-            </div>
-            <div class="sys-split">
-            <div class="sys-block">
-              <h3>Cores</h3>
-              <div class="cores-grid">
-                <div class="core-node"><span class="core-num">1</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
-                <div class="core-node"><span class="core-num">2</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
-                <div class="core-node"><span class="core-num">3</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
-                <div class="core-node"><span class="core-num">4</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
-                <div class="core-node"><span class="core-num">5</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
-                <div class="core-node"><span class="core-num">6</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
-                <div class="core-node"><span class="core-num">7</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
-                <div class="core-node"><span class="core-num">8</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
-              </div>
-            </div>
-            <div class="sys-block">
-              <h3>Heat and graphics memory</h3>
-              <div class="sys-list">
-                <div class="metric-group"><div class="metric-label">Processor <span id="cpu-temp-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="cpu-temp-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
-                <div class="metric-group"><div class="metric-label">Graphics <span id="gpu-temp-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="gpu-temp-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
-                <div class="metric-group"><div class="metric-label">SSD <span id="ssd-temp-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="ssd-temp-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
-                <div class="metric-group"><div class="metric-label">Graphics memory <span id="gpu-vram-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="gpu-vram-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
-              </div>
-            </div>
-            </div>
-            <div class="sys-block">
-              <h3>Memory, storage and network</h3>
-              <div class="sys-list">
-                <div class="metric-group"><div class="metric-label">RAM speed <span id="ram-freq-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="ram-freq-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
-                <div class="metric-group"><div class="metric-label">SSD free <span id="ssd-space-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="ssd-space-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
-                <div class="metric-group"><div class="metric-label">Network <span id="wifi-speed-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="wifi-speed-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
-              </div>
-            </div>
-            <div class="sys-block">
-              <h3>Loaded models <span id="model-info-tag" class="sub"></span></h3>
-              <div id="model-info-body"></div>
-            </div>
+            <section class="sys-card c-cpu"><h3>Processor</h3><div class="t-hero"><div class="t-val"><span id="cpu-val" class="mono-data na">N/A</span></div><span class="t-sub">load</span></div><svg class="spark" data-key="cpu" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"></svg><div class="cores-grid"><div class="core-node"><span class="core-num">1</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">2</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">3</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">4</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">5</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">6</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">7</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">8</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div></div><div class="sys-list"><div class="metric-group"><div class="metric-label">Temperature <span id="cpu-temp-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="cpu-temp-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div></div></section>
+            <section class="sys-card c-gpu"><h3>Graphics</h3><div class="t-hero"><div class="t-val"><span id="gpu-compute-val" class="mono-data na">N/A</span></div><span class="t-sub">load</span></div><svg class="spark" data-key="gpu" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"></svg><div class="sys-list"><div class="metric-group"><div class="metric-label">Temperature <span id="gpu-temp-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="gpu-temp-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div><div class="metric-group"><div class="metric-label">Video memory <span id="gpu-vram-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="gpu-vram-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div></div></section>
+            <section class="sys-card c-ram"><h3>Memory</h3><div class="t-hero"><div class="t-val"><span id="ram-val" class="mono-data na">N/A</span></div><span class="t-sub">in use</span></div><svg class="spark" data-key="ram" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"></svg><div class="sys-list"><div class="metric-group"><div class="metric-label">Speed <span id="ram-freq-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="ram-freq-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div></div></section>
+            <section class="sys-card c-ssd"><h3>Storage</h3><div class="sys-list"><div class="metric-group"><div class="metric-label">Free space <span id="ssd-space-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="ssd-space-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div><div class="metric-group"><div class="metric-label">Temperature <span id="ssd-temp-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="ssd-temp-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div></div></section>
+            <section class="sys-card c-net"><h3>Network</h3><div class="sys-list"><div class="metric-group"><div class="metric-label">Speed <span id="wifi-speed-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="wifi-speed-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div></div></section>
+            <section class="sys-card c-models"><h3>Loaded models <span id="model-info-tag" class="sub"></span></h3><div id="model-info-body"></div></section>
           </div>
         </div>
       </aside>
@@ -193,6 +160,10 @@
       <div id="cli-float"></div>
     </section>
 
+    <section id="page-projects" class="page" aria-label="Projects">
+      <div class="page-inner" id="proj-root"></div>
+    </section>
+
     <section id="page-artifacts" class="page" aria-label="Artifacts">
       <div class="page-inner"><h1>Artifacts</h1><div id="art-list"></div></div>
     </section>
@@ -225,6 +196,7 @@
       </div>
     </section>
   </main>
+  <div id="toast" role="status" aria-live="polite"></div>
 </div>
 <script type="module" src="/src/main.js"></script>
 </body>

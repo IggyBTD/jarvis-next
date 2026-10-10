@@ -208,6 +208,7 @@ function paint() {
     const tab = document.createElement('div');
     tab.className = 'ws-tab';
     tab.setAttribute('role', 'tab');
+    tab.dataset.id = t.id;
     tab.setAttribute('aria-selected', String(t.id === active));
     const label = Object.assign(document.createElement('button'), { type: 'button', className: 't-label', textContent: t.label });
     label.addEventListener('click', () => activate(t.id));
@@ -333,7 +334,8 @@ syncToggle();
 const split = $('ws-split');
 const chatPage = $('page-chat');
 const WS_KEY = 'jarvis.ws.width';
-const clampW = (w) => Math.round(Math.min(Math.max(w, 320), chatPage.clientWidth * 0.7) / 8) * 8;
+// The pane keeps 360 at least (below that its tabs and cards cannot be laid out) and leaves the chat 488 (the 720 measure's gutters at their tightest).
+const clampW = (w) => Math.round(Math.max(360, Math.min(w, chatPage.clientWidth - 496)) / 8) * 8;
 const setW = (w) => chatPage.style.setProperty('--ws-w', `${clampW(w)}px`);
 try { const w = Number(localStorage.getItem(WS_KEY)); if (w) setW(w); } catch { /* storage blocked */ }
 split.addEventListener('pointerdown', (e) => {

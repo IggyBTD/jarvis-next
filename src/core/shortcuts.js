@@ -4,6 +4,7 @@
 import { isWhiteboardMode, enterWhiteboardMode, exitWhiteboardMode, setPage } from './whiteboard-mode.js';
 import { toggleWidget, openArtifact, closePanelById, openPanelIds } from './whiteboard.js';
 import { listArtifacts } from './artifacts.js';
+import { zoomBy, zoomReset } from './zoom.js';
 
 const input = document.getElementById('hud-chat-input');
 const PRESETS = ['btn-general', 'btn-code', 'btn-visual', 'btn-abliterated'];
@@ -14,6 +15,7 @@ export const SHORTCUTS = [
   { keys: 'Ctrl+1 to 9', does: 'Open or close the tab of the 1st to 9th artifact of this session' },
   { keys: 'Ctrl+\\', does: 'Hide or show the sidebar' },
   { keys: 'Ctrl+,', does: 'Open Settings' },
+  { keys: 'Ctrl+ + / Ctrl+ - / Ctrl+0', does: 'Zoom the app in, out, or back to 100% (Ctrl and the mouse wheel too)' },
   { keys: 'Ctrl+L', does: 'Jump to the message field' },
   { keys: 'Ctrl+.', does: 'Stop the reply that is running' },
   { keys: 'Ctrl+M', does: 'Microphone on or off' },
@@ -33,17 +35,20 @@ function togglePanelNumber(n) {
 function run(e) {
   const key = e.key.toLowerCase();
   const digit = /^(?:Digit|Numpad)([1-9])$/.exec(e.code)?.[1];
-  if (e.shiftKey) {
+  if (e.shiftKey && key !== '+') {
     if (digit && Number(digit) <= PRESETS.length) document.getElementById(PRESETS[Number(digit) - 1])?.click();
     else return false;
     return true;
   }
-  if (digit) togglePanelNumber(Number(digit));
+  if (digit && key !== '0') togglePanelNumber(Number(digit));
   else if (key === 'b') (isWhiteboardMode() ? exitWhiteboardMode : enterWhiteboardMode)();
   else if (key === 'i') toggleWidget('system');
   else if (key === 'l') input.focus();
   else if (key === '\\') document.dispatchEvent(new CustomEvent('jarvis:sidebar'));
   else if (key === ',') setPage('settings');
+  else if (key === '=' || key === '+') zoomBy(1);
+  else if (key === '-') zoomBy(-1);
+  else if (key === '0') zoomReset();
   else if (key === '.') document.dispatchEvent(new CustomEvent('jarvis:stop'));
   else if (key === 'm') document.getElementById('dock-mic')?.click();
   else return false;
@@ -55,3 +60,10 @@ window.addEventListener('keydown', (e) => {
   if (e.repeat) { e.preventDefault(); return; }
   if (run(e)) e.preventDefault();
 }, true);
+
+// Ctrl and the wheel zooms too (the webview would do it by itself, but not remember it).
+window.addEventListener('wheel', (e) => {
+  if (!e.ctrlKey) return;
+  e.preventDefault();
+  zoomBy(e.deltaY < 0 ? 1 : -1);
+}, { passive: false });

@@ -56,7 +56,7 @@
 
   /* structure */
   --strip-h: 40px;           /* title strip across both panes */
-  --sidebar-w: 264px;
+  --sidebar-w: 304px;
   --measure: 720px;          /* chat column */
   --pane-gutter: 24px;
   --sidebar-gutter: 16px;

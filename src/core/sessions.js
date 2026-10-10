@@ -42,3 +42,19 @@ export const listSessions = () => call('session_list');
 export const loadSession = async (id) => JSON.parse(await call('session_load', { id }));
 export const deleteSession = (id) => call('session_delete', { id });
 export const exportSession = (id, text) => call('session_export', { id, text });
+
+// Changes the metadata of a saved session that is not the one open (rename, pin, project) without touching its messages.
+export async function patchSession(id, patch) {
+  const meta = (await listSessions()).find((s) => s.id === id);
+  if (!meta) return;
+  await saveSession({ ...meta, ...patch }, await loadSession(id));
+}
+
+// A copy under a new id, for "Duplicate".
+export async function copySession(id) {
+  const meta = (await listSessions()).find((s) => s.id === id);
+  if (!meta) return null;
+  const copy = { ...meta, id: newSessionId(), name: `${meta.name} (copy)`, created: Date.now(), updated: Date.now() };
+  await saveSession(copy, await loadSession(id));
+  return copy;
+}

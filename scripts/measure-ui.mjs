@@ -58,7 +58,7 @@ const result = await page.evaluate(() => {
   }
 
   // 2: control tiers
-  const CONTROLS = '.icon-btn, .tool-btn, .send-btn, .stop-btn, #side-toggle, .win-control-btn, .mode-btn, .mode-switch, .chip-btn, .side-btn, .nav-item, .chat-item, .ws-tab, .t-x, .av-btn, .av-bar .seg, .av-bar .seg button, .wb-btn';
+  const CONTROLS = '.icon-btn, .tool-btn, .send-btn, .stop-btn, #side-toggle, .win-control-btn, .mode-switch, .chip-btn, .side-btn, .nav-item, .chat-item, .ws-tab, .t-x, .av-btn, .av-bar .seg, .av-bar .seg button, .wb-btn';
   for (const el of document.querySelectorAll(CONTROLS)) {
     if (!visible(el)) continue;
     out.controls += 1;
