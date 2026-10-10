@@ -15,7 +15,7 @@ const $ = (id) => document.getElementById(id);
 const input = $('hud-chat-input');
 const stack = $('chat-stack');
 const fmtK = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(Math.round(n)));
-const level = (ratio) => (ratio > 0.9 ? 'high' : ratio > 0.75 ? 'mid' : '');
+const level = (ratio) => (ratio > 0.9 ? 'high' : ratio > 0.7 ? 'mid' : '');
 
 hydrateIcons();
 
@@ -137,7 +137,8 @@ function paintMini() {
   const ramTotal = n('Memory_Total');
   mini('cpu', cpu == null ? null : cpu / 100, cpu == null ? 'N/A' : `${Math.round(cpu)}%`);
   mini('gpu', gpu == null ? null : gpu / 100, gpu == null ? 'N/A' : `${Math.round(gpu)}%`);
-  mini('ram', ram == null || !ramTotal ? null : ram / ramTotal, ram == null ? 'N/A' : `${ram.toFixed(1)} GB`);
+  // memory shows what is used out of what there is, so its bar reads like the other two
+  mini('ram', ram == null || !ramTotal ? null : ram / ramTotal, ram == null ? 'N/A' : ramTotal ? `${ram.toFixed(1)} / ${Math.round(ramTotal)} GB` : `${ram.toFixed(1)} GB`);
 }
 onTelemetry(paintMini);
 paintMini();

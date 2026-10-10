@@ -20,7 +20,7 @@ function draw(key) {
   const pts = h.map((v, i) => [(N - h.length + i) * (W / (N - 1)), H - 3 - Math.min(1, Math.max(0, v)) * (H - 8)]);
   const line = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join('');
   const last = h[h.length - 1];
-  svg.dataset.level = last > 0.9 ? 'high' : last > 0.75 ? 'mid' : '';
+  svg.dataset.level = last > 0.9 ? 'high' : last > 0.7 ? 'mid' : '';
   svg.innerHTML = `<path class="area" d="${line}L${pts[pts.length - 1][0].toFixed(1)} ${H}L${pts[0][0].toFixed(1)} ${H}Z"/><path class="line" d="${line}"/>`;
 }
 

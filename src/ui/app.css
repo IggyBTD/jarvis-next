@@ -675,3 +675,42 @@ body { font: 400 var(--fs-4)/1.5 var(--sans); }
 .chat-meta { font-size: var(--fs-2); }
 .sys-tile .t-val { font-family: var(--mono); font-weight: 400; letter-spacing: -0.02em; }
 #chat-empty h2 { font-family: var(--serif); font-weight: 400; }
+
+/* ===== Phase 8: sidebar resource widget ===== */
+#mini-sys { display: grid; gap: var(--s-3); padding: var(--s-3); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); }
+.mini-row { display: grid; grid-template-columns: 1fr; gap: 6px; font-size: var(--fs-2); color: var(--text-3); }
+.mini-top { display: flex; justify-content: space-between; align-items: baseline; }
+.mini-top .lbl { color: var(--text-2); font-size: var(--fs-2); }
+.mini-row .mono-data { color: var(--text); font-size: var(--fs-2); text-align: right; }
+.mini-bar { height: 4px; background: var(--surface-3); border-radius: var(--r-sm); overflow: hidden; }
+.mini-bar > i { background: var(--accent-mid); }
+.mini-bar > i[data-level="mid"], .progress-fill[data-level="mid"] { background: var(--warm); }
+.mini-bar > i[data-level="high"], .progress-fill[data-level="high"] { background: var(--danger); }
+.progress-fill { background: var(--accent-mid); }
+.progress-bar { background: var(--surface-3); }
+#mini-services { padding: 0 var(--s-1); }
+
+/* ===== Phase 7: input bar ===== */
+#composer { box-shadow: none; border: 1px solid var(--border); background: var(--surface-2); }
+#composer:focus-within { border-color: var(--border-strong); box-shadow: 0 0 0 3px var(--accent-wash); }
+.composer-bar { gap: var(--s-2); }
+.tool-btn { width: var(--icon-box); height: var(--icon-box); border-radius: var(--r-sm); color: var(--text-3); }
+.tool-btn:hover { background: var(--surface-3); color: var(--text-2); }
+.tool-btn.is-on, .tool-btn.is-on#dock-web, .tool-btn.is-on#dock-link { color: var(--text-3); }
+.tool-btn.is-off#dock-web, .tool-btn.is-off#dock-link { color: var(--warm); }
+#dock-mic[data-active], #dock-mic.is-on { background: var(--warm-wash); }
+#dock-mic[data-active] .icon, #dock-mic.is-on .icon { color: var(--warm); }
+#dock-mic.is-on::after { border-color: var(--warm); }
+.tool-btn.recording { background: var(--warm); color: var(--on-accent); }
+.tool-btn.recording .icon { color: var(--on-accent); }
+.stop-btn { width: var(--icon-box); height: var(--icon-box); background: var(--surface-3); color: var(--text-2); border: 1px solid var(--border); border-radius: var(--r-sm); }
+.stop-btn:hover { background: var(--surface-4); opacity: 1; }
+.stop-btn .icon { color: var(--text-2); }
+.stop-btn::after { border-color: var(--text-3); border-radius: var(--r-sm); }
+.send-btn { width: var(--icon-box); height: var(--icon-box); border-radius: var(--r-sm); background: var(--accent); }
+.send-btn .icon { color: var(--on-accent); }
+#ctx-meter { font-family: var(--mono); font-size: var(--fs-2); color: var(--text-3); }
+.dock-badge { font-family: var(--mono); font-size: var(--fs-1); }
+.send-btn:hover .icon, .send-btn:active .icon { color: var(--on-accent); }
+.stop-btn:hover .icon { color: var(--text); }
+.win-control-btn.close-btn:hover .icon { color: var(--on-danger); }
