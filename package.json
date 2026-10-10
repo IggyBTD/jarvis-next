@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "voice": "node sidecars/voice/server.mjs",
+    "browser": "node sidecars/browser/server.mjs",
     "icons": "node scripts/build-icons.mjs",
     "icons:finalise": "node scripts/finalise-icons.mjs",
     "contrast": "node scripts/contrast.mjs",

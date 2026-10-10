@@ -23,10 +23,11 @@ body.side-off #sidebar { visibility: hidden; }
 .brand .mark { margin-right: 0; width: var(--s-6); height: var(--s-6); }
 .brand .mark::before { inset: 8px; /* optical: core of 8 in a ring of 24 */ }
 
-/* chat / code: a 56 by 28 track (2:1): 2 frame, two segments of 26 by 24, a thumb slides to the one in use */
-.mode-switch { position: relative; display: inline-grid; grid-template-columns: 26px 26px; /* optical: 2:1 track */ height: var(--h-sm); padding: 2px; /* optical: 2px frame */ background: var(--surface-4); border-radius: var(--r-md); flex: none; }
+/* chat / code / intel: a 82 by 28 track: 2 frame, two segments of 26 by 24, a thumb slides to the one in use */
+.mode-switch { position: relative; display: inline-grid; grid-template-columns: repeat(3, 26px); /* optical: segments of 26 by 24 */ height: var(--h-sm); padding: 2px; /* optical: 2px frame */ background: var(--surface-4); border-radius: var(--r-md); flex: none; }
 .mode-thumb { position: absolute; top: 2px; left: 2px; /* optical: 2px frame */ width: 26px; height: 24px; border-radius: var(--r-sm); background: var(--surface-2); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18); transition: transform var(--dur) var(--ease-out), opacity var(--dur-fast) var(--ease-out); }
 .mode-switch:has(.mode-btn[data-page="code"][aria-pressed="true"]) .mode-thumb { transform: translateX(26px); }
+.mode-switch:has(.mode-btn[data-page="intel"][aria-pressed="true"]) .mode-thumb { transform: translateX(52px); }
 .mode-switch:not(:has([aria-pressed="true"])) .mode-thumb { opacity: 0; }
 .mode-btn { position: relative; z-index: 1; display: grid; place-items: center; width: 26px; height: 24px; /* optical: 2:1 track */ padding: 0; border: 0; border-radius: var(--r-sm); background: transparent; box-shadow: none; color: var(--text-3); transition: color var(--dur-fast) var(--ease-out); }
 .mode-btn:hover { color: var(--text); }
@@ -106,6 +107,7 @@ body.side-off .col-head, body.side-off #cli-left .panel-head { padding-left: 48p
 .page { position: absolute; inset: 0; display: none; min-width: 0; min-height: 0; }
 body[data-page="chat"] #page-chat { display: grid; }
 body[data-page="code"] #page-code { display: grid; }
+body[data-page="intel"] #page-intel { display: flex; flex-direction: column; }
 body[data-page="projects"] #page-projects, body[data-page="artifacts"] #page-artifacts { display: block; overflow-y: auto; scrollbar-gutter: stable; }
 body[data-page="settings"] #page-settings { display: block; overflow-y: auto; scrollbar-gutter: stable; }
 

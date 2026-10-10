@@ -33,7 +33,8 @@
     "pin",
     "trash",
     "edit",
-    "eject"
+    "eject",
+    "refresh"
   ],
   "sets": {
     "phosphor": {

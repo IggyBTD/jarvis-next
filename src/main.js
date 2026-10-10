@@ -23,6 +23,7 @@ import './core/sysview.js';
 import './core/shell.js';
 import './core/usage.js';
 import './core/code-home.js';
+import './core/intel-page.js';
 
 // Dev only: Ctrl+Shift+I opens the icon switcher. Vite drops this branch from production builds.
 if (import.meta.env.DEV) import('./dev/icon-switcher.js');

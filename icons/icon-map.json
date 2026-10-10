@@ -270,5 +270,13 @@
     "remix": "eject",
     "solar": "upload-minimalistic",
     "lucide": "circle-arrow-out-up-right"
+  },
+  "refresh": {
+    "phosphor": "arrow-clockwise",
+    "tabler": "refresh",
+    "iconoir": "refresh",
+    "remix": "refresh",
+    "solar": "refresh",
+    "lucide": "refresh-cw"
   }
 }

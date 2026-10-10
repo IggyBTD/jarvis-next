@@ -33,6 +33,7 @@
         <span class="mode-thumb" aria-hidden="true"></span>
         <button type="button" class="mode-btn" data-page="chat" aria-pressed="true" title="Chat" aria-label="Chat"><span class="icon" data-icon="chat"></span></button>
         <button type="button" class="mode-btn" data-page="code" aria-pressed="false" title="Code" aria-label="Code"><span class="icon" data-icon="code"></span></button>
+        <button type="button" class="mode-btn" data-page="intel" aria-pressed="false" title="Intel: browser, and later OSINT and finance" aria-label="Intel"><span class="icon" data-icon="globe"></span></button>
       </div>
       <button type="button" id="side-toggle" title="Hide sidebar (Ctrl+\)" aria-label="Hide sidebar"><span class="icon" data-icon="sidebar" ></span></button>
     </div>
@@ -158,6 +159,28 @@
         </section>
       </aside>
       <div id="cli-float"></div>
+    </section>
+
+    <!-- INTEL: OSINT map and finance later; for now one tab, the browser (Playwright) -->
+    <section id="page-intel" class="page" aria-label="Intel">
+      <div class="intel-strip" data-tauri-drag-region>
+        <div class="ws-tab" role="tab" aria-selected="true"><span class="t-label">Playwright</span></div>
+      </div>
+      <div class="intel-bar">
+        <button type="button" class="icon-btn" id="pw-back" title="Back" aria-label="Back"><span class="icon" data-icon="chevron-left"></span></button>
+        <button type="button" class="icon-btn" id="pw-forward" title="Forward" aria-label="Forward"><span class="icon" data-icon="chevron-right"></span></button>
+        <button type="button" class="icon-btn" id="pw-reload" title="Reload" aria-label="Reload"><span class="icon" data-icon="refresh"></span></button>
+        <input type="text" id="pw-url" placeholder="Address, for example example.com" aria-label="Address" autocomplete="off" spellcheck="false">
+        <button type="button" class="av-btn" id="pw-go">Go</button>
+        <button type="button" class="av-btn" id="pw-close" title="Close the browser" hidden>Close</button>
+      </div>
+      <div class="intel-body">
+        <div id="pw-view" tabindex="0" aria-label="Browser page. Click to interact, type to enter text.">
+          <img id="pw-img" alt="" draggable="false" hidden>
+          <div id="pw-empty">No page open. Type an address above. The page runs in a clean Chrome with none of your logins.</div>
+        </div>
+        <div class="intel-status" id="pw-status" aria-live="polite"></div>
+      </div>
     </section>
 
     <section id="page-projects" class="page" aria-label="Projects">

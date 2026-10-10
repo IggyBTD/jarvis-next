@@ -4,6 +4,7 @@ mod memory;
 mod sessions;
 mod telemetry;
 mod voice;
+mod browser;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -26,6 +27,7 @@ pub fn run() {
     .plugin(tauri_plugin_fs::init())
     .manage(telemetry::TelemetryState(std::sync::Arc::new(std::sync::Mutex::new(None))))
     .manage(voice::VoiceState(std::sync::Mutex::new(None)))
+    .manage(browser::BrowserState(std::sync::Mutex::new(None)))
     .manage(agent::AgentState(std::sync::Mutex::new(None)))
     .setup(|app| {
       if cfg!(debug_assertions) {
@@ -56,6 +58,8 @@ pub fn run() {
       instincts::instinct_promote,
       voice::voice_start,
       voice::voice_stop,
+      browser::browser_start,
+      browser::browser_stop,
       agent::agent_set_root,
       agent::agent_get_root,
       agent::agent_list_dir,

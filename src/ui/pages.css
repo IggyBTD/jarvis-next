@@ -46,3 +46,20 @@
 .proj-row .ci-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .av-btn.danger { color: var(--danger); border-color: var(--danger); }
 .av-btn.danger:hover { background: var(--danger-wash); color: var(--danger); }
+
+/* Intel: a title strip with the page's tabs, an address bar, the live page, a status line */
+.intel-strip { display: flex; align-items: center; gap: var(--s-1); height: var(--strip-h); padding: 0 var(--wc-w) 0 var(--pane-gutter); border-bottom: 1px solid var(--border); flex: none; }
+.intel-strip .ws-tab { background: var(--surface-3); color: var(--text); }
+.intel-strip .ws-tab .t-label { padding-right: var(--s-3); }
+.intel-strip .ws-tab .t-label::before { background: var(--accent); }
+.intel-bar { display: flex; align-items: center; gap: var(--s-2); height: 48px; padding: 0 var(--pane-gutter); flex: none; }
+#pw-url { flex: 1; min-width: 0; height: var(--h-md); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface-1); color: var(--text); font: 400 var(--fs-3)/var(--lh-sm) var(--mono); }
+#pw-url:focus-visible { outline: none; border-color: var(--accent); }
+.intel-bar .av-btn { height: var(--h-md); }
+.intel-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--s-2); padding: 0 var(--pane-gutter) var(--s-4); }
+#pw-view { flex: 1; min-height: 0; display: grid; place-items: center; overflow: hidden; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); }
+#pw-view:focus-visible { outline: none; border-color: var(--accent); }
+#pw-img { display: block; max-width: 100%; max-height: 100%; aspect-ratio: 1280 / 800; object-fit: contain; cursor: default; user-select: none; }
+#pw-empty { max-width: 360px; padding: var(--s-5); color: var(--text-3); text-align: center; font-size: var(--fs-3); line-height: var(--lh-sm); }
+.intel-status { flex: none; height: var(--lh-md); font: 400 var(--fs-2)/var(--lh-md) var(--mono); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.intel-status[data-bad] { color: var(--danger); }
