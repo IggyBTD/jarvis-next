@@ -20,6 +20,8 @@ Tokens live in `src/styles/tokens.css` and nothing else defines a colour, radius
 
 Icons: everything goes through `src/icons/index.js` (`<span class="icon" data-icon="semantic-name">`, `hydrateIcons()`), never inline SVG in HTML. Sets are built by `npm run icons` from `icons/icon-map.json` into `src/icons/sets/`; Ctrl+Shift+I opens the dev switcher (dev only); `npm run icons:finalise` prunes everything but the chosen set (do not run it before the choice is made). Motion on icons is plain CSS in `src/ui/icons.css`; it was written for Iconoir's shapes, so another set may need its selectors adjusted.
 
+Spacing and sizing philosophy: `docs/design-spacing-philosophy.md` (three control heights 28/32/40, one 4 px grid, shared centre lines, a measure for chat, a grid for the dashboard). It is saved as the intended direction and is **not applied yet**; where it conflicts with the current tokens on spacing or sizing, it wins once applied.
+
 Keep the DOM ids the inherited modules look up (`hud-chat-input`, `chat-output`, `center-workspace`, `dock-*`, `cpu-val` and the other telemetry ids, `model-info-*`, `btn-general`, `btn-code`, `btn-visual`, `btn-abliterated`, `cli-*`, `win-*`); renaming one breaks a module silently. Before/after screenshots are in `docs/ui-shots/`.
 
 ## Run

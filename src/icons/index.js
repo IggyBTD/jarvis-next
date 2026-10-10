@@ -13,7 +13,8 @@ const ALIAS = { clip: 'attach', down: 'chevron-down', left: 'chevron-left', righ
 const data = new Map();     // "set-variant" -> { kind, viewBox, icons }
 const listeners = new Set();
 let current = DEFAULT_SET;
-try { current = localStorage.getItem(KEY) || DEFAULT_SET; } catch { /* storage blocked */ }
+// VITE_ICON_SET starts a dev server on a given set (tools/versions); a choice made in the switcher still wins.
+try { current = localStorage.getItem(KEY) || import.meta.env.VITE_ICON_SET || DEFAULT_SET; } catch { current = import.meta.env.VITE_ICON_SET || DEFAULT_SET; }
 if (!isKnown(current)) current = DEFAULT_SET;
 
 function isKnown(setVariant) {

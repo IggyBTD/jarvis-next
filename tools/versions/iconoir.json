@@ -1,0 +1,25 @@
+{
+  "productName": "JARVIS Next Iconoir",
+  "identifier": "com.jarvis.next.iconoir",
+  "build": {
+    "devUrl": "http://localhost:5181",
+    "beforeDevCommand": null
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "JARVIS Next - Iconoir",
+        "width": 1270,
+        "height": 700,
+        "x": 0,
+        "y": 0,
+        "minWidth": 960,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": false,
+        "backgroundColor": "#0A0E14"
+      }
+    ]
+  }
+}
