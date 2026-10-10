@@ -1,0 +1,169 @@
+# CLAUDE.md — JARVIS-HUD
+
+Project instructions for Claude Code. This file loads every session — keep it
+accurate as the project evolves rather than letting drift build up.
+
+## Current status
+
+- **Telemetry:** working.
+- **LM Studio connection:** working.
+- **In progress:** rebuilding the underlying code from scratch. The current UI/layout is being kept as-is and copied over unchanged — only the logic underneath (telemetry wiring, LM Studio connection) is being restructured into the folder layout below. Consolidating to a single model rather than the four-preset-button switcher; the model-switcher UI/logic is deferred, not part of this rebuild pass.
+- **Rebuild sequence:** freeze and copy the existing HUD markup/CSS/canvas as-is → extract telemetry into its own isolated module → simplify LM Studio wiring to one fixed model → rebuild the connection as `core/llm-client.js` (the single source every future page calls through) → verify telemetry and chat independently in the new structure before adding anything new.
+
+## Project overview
+
+JARVIS is a Tauri desktop app: a hardware telemetry HUD with an Iron-Man-style
+interface, expanding into a full local AI assistant (chat, coding agent,
+browser automation, financial analysis, and more — see Roadmap below).
+
+- **Project folder:** `C:\Users\bethe\JARVIS-HUD`
+- **Frontend:** Vite + vanilla JS, entry point `index.html`
+- **Backend:** Tauri (Rust)
+- **Telemetry source:** LibreHardwareMonitor's local HTTP server (polled, not embedded)
+- **LLM backend:** LM Studio, OpenAI-compatible local API
+- **Model:** consolidating to a single model (previously ran a four-preset switcher — abliterated/general/coding/visual — across gpt-oss-20b MXFP4 GGUF, Qwen 2.5 14B via Ollama, and Qwen3 VL 8B; switcher is deferred, not deleted, in case it's revisited later)
+
+## Architecture
+
+Structure the project by **stability**, not just by feature — proven telemetry
+code and new/experimental agent code must never be able to take each other down.
+
+```
+JARVIS-HUD/
+├── src/
+│   ├── pages/
+│   │   ├── hud/                # telemetry HUD (stable, don't touch lightly)
+│   │   ├── terminal/            # Coder-model chat page
+│   │   └── whiteboard/          # visualization/artifact pane
+│   ├── core/
+│   │   ├── llm-client.js        # LM Studio integration, model switching
+│   │   ├── tool-router.js       # decides which surface a response renders to
+│   │   └── event-bus.js         # cross-window messaging (Tauri events)
+│   └── index.html
+├── src-tauri/
+│   └── src/
+│       ├── telemetry.rs         # LibreHardwareMonitor polling — isolated
+│       ├── windows.rs           # multi-window spawn/position/close (generic, built once)
+│       ├── os_actions/          # cross-platform action registry — see OS control below
+│       │   ├── mod.rs           # trait defining the fixed action list (OS-agnostic)
+│       │   ├── windows_os.rs    # Windows implementation of the trait
+│       │   └── macos_os.rs      # macOS implementation of the same trait
+│       ├── commands.rs          # Tauri commands exposed to frontend
+│       └── main.rs
+├── skills/                      # plain files, NOT bundled into src — see Skills below
+└── config/
+    ├── models.json
+    └── actions.json              # shared, OS-agnostic action names/descriptions — the model-facing contract that never changes between platforms
+```
+
+**Rules that follow from this:**
+- Never let `telemetry.rs` or `pages/hud/` depend on anything from the agent/browser/whiteboard code paths. A panic in an experimental feature must not take down the temperature readout.
+- `windows.rs` and `tool-router.js` are shared infrastructure — extend them, don't duplicate their logic inside individual features.
+- Every external data source (LM Studio, LibreHardwareMonitor, future email/calendar/financial APIs) gets its own client module under `core/`, following the same pattern.
+- **Keep Tauri thin; push heavy/dependency-laden features into sidecar processes.** Browser automation (Playwright) needs a real Node.js runtime and can't run inside Rust or a webview — bundle it as a Tauri sidecar executable, not compiled into the Rust binary. Microsoft Office COM automation is the same story with Python (`pywin32`). Each sidecar exposes a small local HTTP API; `core/` gets a client module for it (`core/browser-client.js`, `core/office-client.js`) following the same pattern as `llm-client.js`. This is the stability-isolation principle applied one level further — some features get their own process, not just their own file.
+
+## Skills
+
+`skills/` at the project root is a Claude-Code-style skills folder: each skill
+is `skills/<name>/SKILL.md` with YAML frontmatter (`description` at minimum)
+and markdown instructions. Keep skills as loose, user-editable files — not
+compiled into `src/`, so adding a skill is "drop in a folder," not a rebuild.
+
+## System prompt / conventions
+
+JARVIS's own responses (and Claude Code's work in this repo) should match:
+direct, no preamble, no filler, prose-first, no bullet walls, no em dashes,
+no sycophancy. Theology/philosophy/apologetics topics get the same analytical
+rigour as technical ones — no special softening.
+
+## UI design
+
+Iron Man HUD-style depth layers, 3D Y-axis rotating node-mesh centrepiece,
+cyan/teal primary with red used only for structural accents, four-layer
+Z-depth system. Full design detail lives in `JARVIS_UI_Design_Brief.md` and
+`JARVIS_full_brief.md` — consult those for anything visual before improvising.
+
+## Browser automation modes
+
+Two distinct browser modes, not one — decide per task which is used, default to neither being engaged automatically:
+
+- **Sandboxed/Cowork-style** — Playwright launches a clean browser context, no logins, no real sessions. Safe default for lookups, testing flows, anything that doesn't need to act as you.
+- **Claude-in-Chrome-style** — acts inside your real, already-logged-in sessions. Two implementation paths, decision intentionally left open until it's built:
+  - **(a) CDP-attach** — Chrome launched with `--remote-debugging-port`, Playwright connects via `connectOverCDP`, reuses the same tool functions (`navigate`/`click`/`type`/`read_page`) as the sandboxed core. Fastest to build. Detectable by sites running strict anti-bot protection (ticket vendors, banking) and the debug port is a real security exposure if ever reachable beyond localhost.
+  - **(b) Personal Chrome extension** — content script + background service worker + local bridge (websocket or native messaging) to JARVIS. Stays private via Developer Mode "load unpacked" — never published to the Web Store, so no review process applies. More build time than CDP (content script logic, manifest permissions, bridge plumbing), but looks like a normal browser to sites that specifically check for automation, and gets real on-page presence (toolbar icon, side panel).
+- Both modes need the confirm-before-submit guardrail before any purchase/submit action, and a manual-CAPTCHA-handoff path (pause and let you solve it in the visible window) rather than trying to push past one.
+
+## Apps & OS integration
+
+**Core principle: read broadly, act narrowly.** Being a fully local model means nothing leaves the machine, so broad *read* access (Gmail, files) is low-risk. Every *write/action* capability (Office, OS control, browser purchases) carries the same real-world consequence whether the model is local or not — never relax the action-registry/confirm-before-submit gate just because a feature is "just local."
+
+- **OS control** — never let the model write or run arbitrary shell/PowerShell code. All system control goes through the **action registry**: a fixed set of named functions (`enable_game_mode()`, `set_power_plan()`, etc.) implemented in `os_actions/`. The trait in `mod.rs` is the OS-agnostic contract; `windows_os.rs` and `macos_os.rs` each satisfy it their own way, selected at compile time via `#[cfg(target_os = ...)]`. `config/actions.json` holds the action names/descriptions exposed to the model — this file never changes between platforms, so porting to Mac means writing `macos_os.rs`, not touching the registry or the tool-calling code.
+- **Microsoft Office** — COM automation (Rust/Python bridge) driving installed Office apps directly, rather than the sandboxed Office.js add-in route — more powerful since it can read/write live open documents. Destructive actions (save-over, delete, send) go through the same confirm-before-submit gate as browser actions.
+- **Gmail** — official Gmail API via OAuth, read-only scope. Correct tool for the job; don't scrape. Foundational for Phase 5 email triage.
+- **WhatsApp — explicitly deferred, not currently planned.** No official personal-use API exists. The only routes (automating WhatsApp Web, or an unofficial wrapper library) both risk account bans since WhatsApp's terms prohibit unofficial automated clients — a real-world risk category, not just a technical one. Do not add WhatsApp integration without revisiting this tradeoff first.
+- **Audit logging** — log every action JARVIS takes, not just destructive ones (what it read, what it decided, what it changed). Build this alongside the action registry from the start; retrofitting it onto several integrations at once later is much worse than building it once now.
+
+## Modularity hardening (planned, final stage)
+
+**Status: future plan, not part of the current rebuild.** Scheduled for the last stage, alongside Phase 8 hardened infrastructure. Until then the only requirement is boundary discipline (see rules below). Do not build abstraction layers ahead of need.
+
+**Goal:** models, hardware, and OS are each swappable by changing config or adding one adapter, without touching the model-facing tool contract (`config/actions.json`) or the pages.
+
+**The three seams:**
+- **Models:** define interfaces by capability (chat, tool-calling, transcribe, synthesize, OCR, vision), not by provider. One adapter per inference backend (LM Studio, Ollama, llama.cpp) behind `core/llm-client.js`, all using the OpenAI-compatible API as the common contract. `config/models.json` becomes the registry: role, provider, model, residency policy.
+- **Hardware:** a `config/hardware.json` profile holds the VRAM budget, RAM budget and inference backend (ROCm, Vulkan, CUDA, Metal), which decides which models stay resident and which quantisation to pick. GPU telemetry goes behind a provider interface in `telemetry.rs`, since LibreHardwareMonitor is Windows-only and other platforms need a different source.
+- **OS:** extends the existing `os_actions/` trait. Platform-specific areas to cover: app and window control, the shell used by terminal tools (PowerShell, zsh, bash), paths, autostart/service (Windows service, launchd, systemd), audio devices, and macOS accessibility permissions. Supported targets: Windows, macOS, Linux only.
+
+**Rules:**
+- Boundary discipline from day one: no LM Studio calls outside `core/llm-client.js`, no OS-specific calls outside `os_actions/`.
+- Write a formal interface only when a second real implementation exists (LM Studio plus Ollama, Windows plus macOS). Before that, any interface is a guess.
+- Every adapter and platform implementation passes through the same action-registry, confirm-before-submit and audit-logging chokepoint. Modularity must never create a path around the gate.
+- Acceptance test: run the same task suite after swapping each seam (backend, hardware profile, OS). The security inspector pass used for Phase 8 covers this stage too.
+
+## Known gotchas
+
+- **Window drag region blocked:** a canvas overlay was intercepting pointer events over the draggable title bar. Fix: `pointer-events: none` on overlay canvases that sit above drag regions.
+- **Rust/`main.rs` fixes already applied:** corrected WMI API usage, added missing Tauri commands, removed a call to a non-existent disk method, replaced a `tokio` dependency with `std::thread` + `mpsc` channel, and fixed a `MutexGuard` held across an `.await` point. Don't reintroduce async-across-mutex patterns.
+- **n8n + LM Studio (if used for orchestration):** "Use Responses API" must be OFF in the OpenAI Chat Model node — LM Studio serves `/v1/chat/completions`, not the Responses API. Base URL must be `http://host.docker.internal:1234/v1`, not `localhost`, since n8n runs in Docker.
+- **n8n + Google:** Calendar integration works natively; Google Drive needs an HTTP Request node workaround since the Drive node lacks native Search/List. Microsoft services are deferred (Azure tenant issues).
+
+## Coding model / Claude Code cost setup
+
+- Default coding model: DeepSeek V4 Pro (SWE-bench 80.6%).
+- Fable 5 used as security inspector specifically for Phase 4 (OS control) and Phase 8 (hardened infra) work.
+- `free-claude-code` proxy (by Alishahryar1) routes Claude Code CLI through OpenRouter for cost savings. Confirmed working free slug: `open_router/google/gemini-2.5-flash-lite`.
+
+## Roadmap
+
+Full difficulty-ordered feature list with build order lives in
+`JARVIS_Full_Roadmap.md` — treat it as the source of truth for sequencing.
+Summary of the original 8 phases (difficulty out of 10):
+
+1. Fix telemetry (3)
+2. LM Studio integration (4) — model switcher deferred; running a single consolidated model for now
+3. Voice chat, STT/TTS (5)
+4. OS control / agent actions (6)
+5. Email triage + calendar (7)
+6. Financial analysis engine (7)
+7. Biometrics / BLE smartband (8)
+8. Hardened infrastructure — WireGuard, Docker sandboxing, OSINT (9), followed by modularity hardening as the final stage (see Modularity hardening above)
+
+Layered on top of these (see `JARVIS_Full_Roadmap.md` for full detail and
+exact ordering): a Claude-Code-style skills system and terminal page for the
+Coder model, a Cowork-style sandboxed/planning-first mode with parallel
+sub-tasks, headless-first browser automation (Playwright/Puppeteer, vision
+fallback only for canvas/CAPTCHA) plus a separate Claude-in-Chrome-style mode
+for acting in real logged-in sessions (see Browser automation modes above), a
+whiteboard/visualization pane shared across features, "alive" multi-surface
+behavior (autonomous window management, reactive HUD states, spatial memory
+for window placement), and the apps/OS integration layer above (action
+registry, Microsoft Office, Gmail, audit logging — WhatsApp deferred).
+
+## What Claude Code should do here
+
+- Read this file, `JARVIS_Full_Roadmap.md` and `JARVIS_Progress.md` before starting work on any phase.
+- At the end of every session, update `JARVIS_Progress.md`: refresh "Where we are", the checklist, and add a session log entry.
+- Keep new features inside their designated folder (`pages/`, `core/`, `skills/`) rather than growing `main.rs` or `index.html` into a monolith.
+- Flag before touching `telemetry.rs` or anything under `pages/hud/` — that code is stable and shouldn't be refactored incidentally while working on something else.
+- When a change affects the folder structure or a documented gotcha, update this file in the same session rather than letting it drift out of date.
+- Keep backend-specific and OS-specific code behind its designated module (`core/llm-client.js`, `os_actions/`), but do not build generic adapter layers before the modularity hardening stage unless a second real implementation is being added.

@@ -1,0 +1,33 @@
+{
+  "port": 8765,
+  "modelsDir": "models/voice",
+  "asr": {
+    "model": "sherpa-onnx-nemotron-3.5-asr-streaming-0.6b-160ms-int8-2026-06-11",
+    "language": "auto",
+    "languages": [
+      "en",
+      "es",
+      "fr",
+      "it"
+    ],
+    "threads": 4,
+    "pause": {
+      "complete": 0.4,
+      "likely": 0.5,
+      "unsure": 0.7,
+      "open": 2.5
+    },
+    "autoEnd": false
+  },
+  "tts": {
+    "model": "kokoro-multi-lang-v1_0",
+    "voice": "bm_george",
+    "speed": 1.0,
+    "threads": 4
+  },
+  "keys": {
+    "hold": "F8",
+    "toggle": "F9"
+  },
+  "_keys": "hold: press and hold to talk, release to send. toggle: press to start talking, press again to send. Function keys only, so typing is never affected. autoEnd: false means the recognizer never decides by itself that you have finished; only the keys send."
+}

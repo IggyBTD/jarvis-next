@@ -1,0 +1,34 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# JARVIS runtime data (also self-ignored by its own .gitignore)
+/memory/
+/data/
+
+# Voice models (downloaded from the sherpa-onnx release pages, see JARVIS_Progress.md)
+/models/
+
+# Graphify
+graphify-out/cache/

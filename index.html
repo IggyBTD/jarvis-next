@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>JARVIS</title>
+  <link rel="stylesheet" href="/src/ui/app.css">
+</head>
+<body data-page="chat">
+<div id="app">
+  <header id="titlebar" data-tauri-drag-region>
+    <span></span>
+    <div class="window-controls-cluster">
+      <button type="button" id="win-min" class="win-control-btn" title="Minimize" aria-label="Minimize"><svg class="win-icon" viewBox="0 0 10 10"><path d="M1 5h8"/></svg></button>
+      <button type="button" id="win-max" class="win-control-btn" title="Maximize" aria-label="Maximize">
+        <svg class="win-icon win-icon-max" viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7"/></svg>
+        <svg class="win-icon win-icon-restore" viewBox="0 0 10 10"><path d="M3 3V1.5h5.5V7H7"/><rect x="1.5" y="3" width="5.5" height="5.5"/></svg>
+      </button>
+      <button type="button" id="win-close" class="win-control-btn close-btn" title="Close" aria-label="Close"><svg class="win-icon" viewBox="0 0 10 10"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7"/></svg></button>
+    </div>
+  </header>
+
+  <nav id="sidebar" aria-label="Main">
+    <div class="side-top" data-tauri-drag-region>
+      <span class="brand"><span class="mark" aria-hidden="true"></span>JARVIS</span>
+      <div class="mode-switch" role="group" aria-label="Chat or code">
+        <span class="mode-thumb" aria-hidden="true"></span>
+        <button type="button" class="mode-btn" data-page="chat" aria-pressed="true" title="Chat" aria-label="Chat"><span class="ico" data-icon="chat" data-size="18"></span></button>
+        <button type="button" class="mode-btn" data-page="code" aria-pressed="false" title="Code" aria-label="Code"><span class="ico" data-icon="code" data-size="18"></span></button>
+      </div>
+    </div>
+    <button type="button" id="side-toggle" title="Hide sidebar (Ctrl+\)" aria-label="Hide sidebar"><span class="ico" data-icon="sidebar" data-size="18"></span></button>
+    <button type="button" id="new-chat" class="side-btn primary"><span class="ico" data-icon="plus"></span>New chat</button>
+    <div class="nav-group">
+      <button type="button" class="nav-item" data-page="artifacts" aria-pressed="false"><span class="ico" data-icon="artifacts"></span>Artifacts</button>
+      <button type="button" class="nav-item" id="nav-system" aria-pressed="false"><span class="ico" data-icon="system"></span>System</button>
+      <button type="button" class="nav-item" data-page="settings" aria-pressed="false"><span class="ico" data-icon="settings"></span>Settings</button>
+    </div>
+    <div class="side-label">Recent chats</div>
+    <div id="chat-list" role="list"></div>
+    <div id="side-foot">
+      <div id="mini-sys" aria-label="Live system readout">
+        <div class="mini-row"><span>CPU</span><div class="mini-bar"><i id="mini-cpu-bar"></i></div><span class="mono-data" id="mini-cpu">N/A</span></div>
+        <div class="mini-row"><span>GPU</span><div class="mini-bar"><i id="mini-gpu-bar"></i></div><span class="mono-data" id="mini-gpu">N/A</span></div>
+        <div class="mini-row"><span>RAM</span><div class="mini-bar"><i id="mini-ram-bar"></i></div><span class="mono-data" id="mini-ram">N/A</span></div>
+      </div>
+      <div id="mini-services"></div>
+    </div>
+  </nav>
+
+  <main id="main">
+    <!-- CHAT: conversation left, workspace tabs right (artifacts, System; every tab closable) -->
+    <section id="page-chat" class="page" aria-label="Chat">
+      <div id="center-workspace">
+        <div class="col-head">
+          <span class="col-title" id="chat-title">New chat</span>
+          <div class="tools">
+            <button type="button" class="ghost-btn" id="ws-toggle" aria-pressed="true" title="Show or hide the workspace (Ctrl+B)">Workspace</button>
+            <div id="model-wrap">
+              <button type="button" class="ghost-btn chip-btn" id="model-chip" aria-haspopup="true" aria-expanded="false"><span id="model-chip-label">General</span><span class="ico" data-icon="down" data-size="16"></span></button>
+              <div id="model-menu" hidden role="menu">
+                <button type="button" id="btn-general" class="matrix-btn active-mode" data-preset="general" role="menuitem"><span class="m-name">General</span><span class="m-sub">qwen3-14b</span></button>
+                <button type="button" id="btn-code" class="matrix-btn" data-preset="coding" role="menuitem"><span class="m-name">Coding and finance</span><span class="m-sub">qwen3.8-27b</span></button>
+                <button type="button" id="btn-visual" class="matrix-btn" data-preset="visual" role="menuitem"><span class="m-name">Visual</span><span class="m-sub">qwen3-vl-8b</span></button>
+                <button type="button" id="btn-abliterated" class="matrix-btn" data-preset="abliterated" role="menuitem"><span class="m-name">Abliterated</span><span class="m-sub">qwen3-14b, no refusals</span></button>
+                <button type="button" id="btn-auto" class="matrix-btn" data-preset="auto" role="menuitem" disabled><span class="m-name">Auto router</span><span class="m-sub">not available yet</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="chat-host">
+          <div id="chat-stack">
+            <div id="chat-empty"><span class="mark mark-lg" aria-hidden="true"></span><h2><span id="greet">Hello</span><b>.</b></h2><p id="greet-sub">Running locally on this PC.</p><div class="machine" id="machine"></div></div>
+            <div id="chat-output" role="log" aria-live="polite" aria-label="Conversation"></div>
+            <div id="composer">
+              <div id="attach-row" aria-live="polite"></div>
+              <canvas id="voice-wave" aria-hidden="true" hidden></canvas>
+              <textarea id="hud-chat-input" class="chat-input" rows="1" placeholder="Message JARVIS" aria-label="Message JARVIS. Enter sends, Shift and Enter start a new line." autocomplete="off" spellcheck="false"></textarea>
+              <div class="composer-bar">
+                <button id="dock-attach" class="tool-btn is-on" type="button" title="Attach files" aria-label="Attach files"><span class="ico" data-icon="clip"></span></button>
+                <button id="dock-mic" class="tool-btn" type="button" title="Microphone"><span class="ico" data-icon="mic"></span></button>
+                <button id="dock-web" class="tool-btn" type="button" title="Internet access"><span class="ico" data-icon="globe"></span></button>
+                <button id="dock-link" class="tool-btn" type="button" title="Network link"><span class="ico" data-icon="wifi"></span></button>
+                <span class="grow"></span>
+                <span id="ctx-meter" title="Context used"></span>
+                <button id="dock-stop" class="stop-btn" type="button" hidden title="Stop (Ctrl+.)" aria-label="Stop the reply"><span class="ico" data-icon="stop" data-size="18"></span></button>
+                <button id="send-btn" class="send-btn" type="button" title="Send (Enter)" aria-label="Send"><span class="ico" data-icon="send" data-size="18"></span></button>
+              </div>
+              <input type="file" id="attach-input" multiple hidden>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="ws-split" role="separator" aria-orientation="vertical" aria-label="Resize workspace" tabindex="0"></div>
+      <aside id="workspace" aria-label="Workspace">
+        <div id="ws-tabs" role="tablist"></div>
+        <div id="ws-body">
+          <div id="ws-system" class="ws-pane" role="tabpanel" hidden>
+            <div class="sys-hero">
+              <div class="sys-tile"><span class="t-name">Processor</span><div class="t-val"><span id="cpu-val" class="mono-data na">N/A</span></div><span class="t-sub">last minute</span><svg class="spark" data-key="cpu" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"></svg></div>
+              <div class="sys-tile"><span class="t-name">Graphics</span><div class="t-val"><span id="gpu-compute-val" class="mono-data na">N/A</span></div><span class="t-sub">last minute</span><svg class="spark" data-key="gpu" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"></svg></div>
+              <div class="sys-tile"><span class="t-name">Memory</span><div class="t-val"><span id="ram-val" class="mono-data na">N/A</span></div><span class="t-sub">in use</span><svg class="spark" data-key="ram" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"></svg></div>
+            </div>
+            <div class="sys-split">
+            <div class="sys-block">
+              <h3>Cores</h3>
+              <div class="cores-grid">
+                <div class="core-node"><span class="core-num">1</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
+                <div class="core-node"><span class="core-num">2</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
+                <div class="core-node"><span class="core-num">3</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
+                <div class="core-node"><span class="core-num">4</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
+                <div class="core-node"><span class="core-num">5</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
+                <div class="core-node"><span class="core-num">6</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
+                <div class="core-node"><span class="core-num">7</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
+                <div class="core-node"><span class="core-num">8</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div>
+              </div>
+            </div>
+            <div class="sys-block">
+              <h3>Heat and graphics memory</h3>
+              <div class="sys-list">
+                <div class="metric-group"><div class="metric-label">Processor <span id="cpu-temp-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="cpu-temp-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
+                <div class="metric-group"><div class="metric-label">Graphics <span id="gpu-temp-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="gpu-temp-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
+                <div class="metric-group"><div class="metric-label">SSD <span id="ssd-temp-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="ssd-temp-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
+                <div class="metric-group"><div class="metric-label">Graphics memory <span id="gpu-vram-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="gpu-vram-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
+              </div>
+            </div>
+            </div>
+            <div class="sys-block">
+              <h3>Memory, storage and network</h3>
+              <div class="sys-list">
+                <div class="metric-group"><div class="metric-label">RAM speed <span id="ram-freq-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="ram-freq-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
+                <div class="metric-group"><div class="metric-label">SSD free <span id="ssd-space-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="ssd-space-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
+                <div class="metric-group"><div class="metric-label">Network <span id="wifi-speed-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="wifi-speed-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
+              </div>
+            </div>
+            <div class="sys-block">
+              <h3>Loaded models <span id="model-info-tag" class="sub"></span></h3>
+              <div id="model-info-body"></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- CODE: files left, session centre (the same conversation), tasks and changes right -->
+    <section id="page-code" class="page" aria-label="Code">
+      <aside id="cli-left" class="cli-col">
+        <section class="cli-panel" aria-label="Files">
+          <div class="panel-head"><span>Files</span><span id="cli-project" class="sub"></span></div>
+          <div id="cli-tree" class="cli-body"></div>
+        </section>
+        <section class="cli-panel cli-fixed" aria-label="Context">
+          <div class="panel-head"><span>Context</span><span id="cli-model" class="sub"></span></div>
+          <div style="padding: 0 var(--s-3) var(--s-3)">
+            <div class="metric-group"><div class="metric-label">Tokens <span id="cli-ctx-val" class="mono-data">--</span></div><div class="progress-bar"><div id="cli-ctx-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div>
+          </div>
+        </section>
+      </aside>
+      <div id="cli-split-left" class="cli-split" role="separator" aria-orientation="vertical" aria-label="Resize files column" tabindex="0"></div>
+      <section id="cli-session" aria-label="Session">
+        <div class="panel-head">
+          <span>Session</span>
+          <span class="wb-controls">
+            <button type="button" id="cli-toggle-left" class="wb-btn" aria-pressed="true" title="Show or hide the files column">Files</button>
+            <button type="button" id="cli-toggle-plan" class="wb-btn" aria-pressed="false" title="Plan mode: JARVIS researches and proposes a plan, and changes nothing until you approve it">Plan</button>
+            <button type="button" id="cli-toggle-right" class="wb-btn" aria-pressed="true" title="Show or hide the changes column">Changes</button>
+          </span>
+        </div>
+        <div id="cli-session-body"></div>
+      </section>
+      <div id="cli-split-right" class="cli-split" role="separator" aria-orientation="vertical" aria-label="Resize changes column" tabindex="0"></div>
+      <aside id="cli-right" class="cli-col">
+        <section class="cli-panel" aria-label="Tasks">
+          <div class="panel-head"><span>Tasks</span><span id="cli-tasks-count" class="sub"></span></div>
+          <div id="cli-tasks" class="cli-body"></div>
+        </section>
+        <section class="cli-panel" aria-label="Changes">
+          <div class="panel-head"><span>Changes</span><span id="cli-changes-count" class="sub"></span></div>
+          <div id="cli-changes" class="cli-body"></div>
+        </section>
+      </aside>
+      <div id="cli-float"></div>
+    </section>
+
+    <section id="page-artifacts" class="page" aria-label="Artifacts">
+      <div class="page-inner"><h1>Artifacts</h1><div id="art-list"></div></div>
+    </section>
+
+    <section id="page-settings" class="page" aria-label="Settings">
+      <div class="page-inner">
+        <h1>Settings</h1>
+        <div class="set-card">
+          <h2>Appearance</h2>
+          <p>Follows Windows by default.</p>
+          <div class="seg-theme" id="theme-seg" role="group" aria-label="Theme">
+            <button type="button" data-theme="system" aria-pressed="true">System</button>
+            <button type="button" data-theme="light" aria-pressed="false">Light</button>
+            <button type="button" data-theme="dark" aria-pressed="false">Dark</button>
+          </div>
+        </div>
+        <div class="set-card">
+          <h2>Services</h2>
+          <div id="set-services"></div>
+        </div>
+        <div class="set-card">
+          <h2>Slash commands</h2>
+          <p>Type <span class="mono">/</span> in the message field for the full list: memories, habits, sessions, voice, project folder, plan mode, skills. <span class="mono">/help</span> explains each one.</p>
+          <button type="button" class="av-btn" id="open-commands">Open the command list</button>
+        </div>
+        <div class="set-card">
+          <h2>Keyboard shortcuts</h2>
+          <div id="set-keys"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

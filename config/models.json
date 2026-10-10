@@ -1,0 +1,10 @@
+{
+  "default": "general",
+  "endpoint": "http://localhost:1234/v1",
+  "models": {
+    "general": { "model": "qwen/qwen3-14b" },
+    "coding": { "model": "qwen/qwen3.8-27b" },
+    "visual": { "model": "qwen/qwen3-vl-8b" },
+    "abliterated": { "model": "huihui-ai_qwen3-14b-abliterated" }
+  }
+}

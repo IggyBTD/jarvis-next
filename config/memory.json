@@ -1,0 +1,4 @@
+{
+  "recall": { "enabled": true, "maxResults": 4, "budgetChars": 1800 },
+  "habits": { "enabled": true, "maxShown": 6, "minConfidence": 0.7 }
+}

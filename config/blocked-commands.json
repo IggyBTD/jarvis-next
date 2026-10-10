@@ -1,0 +1,21 @@
+{
+  "_readme": "Commands the agent can never run, whatever the permission rules say. Case-insensitive regular expressions, matched against the whole command line. Read by both the JS permission check (src/core/permissions.js) and the Rust executor (src-tauri/src/agent.rs, include_str!), so keep to syntax both understand: no lookaround, no backreferences. This is a backstop for the worst mistakes, not a sandbox.",
+  "patterns": [
+    "\\brm\\s+(-[a-z]*\\s+)*-[a-z]*[rf][a-z]*\\s+(-[a-z]+\\s+)*(/\\*?|~/?|\\$home/?|\\*|\\.\\.?/?)(\\s|$)",
+    "\\brm\\s+(-[a-z]*\\s+)*--no-preserve-root",
+    "\\b(rd|rmdir|del|erase)\\s+(/[sq]\\s+)+[a-z]:[\\\\/]?\\s*$",
+    "\\b(rd|rmdir|del|erase)\\s+(/[sq]\\s+)+%(userprofile|systemroot|windir|homedrive)%",
+    "remove-item\\b[^|;&]*-recurse[^|;&]*\\s(~|\\$home|[a-z]:[\\\\/]?|\\$env:(userprofile|systemroot|windir))(\\s|$)",
+    "\\bmkfs(\\.[a-z0-9]+)?\\b",
+    "\\bdd\\b[^|;&]*\\bof=/dev/",
+    "\\bformat(-volume)?\\s+[a-z]:",
+    "\\b(diskpart|bcdedit|cipher\\s+/w)\\b",
+    "\\breg\\s+delete\\s+hk(lm|cr|u)",
+    "\\b(shutdown|reboot|halt|poweroff)\\b",
+    "\\b(curl|wget|iwr|invoke-webrequest|irm|invoke-restmethod)\\b[^;&]*\\|\\s*(sudo\\s+)?(sh|bash|zsh|iex|invoke-expression|powershell|pwsh)\\b",
+    ":\\(\\)\\s*\\{.*\\|.*&.*\\}\\s*;",
+    "\\bchmod\\s+(-[a-z]+\\s+)*[0-7]*777\\s+/(\\s|$)",
+    "\\bchown\\s+-r\\b[^;&]*\\s/(\\s|$)",
+    ">\\s*/dev/(sd[a-z]|nvme|disk)"
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "_readme": "Hooks: shell commands that run around the agent's actions, in the project folder set with /project. Each hook: { event: 'before' | 'after', match: action name, 'a|b' or '*', path: optional glob on the main argument (src/**/*.js), command: shell command, block: true to refuse the action when a 'before' command fails }. The command may use {path} and {tool}. 'after' output is added to what the model reads; failures never undo the action. Example: { 'event': 'after', 'match': 'edit_file|write_file', 'path': 'src/**/*.js', 'command': 'node --check {path}' }. Hooks are your own configuration and run without asking, so only add commands you trust. Listed by /hooks.",
+  "hooks": []
+}

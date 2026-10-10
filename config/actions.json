@@ -1,0 +1,324 @@
+{
+  "_readme": "The model-facing action registry. Each entry becomes one tool the model may call. tier: auto = runs without asking, ask = needs the user's approval, blocked = never runs. primary = the argument that permission rules in permissions.json match against, e.g. switch_model(coding). kind = command means the primary argument is a shell line and gets split and checked part by part (src/core/permissions.js). A rule in permissions.json can move an action between auto and ask, but nothing can lift a blocked action.",
+  "actions": [
+    {
+      "name": "switch_model",
+      "description": "Switch JARVIS to another model preset when the user asks for it (for example 'use the coding model'). The next reply comes from the new model.",
+      "tier": "auto",
+      "primary": "mode",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [],
+            "description": "The preset to switch to."
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      }
+    },
+    {
+      "name": "open_whiteboard",
+      "description": "Switch the window to whiteboard mode (the empty board where panels are placed).",
+      "tier": "auto",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "close_whiteboard",
+      "description": "Leave whiteboard mode and go back to the HUD. Panels are kept for next time.",
+      "tier": "auto",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "open_panel",
+      "description": "Open a new floating panel on the whiteboard (opens the whiteboard first if needed). Give it a title; content is optional and may be filled in later by calling this again with the same id.",
+      "tier": "auto",
+      "primary": "type",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Short human readable title."
+          },
+          "id": {
+            "type": "string",
+            "description": "Optional kebab-case id. Reusing an id updates that panel instead of making a new one."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "markdown",
+              "html",
+              "svg",
+              "mermaid",
+              "chart",
+              "code",
+              "table"
+            ],
+            "description": "Panel content type. Default markdown."
+          },
+          "content": {
+            "type": "string",
+            "description": "Panel content, formatted as the type requires. May be empty."
+          },
+          "lang": {
+            "type": "string",
+            "description": "Language name, only for type code."
+          }
+        },
+        "required": [
+          "title"
+        ]
+      }
+    },
+    {
+      "name": "open_system_panel",
+      "description": "Open the built-in system panel (GPU memory, load, temperature, generation speed, context use).",
+      "tier": "auto",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "close_panel",
+      "description": "Close a floating panel on the whiteboard by its id (or the built-in system panel by the id 'system'). The panel's content stays in the conversation.",
+      "tier": "auto",
+      "primary": "id",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Panel id."
+          }
+        },
+        "required": [
+          "id"
+        ]
+      }
+    },
+    {
+      "name": "list_dir",
+      "description": "List the files and folders of the project folder (or a subfolder). Shows file sizes. Skips the contents of node_modules, .git, target, dist.",
+      "tier": "auto",
+      "primary": "path",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Folder, relative to the project folder. Default: the project folder itself."
+          },
+          "depth": {
+            "type": "integer",
+            "description": "How many levels to show, 1 to 4. Default 1."
+          }
+        }
+      }
+    },
+    {
+      "name": "read_file",
+      "description": "Read a text file from the project. Lines come back numbered. Long files are read in pages: use offset and limit to continue.",
+      "tier": "auto",
+      "primary": "path",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File path, relative to the project folder."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "First line to read, starting at 1."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "How many lines, at most 1000. Default 300."
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "name": "search_files",
+      "description": "Search the project's text files for a regular expression. Returns file:line: text. Case-insensitive unless the pattern contains an upper-case letter.",
+      "tier": "auto",
+      "primary": "pattern",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Regular expression."
+          },
+          "path": {
+            "type": "string",
+            "description": "Folder or file to search, relative to the project folder. Default: everything."
+          },
+          "glob": {
+            "type": "string",
+            "description": "Only files whose name matches, for example *.js (* and ? only)."
+          }
+        },
+        "required": [
+          "pattern"
+        ]
+      }
+    },
+    {
+      "name": "edit_file",
+      "description": "Change a file by replacing exact text. old_text must appear in the file exactly once (copy it from read_file, without the line numbers) unless replace_all is true. Prefer this over write_file for changes to existing files.",
+      "tier": "auto",
+      "primary": "path",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File path, relative to the project folder."
+          },
+          "old_text": {
+            "type": "string",
+            "description": "The exact text to replace, whitespace included."
+          },
+          "new_text": {
+            "type": "string",
+            "description": "The replacement text."
+          },
+          "replace_all": {
+            "type": "boolean",
+            "description": "Replace every occurrence instead of requiring exactly one."
+          }
+        },
+        "required": [
+          "path",
+          "old_text",
+          "new_text"
+        ]
+      }
+    },
+    {
+      "name": "write_file",
+      "description": "Create a file, or replace a whole file, with the given content. Parent folders are created. For small changes to an existing file use edit_file.",
+      "tier": "auto",
+      "primary": "path",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File path, relative to the project folder."
+          },
+          "content": {
+            "type": "string",
+            "description": "The complete file content."
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ]
+      }
+    },
+    {
+      "name": "run_command",
+      "description": "Run one shell command in the project folder and return its output and exit code. Runs in PowerShell on Windows, sh elsewhere. Use it for tests, builds, git and similar; use the file tools to read or change files. The user may be asked to approve it. Commands time out after 30 seconds unless timeout_secs is given (at most 300).",
+      "tier": "ask",
+      "kind": "command",
+      "primary": "command",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "The command line."
+          },
+          "timeout_secs": {
+            "type": "integer",
+            "description": "Time limit in seconds. Default 30."
+          }
+        },
+        "required": [
+          "command"
+        ]
+      }
+    },
+    {
+      "name": "set_tasks",
+      "description": "Keep a visible task checklist for a job with several steps. Send the WHOLE list every time (it replaces the old one). Statuses: todo, doing, done; at most one task is doing. Update it as you finish each step, so the user can see progress.",
+      "tier": "auto",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "description": "The full list, in order. Each item: {\"text\": \"what to do\", \"status\": \"todo|doing|done\"}.",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "tasks"
+        ]
+      }
+    },
+    {
+      "name": "submit_plan",
+      "description": "Plan mode only: hand the user your plan for approval. Give a one-line summary and the ordered steps. Nothing is changed until the user approves; if they reject it, they will tell you what to change.",
+      "tier": "auto",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string",
+            "description": "One line: what the plan achieves."
+          },
+          "steps": {
+            "type": "array",
+            "description": "Ordered steps, each one concrete action as a string.",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "summary",
+          "steps"
+        ]
+      }
+    },
+    {
+      "name": "use_skill",
+      "description": "Load the instructions of a skill listed in <skills> and follow them. Use it when the task matches a skill's description.",
+      "tier": "auto",
+      "primary": "name",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The skill name."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    }
+  ]
+}
