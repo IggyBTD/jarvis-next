@@ -8,7 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "voice": "node sidecars/voice/server.mjs"
+    "voice": "node sidecars/voice/server.mjs",
+    "icons": "node scripts/build-icons.mjs",
+    "icons:finalise": "node scripts/finalise-icons.mjs",
+    "contrast": "node scripts/contrast.mjs"
   },
   "devDependencies": {
     "@iconify-json/solar": "^1.2.13",

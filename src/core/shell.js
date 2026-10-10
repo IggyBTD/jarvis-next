@@ -1,6 +1,6 @@
 // The app shell: sidebar, page switching, chat list, live readout, settings and artifacts pages.
 // It only moves and fills DOM; every behaviour (chat, tools, telemetry, voice) stays in its module.
-import { hydrate } from './icons.js';
+import { hydrateIcons } from '../icons/index.js';
 import { PAGES, setPage, currentPage } from './whiteboard-mode.js';
 import { openWidget, openArtifact } from './whiteboard.js';
 import { listArtifacts, onArtifactsChange } from './artifacts.js';
@@ -17,7 +17,21 @@ const stack = $('chat-stack');
 const fmtK = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(Math.round(n)));
 const level = (ratio) => (ratio > 0.9 ? 'high' : ratio > 0.75 ? 'mid' : '');
 
-hydrate();
+hydrateIcons();
+
+// A control that is on (pressed, listening) carries data-active; its icon then uses the set's filled variant.
+const isOn = (b) => b.getAttribute('aria-pressed') === 'true' || (b.id === 'dock-mic' && b.classList.contains('is-on')) || b.classList.contains('recording');
+function syncActive(b) {
+  if (b.closest('#cli-float, .cli-float-panel')) return;
+  const was = b.hasAttribute('data-active');
+  const now = isOn(b);
+  if (was === now) return;
+  b.toggleAttribute('data-active', now);
+  hydrateIcons(b);
+}
+document.querySelectorAll('button[aria-pressed], .tool-btn').forEach(syncActive);
+new MutationObserver((records) => records.forEach((r) => { if (r.target.matches?.('button')) syncActive(r.target); }))
+  .observe(document.body, { subtree: true, attributes: true, attributeFilter: ['aria-pressed', 'class'] });
 
 // --- pages ---------------------------------------------------------------------
 const pageButtons = [...document.querySelectorAll('[data-page]')].filter((b) => b.tagName === 'BUTTON' && PAGES.includes(b.dataset.page));

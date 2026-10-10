@@ -1,5 +1,6 @@
 // Wires the chat input, mode buttons and transcript to llm-client.
 // A reply is rendered as blocks: optional reasoning, then text and artifact cards in order.
+import { hydrateIcons } from '../icons/index.js';
 import { chat, setMode, getMode, getPreset, syncModel, onEvent } from './llm-client.js';
 import { hasImages, takeAsContent } from './attachments.js';
 import { pulse, setThinking } from './mesh-state.js';
@@ -121,7 +122,7 @@ function artifactCard(p, done) {
   const state = p.complete ? 'Open' : done ? 'Incomplete' : `Writing... ${fmtChars(p.content.length)}`;
   const type = p.opening ? '...' : p.type === 'code' && p.lang ? p.lang : p.type;
   return `<button type="button" class="artifact-card${usable ? '' : ' busy'}" data-artifact="${escapeHtml(p.id)}"${usable ? '' : ' disabled'}>`
-    + `<span class="ac-type">${escapeHtml(type)}</span><span class="ac-title">${title}</span><span class="ac-state">${state}</span></button>`
+    + `<span class="icon" data-icon="layers" aria-hidden="true"></span><span class="ac-type">${escapeHtml(type)}</span><span class="ac-title">${title}</span><span class="ac-state">${state}</span></button>`
     + artifactSource(p);
 }
 
@@ -158,6 +159,7 @@ function renderAssistant(el, content, { done, quiet = false }) {
     }
   }
   el.querySelector('.chat-text').innerHTML = html;
+  hydrateIcons(el);
 }
 
 // Collapsible reasoning block above the answer.

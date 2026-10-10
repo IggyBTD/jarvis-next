@@ -9,7 +9,7 @@ button:disabled { cursor: default; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 :focus:not(:focus-visible) { outline: none; }
 [hidden] { display: none !important; }
-.ico { display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.icon { display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .mono { font-family: var(--mono); font-size: var(--fs-sm); }
 .mono-data { font-variant-numeric: tabular-nums; }
 .mono-data.na { color: var(--text-3); }
@@ -38,26 +38,25 @@ body.side-off #side-toggle { left: 8px; }
 .win-control-btn { width: 46px; height: 100%; display: grid; place-items: center; background: none; border: 0; color: var(--text-2); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
 .win-control-btn:hover { background: var(--hover); color: var(--text-1); }
 .win-control-btn.close-btn:hover { background: var(--danger); color: var(--on-danger); }
-.win-icon { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1; }
 .win-icon-restore, .win-control-btn.is-maximized .win-icon-max { display: none; }
-.win-control-btn.is-maximized .win-icon-restore { display: block; }
+.win-control-btn.is-maximized .win-icon-restore { display: inline-flex; }
 .win-control-btn:focus-visible { outline-offset: -2px; }
 
 /* ---- sidebar ---------------------------------------------------------------------------- */
 .mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-1); margin-top: var(--s-1); }
 .mode-btn { --hue: var(--accent); --soft: var(--card); display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-2); padding: var(--s-2) var(--s-4); border: 1px solid var(--line); border-radius: var(--r-2); background: var(--card); color: var(--text-2); font: 600 var(--fs-md)/1.2 var(--display); text-align: left; transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
-.mode-btn .ico { color: var(--text-2); }
-.mode-btn[aria-pressed="true"] .ico { color: var(--accent); }
+.mode-btn .icon { color: var(--text-2); }
+.mode-btn[aria-pressed="true"] .icon { color: var(--accent); }
 .mode-btn:hover { border-color: var(--line-strong); color: var(--text-1); }
 .mode-btn[aria-pressed="true"] { background: var(--card); border-color: var(--line-strong); color: var(--text-1); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
 .side-btn, .nav-item { display: flex; align-items: center; gap: var(--s-2); width: 100%; height: 34px; padding: 0 var(--s-2); border: 0; border-radius: var(--r-1); background: transparent; color: var(--text-2); text-align: left; font-size: var(--fs-md); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
 .side-btn:hover, .nav-item:hover { background: var(--hover); color: var(--text-1); }
 .nav-item[aria-pressed="true"] { background: var(--active); color: var(--text-1); font-weight: 600; }
-.nav-item .ico { color: var(--text-2); }
-.nav-item[aria-pressed="true"] .ico { color: var(--accent); }
+.nav-item .icon { color: var(--text-2); }
+.nav-item[aria-pressed="true"] .icon { color: var(--accent); }
 .side-btn.primary { margin-top: var(--s-2); height: 38px; color: var(--text-1); font-weight: 600; background: var(--card); border: 1px solid var(--line-strong); border-radius: var(--r-2); }
 .side-btn.primary:hover { background: var(--hover); }
-.side-btn.primary .ico { color: var(--accent); }
+.side-btn.primary .icon { color: var(--accent); }
 .nav-group { display: flex; flex-direction: column; gap: 2px; margin-top: var(--s-2); }
 .side-label { padding: var(--s-4) var(--s-2) var(--s-1); font-size: var(--fs-xs); font-weight: 600; color: var(--text-3); }
 #chat-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; margin: 0 calc(var(--s-1) * -1); padding: 0 var(--s-1); }
@@ -150,8 +149,6 @@ body.ws-off #ws-split, body.ws-off #workspace { display: none; }
 
 /* artifact card in the transcript: a rose tile, title, kind and version, then the action */
 .artifact-card { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-4); width: 100%; margin: var(--s-2) 0; padding: var(--s-2) var(--s-4) var(--s-2) var(--s-2); background: var(--card); border: 1px solid var(--line-strong); border-radius: var(--r-3); text-align: left; transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
-.artifact-card::before { content: ""; grid-column: 1; grid-row: 1 / span 2; width: 36px; height: 36px; border-radius: var(--r-2); background: var(--active); }
-.artifact-card::after { content: ""; grid-column: 1; grid-row: 1 / span 2; place-self: center; width: 20px; height: 20px; background: var(--text-2); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l9 5-9 5-9-5 9-5z'/%3E%3Cpath d='M3 13l9 5 9-5'/%3E%3C/svg%3E") center / 20px no-repeat; }
 .artifact-card:hover:not(:disabled) { background: var(--hover); }
 .artifact-card.busy { color: var(--text-3); }
 .ac-type { grid-column: 2; grid-row: 2; font-size: var(--fs-xs); color: var(--text-3); text-transform: capitalize; }
@@ -584,9 +581,24 @@ div.tc-head { cursor: default; }
 .mode-switch:not(:has([aria-pressed="true"])) .mode-thumb { opacity: 0; }
 .mode-btn { position: relative; z-index: 1; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: var(--r-sm); background: transparent; box-shadow: none; color: var(--text-3); transition: color var(--dur-fast) var(--ease-out); }
 .mode-btn:hover { color: var(--text-1); border-color: transparent; }
-.mode-btn .ico { color: inherit; }
+.mode-btn .icon { color: inherit; }
 .mode-btn[aria-pressed="true"] { background: transparent; border: 0; box-shadow: none; color: var(--accent); }
-.mode-btn[aria-pressed="true"] .ico { color: var(--accent); }
+.mode-btn[aria-pressed="true"] .icon { color: var(--accent); }
 .side-top { justify-content: space-between; }
 #side-toggle { top: 4px; }
 body:has(#dock-stop:not([hidden])) #send-btn { display: none; }
+
+/* ---- icons: one treatment for every icon (src/icons/index.js) ---- */
+.icon { width: var(--icon-size); height: var(--icon-size); color: var(--text-3); display: inline-flex; flex: none; align-items: center; justify-content: center; }
+.icon svg { width: 100%; height: 100%; }
+button:hover .icon { color: var(--text-2); }
+button[data-active] .icon { color: var(--accent); }
+button[data-active] { background: var(--accent-wash); }
+.icon-btn { width: var(--icon-box); height: var(--icon-box); border-radius: var(--r-sm); display: grid; place-items: center; }
+.artifact-card > .icon { grid-column: 1; grid-row: 1 / span 2; width: 36px; height: 36px; border-radius: var(--r-md); background: var(--surface-3); color: var(--accent-mid); }
+.artifact-card > .icon svg { width: var(--icon-size); height: var(--icon-size); }
+.win-control-btn .icon { width: 14px; height: 14px; color: inherit; }
+
+/* window controls: restore replaces maximise while the window is maximised (after .icon so it wins) */
+.win-control-btn .win-icon-restore, .win-control-btn.is-maximized .win-icon-max { display: none; }
+.win-control-btn.is-maximized .win-icon-restore { display: inline-flex; }

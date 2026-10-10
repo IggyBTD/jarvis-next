@@ -21,3 +21,6 @@ import './core/native-chrome.js';
 import './core/shortcuts.js';
 import './core/sysview.js';
 import './core/shell.js';
+
+// Dev only: Ctrl+Shift+I opens the icon switcher. Vite drops this branch from production builds.
+if (import.meta.env.DEV) import('./dev/icon-switcher.js');

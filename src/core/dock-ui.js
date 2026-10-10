@@ -1,7 +1,7 @@
 // Bottom dock: microphone, attach files, internet access, network link.
 import { getSwitches, onSwitchChange, setMic, setInternet, setLink } from './switches.js';
 import { addFile, removeAttachment, onAttachmentsChange } from './attachments.js';
-import { icon } from './icons.js';
+import { setIcon } from '../icons/index.js';
 
 const $ = (id) => document.getElementById(id);
 const micBtn = $('dock-mic');
@@ -14,7 +14,7 @@ const attachRow = $('attach-row');
 function paint(btn, on, glyphOn, glyphOff, titleOn, titleOff) {
   btn.classList.toggle('is-on', on);
   btn.classList.toggle('is-off', !on);
-  btn.firstElementChild.innerHTML = icon(on ? glyphOn : glyphOff);
+  setIcon(btn.firstElementChild, on ? glyphOn : glyphOff);
   btn.title = on ? titleOn : titleOff;
   btn.setAttribute('aria-label', btn.title);
   btn.setAttribute('aria-pressed', String(on));

@@ -7,7 +7,7 @@ import { getArtifact, onArtifactsChange } from './artifacts.js';
 import { buildSrcdoc } from './artifact-renderer.js';
 import { renderMarkdown, highlightCode } from './markdown.js';
 import { currentPage, setPage, setWorkspaceShown, isWhiteboardMode } from './whiteboard-mode.js';
-import { icon } from './icons.js';
+import { icon } from '../icons/index.js';
 
 const $ = (id) => document.getElementById(id);
 const tabsEl = $('ws-tabs');
@@ -88,7 +88,7 @@ async function previewView(a, v) {
 }
 
 const btn = (cls, text) => Object.assign(document.createElement('button'), { type: 'button', className: cls, textContent: text });
-const setIconBtn = (b, name, label) => { b.innerHTML = `${icon(name, 16)}<span>${label}</span>`; b.title = label; b.setAttribute('aria-label', label); };
+const setIconBtn = (b, name, label) => { b.innerHTML = `${icon(name, { size: 16 })}<span>${label}</span>`; b.title = label; b.setAttribute('aria-label', label); };
 const iconBtn = (cls, name, label) => { const b = btn(cls, ''); setIconBtn(b, name, label); return b; };
 
 export function artifactView(id) {
@@ -98,10 +98,10 @@ export function artifactView(id) {
   bar.className = 'av-bar';
   const title = Object.assign(document.createElement('span'), { className: 'av-title' });
   const prev = btn('av-btn av-step', '');
-  prev.innerHTML = icon('left', 16);
+  prev.innerHTML = icon('chevron-left', { size: 16 });
   const ver = Object.assign(document.createElement('span'), { className: 'av-ver' });
   const next = btn('av-btn av-step', '');
-  next.innerHTML = icon('right', 16);
+  next.innerHTML = icon('chevron-right', { size: 16 });
   prev.setAttribute('aria-label', 'Previous version');
   next.setAttribute('aria-label', 'Next version');
   const seg = Object.assign(document.createElement('span'), { className: 'seg' });
@@ -196,7 +196,7 @@ function paint() {
     tab.setAttribute('aria-selected', String(t.id === active));
     const label = Object.assign(document.createElement('button'), { type: 'button', className: 't-label', textContent: t.label });
     label.addEventListener('click', () => activate(t.id));
-    const x = Object.assign(document.createElement('button'), { type: 'button', className: 't-x', innerHTML: icon('close', 14), title: `Close ${t.label}` });
+    const x = Object.assign(document.createElement('button'), { type: 'button', className: 't-x', innerHTML: icon('close', { size: 14 }), title: `Close ${t.label}` });
     x.setAttribute('aria-label', `Close ${t.label}`);
     x.addEventListener('click', () => closeTab(t.id));
     tab.append(label, x);
