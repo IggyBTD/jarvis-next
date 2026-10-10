@@ -2,7 +2,7 @@
    and the answer, 32 between one exchange and the next (the user line adds 8 on top of the 24 gap). */
 #chat-host { flex: 1; min-height: 0; display: flex; }
 #chat-stack { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; position: relative; }
-#chat-output { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; display: flex; flex-direction: column; gap: var(--s-5); padding: var(--pane-gutter) max(var(--pane-gutter), calc((100% - var(--measure)) / 2)); user-select: text; }
+#chat-output { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; display: flex; flex-direction: column; gap: var(--s-5); padding: var(--pane-gutter) max(var(--pane-gutter), calc((100% - var(--measure)) / 2)) var(--s-8); user-select: text; }
 
 .chat-line { max-width: 100%; overflow-wrap: anywhere; content-visibility: auto; contain-intrinsic-size: auto 96px; overflow-clip-margin: var(--s-5); position: relative; }
 .chat-line .chat-text { white-space: pre-wrap; }
