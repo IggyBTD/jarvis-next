@@ -76,8 +76,8 @@ body[data-page="code"] #code-home { display: flex; flex-direction: column; gap: 
 .ch-label { font: 400 var(--fs-1)/var(--lh-xs) var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
 .ch-value { font: 500 var(--fs-6)/var(--lh-lg) var(--mono); letter-spacing: -0.02em; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ch-value.small { font-size: var(--fs-4); line-height: var(--lh-lg); }
-.ch-heat { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, var(--s-3)); grid-auto-columns: var(--s-3); gap: var(--s-1); justify-content: end; overflow: hidden; }
-.ch-cell { display: block; width: var(--s-3); height: var(--s-3); border-radius: 2px; /* optical: a 12px cell, a quarter of its size */ background: var(--surface-3); }
+.ch-heat { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, var(--s-3)); grid-template-columns: repeat(26, minmax(0, 1fr)); gap: var(--s-1); }
+.ch-cell { display: block; width: 100%; height: var(--s-3); border-radius: 2px; /* optical: a 12px cell, a quarter of its size */ background: var(--surface-3); }
 .ch-cell[data-future] { visibility: hidden; }
 .ch-cell[data-level="1"] { background: color-mix(in srgb, var(--accent) 25%, var(--surface-3)); }
 .ch-cell[data-level="2"] { background: color-mix(in srgb, var(--accent) 50%, var(--surface-3)); }
