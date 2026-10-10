@@ -104,9 +104,21 @@ refreshChats();
 
 const title = $('chat-title');
 const out = $('chat-output');
+// "Show me a chart of my cpu load" becomes "Chart of cpu load": lead-ins and filler dropped, 3 to 5 words kept.
+const LEAD = /^(?:(?:hey|hi|hello|ok|okay|please|so|and|now|then)[\s,]+)*(?:(?:can|could|would|will) you\s+)?(?:(?:please)\s+)?(?:(?:show|give|make|tell|write|build|create|draw|plot|find|get)(?:\s+me)?|i (?:want|need|would like)(?: you)? to|i (?:want|need)|help me(?: to)?|let'?s|explain|what is|what's|how (?:do|can|does) i?)\s+/i;
+const FILLER = new Set(['a', 'an', 'the', 'my', 'some', 'please']);
+function titleFrom(text) {
+  const cleaned = text.trim().split('\n')[0].replace(/[?!.:,;]+$/g, '').replace(LEAD, '');
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  const kept = words.filter((w) => !FILLER.has(w.toLowerCase()));
+  const pick = (kept.length >= 2 ? kept : words).slice(0, 5);
+  if (!pick.length) return 'New chat';
+  const t = pick.join(' ');
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
 new MutationObserver(() => {
   const first = out.querySelector('.chat-line.user .chat-text')?.textContent.trim();
-  title.textContent = first ? first.split('\n')[0].slice(0, 60) : 'New chat';
+  title.textContent = first ? titleFrom(first) : 'New chat';
 }).observe(out, { childList: true });
 
 // --- live readout in the sidebar ---------------------------------------------------------------------

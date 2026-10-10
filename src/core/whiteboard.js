@@ -110,7 +110,8 @@ export function artifactView(id) {
   seg.append(tabPreview, tabSource);
   const copyBtn = iconBtn('av-btn av-act', 'copy', 'Copy');
   const saveBtn = iconBtn('av-btn av-act', 'save', 'Save');
-  bar.append(title, prev, ver, next, seg, copyBtn, saveBtn);
+  // no title here: the tab already says what this is
+  bar.append(prev, ver, next, seg, copyBtn, saveBtn);
   const body = Object.assign(document.createElement('div'), { className: 'av-body' });
   el.append(bar, body);
 
@@ -123,6 +124,8 @@ export function artifactView(id) {
     const token = ++state.token;
     title.textContent = a.title;
     ver.textContent = `v${state.idx + 1}/${a.versions.length}${v.partial ? ' incomplete' : ''}`;
+    const several = a.versions.length > 1;
+    prev.hidden = next.hidden = ver.hidden = !several; // a single version needs no pager
     prev.disabled = state.idx === 0;
     next.disabled = state.idx === a.versions.length - 1;
     const previewable = PREVIEWABLE.has(a.type);
@@ -188,6 +191,18 @@ const stored = (() => { try { return localStorage.getItem('jarvis.ws.system') !=
 const empty = Object.assign(document.createElement('div'), { className: 'ws-empty', textContent: 'Nothing open. Artifacts the assistant makes open here; System shows the live readings.' });
 bodyEl.append(empty);
 
+export const isArtifactOpen = (id) => tabs.has(id) && active === id && isWhiteboardMode() && currentPage() === 'chat';
+
+// a card in the chat that points at the artifact on screen says so, and stops offering to open it
+export function syncCards(root = document) {
+  root.querySelectorAll('.artifact-card[data-artifact]').forEach((card) => {
+    const open = isArtifactOpen(card.dataset.artifact);
+    card.classList.toggle('is-open', open);
+    const state = card.querySelector('.ac-state');
+    if (state && /^Open( in panel)?$/.test(state.textContent)) state.textContent = open ? 'Open in panel' : 'Open';
+  });
+}
+
 function paint() {
   tabsEl.replaceChildren(...[...tabs.values()].map((t) => {
     const tab = document.createElement('div');
@@ -204,6 +219,7 @@ function paint() {
   }));
   tabs.forEach((t) => { t.pane.hidden = t.id !== active; });
   empty.hidden = tabs.size > 0;
+  syncCards();
 }
 
 function activate(id) {
@@ -310,7 +326,8 @@ export const closeWhiteboard = () => setWorkspaceShown(false);
 const toggle = $('ws-toggle');
 toggle.addEventListener('click', () => setWorkspaceShown(!isWhiteboardMode()));
 const syncToggle = () => toggle.setAttribute('aria-pressed', String(isWhiteboardMode()));
-document.addEventListener('jarvis:workspace', syncToggle);
+document.addEventListener('jarvis:workspace', () => { syncToggle(); syncCards(); });
+document.addEventListener('jarvis:page', () => syncCards());
 syncToggle();
 
 const split = $('ws-split');

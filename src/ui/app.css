@@ -654,3 +654,10 @@ body.ws-off .col-head { padding-right: var(--wc-w); }
 /* sidebar bottom: the widget keeps 16 px from the window edge and 12 px from the status row */
 #sidebar { padding-bottom: var(--s-4); }
 #side-foot { gap: var(--s-3); }
+
+/* ===== Phase 4: less repeated state ===== */
+.artifact-card.is-open { background: var(--accent-wash); border-color: var(--border-strong); cursor: default; }
+.artifact-card.is-open .ac-state { color: var(--text-3); font-weight: 400; }
+.av-bar { justify-content: flex-end; }
+.chat-meta { opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); font-size: var(--fs-2); color: var(--text-3); }
+.chat-line:hover .chat-meta, .chat-line:focus-within .chat-meta { opacity: 1; }

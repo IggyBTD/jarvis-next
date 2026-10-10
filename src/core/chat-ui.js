@@ -16,7 +16,7 @@ import { loadSkills, skillsContext, findSkill, skillPrompt, getSkills } from './
 import { newSessionId, sessionTitle, saveSession, listSessions, loadSession, toMarkdown, exportSession, textOf as messageText } from './sessions.js';
 import { handleCommandKey } from './command-palette.js';
 import { buildContext } from './memory-client.js';
-import { openArtifact, applyBoardSpec } from './whiteboard.js';
+import { openArtifact, applyBoardSpec, isArtifactOpen, syncCards } from './whiteboard.js';
 import { bindChat, beginTurn } from './voice.js';
 import { toolDefinitions, runToolCall, registerActionHost, undoEdit, loadLocalRules } from './actions.js';
 import { restoreProject } from './agent-client.js';
@@ -160,6 +160,7 @@ function renderAssistant(el, content, { done, quiet = false }) {
   }
   el.querySelector('.chat-text').innerHTML = html;
   hydrateIcons(el);
+  syncCards(el);
 }
 
 // Collapsible reasoning block above the answer.
