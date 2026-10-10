@@ -104,6 +104,19 @@ async function swapTo(key) {
   return loadedInstances(models).find((i) => i.key === key).id;
 }
 
+// Frees one loaded model from memory (the next message loads it again).
+export function unloadModel(instanceId, key) {
+  const run = swapQueue.then(async () => {
+    emit({ type: 'phase', phase: 'unloading', model: key });
+    try {
+      await native('/models/unload', { instance_id: instanceId });
+      await waitFor((ms) => !loadedInstances(ms).some((i) => i.id === instanceId), 'unload to finish');
+    } finally { seen = null; emit({ type: 'phase', phase: 'idle', model: key }); }
+  });
+  swapQueue = run.catch(() => {});
+  return run;
+}
+
 // Swaps never overlap. The target is read when the swap actually runs, so rapid
 // mode changes collapse to the latest one and skip intermediate loads.
 let swapQueue = Promise.resolve();

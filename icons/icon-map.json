@@ -262,5 +262,13 @@
     "remix": "pencil",
     "solar": "pen",
     "lucide": "pencil"
+  },
+  "eject": {
+    "phosphor": "eject",
+    "tabler": "player-eject",
+    "iconoir": "eject",
+    "remix": "eject",
+    "solar": "upload-minimalistic",
+    "lucide": "circle-arrow-out-up-right"
   }
 }

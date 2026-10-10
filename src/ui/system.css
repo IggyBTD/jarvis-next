@@ -54,10 +54,16 @@
 #model-info-body { min-width: 0; }
 .model-card + .model-card { margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--border); }
 .model-card-head { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2); margin-bottom: var(--s-3); }
-.model-name { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.model-name { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .quant-pill { display: inline-flex; align-items: center; height: var(--lh-md); padding: 0 var(--s-2); border: 1px solid var(--border-strong); border-radius: var(--r-pill); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-2); }
 .model-stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3) var(--s-4); }
 .model-stat { display: flex; flex-direction: column; min-width: 0; }
 .model-stat-label { font: 400 var(--fs-1)/var(--lh-xs) var(--sans); color: var(--text-3); }
 .model-stat-value { font: 400 var(--fs-3)/var(--lh-sm) var(--mono); }
 .model-note { font-size: var(--fs-3); line-height: var(--lh-sm); color: var(--text-3); padding: var(--s-2) 0; }
+
+/* unload: a small square button with the eject triangle, at the end of the model's name row */
+.model-eject { flex: none; width: var(--h-sm); height: var(--h-sm); border: 1px solid var(--border-strong); background: var(--surface-1); color: var(--text-2); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+.model-eject:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
+.model-eject:disabled { opacity: 0.4; }
+.model-eject .icon { width: var(--icon-sm); height: var(--icon-sm); }

@@ -32,7 +32,8 @@
     "folder",
     "pin",
     "trash",
-    "edit"
+    "edit",
+    "eject"
   ],
   "sets": {
     "phosphor": {

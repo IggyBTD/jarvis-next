@@ -1,5 +1,6 @@
 // Bottom-right panel: one card per model currently loaded in LM Studio.
-import { listModels, onEvent, getPreset } from './llm-client.js';
+import { listModels, onEvent, getPreset, unloadModel } from './llm-client.js';
+import { icon } from '../icons/index.js';
 import { getSwitches, onSwitchChange } from './switches.js';
 import { reportService } from './service-status.js';
 
@@ -65,7 +66,14 @@ function modelCard({ model, instance }) {
   const quant = document.createElement('span');
   quant.className = 'quant-pill';
   quant.textContent = model.quantization?.name ?? '?';
-  head.append(name, quant);
+  const eject = document.createElement('button');
+  eject.type = 'button';
+  eject.className = 'icon-btn model-eject';
+  eject.title = `Unload ${model.display_name || model.key} from memory`;
+  eject.setAttribute('aria-label', eject.title);
+  eject.innerHTML = icon('eject');
+  eject.addEventListener('click', () => { eject.disabled = true; unloadModel(instance.id, model.key).catch(() => { eject.disabled = false; }); });
+  head.append(name, quant, eject);
 
   const grid = document.createElement('div');
   grid.className = 'model-stat-grid';
