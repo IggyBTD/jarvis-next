@@ -1,0 +1,74 @@
+/* Icon motion. Plain CSS on the inline SVGs from src/core/icons.js: no library, nothing runs unless a
+   control is hovered, pressed or in a state worth showing. Every motion is a transform or opacity of
+   150 to 600 ms, ease-out. The global reduced-motion rule in app.css cuts all of it. */
+svg.ic * { transform-box: fill-box; transform-origin: center; }
+svg.ic { transition: transform 200ms var(--ease-out), rotate 200ms var(--ease-out); }
+svg.ic * { transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out); }
+
+/* chat: the three dots hop one after another */
+button:hover .ic-chat circle { animation: dot-hop 500ms ease-out both; }
+button:hover .ic-chat circle:nth-of-type(2) { animation-delay: 70ms; }
+button:hover .ic-chat circle:nth-of-type(3) { animation-delay: 140ms; }
+@keyframes dot-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-2.5px); } }
+
+/* code: the brackets open */
+button:hover .ic-code path:nth-of-type(1) { transform: translateX(-1.5px); }
+button:hover .ic-code path:nth-of-type(2) { transform: translateX(1.5px); }
+
+/* sidebar toggle: the chevron turns when the sidebar is hidden */
+body.side-off .ic-sidebar path:nth-of-type(2) { transform: scaleX(-1); }
+button:hover .ic-sidebar path:nth-of-type(2) { transform: translateX(-1px); }
+body.side-off button:hover .ic-sidebar path:nth-of-type(2) { transform: scaleX(-1) translateX(-1px); }
+
+button:hover .ic-plus { rotate: 90deg; }
+button:hover .ic-artifacts { transform: translateY(-1.5px) rotate(-4deg); }
+button:hover .ic-system path:nth-of-type(1) { transform: scale(1.2); }
+button:hover .ic-settings { rotate: 90deg; transition-duration: 600ms; }
+button:hover .ic-clip { rotate: -14deg; }
+button:hover .ic-globe, button:hover .ic-globe-off { rotate: 40deg; transition-duration: 600ms; }
+button:hover .ic-mic, button:hover .ic-mic-off { transform: scale(1.1); }
+button:hover .ic-copy, button:hover .ic-save { transform: translateY(-1px); }
+button:hover .ic-left { transform: translateX(-1.5px); }
+button:hover .ic-right { transform: translateX(1.5px); }
+button:hover .ic-close { rotate: 90deg; }
+button:hover .ic-send { transform: translateY(-2px); }
+button:active .ic-send { transform: translateY(-5px); opacity: 0.5; }
+button:active .ic-stop { transform: scale(0.8); }
+
+/* wifi: the arcs light from the dot outwards */
+button:hover .ic-wifi path:nth-of-type(4), button:hover .ic-wifi path:nth-of-type(3), button:hover .ic-wifi path:nth-of-type(2) { animation: arc-in 450ms ease-out both; }
+button:hover .ic-wifi path:nth-of-type(3) { animation-delay: 90ms; }
+button:hover .ic-wifi path:nth-of-type(2) { animation-delay: 180ms; }
+@keyframes arc-in { 0% { opacity: 0.2; } 100% { opacity: 1; } }
+
+/* dropdown chevron follows the open state */
+[aria-expanded="true"] .ic-down { rotate: 180deg; }
+
+/* copy and save confirm with a tick that draws itself */
+.ic-check path { stroke-dasharray: 20; stroke-dashoffset: 20; animation: tick-draw 320ms ease-out forwards; }
+@keyframes tick-draw { to { stroke-dashoffset: 0; } }
+
+/* window controls */
+.win-icon { transition: transform 150ms var(--ease-out), rotate 200ms var(--ease-out); }
+.win-control-btn:hover .win-icon { transform: scale(1.15); }
+.win-control-btn.close-btn:hover .win-icon { rotate: 90deg; }
+
+/* a service that is up breathes once in a while; one that is down stays still */
+.svc { position: relative; }
+.svc[data-state="ok"]::after { content: ""; position: absolute; left: 0; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: var(--ok); animation: svc-pulse 3.2s ease-out infinite; }
+@keyframes svc-pulse { 0%, 60% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(2.6); opacity: 0; } }
+
+/* the microphone: a ring leaves it while it is listening */
+#dock-mic.is-on::after { content: ""; position: absolute; inset: 4px; border-radius: 10px; border: 1.5px solid var(--accent); animation: ring-out 1.8s ease-out infinite; pointer-events: none; }
+#dock-mic.recording::after { border-color: var(--on-accent); }
+
+/* artifact toolbar buttons with icons */
+.av-act { display: inline-flex; align-items: center; gap: 6px; }
+.av-step { display: inline-grid; place-items: center; width: 28px; padding: 0; }
+.ws-tab .t-x { font-size: 0; }
+
+/* the artifact toolbar stays on one line: labels give way to icons when the workspace is narrow */
+.av { container-type: inline-size; }
+.av-bar { flex-wrap: nowrap; }
+.av-title { min-width: 0; }
+@container (max-width: 640px) { .av-act span { display: none; } .av-act { padding: 0 8px; } }

@@ -7,6 +7,7 @@ import { getArtifact, onArtifactsChange } from './artifacts.js';
 import { buildSrcdoc } from './artifact-renderer.js';
 import { renderMarkdown, highlightCode } from './markdown.js';
 import { currentPage, setPage, setWorkspaceShown, isWhiteboardMode } from './whiteboard-mode.js';
+import { icon } from './icons.js';
 
 const $ = (id) => document.getElementById(id);
 const tabsEl = $('ws-tabs');
@@ -87,6 +88,8 @@ async function previewView(a, v) {
 }
 
 const btn = (cls, text) => Object.assign(document.createElement('button'), { type: 'button', className: cls, textContent: text });
+const setIconBtn = (b, name, label) => { b.innerHTML = `${icon(name, 16)}<span>${label}</span>`; b.title = label; b.setAttribute('aria-label', label); };
+const iconBtn = (cls, name, label) => { const b = btn(cls, ''); setIconBtn(b, name, label); return b; };
 
 export function artifactView(id) {
   const el = document.createElement('div');
@@ -94,17 +97,19 @@ export function artifactView(id) {
   const bar = document.createElement('div');
   bar.className = 'av-bar';
   const title = Object.assign(document.createElement('span'), { className: 'av-title' });
-  const prev = btn('av-btn', '‹');
+  const prev = btn('av-btn av-step', '');
+  prev.innerHTML = icon('left', 16);
   const ver = Object.assign(document.createElement('span'), { className: 'av-ver' });
-  const next = btn('av-btn', '›');
+  const next = btn('av-btn av-step', '');
+  next.innerHTML = icon('right', 16);
   prev.setAttribute('aria-label', 'Previous version');
   next.setAttribute('aria-label', 'Next version');
   const seg = Object.assign(document.createElement('span'), { className: 'seg' });
   const tabPreview = btn('wb-tab-preview', 'Preview');
   const tabSource = btn('wb-tab-source', 'Source');
   seg.append(tabPreview, tabSource);
-  const copyBtn = btn('av-btn', 'Copy');
-  const saveBtn = btn('av-btn', 'Save');
+  const copyBtn = iconBtn('av-btn av-act', 'copy', 'Copy');
+  const saveBtn = iconBtn('av-btn av-act', 'save', 'Save');
   bar.append(title, prev, ver, next, seg, copyBtn, saveBtn);
   const body = Object.assign(document.createElement('div'), { className: 'av-body' });
   el.append(bar, body);
@@ -134,17 +139,17 @@ export function artifactView(id) {
   tabPreview.addEventListener('click', () => { state.tab = 'preview'; render(); });
   tabSource.addEventListener('click', () => { state.tab = 'source'; render(); });
   copyBtn.addEventListener('click', async () => {
-    let label = 'Copied';
-    try { await navigator.clipboard.writeText(getArtifact(id).versions[state.idx].content); } catch { label = 'Failed'; }
-    copyBtn.textContent = label;
-    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1200);
+    let ok = true;
+    try { await navigator.clipboard.writeText(getArtifact(id).versions[state.idx].content); } catch { ok = false; }
+    setIconBtn(copyBtn, ok ? 'check' : 'close', ok ? 'Copied' : 'Failed');
+    setTimeout(() => setIconBtn(copyBtn, 'copy', 'Copy'), 1200);
   });
   // Save: native Save dialog + write in the desktop app; plain download when run in a browser.
   saveBtn.addEventListener('click', async () => {
     const a = getArtifact(id);
     const name = fileNameFor(a);
     const { content } = a.versions[state.idx];
-    let label = 'Saved';
+    let ok = true;
     try {
       if (window.__TAURI_INTERNALS__) {
         const { save } = await import('@tauri-apps/plugin-dialog');
@@ -159,10 +164,10 @@ export function artifactView(id) {
       }
     } catch (e) {
       console.warn('[jarvis] save failed:', e);
-      label = 'Failed';
+      ok = false;
     }
-    saveBtn.textContent = label;
-    setTimeout(() => { saveBtn.textContent = 'Save'; }, 1200);
+    setIconBtn(saveBtn, ok ? 'check' : 'close', ok ? 'Saved' : 'Failed');
+    setTimeout(() => setIconBtn(saveBtn, 'save', 'Save'), 1200);
   });
   // A new version of this artifact (the model edited it): show the latest.
   const offVersions = onArtifactsChange((a) => { if (a.id === id) { state.idx = a.versions.length - 1; render(); } });
@@ -191,7 +196,7 @@ function paint() {
     tab.setAttribute('aria-selected', String(t.id === active));
     const label = Object.assign(document.createElement('button'), { type: 'button', className: 't-label', textContent: t.label });
     label.addEventListener('click', () => activate(t.id));
-    const x = Object.assign(document.createElement('button'), { type: 'button', className: 't-x', innerHTML: '×', title: `Close ${t.label}` });
+    const x = Object.assign(document.createElement('button'), { type: 'button', className: 't-x', innerHTML: icon('close', 14), title: `Close ${t.label}` });
     x.setAttribute('aria-label', `Close ${t.label}`);
     x.addEventListener('click', () => closeTab(t.id));
     tab.append(label, x);
