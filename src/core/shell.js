@@ -20,7 +20,7 @@ const level = (ratio) => (ratio > 0.9 ? 'high' : ratio > 0.7 ? 'mid' : '');
 hydrateIcons();
 
 // A control that is on (pressed, listening) carries data-active; its icon then uses the set's filled variant.
-const isOn = (b) => b.getAttribute('aria-pressed') === 'true' || (b.id === 'dock-mic' && b.classList.contains('is-on')) || b.classList.contains('recording');
+const isOn = (b) => !['dock-web', 'dock-link', 'dock-attach'].includes(b.id) && (b.getAttribute('aria-pressed') === 'true' || (b.id === 'dock-mic' && b.classList.contains('is-on')) || b.classList.contains('recording'));
 function syncActive(b) {
   if (b.closest('#cli-float, .cli-float-panel')) return;
   const was = b.hasAttribute('data-active');
@@ -84,6 +84,7 @@ let current = '';
 async function refreshChats() {
   let sessions = [];
   try { sessions = (await listSessions()) ?? []; } catch { /* a plain browser has no session store */ }
+  if (!Array.isArray(sessions)) sessions = [];
   sessions.sort((a, b) => b.updated - a.updated);
   if (!sessions.length) { list.replaceChildren(Object.assign(document.createElement('div'), { className: 'chat-list-empty', textContent: 'No saved chats yet.' })); return; }
   list.replaceChildren(...sessions.slice(0, 40).map((s) => {

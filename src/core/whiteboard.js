@@ -76,7 +76,7 @@ async function previewView(a, v) {
   try {
     srcdoc = await buildSrcdoc(a.type, v.content);
   } catch (e) {
-    srcdoc = `<body style="font-family:monospace;padding:16px;color:#c93b3b">Renderer failed: ${String(e.message).replace(/</g, '&lt;')}</body>`;
+    srcdoc = `<body style="font-family:monospace;padding:16px;color:${getComputedStyle(document.documentElement).getPropertyValue('--danger').trim()}">Renderer failed: ${String(e.message).replace(/</g, '&lt;')}</body>`;
   }
   const frame = document.createElement('iframe');
   frame.className = 'wb-frame';

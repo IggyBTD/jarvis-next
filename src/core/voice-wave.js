@@ -57,7 +57,8 @@ function draw(now) {
   ctx.clearRect(0, 0, w, h);
 
   // baseline
-  ctx.strokeStyle = 'rgba(85, 179, 204, 0.28)';
+  const c = colours();
+  ctx.strokeStyle = c.line;
   ctx.lineWidth = dpr;
   ctx.beginPath();
   ctx.moveTo(0, mid);
@@ -77,11 +78,22 @@ function draw(now) {
   }
   ctx.lineJoin = 'round';
   ctx.lineWidth = (talking ? 2 : 1.5) * dpr;
-  ctx.strokeStyle = talking ? 'rgba(216, 253, 255, 0.95)' : 'rgba(121, 224, 242, 0.7)';
-  ctx.shadowColor = '#00d9ff';
+  ctx.strokeStyle = talking ? c.warm : c.dim;
+  ctx.shadowColor = c.warm;
   ctx.shadowBlur = talking ? 10 * dpr : 0;
   ctx.stroke();
   ctx.shadowBlur = 0;
+}
+
+// Colours come from the design tokens; looked up now and then, not every frame.
+let cached = null;
+let drawn = 0;
+function colours() {
+  if (!cached || drawn++ % 120 === 0) {
+    const t = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    cached = { line: t('--border-strong'), dim: t('--accent-mid'), warm: t('--warm') };
+  }
+  return cached;
 }
 
 // Called when the microphone starts listening (listener = the object from createListener) and when it stops.
