@@ -37,8 +37,16 @@ export async function health() {
 let frame = -1;
 export async function shot() {
   const res = await fetch(`${BASE}/shot?since=${frame}`, { cache: 'no-store' });
-  if (res.status === 204) return undefined;
+  if (res.status === 204) return res.headers.get('X-Open') === '0' ? null : undefined;
   if (!res.ok) return null;
   frame = Number(res.headers.get('X-Frame') ?? -1);
   return { src: URL.createObjectURL(await res.blob()), url: decodeURIComponent(res.headers.get('X-Url') ?? ''), title: decodeURIComponent(res.headers.get('X-Title') ?? '') };
+}
+
+// Aircraft for the OSINT map (the sidecar asks OpenSky and caches the answer).
+export async function aircraft(force = false) {
+  await ensureBrowser();
+  const res = await fetch(`${BASE}/osint/aircraft${force ? '?force=1' : ''}`);
+  if (!res.ok) throw new Error(`Aircraft data: the sidecar answered ${res.status}`);
+  return res.json();
 }

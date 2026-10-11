@@ -198,6 +198,7 @@ const handlers = {
 
   async browser_goto({ url }) {
     const s = await openUrl(url);
+    document.dispatchEvent(new CustomEvent('jarvis:intel-open', { detail: { tab: 'playwright' } })); // the Playwright tab opens so the user can watch
     document.dispatchEvent(new CustomEvent('jarvis:toast', { detail: { text: `Opened ${s.url} in the Intel browser` } }));
     return `Opened ${s.url} (title: ${s.title || 'none'}). The page is shown on the Intel page. Use browser_text to read it.`;
   },

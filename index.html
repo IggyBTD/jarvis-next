@@ -161,28 +161,48 @@
       <div id="cli-float"></div>
     </section>
 
-    <!-- INTEL: OSINT map and finance later; for now one tab, the browser (Playwright) -->
+    <!-- INTEL: tabs you open and close like the workspace's: OSINT (a 3D map of aircraft and ships) and Playwright (the browser) -->
     <section id="page-intel" class="page" aria-label="Intel">
       <div class="intel-strip" data-tauri-drag-region>
-        <div class="ws-tab" role="tab" aria-selected="true"><span class="t-label">Playwright</span></div>
+        <div id="intel-tabs" role="tablist" data-tauri-drag-region></div>
+        <div id="intel-add-wrap">
+          <button type="button" class="icon-btn" id="intel-add" aria-haspopup="true" aria-expanded="false" title="Open a tab" aria-label="Open a tab"><span class="icon" data-icon="plus"></span></button>
+          <div id="intel-menu" role="menu" hidden></div>
+        </div>
       </div>
       <div class="intel-split">
         <div class="intel-main">
-      <div class="intel-bar">
-          <button type="button" class="icon-btn" id="pw-back" title="Back" aria-label="Back"><span class="icon" data-icon="chevron-left"></span></button>
-          <button type="button" class="icon-btn" id="pw-forward" title="Forward" aria-label="Forward"><span class="icon" data-icon="chevron-right"></span></button>
-          <button type="button" class="icon-btn" id="pw-reload" title="Reload" aria-label="Reload"><span class="icon" data-icon="refresh"></span></button>
-          <input type="text" id="pw-url" placeholder="Address, for example example.com" aria-label="Address" autocomplete="off" spellcheck="false">
-          <button type="button" class="av-btn" id="pw-go">Go</button>
-          <button type="button" class="av-btn" id="pw-close" title="Close the browser" hidden>Close</button>
-        </div>
-        <div class="intel-body">
-          <div id="pw-view" tabindex="0" aria-label="Browser page. Click to interact, type to enter text.">
-            <img id="pw-img" alt="" draggable="false" hidden>
-            <div id="pw-empty">No page open. Type an address above. Or tell JARVIS what to open, in the box on the right. The browser keeps its own profile: log in once on a site here and it stays logged in for JARVIS.</div>
+          <div id="intel-none" class="intel-pane">No tab open. Use + to open OSINT or Playwright.</div>
+
+          <div id="intel-osint" class="intel-pane" role="tabpanel" hidden>
+            <div class="osint-bar">
+              <button type="button" class="av-btn osint-layer" id="osint-air" aria-pressed="true"><span class="osint-dot air"></span>Aircraft <span id="osint-air-n" class="mono-data">--</span></button>
+              <button type="button" class="av-btn osint-layer" id="osint-sea" aria-pressed="true"><span class="osint-dot sea"></span>Ships <span id="osint-sea-n" class="mono-data">--</span></button>
+              <span class="grow"></span>
+              <input type="password" id="osint-key" placeholder="AIS key (aisstream.io)" aria-label="AIS stream key" autocomplete="off" spellcheck="false">
+              <button type="button" class="av-btn" id="osint-refresh" title="Ask for fresh aircraft positions">Refresh</button>
+            </div>
+            <div id="osint-map" aria-label="3D globe with aircraft and ships"></div>
+            <div class="intel-status" id="osint-status" aria-live="polite"></div>
           </div>
-          <div class="intel-status" id="pw-status" aria-live="polite"></div>
-        </div>
+
+          <div id="intel-pw" class="intel-pane" role="tabpanel" hidden>
+            <div class="intel-bar">
+              <button type="button" class="icon-btn" id="pw-back" title="Back" aria-label="Back"><span class="icon" data-icon="chevron-left"></span></button>
+              <button type="button" class="icon-btn" id="pw-forward" title="Forward" aria-label="Forward"><span class="icon" data-icon="chevron-right"></span></button>
+              <button type="button" class="icon-btn" id="pw-reload" title="Reload" aria-label="Reload"><span class="icon" data-icon="refresh"></span></button>
+              <input type="text" id="pw-url" placeholder="Address, for example example.com" aria-label="Address" autocomplete="off" spellcheck="false">
+              <button type="button" class="av-btn" id="pw-go">Go</button>
+              <button type="button" class="av-btn" id="pw-close" title="Close the browser" hidden>Close</button>
+            </div>
+            <div class="intel-body">
+              <div id="pw-view" tabindex="0" aria-label="Browser page. Click to interact, type to enter text.">
+                <img id="pw-img" alt="" draggable="false" hidden>
+                <div id="pw-empty">No page open. Type an address above. Or tell JARVIS what to open, in the box on the right. The browser keeps its own profile: log in once on a site here and it stays logged in for JARVIS.</div>
+              </div>
+              <div class="intel-status" id="pw-status" aria-live="polite"></div>
+            </div>
+          </div>
         </div>
         <aside id="intel-session" aria-label="Conversation">
           <div id="intel-session-body"></div>

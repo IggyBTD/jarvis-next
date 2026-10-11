@@ -3,6 +3,9 @@
 //   GET  /health            { ok, running, url, title }
 //   GET  /shot              the page as a JPEG (headers X-Url and X-Title, both URL-encoded)
 //   POST /open  {url}       go to an http or https address
+//   GET  /osint/aircraft    every aircraft in the air right now, from OpenSky (fetched here because OpenSky's CORS rule
+//                           refuses the app's own pages). Cached 15 minutes: an anonymous account has 400 credits a day and
+//                           the world costs 4. ?force=1 asks again, at most once a minute.
 //   POST /do    {type, ...} back | forward | reload | click {x, y} | clickText {text} | type {text}
 //                           | press {key} | scroll {dy} | text | close
 //
@@ -97,23 +100,47 @@ const readJson = (req) => new Promise((resolve, reject) => {
   req.on('end', () => { try { resolve(raw ? JSON.parse(raw) : {}); } catch { reject(new Error('Body is not JSON')); } });
 });
 
+// --- OSINT: aircraft ----------------------------------------------------------------
+const AIRCRAFT_TTL = 15 * 60 * 1000;
+let aircraft = { at: 0, time: 0, credits: null, list: [], error: '' };
+async function loadAircraft(force) {
+  const age = Date.now() - aircraft.at;
+  if (aircraft.list.length && (age < AIRCRAFT_TTL && !force || age < 60000)) return aircraft;
+  try {
+    const res = await fetch('https://opensky-network.org/api/states/all', { signal: AbortSignal.timeout(25000) });
+    if (res.status === 429) throw new Error('OpenSky says the daily limit is used up');
+    if (!res.ok) throw new Error(`OpenSky answered ${res.status}`);
+    const body = await res.json();
+    // [lat, lon, altitude m, track deg, icao24, callsign, country, speed m/s], airborne ones only
+    const list = (body.states ?? []).filter((r) => r[6] != null && r[5] != null && !r[8]).map((r) => [r[6], r[5], Math.round(r[13] ?? r[7] ?? 0), Math.round(r[10] ?? 0), r[0], (r[1] ?? '').trim(), r[2], Math.round(r[9] ?? 0)]);
+    aircraft = { at: Date.now(), time: body.time, credits: Number(res.headers.get('x-rate-limit-remaining')) || null, list, error: '' };
+  } catch (e) {
+    aircraft = { ...aircraft, error: String(e?.message ?? e) }; // keep the old list on screen, say why it is old
+  }
+  return aircraft;
+}
+
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin;
   if (!originAllowed(origin)) { res.writeHead(403).end(); return; }
-  const cors = { 'Access-Control-Allow-Origin': origin ?? '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Expose-Headers': 'X-Url,X-Title,X-Frame' };
+  const cors = { 'Access-Control-Allow-Origin': origin ?? '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Expose-Headers': 'X-Url,X-Title,X-Frame,X-Open' };
   if (req.method === 'OPTIONS') { res.writeHead(204, cors).end(); return; }
   const json = (code, obj) => res.writeHead(code, { ...cors, 'Content-Type': 'application/json' }).end(JSON.stringify(obj));
   try {
     const path = new URL(req.url, 'http://x').pathname;
     if (req.method === 'GET' && path === '/health') return json(200, { ok: true, ...(await state()) });
     if (req.method === 'GET' && path === '/shot') {
-      if (!page || page.isClosed()) return json(409, { error: 'No page is open.' });
+      if (!page || page.isClosed()) { res.writeHead(204, { ...cors, 'X-Open': '0' }).end(); return; } // 204, not an error: the viewer asks twice a second
       const since = Number(new URL(req.url, 'http://x').searchParams.get('since'));
-      if (latest && since === frameNo) { res.writeHead(204, { ...cors, 'X-Frame': String(frameNo) }).end(); return; } // nothing new
+      if (latest && since === frameNo) { res.writeHead(204, { ...cors, 'X-Open': '1', 'X-Frame': String(frameNo) }).end(); return; } // nothing new
       const jpeg = latest ?? await page.screenshot({ type: 'jpeg', quality: 70 });
       const s = await state();
       res.writeHead(200, { ...cors, 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-store', 'X-Frame': String(frameNo), 'X-Url': encodeURIComponent(s.url), 'X-Title': encodeURIComponent(s.title) }).end(jpeg);
       return;
+    }
+    if (req.method === 'GET' && path === '/osint/aircraft') {
+      const a = await loadAircraft(new URL(req.url, 'http://x').searchParams.get('force') === '1');
+      return json(200, { time: a.time, ageSec: Math.round((Date.now() - a.at) / 1000), credits: a.credits, error: a.error, count: a.list.length, aircraft: a.list });
     }
     if (req.method === 'POST' && path === '/open') {
       const { url } = await readJson(req);

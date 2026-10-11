@@ -1,7 +1,7 @@
 // The Intel page's Playwright tab: a live view of the sidecar's Chrome page. Click and scroll on the picture,
 // type while it is focused, use the address bar. The same page is what the model's browser_* actions drive.
 import { ensureBrowser, openUrl, doAction, health, shot } from './browser-client.js';
-import { currentPage } from './whiteboard-mode.js';
+import { activeIntelTab } from './intel-tabs.js';
 
 const $ = (id) => document.getElementById(id);
 const view = $('pw-view');
@@ -31,7 +31,7 @@ function show(frame) {
 }
 
 async function refresh() {
-  if (busy || currentPage() !== 'intel' || document.hidden) return;
+  if (busy || activeIntelTab() !== 'playwright' || document.hidden) return;
   busy = true;
   try { const f = await shot(); if (f !== undefined) show(f); } catch { /* sidecar not started yet: nothing to show */ } finally { busy = false; }
 }
@@ -77,13 +77,14 @@ view.addEventListener('keydown', (e) => {
   e.stopPropagation();
 });
 
-// start the sidecar when the page is first shown, then follow the page about twice a second
+// start the sidecar when the Playwright tab is first shown, then follow the page about twice a second
 let started = false;
-document.addEventListener('jarvis:page', async () => {
-  if (currentPage() !== 'intel' || started) return;
+document.addEventListener('jarvis:intel-tab', async (e) => {
+  if (e.detail.tab !== 'playwright') return;
+  if (started) { refresh(); return; }
   started = true;
   say('Starting the browser...');
-  try { await ensureBrowser(); const h = await health(); say(h.running ? h.url : 'Ready'); } catch (e) { started = false; say(e.message ?? String(e), true); }
+  try { await ensureBrowser(); const h = await health(); say(h.running ? h.url : 'Ready'); } catch (err) { started = false; say(err.message ?? String(err), true); }
   refresh();
 });
 setInterval(refresh, 400);
