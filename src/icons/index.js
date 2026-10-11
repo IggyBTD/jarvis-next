@@ -89,6 +89,18 @@ export function icon(name, { size } = {}) {
   return `<span class="icon" data-icon="${name}"${size ? ` data-size="${size}"` : ''}${style} aria-hidden="true">${svg}</span>`;
 }
 
+// An icon as a CSS mask: `mask: var(--name)` paints it in any colour and lets it be animated without touching the DOM
+// (used for the thinking indicator, whose line of text is rewritten as the state changes).
+export function iconMask(name) {
+  const { svg } = markup(name, false);
+  if (!svg) return 'none';
+  const plain = svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ').replaceAll('currentColor', '#000').replace(/ style="[^"]*"/, '');
+  return `url("data:image/svg+xml,${encodeURIComponent(plain)}")`;
+}
+const setMasks = () => document.documentElement.style.setProperty('--mask-spark', iconMask('spark'));
+setMasks();
+listeners.add(setMasks);
+
 export function setIcon(el, name) {
   el.dataset.icon = name;
   hydrateOne(el);

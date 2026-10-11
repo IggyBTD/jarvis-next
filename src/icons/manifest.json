@@ -34,7 +34,8 @@
     "trash",
     "edit",
     "eject",
-    "refresh"
+    "refresh",
+    "spark"
   ],
   "sets": {
     "phosphor": {

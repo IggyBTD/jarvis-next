@@ -30,6 +30,8 @@ if (args.includes('--parent-stdin')) {
 let browser = null;
 let page = null;
 let starting = null;
+let latest = null; // the newest frame the page pushed (screencast): serving it costs nothing, a fresh screenshot costs half a second
+let frameNo = 0;
 
 async function ensurePage() {
   if (page && !page.isClosed()) return page;
@@ -37,14 +39,22 @@ async function ensurePage() {
     browser ??= await chromium.launch({ channel: 'chrome', headless: true, args: ['--disable-gpu'] }); // software rendering: no GPU memory
     const context = await browser.newContext({ viewport: VIEW, acceptDownloads: false, serviceWorkers: 'block' });
     page = await context.newPage();
+    latest = null;
+    const cdp = await context.newCDPSession(page);
+    cdp.on('Page.screencastFrame', ({ data, sessionId }) => { latest = Buffer.from(data, 'base64'); frameNo += 1; cdp.send('Page.screencastFrameAck', { sessionId }).catch(() => {}); });
+    await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 70, maxWidth: VIEW.width, maxHeight: VIEW.height, everyNthFrame: 1 });
     return page;
   })().finally(() => { starting = null; });
   return starting;
 }
 
-const safeUrl = (raw) => {
+// Words that are not an address are a search. DuckDuckGo's plain page is used: Google refuses automated browsers with a captcha.
+const looksLikeAddress = (t) => !/\s/.test(t) && (/^[a-z][a-z0-9+.-]*:\/\//i.test(t) || /^[^./]+\.[^./]+/.test(t) || /^localhost(:\d+)?(\/|$)/i.test(t));
+const safeUrl = (input) => {
+  const text = input.trim();
+  const raw = looksLikeAddress(text) ? text : `https://html.duckduckgo.com/html/?q=${encodeURIComponent(text)}`;
   let u;
-  try { u = new URL(/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`); } catch { throw new Error('That is not a web address.'); }
+  try { u = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`); } catch { throw new Error('That is not a web address.'); }
   if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('Only http and https addresses can be opened.');
   return u.href;
 };
@@ -85,7 +95,7 @@ const readJson = (req) => new Promise((resolve, reject) => {
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin;
   if (!originAllowed(origin)) { res.writeHead(403).end(); return; }
-  const cors = { 'Access-Control-Allow-Origin': origin ?? '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Expose-Headers': 'X-Url,X-Title' };
+  const cors = { 'Access-Control-Allow-Origin': origin ?? '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Expose-Headers': 'X-Url,X-Title,X-Frame' };
   if (req.method === 'OPTIONS') { res.writeHead(204, cors).end(); return; }
   const json = (code, obj) => res.writeHead(code, { ...cors, 'Content-Type': 'application/json' }).end(JSON.stringify(obj));
   try {
@@ -93,9 +103,11 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && path === '/health') return json(200, { ok: true, ...(await state()) });
     if (req.method === 'GET' && path === '/shot') {
       if (!page || page.isClosed()) return json(409, { error: 'No page is open.' });
-      const jpeg = await page.screenshot({ type: 'jpeg', quality: 72 });
+      const since = Number(new URL(req.url, 'http://x').searchParams.get('since'));
+      if (latest && since === frameNo) { res.writeHead(204, { ...cors, 'X-Frame': String(frameNo) }).end(); return; } // nothing new
+      const jpeg = latest ?? await page.screenshot({ type: 'jpeg', quality: 70 });
       const s = await state();
-      res.writeHead(200, { ...cors, 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-store', 'X-Url': encodeURIComponent(s.url), 'X-Title': encodeURIComponent(s.title) }).end(jpeg);
+      res.writeHead(200, { ...cors, 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-store', 'X-Frame': String(frameNo), 'X-Url': encodeURIComponent(s.url), 'X-Title': encodeURIComponent(s.title) }).end(jpeg);
       return;
     }
     if (req.method === 'POST' && path === '/open') {

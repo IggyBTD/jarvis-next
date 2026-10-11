@@ -52,13 +52,13 @@
 .mark::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid var(--accent); /* optical: 1.5px ring */ opacity: 0.35; }
 .mark-lg { width: var(--s-6); height: var(--s-6); margin-bottom: var(--s-4); }
 .mark-lg::before { inset: 9px; /* optical: core of 14 in a ring of 32 */ }
-.mark.live::before, .chat-line.pending .chat-text::before { animation: core-breathe 1.6s ease-in-out infinite; }
-.mark.live::after, .chat-line.pending .chat-text::after { animation: ring-out 1.6s ease-out infinite; }
+.mark.live::before { animation: core-breathe 1.6s ease-in-out infinite; }
+.mark.live::after { animation: ring-out 1.6s ease-out infinite; }
 @keyframes core-breathe { 0%, 100% { transform: scale(0.8); } 50% { transform: scale(1); } }
 @keyframes ring-out { 0% { transform: scale(0.55); opacity: 0.7; } 100% { transform: scale(1.35); opacity: 0; } }
 .chat-line.pending .chat-text { position: relative; display: inline-flex; align-items: center; gap: var(--s-3); height: var(--lh-md); color: var(--text-3); font: 400 var(--fs-4)/var(--lh-md) var(--sans); }
-.chat-line.pending .chat-text::before { content: ""; flex: none; width: var(--s-2); height: var(--s-2); margin: 5px; /* optical: core centred in the 18 ring */ border-radius: 50%; background: var(--accent); }
-.chat-line.pending .chat-text::after { content: ""; position: absolute; left: 0; top: 50%; width: var(--icon-md); height: var(--icon-md); margin-top: -9px; /* optical: half of 18 */ border-radius: 50%; border: 1.5px solid var(--accent); /* optical: 1.5px ring */ }
+.chat-line.pending .chat-text::before { content: ""; flex: none; width: var(--icon-md); height: var(--icon-md); background: var(--accent); -webkit-mask: var(--mask-spark) center / contain no-repeat; mask: var(--mask-spark) center / contain no-repeat; animation: think-twinkle 1.6s ease-in-out infinite; }
+@keyframes think-twinkle { 0%, 100% { opacity: 0.5; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.05); } }
 
 /* ---- empty state ------------------------------------------------------------------------------------ */
 #chat-empty { position: absolute; left: 0; right: 0; top: 24%; padding: 0 var(--chat-gutter); pointer-events: none; width: min(var(--measure), 100%); margin: 0 auto; }

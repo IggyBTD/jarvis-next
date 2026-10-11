@@ -33,12 +33,12 @@ function show(frame) {
 async function refresh() {
   if (busy || currentPage() !== 'intel' || document.hidden) return;
   busy = true;
-  try { show(await shot()); } catch { /* sidecar not started yet: nothing to show */ } finally { busy = false; }
+  try { const f = await shot(); if (f !== undefined) show(f); } catch { /* sidecar not started yet: nothing to show */ } finally { busy = false; }
 }
 
 async function guarded(fn) {
   say('Working...');
-  try { await fn(); } catch (e) { say(e.message ?? String(e), true); return; }
+  try { await flush(); await fn(); } catch (e) { say(e.message ?? String(e), true); return; }
   await refresh();
 }
 
@@ -57,11 +57,21 @@ const point = (e) => {
 img.addEventListener('click', (e) => { view.focus(); guarded(() => doAction({ type: 'click', ...point(e) })); });
 view.addEventListener('wheel', (e) => { if (!running || e.ctrlKey) return; e.preventDefault(); doAction({ type: 'scroll', dy: e.deltaY }).then(refresh).catch(() => {}); }, { passive: false });
 
+// Letters typed within 80 ms of each other go out as one request, in order.
+let typed = '';
+let typeTimer = 0;
+async function flush() {
+  clearTimeout(typeTimer);
+  const text = typed;
+  typed = '';
+  if (text) await doAction({ type: 'type', text }).catch(() => {});
+}
+
 const SPECIAL = new Set(['Enter', 'Backspace', 'Tab', 'Escape', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown']);
 view.addEventListener('keydown', (e) => {
   if (!running || e.ctrlKey || e.metaKey || e.altKey) return;
-  if (SPECIAL.has(e.key)) doAction({ type: 'press', key: e.key }).then(refresh).catch(() => {});
-  else if (e.key.length === 1) doAction({ type: 'type', text: e.key }).then(refresh).catch(() => {});
+  if (SPECIAL.has(e.key)) flush().then(() => doAction({ type: 'press', key: e.key })).then(refresh).catch(() => {});
+  else if (e.key.length === 1) { typed += e.key; clearTimeout(typeTimer); typeTimer = setTimeout(() => flush().then(refresh), 80); }
   else return;
   e.preventDefault();
   e.stopPropagation();
@@ -76,4 +86,4 @@ document.addEventListener('jarvis:page', async () => {
   try { await ensureBrowser(); const h = await health(); say(h.running ? h.url : 'Ready'); } catch (e) { started = false; say(e.message ?? String(e), true); }
   refresh();
 });
-setInterval(refresh, 600);
+setInterval(refresh, 400);

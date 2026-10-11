@@ -33,9 +33,12 @@ export async function health() {
   await ensureBrowser();
   return (await fetch(`${BASE}/health`)).json();
 }
-// The current page as an object URL, or null when no page is open. The caller revokes it.
+// The current page as an object URL (the caller revokes it); undefined when nothing changed since `since`; null when no page is open.
+let frame = -1;
 export async function shot() {
-  const res = await fetch(`${BASE}/shot`, { cache: 'no-store' });
+  const res = await fetch(`${BASE}/shot?since=${frame}`, { cache: 'no-store' });
+  if (res.status === 204) return undefined;
   if (!res.ok) return null;
+  frame = Number(res.headers.get('X-Frame') ?? -1);
   return { src: URL.createObjectURL(await res.blob()), url: decodeURIComponent(res.headers.get('X-Url') ?? ''), title: decodeURIComponent(res.headers.get('X-Title') ?? '') };
 }

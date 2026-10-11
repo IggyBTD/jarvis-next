@@ -278,5 +278,13 @@
     "remix": "refresh",
     "solar": "refresh",
     "lucide": "refresh-cw"
+  },
+  "spark": {
+    "phosphor": "sparkle",
+    "tabler": "sparkles",
+    "iconoir": "sparks",
+    "remix": "sparkling",
+    "solar": "stars-minimalistic",
+    "lucide": "sparkles"
   }
 }
