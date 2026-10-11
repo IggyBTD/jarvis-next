@@ -138,4 +138,12 @@ onEvent((e) => {
 
 onSwitchChange(() => refresh());
 refresh();
-setInterval(() => { if (!document.hidden) refresh(); }, 3000);
+// LM Studio takes a fifth of a second to list its models, so ask often only when the answer is on screen
+// (the System tab's model card) or a reply is being written; otherwise every 15 seconds is plenty.
+const sysShown = () => document.body.dataset.page === 'chat' && !document.body.classList.contains('ws-off') && document.getElementById('ws-system')?.hidden === false;
+let lastAsk = 0;
+setInterval(() => {
+  if (document.hidden) return;
+  const every = sysShown() || (phase && phase.phase !== 'idle') ? 3000 : 15000;
+  if (Date.now() - lastAsk >= every - 200) { lastAsk = Date.now(); refresh(); }
+}, 1000);

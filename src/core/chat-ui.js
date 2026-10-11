@@ -4,7 +4,7 @@ import { hydrateIcons } from '../icons/index.js';
 import { chat, setMode, getMode, getPreset, syncModel, onEvent } from './llm-client.js';
 import { hasImages, takeAsContent } from './attachments.js';
 import { pulse, setThinking } from './mesh-state.js';
-import { renderMarkdown, highlightCode } from './markdown.js';
+import { renderBlocks, highlightCode } from './markdown.js';
 import { parseReply } from './tool-router.js';
 import { upsertArtifact } from './artifacts.js';
 import { runCommand, registerCommandHost, hasCommand } from './commands.js';
@@ -139,19 +139,70 @@ function artifactSource(p) {
   return `<div class="code-box ac-source"><div class="code-head"><span>${escapeHtml(lang || 'code')}</span><button type="button" class="copy-btn">Copy</button></div><pre><code class="hljs">${body}</code></pre></div>`;
 }
 
+// Puts a reply into its message without rebuilding what did not change. While a reply streams, every block above
+// the one being written is the same as in the paint before; replacing it would restyle, relayout and (for the
+// reader) drop a text selection on every paint. A reply is a list of parts: rendered markdown (a list of blocks) or
+// plain html (artifact cards). The new list is compared with the last one and only the blocks that differ are made
+// again; nothing unchanged is even parsed.
+const shown = new WeakMap(); // the message text element -> the parts drawn in it
+const nodesFrom = (html) => { const t = document.createElement('template'); t.innerHTML = html; return [...t.content.childNodes]; };
+const dropNodes = (nodes) => nodes.forEach((n) => n.remove());
+function swapNodes(oldNodes, newNodes, host) {
+  if (oldNodes.length) { oldNodes[0].before(...newNodes); dropNodes(oldNodes); } else host.append(...newNodes);
+}
+function patchParts(host, parts) {
+  if (!shown.has(host)) host.replaceChildren(); // the "Thinking..." text
+  const old = shown.get(host) ?? [];
+  const out = parts.map((p, i) => {
+    const o = old[i];
+    if (p.kind === 'md') {
+      const made = (html) => ({ html, nodes: nodesFrom(html) });
+      if (!o || o.kind !== 'md') {
+        const el = Object.assign(document.createElement('div'), { className: 'md' });
+        const blocks = p.blocks.map(made);
+        el.append(...blocks.flatMap((x) => x.nodes));
+        if (o) { o.nodes[0].before(el); dropNodes(o.nodes); } else host.append(el);
+        return { kind: 'md', nodes: [el], blocks };
+      }
+      const el = o.nodes[0];
+      // a block that drew nothing has no node to put its replacement next to: start this part over (rare)
+      if (p.blocks.some((html, j) => o.blocks[j] && o.blocks[j].html !== html && !o.blocks[j].nodes.length)) {
+        const blocks = p.blocks.map(made);
+        el.replaceChildren(...blocks.flatMap((x) => x.nodes));
+        return { kind: 'md', nodes: [el], blocks };
+      }
+      const blocks = p.blocks.map((html, j) => {
+        const b = o.blocks[j];
+        if (b && b.html === html) return b;
+        const fresh = made(html);
+        if (b) swapNodes(b.nodes, fresh.nodes, el); else el.append(...fresh.nodes);
+        return fresh;
+      });
+      o.blocks.slice(p.blocks.length).forEach((x) => dropNodes(x.nodes));
+      return { kind: 'md', nodes: [el], blocks };
+    }
+    if (o && o.kind === 'html' && o.html === p.html) return o;
+    const nodes = nodesFrom(p.html);
+    if (o) swapNodes(o.nodes, nodes, host); else host.append(...nodes);
+    return { kind: 'html', html: p.html, nodes };
+  });
+  old.slice(parts.length).forEach((o) => dropNodes(o.nodes));
+  shown.set(host, out);
+}
+
 // quiet: redrawing a saved conversation: artifacts are registered again but nothing is opened or arranged.
 function renderAssistant(el, content, { done, quiet = false }) {
-  let html = '';
+  const parts = [];
   for (const p of parseReply(content)) {
     if (p.kind === 'board') {
       if (done && !quiet) applyBoardSpec(p); // arrange the panels once the whole reply is in
       continue;
     }
     if (p.kind === 'text') {
-      html += `<div class="md">${renderMarkdown(p.text)}</div>`;
+      parts.push({ kind: 'md', blocks: renderBlocks(p.text) });
       continue;
     }
-    html += artifactCard(p, done);
+    parts.push({ kind: 'html', html: artifactCard(p, done) });
     if (p.id && p.content && (p.complete || done)) {
       const { changed } = upsertArtifact({ ...p, partial: !p.complete });
       // A source file has nothing to preview: it is already written out in the session, so it
@@ -160,7 +211,7 @@ function renderAssistant(el, content, { done, quiet = false }) {
       else if (changed) openArtifact(p.id);
     }
   }
-  el.querySelector('.chat-text').innerHTML = html;
+  patchParts(el.querySelector('.chat-text'), parts);
   hydrateIcons(el);
   syncCards(el);
 }

@@ -112,8 +112,12 @@ onTelemetry(paintMini);
 paintMini();
 
 // --- services (sidebar footer and settings) ---------------------------------------------------------------------
+let servicesSeen = '';
 function paintServices() {
   const services = getServices();
+  const signature = JSON.stringify(services); // the list is rebuilt only when a service changed, not every second
+  if (signature === servicesSeen) return;
+  servicesSeen = signature;
   const dot = (s, detail) => {
     const el = Object.assign(document.createElement('span'), { className: 'svc', textContent: s.label ?? s.id });
     el.dataset.state = s.state;

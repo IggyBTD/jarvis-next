@@ -52,6 +52,11 @@ export async function install({ chat = true, telemetry = true } = {}) {
             const send = (d) => c.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: d }] })}\n\n`));
             if (/Name this conversation/.test(last)) { send({ content: '"Peak CPU load chart."' }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
             if (/still fit/.test(last)) { send({ content: 'KEEP' }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
+            if (/longtext/i.test(last)) { // a long markdown answer streamed in small pieces, to measure how the page copes
+              const para = '## Section\n\nSome **bold** text, `inline code`, and a list:\n\n- first item with detail\n- second item with detail\n\n```js\nconst answer = 42;\nconsole.log(answer);\n```\n\n';
+              for (let i = 0; i < 40; i += 1) for (const piece of para.match(/[\s\S]{1,6}/g)) { send({ content: piece }); await new Promise((r) => setTimeout(r, 6)); }
+              c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return;
+            }
             if (/plain/i.test(last)) { send({ content: titled.slice(0, 20) }); send({ content: `${titled.slice(20)}A plain answer.` }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
             if (/chart/i.test(last)) { send({ content: CHART }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
             await new Promise((r) => setTimeout(r, 60000)); // stays "thinking"

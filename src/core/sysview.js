@@ -13,7 +13,9 @@ const SOURCES = {
 };
 const history = { cpu: [], gpu: [], ram: [] };
 
+const pane = document.getElementById('ws-system');
 function draw(key) {
+  if (pane?.hidden) return; // the System tab is closed: the history keeps growing, the picture is drawn when it opens
   const svg = document.querySelector(`.spark[data-key="${key}"]`);
   const h = history[key];
   if (!svg || h.length < 2) return;
@@ -35,3 +37,5 @@ onTelemetry(() => {
     draw(key);
   }
 });
+
+if (pane) new MutationObserver(() => { if (!pane.hidden) Object.keys(history).forEach(draw); }).observe(pane, { attributes: true, attributeFilter: ['hidden'] });

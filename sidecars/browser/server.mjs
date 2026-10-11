@@ -139,8 +139,11 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (req.method === 'GET' && path === '/osint/aircraft') {
-      const a = await loadAircraft(new URL(req.url, 'http://x').searchParams.get('force') === '1');
-      return json(200, { time: a.time, ageSec: Math.round((Date.now() - a.at) / 1000), credits: a.credits, error: a.error, count: a.list.length, aircraft: a.list });
+      const q = new URL(req.url, 'http://x').searchParams;
+      const a = await loadAircraft(q.get('force') === '1');
+      const head = { time: a.time, ageSec: Math.round((Date.now() - a.at) / 1000), credits: a.credits, error: a.error, count: a.list.length };
+      if (a.time && Number(q.get('since')) === a.time) return json(200, { ...head, unchanged: true }); // the page already has this list: do not send 600 KB again
+      return json(200, { ...head, aircraft: a.list });
     }
     if (req.method === 'POST' && path === '/open') {
       const { url } = await readJson(req);

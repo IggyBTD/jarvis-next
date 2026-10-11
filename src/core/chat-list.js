@@ -155,7 +155,8 @@ registerContext('.chat-item', (el) => {
 // --- events ---------------------------------------------------------------------
 document.addEventListener('jarvis:sessions-changed', refreshChats);
 onProjects(paint);
-setInterval(() => { if (!document.hidden && !list.querySelector('.ci-edit')) refreshChats(); }, 5000);
+// every save already announces itself (jarvis:sessions-changed); this only catches a change made elsewhere
+setInterval(() => { if (!document.hidden && !list.querySelector('.ci-edit')) refreshChats(); }, 30000);
 
 // The header shows the model's name for the chat once there is one; until then a short title from the first message.
 let named = false;

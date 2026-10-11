@@ -71,7 +71,28 @@ function normaliseMath(text) {
     .join('');
 }
 
-export function renderMarkdown(text) {
-  const html = marked.parse(normaliseMath(text));
-  return DOMPurify.sanitize(html, { ADD_ATTR: ['target'] });
+// A reply is drawn again on every paint while it streams, but all of it except the last block is the same as
+// the paint before. So it is rendered block by block (a block is a paragraph, a list, a code fence, a table...)
+// and each block's finished, sanitised HTML is remembered: only the block still being written is worked out again.
+const blocks = new Map();
+const BLOCK_CACHE = 600;
+// The same, as a list: one entry per block, so a caller can tell which blocks did not change (chat-ui.js).
+export function renderBlocks(text) {
+  const tokens = marked.lexer(normaliseMath(text));
+  const list = [];
+  for (const t of tokens) {
+    if (t.type === 'space') continue;
+    const key = `${t.type}\u0000${t.raw}`;
+    let part = blocks.get(key);
+    if (part === undefined) {
+      const one = [t];
+      if (marked.defaults.walkTokens) marked.walkTokens(one, marked.defaults.walkTokens); // the code highlighter hooks in here
+      part = DOMPurify.sanitize(marked.parser(one), { ADD_ATTR: ['target'] });
+      if (blocks.size >= BLOCK_CACHE) blocks.delete(blocks.keys().next().value);
+      blocks.set(key, part);
+    }
+    list.push(part);
+  }
+  return list;
 }
+export const renderMarkdown = (text) => renderBlocks(text).join('');

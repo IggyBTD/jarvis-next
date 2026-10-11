@@ -44,9 +44,9 @@ export async function shot() {
 }
 
 // Aircraft for the OSINT map (the sidecar asks OpenSky and caches the answer).
-export async function aircraft(force = false) {
+export async function aircraft(force = false, since = 0) {
   await ensureBrowser();
-  const res = await fetch(`${BASE}/osint/aircraft${force ? '?force=1' : ''}`);
+  const res = await fetch(`${BASE}/osint/aircraft?since=${since}${force ? '&force=1' : ''}`);
   if (!res.ok) throw new Error(`Aircraft data: the sidecar answered ${res.status}`);
   return res.json();
 }

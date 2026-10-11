@@ -104,6 +104,12 @@ function showUnavailable(reason) {
   if (reason) reportService('sensors', 'error', 'no reading from LibreHardwareMonitor (port 8085)');
 }
 
+// Every reading is drawn into the System tab's elements. While that tab is closed nobody can see them, so the
+// drawing waits (the numbers are kept) and happens once, when the tab is shown again.
+const sys = $('ws-system');
+let stale = false;
+if (sys) new MutationObserver(() => { if (!sys.hidden && stale) { stale = false; render(latest); } }).observe(sys, { attributes: true, attributeFilter: ['hidden'] });
+
 export async function initTelemetry() {
   showUnavailable(''); // N/A until the first real reading arrives
   const started = Date.now();
@@ -122,7 +128,7 @@ export async function initTelemetry() {
       sawData = true;
       lastUpdate = Date.now();
       if (notchMeta && notchMeta.textContent === 'Sensors offline') notchMeta.textContent = '';
-      render(e.payload ?? {});
+      if (sys?.hidden) stale = true; else render(e.payload ?? {});
       publish(e.payload ?? {}, false);
       reportService('sensors', 'ok', 'readings arriving');
     });
