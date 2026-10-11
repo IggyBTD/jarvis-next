@@ -31,7 +31,8 @@ export default defineConfig({
     port: 5174,
     strictPort: true,
     watch: {
-      ignored: ['**/src-tauri/**'],
+      // data/ holds the browser's profile (Chrome keeps its cookie files locked, and watching one crashed the dev server), saved sessions and logs
+      ignored: ['**/src-tauri/**', '**/data/**', '**/sidecars/**/node_modules/**', '**/graphify-out/**', '**/docs/ui-shots/**', '**/.playwright-mcp/**'],
     },
   },
 });
