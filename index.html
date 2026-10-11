@@ -183,7 +183,8 @@
           <div id="intel-osint" class="intel-pane" role="tabpanel" hidden>
             <div class="osint-bar">
               <button type="button" class="av-btn osint-layer" id="osint-air" aria-pressed="true"><span class="osint-dot air"></span>Aircraft <span id="osint-air-n" class="mono-data">--</span></button>
-              <button type="button" class="av-btn osint-layer" id="osint-sea" aria-pressed="true"><span class="osint-dot sea"></span>Ships <span id="osint-sea-n" class="mono-data">--</span></button>
+              <button type="button" class="av-btn osint-layer" id="osint-tank" aria-pressed="true" title="Oil, chemical and gas tankers (AIS ship types 80 to 89)"><span class="osint-dot tank"></span>Tankers <span id="osint-tank-n" class="mono-data">--</span></button>
+              <button type="button" class="av-btn osint-layer" id="osint-sea" aria-pressed="true"><span class="osint-dot sea"></span>Other ships <span id="osint-sea-n" class="mono-data">--</span></button>
               <span class="grow"></span>
               <input type="password" id="osint-key" placeholder="AIS key (aisstream.io)" aria-label="AIS stream key" autocomplete="off" spellcheck="false">
               <button type="button" class="av-btn" id="osint-refresh" title="Ask for fresh aircraft positions">Refresh</button>

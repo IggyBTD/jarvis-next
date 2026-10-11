@@ -73,7 +73,8 @@
 .osint-layer .mono-data { font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); }
 .osint-dot { width: var(--s-2); height: var(--s-2); border-radius: 50%; }
 .osint-dot.air { background: var(--accent); }
-.osint-dot.sea { background: var(--warm); }
+.osint-dot.sea { background: var(--text-3); }
+.osint-dot.tank { background: var(--warm); }
 #osint-key { width: 224px; height: var(--h-md); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface-1); color: var(--text); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
 #osint-key:focus-visible { outline: none; border-color: var(--accent); }
 #osint-map { flex: 1; min-height: 0; margin: 0 var(--pane-gutter); overflow: hidden; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); }

@@ -8,19 +8,27 @@ mod browser;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  // Keep every GPU free for the LLM: the interface is drawn by the CPU (WebView2's software renderer),
-  // so neither the discrete nor the integrated GPU holds memory for it. Set JARVIS_GPU=low to draw on the
-  // integrated GPU instead (smoother on a slow CPU), or JARVIS_GPU=any to leave WebView2 alone.
+  // Keep the big GPU free for the LLM. The interface (layout, text, the compositing of the window) is drawn by the
+  // CPU; WebGL (the OSINT globe, the only 3D in the app) is the one thing left on a GPU, and `--force_low_power_gpu`
+  // makes that the integrated one. Measured with Chrome on this machine: WebGL on the integrated Radeon, nothing on the
+  // discrete one. JARVIS_GPU picks another way: `off` draws everything, the globe too, on the CPU (slow globe),
+  // `low` puts the whole interface on the integrated GPU, `any` leaves WebView2 alone.
   // WebView2 reads this variable when it creates its environment, which happens after this line.
-  let flags = match std::env::var("JARVIS_GPU").as_deref() {
-    Ok("any") => "",
-    Ok("low") => "--force_low_power_gpu",
-    _ => "--disable-gpu",
+  let flags: &[&str] = match std::env::var("JARVIS_GPU").as_deref() {
+    Ok("any") => &[],
+    Ok("low") => &["--force_low_power_gpu"],
+    Ok("off") => &["--disable-gpu"],
+    _ => &["--disable-gpu-compositing", "--disable-gpu-rasterization", "--force_low_power_gpu"],
   };
-  let switches = std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").unwrap_or_default();
-  if !flags.is_empty() && !switches.contains(flags) {
-    let joined = if switches.trim().is_empty() { flags.to_string() } else { format!("{switches} {flags}") };
-    std::env::set_var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", joined);
+  let mut switches = std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").unwrap_or_default();
+  for flag in flags {
+    if !switches.contains(flag) {
+      if !switches.trim().is_empty() { switches.push(' '); }
+      switches.push_str(flag);
+    }
+  }
+  if !switches.trim().is_empty() {
+    std::env::set_var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", switches);
   }
   tauri::Builder::default()
     .plugin(tauri_plugin_dialog::init())
