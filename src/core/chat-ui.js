@@ -212,6 +212,8 @@ stopBtn?.addEventListener('click', stopTurn);
 document.addEventListener('jarvis:stop', stopTurn); // Ctrl+. (shortcuts.js)
 
 async function send() {
+  const quiet = input.dataset.quiet === '1'; // a command the app typed (open a chat, new chat): not shown as the user's message
+  delete input.dataset.quiet;
   const text = input.value.trim();
   if (busy && text.toLowerCase() === '/stop') {
     input.value = '';
@@ -242,8 +244,8 @@ async function send() {
   if (text.startsWith('/') && !skill) {
     try {
       const reply = await runCommand(text);
-      addLine('user', text, { meta: '' });
-      if (reply) addLine('system', reply, { meta: '' });
+      if (!quiet) addLine('user', text, { meta: '' });
+      if (reply && !(quiet && /^(Resumed|Conversation cleared)/.test(reply))) addLine('system', reply, { meta: '' });
       output.scrollTop = output.scrollHeight;
     } finally {
       busy = false;

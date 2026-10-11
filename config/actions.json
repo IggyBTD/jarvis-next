@@ -322,7 +322,7 @@
     },
     {
       "name": "browser_goto",
-      "description": "Open a web address in JARVIS's own browser (a clean Chrome with none of the user's logins, shown on the Intel page) and return the page title. Only http and https. The user is asked to approve it. Then use browser_text to read the page.",
+      "description": "Open a website in JARVIS's built-in Playwright browser (shown on the Intel page), for example youtube.com, or search the web by giving plain words instead of an address. A clean Chrome with none of the user's logins. Returns the page title. Only http and https. The user is asked to approve it. Then use browser_text to read the page.",
       "tier": "ask",
       "primary": "url",
       "parameters": {
@@ -330,7 +330,7 @@
         "properties": {
           "url": {
             "type": "string",
-            "description": "The address, for example https://example.com"
+            "description": "An address such as https://youtube.com, or words to search for."
           }
         },
         "required": [

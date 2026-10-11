@@ -22,7 +22,9 @@ let typing = null; // { id, name }: the chat the model just named, typed out onc
 const op = (detail) => document.dispatchEvent(new CustomEvent('jarvis:session-op', { detail }));
 
 // Slash commands go through the message field, the one door chat-ui.js guards.
+// Typed by the app, not the user: chat-ui.js does not echo these into the conversation (quiet).
 export function run(text) {
+  input.dataset.quiet = '1';
   input.value = text;
   input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
 }
