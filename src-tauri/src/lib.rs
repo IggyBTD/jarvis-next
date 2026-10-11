@@ -8,17 +8,17 @@ mod browser;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  // Keep the big GPU free for the LLM. The interface (layout, text, the compositing of the window) is drawn by the
-  // CPU; WebGL (the OSINT globe, the only 3D in the app) is the one thing left on a GPU, and `--force_low_power_gpu`
-  // makes that the integrated one. Measured with Chrome on this machine: WebGL on the integrated Radeon, nothing on the
-  // discrete one. JARVIS_GPU picks another way: `off` draws everything, the globe too, on the CPU (slow globe),
-  // `low` puts the whole interface on the integrated GPU, `any` leaves WebView2 alone.
+  // Keep the big GPU free for the LLM: the interface is drawn by the integrated GPU, not the discrete one
+  // (`--force_low_power_gpu`). The integrated GPU is idle anyway; the cost is a few tens of MB that Windows still
+  // puts on the discrete GPU, because the window is shown through it. JARVIS_GPU picks another way:
+  // `hybrid` draws the interface on the CPU and only WebGL (the OSINT globe) on the integrated GPU, with nothing at
+  // all on the discrete one; `off` draws everything on the CPU; `any` leaves WebView2 alone.
   // WebView2 reads this variable when it creates its environment, which happens after this line.
   let flags: &[&str] = match std::env::var("JARVIS_GPU").as_deref() {
     Ok("any") => &[],
-    Ok("low") => &["--force_low_power_gpu"],
     Ok("off") => &["--disable-gpu"],
-    _ => &["--disable-gpu-compositing", "--disable-gpu-rasterization", "--force_low_power_gpu"],
+    Ok("hybrid") => &["--disable-gpu-compositing", "--disable-gpu-rasterization", "--force_low_power_gpu"],
+    _ => &["--force_low_power_gpu"],
   };
   let mut switches = std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").unwrap_or_default();
   for flag in flags {

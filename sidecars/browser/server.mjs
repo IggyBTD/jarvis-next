@@ -3,9 +3,13 @@
 //   GET  /health            { ok, running, url, title }
 //   GET  /shot              the page as a JPEG (headers X-Url and X-Title, both URL-encoded)
 //   POST /open  {url}       go to an http or https address
-//   GET  /osint/aircraft    every aircraft in the air right now, from OpenSky (fetched here because OpenSky's CORS rule
-//                           refuses the app's own pages). Cached 15 minutes: an anonymous account has 400 credits a day and
-//                           the world costs 4. ?force=1 asks again, at most once a minute.
+//   GET  /osint/aircraft    aircraft in the air, from OpenSky (fetched here because OpenSky's CORS rule refuses the app's own
+//                           pages). ?watch=1 (default) keeps only the airlines in config/osint-watch.json. Anonymous: cached 15
+//                           minutes (400 credits a day, the world costs 4). With an OpenSky API client saved: every 100 seconds
+//                           (4000 credits a day). ?force=1 asks again, at most every 30 to 60 seconds.
+//   GET  /osint/opensky     { configured, authed }: whether an OpenSky login is saved and accepted (the secret is never sent back)
+//   POST /osint/opensky     {clientId, clientSecret} save the login (data/opensky.json, git-ignored); both empty removes it
+//   GET  /osint/watch       the watch list file (airlines and companies)
 //   POST /do    {type, ...} back | forward | reload | click {x, y} | clickText {text} | type {text}
 //                           | press {key} | scroll {dy} | text | close
 //
@@ -15,6 +19,7 @@
 //
 // Run: node server.mjs [--parent-stdin] [--port 8766]   (--parent-stdin: exit when stdin closes, so it never outlives the app)
 import http from 'node:http';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -101,23 +106,71 @@ const readJson = (req) => new Promise((resolve, reject) => {
 });
 
 // --- OSINT: aircraft ----------------------------------------------------------------
-const AIRCRAFT_TTL = 15 * 60 * 1000;
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const OPENSKY_API = process.env.OPENSKY_API_URL ?? 'https://opensky-network.org/api/states/all';
+const OPENSKY_AUTH = process.env.OPENSKY_AUTH_URL ?? 'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token';
+const DATA_DIR = path.join(ROOT, 'data');
+const CRED_FILE = path.join(DATA_DIR, 'opensky.json');
+const WATCH_FILE = path.join(ROOT, 'config', 'osint-watch.json');
+
+const readJsonFile = (file, fallback) => { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; } };
+const readWatch = () => readJsonFile(WATCH_FILE, { airlines: [], companies: [] });
+
+let creds = readJsonFile(CRED_FILE, null);
+let token = { value: '', until: 0 };
+let authed = false; // the saved login was accepted the last time it was used
+
+// OpenSky's own API login: an OAuth2 client (id and secret from the free account page) is traded for a token that lasts 30 minutes.
+async function bearer() {
+  if (!creds?.clientId || !creds?.clientSecret) return '';
+  if (token.value && Date.now() < token.until) return token.value;
+  const res = await fetch(OPENSKY_AUTH, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'client_credentials', client_id: creds.clientId, client_secret: creds.clientSecret }),
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) { authed = false; throw new Error(res.status === 401 || res.status === 400 ? 'OpenSky refused the login (check the client id and secret)' : `OpenSky login answered ${res.status}`); }
+  const body = await res.json();
+  token = { value: body.access_token, until: Date.now() + Math.max(60, (body.expires_in ?? 1800) - 60) * 1000 };
+  authed = true;
+  return token.value;
+}
+
 let aircraft = { at: 0, time: 0, credits: null, list: [], error: '' };
 async function loadAircraft(force) {
+  const ttl = authed ? 100 * 1000 : 15 * 60 * 1000;
+  const gap = authed ? 30 * 1000 : 60 * 1000;
   const age = Date.now() - aircraft.at;
-  if (aircraft.list.length && (age < AIRCRAFT_TTL && !force || age < 60000)) return aircraft;
+  if (aircraft.list.length && ((age < ttl && !force) || age < gap)) return aircraft;
   try {
-    const res = await fetch('https://opensky-network.org/api/states/all', { signal: AbortSignal.timeout(25000) });
+    let bear = '';
+    try { bear = await bearer(); } catch (e) { aircraft = { ...aircraft, error: String(e.message) }; } // fall back to anonymous, and say why
+    const res = await fetch(OPENSKY_API, { headers: bear ? { Authorization: `Bearer ${bear}` } : {}, signal: AbortSignal.timeout(25000) });
+    if (res.status === 401 && bear) { token = { value: '', until: 0 }; authed = false; throw new Error('OpenSky refused the saved login'); }
     if (res.status === 429) throw new Error('OpenSky says the daily limit is used up');
     if (!res.ok) throw new Error(`OpenSky answered ${res.status}`);
     const body = await res.json();
-    // [lat, lon, altitude m, track deg, icao24, callsign, country, speed m/s], airborne ones only
-    const list = (body.states ?? []).filter((r) => r[6] != null && r[5] != null && !r[8]).map((r) => [r[6], r[5], Math.round(r[13] ?? r[7] ?? 0), Math.round(r[10] ?? 0), r[0], (r[1] ?? '').trim(), r[2], Math.round(r[9] ?? 0)]);
-    aircraft = { at: Date.now(), time: body.time, credits: Number(res.headers.get('x-rate-limit-remaining')) || null, list, error: '' };
+    // [lat, lon, altitude m, track deg, icao24, callsign, country, speed m/s, seconds since the position was taken], airborne ones only
+    const list = (body.states ?? []).filter((r) => r[6] != null && r[5] != null && !r[8]).map((r) => [r[6], r[5], Math.round(r[13] ?? r[7] ?? 0), Math.round(r[10] ?? 0), r[0], (r[1] ?? '').trim(), r[2], Math.round(r[9] ?? 0), Math.max(0, (body.time ?? 0) - (r[3] ?? body.time ?? 0))]);
+    aircraft = { at: Date.now(), time: body.time, credits: Number(res.headers.get('x-rate-limit-remaining')) || null, list, error: aircraft.error && !authed && creds ? aircraft.error : '' };
   } catch (e) {
     aircraft = { ...aircraft, error: String(e?.message ?? e) }; // keep the old list on screen, say why it is old
   }
   return aircraft;
+}
+
+// The flights of the airlines in the watch list, each with its airline's name added at the end.
+function watched(list, watch) {
+  const rules = (watch.airlines ?? []).map((a) => ({ name: a.name, prefixes: a.prefixes ?? [] }));
+  const out = [];
+  for (const row of list) {
+    const call = row[5];
+    if (!call) continue;
+    const hit = rules.find((r) => r.prefixes.some((p) => call.startsWith(p) && /^\d/.test(call.slice(p.length))));
+    if (hit) out.push([...row, hit.name]);
+  }
+  return out;
 }
 
 const server = http.createServer(async (req, res) => {
@@ -141,10 +194,30 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && path === '/osint/aircraft') {
       const q = new URL(req.url, 'http://x').searchParams;
       const a = await loadAircraft(q.get('force') === '1');
-      const head = { time: a.time, ageSec: Math.round((Date.now() - a.at) / 1000), credits: a.credits, error: a.error, count: a.list.length };
-      if (a.time && Number(q.get('since')) === a.time) return json(200, { ...head, unchanged: true }); // the page already has this list: do not send 600 KB again
-      return json(200, { ...head, aircraft: a.list });
+      const mine = q.get('watch') !== '0';
+      const list = mine ? watched(a.list, readWatch()) : a.list;
+      const head = { time: a.time, ageSec: Math.round((Date.now() - a.at) / 1000), credits: a.credits, error: a.error, count: list.length, total: a.list.length, authed, refreshSec: authed ? 100 : 900 };
+      if (a.time && Number(q.get('since')) === a.time && q.get('mode') === (mine ? 'watch' : 'all')) return json(200, { ...head, unchanged: true }); // the page already has this list
+      return json(200, { ...head, aircraft: list });
     }
+    if (path === '/osint/opensky') {
+      if (req.method === 'GET') return json(200, { configured: !!creds, authed });
+      if (req.method === 'POST') {
+        const { clientId = '', clientSecret = '' } = await readJson(req);
+        const ok = (v) => typeof v === 'string' && v.length <= 200 && /^[\w@.\-~+=]*$/.test(v);
+        if (!ok(clientId) || !ok(clientSecret)) return json(400, { error: 'That is not a client id and secret.' });
+        token = { value: '', until: 0 };
+        authed = false;
+        if (!clientId && !clientSecret) { creds = null; fs.rmSync(CRED_FILE, { force: true }); return json(200, { configured: false, authed: false }); }
+        creds = { clientId, clientSecret };
+        try { await bearer(); } catch (e) { creds = null; return json(400, { error: String(e.message) }); } // only a login that works is kept
+        fs.mkdirSync(DATA_DIR, { recursive: true }); // (`path` is the request's path in here, not the module)
+        fs.writeFileSync(CRED_FILE, JSON.stringify(creds), { mode: 0o600 });
+        aircraft.at = 0; // fetch with the login right away
+        return json(200, { configured: true, authed });
+      }
+    }
+    if (req.method === 'GET' && path === '/osint/watch') return json(200, readWatch());
     if (req.method === 'POST' && path === '/open') {
       const { url } = await readJson(req);
       const p = await ensurePage();

@@ -32,10 +32,14 @@ Keep the DOM ids the inherited modules look up (`hud-chat-input`, `chat-output`,
 
 Only checked in a browser pane with a scripted fake LM Studio and a stubbed telemetry event: chat streaming, markdown and code, a chart artifact in a tab, tab close and reopen, model menu, Code page layout, approval and diff cards, light and dark, settings, artifacts page. Not checked in the real Tauri window: real telemetry values, window controls and drag region, the Rust agent (files, commands, approvals), voice, session save and `/resume` from the chat list, LM Studio model swap. After a theme change an open artifact keeps its old colours until it is reopened.
 
-## Performance rules (the interface is drawn by the CPU; only WebGL, the OSINT globe, uses the integrated GPU: see `src-tauri/src/lib.rs`)
+## Performance rules (the whole interface is drawn by the integrated GPU, never the discrete one: `JARVIS_GPU` in `src-tauri/src/lib.rs`; `hybrid` = CPU for the interface and the iGPU only for the OSINT globe, `off` = all CPU)
 
 - Nothing may loop forever. A `requestAnimationFrame` loop or an infinite CSS animation repaints the whole CPU-drawn window; the OSINT globe is drawn on demand (`osint-map.js`: the loop runs while you drag, zoom or hover, or while data is going in, then stops), and decorative pulses were removed.
 - Work only for what is on screen: telemetry waits while the System tab is closed, the globe, aircraft polling and ship stream run only on the OSINT tab, the Playwright view only polls on its own tab, the model list is asked every 15 s unless the System tab or a reply needs it.
 - A streamed reply is rendered block by block (`renderBlocks` remembers each finished block) and patched into the page block by block (`patchParts` in `chat-ui.js`); the result is identical to a one-shot render (checked), at about half the main-thread time.
 - Measure with Playwright and CDP `Performance.getMetrics` (TaskDuration), not by feel. Headless Chrome runs `requestAnimationFrame` unthrottled, so busy figures while a loop runs are far worse than in the app.
 - A production build (`npm run tauri build`) is much lighter than `tauri dev` (no module-by-module loading, optimised Rust).
+
+## OSINT map
+
+`src/core/osint-map.js`: aircraft and ships are icons (three instanced meshes, one per kind) that glide between reports by dead reckoning (`geo.js`, tested in `tools/tests/geo.test.mjs`). `config/osint-watch.json` is the list of airlines (callsign prefixes) and companies (ship names, IMO or MMSI numbers, words in the name or destination) shown while "My list" is on; AIS never says who owns a ship, so company matches are only as good as that file. OpenSky: anonymous 400 credits a day (refresh every 15 min); an API client saved through the OpenSky button goes to `data/opensky.json` (git-ignored) and gives 4000 a day (refresh every 100 s). Ships need a free aisstream.io key.

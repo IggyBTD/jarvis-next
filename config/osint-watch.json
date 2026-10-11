@@ -1,0 +1,38 @@
+{
+  "_readme": "What the OSINT map shows while 'Only my list' is on. Edit this file; the browser sidecar re-reads it on every refresh. Aircraft: an airline is matched by the first letters of the flight's callsign (OpenSky gives callsigns like AFR1234). Ships: AIS says what a vessel is (type, name, destination) but never who owns or charters it, so a company's tankers can only be matched by what you list here: exact names, IMO numbers, MMSI numbers, words in the name, or words in the AIS destination field. A match on a name or a number is firm; a match on the destination is a guess (a tanker bound for Pernis may not be Shell's).",
+  "airlines": [
+    { "name": "Iberia", "prefixes": ["IBE", "IBS"], "note": "IBE Iberia, IBS Iberia Express" },
+    { "name": "Qatar Airways", "prefixes": ["QTR"] },
+    { "name": "KLM", "prefixes": ["KLM", "KLC"], "note": "KLC KLM Cityhopper" },
+    { "name": "Air France", "prefixes": ["AFR", "HOP"], "note": "HOP Air France Hop" }
+  ],
+  "companies": [
+    {
+      "name": "Repsol",
+      "names": ["P. BEL AIR", "P. BEVERLY HILLS", "SESTAO KNUTSEN", "IBERICA KNUTSEN"],
+      "nameContains": ["REPSOL"],
+      "imo": [],
+      "mmsi": [],
+      "destinationContains": ["CARTAGENA", "TARRAGONA", "MUSKIZ", "A CORUNA", "LA CORUNA", "REPSOL"],
+      "sources": "P. Bel Air and P. Beverly Hills: three-year time charters to Repsol Trading announced by Performance Shipping (may have ended); Sestao Knutsen and Iberica Knutsen: LNG carriers once 50% owned with Repsol (assets later sold to Shell). Verify on Equasis before relying on any of them."
+    },
+    {
+      "name": "Moeve",
+      "names": ["RS ONZA"],
+      "nameContains": ["MOEVE", "CEPSA"],
+      "imo": [],
+      "mmsi": [],
+      "destinationContains": ["HUELVA", "LA RABIDA", "SAN ROQUE", "ALGECIRAS", "MOEVE", "CEPSA"],
+      "sources": "RS Onza: chemical tanker owned by Suardiaz and working for Moeve (Suardiaz press release). Moeve (formerly Cepsa) has also ordered chemical tankers from RFOcean; add their names here when they are delivered."
+    },
+    {
+      "name": "Shell",
+      "names": [],
+      "nameContains": ["SHELL"],
+      "imo": [],
+      "mmsi": [],
+      "destinationContains": ["PERNIS", "BUKOM", "STANLOW", "SHELL"],
+      "sources": "No public list of Shell's owned or chartered tankers was found. Add names, IMO or MMSI numbers here (Equasis, or the Shell vessel inspection pages, list them)."
+    }
+  ]
+}

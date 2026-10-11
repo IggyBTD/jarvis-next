@@ -75,7 +75,6 @@
 .osint-dot.air { background: var(--accent); }
 .osint-dot.sea { background: var(--text-3); }
 .osint-dot.tank { background: var(--warm); }
-#osint-key { width: 224px; height: var(--h-md); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface-1); color: var(--text); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
 #osint-key:focus-visible { outline: none; border-color: var(--accent); }
 #osint-map { flex: 1; min-height: 0; margin: 0 var(--pane-gutter); overflow: hidden; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); }
 #intel-osint .intel-status { margin: var(--s-2) var(--pane-gutter) var(--s-4); }
@@ -96,3 +95,18 @@
 .intel-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 #intel-session { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border); }
 #intel-session-body { flex: 1; min-height: 0; display: flex; overflow: hidden; }
+
+/* OSINT toolbar rows: layers, size, logins */
+.osint-bar { flex-wrap: nowrap; }
+.osint-bar .av-btn { white-space: nowrap; flex: none; }
+.osint-bar.osint-sub { height: var(--h-lg); padding-top: 0; }
+.osint-bar.osint-sub[hidden] { display: none; }
+.osint-bar.osint-sub input { flex: 0 1 224px; min-width: 0; height: var(--h-md); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface-1); color: var(--text); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
+.osint-bar.osint-sub input:focus-visible { outline: none; border-color: var(--accent); }
+.osint-bar.osint-sub #osint-key { flex: 1 1 auto; max-width: 420px; }
+.osint-note { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 var(--fs-2)/var(--lh-xs) var(--sans); color: var(--text-3); }
+.osint-note[data-bad] { color: var(--danger); }
+.osint-size { font: 600 var(--fs-4)/var(--lh-sm) var(--mono); }
+.osint-key-icon.air { width: var(--icon-sm); height: var(--icon-sm); color: var(--accent); }
+#osint-mine[aria-pressed="false"], #osint-login-btn[aria-pressed="false"] { opacity: 0.75; }
+#osint-login-btn[aria-pressed="true"] { border-color: var(--accent-dim); }

@@ -182,12 +182,25 @@
 
           <div id="intel-osint" class="intel-pane" role="tabpanel" hidden>
             <div class="osint-bar">
-              <button type="button" class="av-btn osint-layer" id="osint-air" aria-pressed="true"><span class="osint-dot air"></span>Aircraft <span id="osint-air-n" class="mono-data">--</span></button>
-              <button type="button" class="av-btn osint-layer" id="osint-tank" aria-pressed="true" title="Oil, chemical and gas tankers (AIS ship types 80 to 89)"><span class="osint-dot tank"></span>Tankers <span id="osint-tank-n" class="mono-data">--</span></button>
-              <button type="button" class="av-btn osint-layer" id="osint-sea" aria-pressed="true"><span class="osint-dot sea"></span>Other ships <span id="osint-sea-n" class="mono-data">--</span></button>
+              <button type="button" class="av-btn osint-layer" id="osint-air" aria-pressed="true"><span class="icon osint-key-icon air" data-icon="send"></span>Aircraft <span id="osint-air-n" class="mono-data">--</span></button>
+              <button type="button" class="av-btn osint-layer" id="osint-tank" aria-pressed="true" title="Tankers: AIS ship types 80 to 89 (oil, chemical and gas carriers)"><span class="osint-dot tank"></span>Tankers <span id="osint-tank-n" class="mono-data">--</span></button>
+              <button type="button" class="av-btn osint-layer" id="osint-sea" aria-pressed="true"><span class="osint-dot sea"></span>Ships <span id="osint-sea-n" class="mono-data">--</span></button>
+              <button type="button" class="av-btn" id="osint-mine" aria-pressed="true" title="On: only the airlines and companies in config/osint-watch.json. Off: everything.">My list</button>
               <span class="grow"></span>
-              <input type="password" id="osint-key" placeholder="AIS key (aisstream.io)" aria-label="AIS stream key" autocomplete="off" spellcheck="false">
+              <button type="button" class="icon-btn" id="osint-smaller" title="Smaller icons" aria-label="Smaller icons"><span class="osint-size">-</span></button>
+              <button type="button" class="icon-btn" id="osint-bigger" title="Bigger icons" aria-label="Bigger icons"><span class="osint-size">+</span></button>
+              <button type="button" class="av-btn" id="osint-login-btn" aria-pressed="false" title="Sign in to OpenSky for fresh aircraft positions">OpenSky</button>
               <button type="button" class="av-btn" id="osint-refresh" title="Ask for fresh aircraft positions">Refresh</button>
+            </div>
+            <div class="osint-bar osint-sub" id="osint-login" hidden>
+              <input type="text" id="osint-client-id" placeholder="OpenSky client id" aria-label="OpenSky client id" autocomplete="off" spellcheck="false">
+              <input type="password" id="osint-client-secret" placeholder="client secret" aria-label="OpenSky client secret" autocomplete="off" spellcheck="false">
+              <button type="button" class="av-btn" id="osint-login-save">Save</button>
+              <button type="button" class="av-btn" id="osint-login-remove">Remove</button>
+              <span id="osint-login-note" class="osint-note">Free account at opensky-network.org, then Account, API client. Kept on this PC only.</span>
+            </div>
+            <div class="osint-bar osint-sub">
+              <input type="password" id="osint-key" placeholder="AIS key (aisstream.io), for ships and tankers" aria-label="AIS stream key" autocomplete="off" spellcheck="false">
             </div>
             <div id="osint-map" aria-label="3D globe with aircraft and ships"></div>
             <div class="intel-status" id="osint-status" aria-live="polite"></div>

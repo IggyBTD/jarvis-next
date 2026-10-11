@@ -43,10 +43,27 @@ export async function shot() {
   return { src: URL.createObjectURL(await res.blob()), url: decodeURIComponent(res.headers.get('X-Url') ?? ''), title: decodeURIComponent(res.headers.get('X-Title') ?? '') };
 }
 
-// Aircraft for the OSINT map (the sidecar asks OpenSky and caches the answer).
-export async function aircraft(force = false, since = 0) {
+// Aircraft for the OSINT map (the sidecar asks OpenSky and caches the answer). `mine`: only the airlines in the watch list.
+export async function aircraft(force = false, since = 0, mine = true) {
   await ensureBrowser();
-  const res = await fetch(`${BASE}/osint/aircraft?since=${since}${force ? '&force=1' : ''}`);
+  const res = await fetch(`${BASE}/osint/aircraft?since=${since}&mode=${mine ? 'watch' : 'all'}&watch=${mine ? 1 : 0}${force ? '&force=1' : ''}`);
   if (!res.ok) throw new Error(`Aircraft data: the sidecar answered ${res.status}`);
   return res.json();
+}
+
+export async function osintWatch() {
+  await ensureBrowser();
+  return (await fetch(`${BASE}/osint/watch`)).json();
+}
+export async function osintLoginStatus() {
+  await ensureBrowser();
+  return (await fetch(`${BASE}/osint/opensky`)).json();
+}
+// An OpenSky API client (id and secret). Empty strings remove the saved login.
+export async function osintLogin(clientId, clientSecret) {
+  await ensureBrowser();
+  const res = await fetch(`${BASE}/osint/opensky`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientId, clientSecret }) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error ?? `The sidecar answered ${res.status}`);
+  return data;
 }
