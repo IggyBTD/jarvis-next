@@ -5,7 +5,9 @@
     "run_command(npm test*)",
     "run_command(cargo test*)",
     "edit_file(src/**)",
-    "write_file(docs/*)"
+    "write_file(docs/*)",
+    "browser_goto(*)",
+    "browser_goto(*paypal*)"
   ],
   "allow": [
     "run_command(git status*)",
@@ -37,7 +39,9 @@
     "run_command(Get-Location)",
     "run_command(node --version)",
     "run_command(npm --version)",
-    "run_command(cargo --version)"
+    "run_command(cargo --version)",
+    "browser_goto(*)",
+    "browser_click(*)"
   ],
   "ask": [
     "read_file(*.env*)",
@@ -52,7 +56,20 @@
     "run_command(*.env*)",
     "run_command(*id_rsa*)",
     "run_command(*id_ed25519*)",
-    "run_command(*.pem*)"
+    "run_command(*.pem*)",
+    "browser_goto(*paypal*)",
+    "browser_goto(*stripe*)",
+    "browser_goto(*bank*)",
+    "browser_goto(*checkout*)",
+    "browser_goto(*wallet*)",
+    "browser_goto(*coinbase*)",
+    "browser_goto(*binance*)",
+    "browser_goto(*revolut*)",
+    "browser_goto(*mail.google*)",
+    "browser_goto(*outlook*)",
+    "browser_goto(*accounts.google*)",
+    "browser_goto(*login.microsoftonline*)",
+    "browser_goto(*appleid*)"
   ],
   "deny": []
 }
