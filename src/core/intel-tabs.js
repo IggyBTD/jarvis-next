@@ -1,83 +1,84 @@
-// The Intel page's tabs: OSINT (map) and Playwright (browser). Open and close them like the workspace's tabs;
-// the + button lists the ones that are closed. What is open is remembered. Panes announce themselves through
-// `jarvis:intel-tab` so only the one in view does any work (draws, polls, streams).
+// The Intel page's tabs, like a browser's: + opens a Start tab (the home of the page, one tile per app), and
+// picking an app turns that tab into the app. Each app has one tab (picking an app that is open goes to it).
+// A page always has at least one tab. Panes announce themselves through `jarvis:intel-tab` so only the one in
+// view does any work (draws, polls, streams). What is open is remembered.
 import { icon } from '../icons/index.js';
 import { currentPage } from './whiteboard-mode.js';
 
-const TABS = {
+const APPS = {
+  start: { label: 'Start', pane: 'intel-start' },
   osint: { label: 'OSINT', pane: 'intel-osint' },
   playwright: { label: 'Playwright', pane: 'intel-pw' },
 };
-const KEY = 'jarvis.intel.tabs';
+const KEY = 'jarvis.intel.tabs.v2';
 
-let open = ['osint'];
-let active = 'osint';
+let tabs = ['start']; // kinds, in order: 'start' | 'osint' | 'playwright'
+let active = 'start';
 try {
   const saved = JSON.parse(localStorage.getItem(KEY) ?? 'null');
-  if (Array.isArray(saved?.open)) { open = saved.open.filter((id) => TABS[id]); active = TABS[saved.active] && open.includes(saved.active) ? saved.active : open[0] ?? ''; }
+  if (Array.isArray(saved?.tabs) && saved.tabs.length) {
+    tabs = [...new Set(saved.tabs.filter((k) => APPS[k]))];
+    active = tabs.includes(saved.active) ? saved.active : tabs[0];
+  }
 } catch { /* storage blocked */ }
+if (!tabs.length) { tabs = ['start']; active = 'start'; }
 
 const $ = (id) => document.getElementById(id);
 const strip = $('intel-tabs');
-const menu = $('intel-menu');
-const add = $('intel-add');
 
 export const activeIntelTab = () => (currentPage() === 'intel' ? active : '');
 
-function save() { try { localStorage.setItem(KEY, JSON.stringify({ open, active })); } catch { /* storage blocked */ } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ tabs, active })); } catch { /* storage blocked */ } }
 
 function paint() {
-  strip.replaceChildren(...open.map((id) => {
+  strip.replaceChildren(...tabs.map((kind) => {
     const tab = document.createElement('div');
     tab.className = 'ws-tab';
     tab.setAttribute('role', 'tab');
-    tab.setAttribute('aria-selected', String(id === active));
-    const label = Object.assign(document.createElement('button'), { type: 'button', className: 't-label', textContent: TABS[id].label });
-    label.addEventListener('click', () => activate(id));
-    const x = Object.assign(document.createElement('button'), { type: 'button', className: 't-x', innerHTML: icon('close', { size: 14 }), title: `Close ${TABS[id].label}` });
-    x.setAttribute('aria-label', `Close ${TABS[id].label}`);
-    x.addEventListener('click', () => close(id));
+    tab.setAttribute('aria-selected', String(kind === active));
+    const label = Object.assign(document.createElement('button'), { type: 'button', className: 't-label', textContent: APPS[kind].label });
+    label.addEventListener('click', () => activate(kind));
+    const x = Object.assign(document.createElement('button'), { type: 'button', className: 't-x', innerHTML: icon('close', { size: 14 }), title: `Close ${APPS[kind].label}` });
+    x.setAttribute('aria-label', `Close ${APPS[kind].label}`);
+    x.addEventListener('click', () => close(kind));
     tab.append(label, x);
     return tab;
   }));
-  Object.entries(TABS).forEach(([id, t]) => { $(t.pane).hidden = id !== active; });
-  $('intel-none').hidden = open.length > 0;
-  add.hidden = open.length === Object.keys(TABS).length;
+  Object.entries(APPS).forEach(([kind, a]) => { $(a.pane).hidden = kind !== active; });
   document.dispatchEvent(new CustomEvent('jarvis:intel-tab', { detail: { tab: activeIntelTab() } }));
 }
 
-function activate(id) { active = id; save(); paint(); }
-function close(id) {
-  open = open.filter((x) => x !== id);
-  if (active === id) active = open[open.length - 1] ?? '';
-  save();
-  paint();
-}
-export function openIntelTab(id) {
-  if (!TABS[id]) return;
-  if (!open.includes(id)) open = [...open, id];
-  active = id;
+function activate(kind) { active = kind; save(); paint(); }
+
+function close(kind) {
+  const i = tabs.indexOf(kind);
+  tabs = tabs.filter((k) => k !== kind);
+  if (!tabs.length) tabs = ['start'];
+  if (active === kind) active = tabs[Math.min(i, tabs.length - 1)];
   save();
   paint();
 }
 
-// the + menu: the closed tabs
-function setMenu(on) {
-  menu.hidden = !on;
-  add.setAttribute('aria-expanded', String(on));
-  if (!on) return;
-  menu.replaceChildren(...Object.entries(TABS).filter(([id]) => !open.includes(id)).map(([id, t]) => {
-    const b = Object.assign(document.createElement('button'), { type: 'button', textContent: t.label });
-    b.setAttribute('role', 'menuitem');
-    b.addEventListener('click', () => { setMenu(false); openIntelTab(id); });
-    return b;
-  }));
+// + : a new Start tab (there is only ever one, so a second click goes to it)
+export function newIntelTab() {
+  if (!tabs.includes('start')) tabs = [...tabs, 'start'];
+  activate('start');
 }
-add.addEventListener('click', () => setMenu(menu.hidden));
-document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !e.target.closest('#intel-add-wrap')) setMenu(false); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) { setMenu(false); add.focus(); } });
 
+// An app was picked, in a Start tab or by JARVIS: it takes the Start tab's place, or goes to its own tab if it is already open.
+export function openIntelTab(app) {
+  if (!APPS[app] || app === 'start') return;
+  if (tabs.includes(app)) tabs = tabs.filter((k) => k !== 'start');
+  else if (tabs.includes('start')) tabs = tabs.map((k) => (k === 'start' ? app : k));
+  else tabs = [...tabs, app];
+  active = app;
+  save();
+  paint();
+}
+
+$('intel-add').addEventListener('click', newIntelTab);
+document.querySelectorAll('.start-tile').forEach((t) => t.addEventListener('click', () => openIntelTab(t.dataset.app)));
 // JARVIS opened the browser for the user: show its tab
 document.addEventListener('jarvis:intel-open', (e) => openIntelTab(e.detail.tab));
-document.addEventListener('jarvis:page', () => { paint(); });
+document.addEventListener('jarvis:page', paint);
 paint();

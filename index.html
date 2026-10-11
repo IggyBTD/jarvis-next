@@ -165,14 +165,20 @@
     <section id="page-intel" class="page" aria-label="Intel">
       <div class="intel-strip" data-tauri-drag-region>
         <div id="intel-tabs" role="tablist" data-tauri-drag-region></div>
-        <div id="intel-add-wrap">
-          <button type="button" class="icon-btn" id="intel-add" aria-haspopup="true" aria-expanded="false" title="Open a tab" aria-label="Open a tab"><span class="icon" data-icon="plus"></span></button>
-          <div id="intel-menu" role="menu" hidden></div>
-        </div>
+        <button type="button" class="icon-btn" id="intel-add" title="New tab" aria-label="New tab"><span class="icon" data-icon="plus"></span></button>
       </div>
       <div class="intel-split">
         <div class="intel-main">
-          <div id="intel-none" class="intel-pane">No tab open. Use + to open OSINT or Playwright.</div>
+          <div id="intel-start" class="intel-pane" role="tabpanel" hidden>
+            <div class="start-inner">
+              <h1>Start</h1>
+              <p>Pick an app to open in this tab.</p>
+              <div class="start-grid">
+                <button type="button" class="start-tile" data-app="osint"><span class="icon" data-icon="globe"></span><span class="s-name">OSINT</span><span class="s-sub">A 3D globe with the aircraft in the air and, with a key, the ships at sea.</span></button>
+                <button type="button" class="start-tile" data-app="playwright"><span class="icon" data-icon="layers"></span><span class="s-name">Playwright</span><span class="s-sub">A browser you can use, and that JARVIS can open pages in for you.</span></button>
+              </div>
+            </div>
+          </div>
 
           <div id="intel-osint" class="intel-pane" role="tabpanel" hidden>
             <div class="osint-bar">
