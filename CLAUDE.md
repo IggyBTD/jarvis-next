@@ -31,3 +31,11 @@ Keep the DOM ids the inherited modules look up (`hud-chat-input`, `chat-output`,
 ## Not verified yet
 
 Only checked in a browser pane with a scripted fake LM Studio and a stubbed telemetry event: chat streaming, markdown and code, a chart artifact in a tab, tab close and reopen, model menu, Code page layout, approval and diff cards, light and dark, settings, artifacts page. Not checked in the real Tauri window: real telemetry values, window controls and drag region, the Rust agent (files, commands, approvals), voice, session save and `/resume` from the chat list, LM Studio model swap. After a theme change an open artifact keeps its old colours until it is reopened.
+
+## Performance rules (the interface is drawn by the CPU: `--disable-gpu`, see `src-tauri/src/lib.rs`)
+
+- Nothing may loop forever. A `requestAnimationFrame` loop or an infinite CSS animation repaints the whole CPU-drawn window; the OSINT globe is drawn on demand (`osint-map.js`: the loop runs while you drag, zoom or hover, or while data is going in, then stops), and decorative pulses were removed.
+- Work only for what is on screen: telemetry waits while the System tab is closed, the globe, aircraft polling and ship stream run only on the OSINT tab, the Playwright view only polls on its own tab, the model list is asked every 15 s unless the System tab or a reply needs it.
+- A streamed reply is rendered block by block (`renderBlocks` remembers each finished block) and patched into the page block by block (`patchParts` in `chat-ui.js`); the result is identical to a one-shot render (checked), at about half the main-thread time.
+- Measure with Playwright and CDP `Performance.getMetrics` (TaskDuration), not by feel. Headless Chrome runs `requestAnimationFrame` unthrottled, so busy figures while a loop runs are far worse than in the app.
+- A production build (`npm run tauri build`) is much lighter than `tauri dev` (no module-by-module loading, optimised Rust).
