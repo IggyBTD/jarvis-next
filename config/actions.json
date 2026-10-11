@@ -364,6 +364,49 @@
           "text"
         ]
       }
+    },
+    {
+      "name": "browser_type",
+      "description": "Type text into the field that has focus on the open page (click it first with browser_click), optionally pressing Enter afterwards, for example to search. The user is asked to approve it.",
+      "tier": "ask",
+      "primary": "text",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "What to type."
+          },
+          "submit": {
+            "type": "boolean",
+            "description": "Press Enter afterwards."
+          }
+        },
+        "required": [
+          "text"
+        ]
+      }
+    },
+    {
+      "name": "browser_scroll",
+      "description": "Scroll the open page down or up by about one screen, to see more of it before reading it again with browser_text.",
+      "tier": "auto",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": [
+              "down",
+              "up"
+            ],
+            "description": "Which way."
+          }
+        },
+        "required": [
+          "direction"
+        ]
+      }
     }
   ]
 }

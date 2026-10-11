@@ -63,3 +63,9 @@
 #pw-empty { max-width: 360px; padding: var(--s-5); color: var(--text-3); text-align: center; font-size: var(--fs-3); line-height: var(--lh-sm); }
 .intel-status { flex: none; height: var(--lh-md); font: 400 var(--fs-2)/var(--lh-md) var(--mono); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .intel-status[data-bad] { color: var(--danger); }
+
+/* Intel: the browser on the left, the conversation (the same one as Chat and Code) on the right */
+.intel-split { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 32%); }
+.intel-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+#intel-session { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border); }
+#intel-session-body { flex: 1; min-height: 0; display: flex; overflow: hidden; }

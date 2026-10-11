@@ -32,3 +32,6 @@ dist-ssr
 
 # Graphify
 graphify-out/cache/
+
+# JARVIS browser profile (cookies, logins)
+data/browser-profile/

@@ -166,20 +166,27 @@
       <div class="intel-strip" data-tauri-drag-region>
         <div class="ws-tab" role="tab" aria-selected="true"><span class="t-label">Playwright</span></div>
       </div>
+      <div class="intel-split">
+        <div class="intel-main">
       <div class="intel-bar">
-        <button type="button" class="icon-btn" id="pw-back" title="Back" aria-label="Back"><span class="icon" data-icon="chevron-left"></span></button>
-        <button type="button" class="icon-btn" id="pw-forward" title="Forward" aria-label="Forward"><span class="icon" data-icon="chevron-right"></span></button>
-        <button type="button" class="icon-btn" id="pw-reload" title="Reload" aria-label="Reload"><span class="icon" data-icon="refresh"></span></button>
-        <input type="text" id="pw-url" placeholder="Address, for example example.com" aria-label="Address" autocomplete="off" spellcheck="false">
-        <button type="button" class="av-btn" id="pw-go">Go</button>
-        <button type="button" class="av-btn" id="pw-close" title="Close the browser" hidden>Close</button>
-      </div>
-      <div class="intel-body">
-        <div id="pw-view" tabindex="0" aria-label="Browser page. Click to interact, type to enter text.">
-          <img id="pw-img" alt="" draggable="false" hidden>
-          <div id="pw-empty">No page open. Type an address above. The page runs in a clean Chrome with none of your logins.</div>
+          <button type="button" class="icon-btn" id="pw-back" title="Back" aria-label="Back"><span class="icon" data-icon="chevron-left"></span></button>
+          <button type="button" class="icon-btn" id="pw-forward" title="Forward" aria-label="Forward"><span class="icon" data-icon="chevron-right"></span></button>
+          <button type="button" class="icon-btn" id="pw-reload" title="Reload" aria-label="Reload"><span class="icon" data-icon="refresh"></span></button>
+          <input type="text" id="pw-url" placeholder="Address, for example example.com" aria-label="Address" autocomplete="off" spellcheck="false">
+          <button type="button" class="av-btn" id="pw-go">Go</button>
+          <button type="button" class="av-btn" id="pw-close" title="Close the browser" hidden>Close</button>
         </div>
-        <div class="intel-status" id="pw-status" aria-live="polite"></div>
+        <div class="intel-body">
+          <div id="pw-view" tabindex="0" aria-label="Browser page. Click to interact, type to enter text.">
+            <img id="pw-img" alt="" draggable="false" hidden>
+            <div id="pw-empty">No page open. Type an address above. Or tell JARVIS what to open, in the box on the right. The browser keeps its own profile: log in once on a site here and it stays logged in for JARVIS.</div>
+          </div>
+          <div class="intel-status" id="pw-status" aria-live="polite"></div>
+        </div>
+        </div>
+        <aside id="intel-session" aria-label="Conversation">
+          <div id="intel-session-body"></div>
+        </aside>
       </div>
     </section>
 

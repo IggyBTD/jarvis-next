@@ -12,6 +12,8 @@
 //
 // Run: node server.mjs [--parent-stdin] [--port 8766]   (--parent-stdin: exit when stdin closes, so it never outlives the app)
 import http from 'node:http';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const ORIGIN_RE = /^(https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?|tauri:\/\/localhost|https?:\/\/tauri\.localhost)$/;
@@ -19,6 +21,7 @@ const originAllowed = (origin) => !origin || ORIGIN_RE.test(origin);
 const args = process.argv.slice(2);
 const port = Number(args[args.indexOf('--port') + 1]) || 8766;
 const VIEW = { width: 1280, height: 800 };
+const PROFILE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'data', 'browser-profile');
 const MAX_TEXT = 12000;
 
 if (args.includes('--parent-stdin')) {
@@ -28,6 +31,7 @@ if (args.includes('--parent-stdin')) {
 }
 
 let browser = null;
+let context = null;
 let page = null;
 let starting = null;
 let latest = null; // the newest frame the page pushed (screencast): serving it costs nothing, a fresh screenshot costs half a second
@@ -36,9 +40,10 @@ let frameNo = 0;
 async function ensurePage() {
   if (page && !page.isClosed()) return page;
   starting ??= (async () => {
-    browser ??= await chromium.launch({ channel: 'chrome', headless: true, args: ['--disable-gpu'] }); // software rendering: no GPU memory
-    const context = await browser.newContext({ viewport: VIEW, acceptDownloads: false, serviceWorkers: 'block' });
-    page = await context.newPage();
+    // One profile folder for JARVIS's own browser: a site the user logs in to here stays logged in. It is not the user's Chrome profile.
+    context ??= await chromium.launchPersistentContext(PROFILE, { channel: 'chrome', headless: true, args: ['--disable-gpu'], viewport: VIEW, acceptDownloads: false, serviceWorkers: 'block' }); // software rendering: no GPU memory
+    browser = context.browser();
+    page = context.pages()[0] ?? await context.newPage();
     latest = null;
     const cdp = await context.newCDPSession(page);
     cdp.on('Page.screencastFrame', ({ data, sessionId }) => { latest = Buffer.from(data, 'base64'); frameNo += 1; cdp.send('Page.screencastFrameAck', { sessionId }).catch(() => {}); });
@@ -79,7 +84,7 @@ async function act(body) {
       const text = await p.evaluate(() => document.body?.innerText ?? '');
       return { ...(await state()), text: text.replace(/\n{3,}/g, '\n\n').slice(0, MAX_TEXT), truncated: text.length > MAX_TEXT };
     }
-    case 'close': await browser?.close().catch(() => {}); browser = null; page = null; return { running: false, url: '', title: '' };
+    case 'close': await context?.close().catch(() => {}); browser = null; context = null; page = null; return { running: false, url: '', title: '' };
     default: throw new Error(`Unknown action ${body.type}`);
   }
   await p.waitForLoadState('domcontentloaded', { timeout: 5000 }).catch(() => {});
@@ -124,6 +129,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, '127.0.0.1', () => console.log(`browser sidecar on 127.0.0.1:${port}`));
-const stop = async () => { await browser?.close().catch(() => {}); process.exit(0); };
+const stop = async () => { await context?.close().catch(() => {}); process.exit(0); };
 process.on('SIGINT', stop);
 process.on('SIGTERM', stop);

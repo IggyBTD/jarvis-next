@@ -42,7 +42,7 @@ $('nav-system').addEventListener('click', () => openWidget('system'));
 
 // The one conversation lives in the chat page, or in the Code page's session column.
 function placeChat() {
-  const host = currentPage() === 'code' ? $('cli-session-body') : $('chat-host');
+  const host = { code: $('cli-session-body'), intel: $('intel-session-body') }[currentPage()] ?? $('chat-host');
   if (stack.parentElement === host) return;
   host.append(stack);
   const out = $('chat-output');
@@ -52,7 +52,7 @@ document.addEventListener('jarvis:page', () => {
   placeChat();
   pageButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.page === currentPage())));
   if (currentPage() === 'artifacts') renderArtifacts();
-  if (currentPage() === 'chat' || currentPage() === 'code') input.focus();
+  if (['chat', 'code', 'intel'].includes(currentPage())) input.focus();
 });
 
 // --- model menu ---------------------------------------------------------------------

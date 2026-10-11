@@ -214,6 +214,17 @@ ${r.text || '(no visible text)'}`;
     return `Clicked "${text}". Now at ${r.url} (title: ${r.title || 'none'}).`;
   },
 
+  async browser_type({ text, submit = false }) {
+    await doAction({ type: 'type', text });
+    const r = submit ? await doAction({ type: 'press', key: 'Enter' }) : await doAction({ type: 'text' });
+    return `Typed "${text}"${submit ? ' and pressed Enter' : ''}. Now at ${r.url}.`;
+  },
+
+  async browser_scroll({ direction }) {
+    await doAction({ type: 'scroll', dy: direction === 'up' ? -700 : 700 });
+    return `Scrolled ${direction}. Use browser_text to read what is on screen now.`;
+  },
+
   async run_command({ command, timeout_secs }) {
     const r = await agent.runCommand(command, timeout_secs);
     const status = r.timed_out ? 'timed out and was stopped' : `exit code ${r.exit_code ?? 'unknown'}`;
