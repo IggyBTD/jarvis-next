@@ -124,7 +124,7 @@ function paintServices() {
     if (detail) el.title = `${s.state}: ${s.detail}`;
     return el;
   };
-  const names = { lmstudio: 'LM Studio', sensors: 'Sensors', voice: 'Voice' };
+  const names = { lmstudio: 'LM Studio', sensors: 'Sensors', voice: 'Voice', server: 'JARVIS server' };
   const named = services.map((s) => ({ ...s, label: names[s.id] ?? s.id }));
   $('mini-services').replaceChildren(...named.map((s) => dot(s, true)));
   $('set-services').replaceChildren(...named.map((s) => {

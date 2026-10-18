@@ -46,7 +46,7 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
     const os = osOf(target);
     const c = contract.get(name);
     if (c) {
-      if (!c.enabled || !c.platforms.includes(os)) return null;
+      if (!c.enabled || !c.platforms.includes(os) || c.system) return null; // system actions are for the server's own use (tasks), never for the model
       if (c.internal) {
         const h = internal.get(name);
         return h ? { ...h, kind: 'internal', tier: h.tier ?? c.tier, params: c.params, description: c.description, category: c.category } : null;
@@ -60,7 +60,7 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
   // Tools for one model request. Registry tools are capped; the always-on extras sit on top of the cap.
   function toolDefs(target, { text = '', recent = [], unlocked = new Set(), max = cfg.actions.maxToolsPerRequest } = {}) {
     const os = osOf(target);
-    const regDefs = cfg.actions.actions.filter((a) => a.enabled && a.platforms.includes(os) && (!a.internal || internal.has(a.name))).map((a) => ({ ...a }));
+    const regDefs = cfg.actions.actions.filter((a) => a.enabled && !a.system && a.platforms.includes(os) && (!a.internal || internal.has(a.name))).map((a) => ({ ...a }));
     const { tools, categories } = selectTools({ defs: regDefs, text, recent, unlocked, max });
     const wantBrowser = categoryScores(text).browser > 0 || unlocked.has('browser') || recent.some((n) => n.startsWith('browser_'));
     const extras = [...internal.values()].filter((d) => !contract.has(d.name) && (d.alwaysOn || (d.category === 'browser' && wantBrowser)));
@@ -74,7 +74,7 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
     params: { type: 'object', properties: { category: { type: 'string', maxLength: 40 } }, required: [], additionalProperties: false },
     handler(args, ctx) {
       const os = osOf(ctx.target);
-      const defs = cfg.actions.actions.filter((a) => a.enabled && a.platforms.includes(os) && (!a.internal || internal.has(a.name)));
+      const defs = cfg.actions.actions.filter((a) => a.enabled && !a.system && a.platforms.includes(os) && (!a.internal || internal.has(a.name)));
       const cats = allCategories(defs);
       if (args.category) {
         if (!cats.includes(args.category)) return { error: `unknown category. Available: ${cats.join(', ')}` };

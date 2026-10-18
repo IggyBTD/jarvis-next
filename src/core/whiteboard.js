@@ -17,6 +17,8 @@ const sysPane = $('ws-system');
 const PREVIEWABLE = new Set(['html', 'svg', 'mermaid', 'chart', 'markdown', 'table']);
 const EXTENSIONS = { html: 'html', svg: 'svg', mermaid: 'mmd', chart: 'json', markdown: 'md', table: 'json' };
 const SYSTEM = 'system';
+const SERVER = 'server';
+const serverPane = $('ws-server');
 
 export const fileNameFor = (a) => {
   const base = (a.id || 'artifact').replace(/[^\w.-]+/g, '-');
@@ -237,9 +239,9 @@ function closeTab(id) {
   const t = tabs.get(id);
   if (!t) return;
   t.dispose?.();
-  if (t.id === SYSTEM) {
+  if (t.id === SYSTEM || t.id === SERVER) {
     t.pane.hidden = true;
-    try { localStorage.setItem('jarvis.ws.system', 'off'); } catch { /* storage blocked */ }
+    if (t.id === SYSTEM) { try { localStorage.setItem('jarvis.ws.system', 'off'); } catch { /* storage blocked */ } }
   } else t.pane.remove();
   tabs.delete(id);
   if (active === id) active = [...tabs.keys()].pop() ?? null;
@@ -261,19 +263,19 @@ function ensureArtifactTab(id) {
 onArtifactsChange((a) => { const t = tabs.get(a.id); if (t && t.label !== a.title) { t.label = a.title; paint(); } });
 
 // --- public API (names kept from the floating-panel whiteboard) -------------------------------
-export const isWidgetOpen = (id) => id === SYSTEM && tabs.has(SYSTEM);
+export const isWidgetOpen = (id) => (id === SYSTEM || id === SERVER) && tabs.has(id);
 
 export function openWidget(id) {
-  if (id !== SYSTEM) return;
+  if (id !== SYSTEM && id !== SERVER) return;
   if (currentPage() !== 'chat') setPage('chat');
   setWorkspaceShown(true);
-  if (!tabs.has(SYSTEM)) {
-    tabs.set(SYSTEM, { id: SYSTEM, label: 'System', pane: sysPane });
-    try { localStorage.removeItem('jarvis.ws.system'); } catch { /* storage blocked */ }
+  if (!tabs.has(id)) {
+    tabs.set(id, { id, label: id === SYSTEM ? 'System' : 'Server', pane: id === SYSTEM ? sysPane : serverPane });
+    if (id === SYSTEM) { try { localStorage.removeItem('jarvis.ws.system'); } catch { /* storage blocked */ } }
   }
-  activate(SYSTEM);
+  activate(id);
 }
-export function closeWidget(id) { if (id === SYSTEM) closeTab(SYSTEM); }
+export function closeWidget(id) { if (id === SYSTEM || id === SERVER) closeTab(id); }
 export const toggleWidget = (id) => (isWidgetOpen(id) ? closeWidget(id) : openWidget(id));
 
 // The conversation is always visible next to the workspace now, so these are only kept for callers.
@@ -306,10 +308,11 @@ export function applyBoardSpec({ panels: ids = [] }) {
   setWorkspaceShown(true);
   if (wantSystem && !tabs.has(SYSTEM)) openWidget(SYSTEM);
   if (wanted.length) {
-    [...tabs.keys()].filter((id) => id !== SYSTEM && !wanted.includes(id)).forEach(closeTab);
+    [...tabs.keys()].filter((id) => id !== SYSTEM && id !== SERVER && !wanted.includes(id)).forEach(closeTab);
     wanted.forEach(ensureArtifactTab);
     const order = new Map();
     if (tabs.has(SYSTEM)) order.set(SYSTEM, tabs.get(SYSTEM));
+    if (tabs.has(SERVER)) order.set(SERVER, tabs.get(SERVER));
     wanted.forEach((id) => order.set(id, tabs.get(id)));
     tabs.clear();
     order.forEach((t, id) => tabs.set(id, t));
@@ -317,10 +320,10 @@ export function applyBoardSpec({ panels: ids = [] }) {
   }
 }
 
-export const panelCount = () => [...tabs.keys()].filter((id) => id !== SYSTEM).length;
+export const panelCount = () => [...tabs.keys()].filter((id) => id !== SYSTEM && id !== SERVER).length;
 export function closePanelById(id) {
   if (!tabs.has(id)) return null;
-  const kind = id === SYSTEM ? 'widget' : 'panel';
+  const kind = id === SYSTEM || id === SERVER ? 'widget' : 'panel';
   closeTab(id);
   return kind;
 }

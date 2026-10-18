@@ -24,6 +24,7 @@ import { toolDefinitions, runToolCall, registerActionHost, undoEdit, loadLocalRu
 import { restoreProject } from './agent-client.js';
 import { actionCard, approvalCard, planCard } from './tool-cards.js';
 import { assistantToolMessage, toolResultMessage } from './tool-calls.js';
+import { serverMode, sendChat, abortChat, onLink, state as link } from './server-link.js';
 
 const input = document.getElementById('hud-chat-input');
 const output = document.getElementById('chat-output');
@@ -256,11 +257,101 @@ function interrupt() {
 
 // /stop ends a running turn (a long agent job) without waiting for it.
 function stopTurn() {
+  if (serverTurn) abortChat();
   turn?.controller.abort();
   approval?.cancel();
 }
 stopBtn?.addEventListener('click', stopTurn);
 document.addEventListener('jarvis:stop', stopTurn); // Ctrl+. (shortcuts.js)
+
+// --- the JARVIS server path -------------------------------------------------
+// The server streams the reply, runs tools on the active computer and asks for approval itself (server-ui.js shows the
+// dialog). This function only draws what arrives. It never falls back to the local model or local tools: if the server is
+// not reachable, nothing is sent and the message goes back into the box.
+let serverTurn = null;
+async function sendViaServer(text) {
+  const { content, names } = takeAsContent(text);
+  const body = typeof content === 'string' ? content : textOf(content);
+  const sent = sendChat(body);
+  if (!sent.ok) {
+    addLine('system', sent.reason, { meta: '' });
+    input.value = text;
+    input.dispatchEvent(new Event('input'));
+    busy = false;
+    return;
+  }
+  lastSent = text;
+  document.dispatchEvent(new CustomEvent('jarvis:message-sent'));
+  setWorking(true);
+  const target = (link.machines[link.target]?.label ?? link.target).toUpperCase();
+  addLine('user', text, { files: names, meta: `${clock()}  ${target}` });
+  workspace.classList.add('has-output');
+  let pending = addLine('assistant pending', 'Thinking...', { meta: '' });
+  let latest = '';
+  let afterTool = false;
+  let toolLine = null;
+  let frame = 0;
+  const paint = (final) => { if (latest) renderAssistant(pending, latest, { done: final }); };
+  const stamp = (line) => {
+    const m = document.createElement('span');
+    m.className = 'chat-meta';
+    m.textContent = `${clock()}  ${target}`;
+    line.append(m);
+  };
+  output.scrollTop = output.scrollHeight;
+
+  await new Promise((finish) => {
+    const end = () => { cancelAnimationFrame(frame); off(); serverTurn = null; setThinking(false); busy = false; setWorking(false); finish(); };
+    serverTurn = { end };
+    const fail = (message, kind = 'error') => { pending.className = `chat-line ${kind}`; pending.querySelector('.thought')?.remove(); setText(pending, message); end(); };
+    const off = onLink((e) => {
+      switch (e.type) {
+        case 'chat.delta':
+          if (afterTool) { paint(true); pending = addLine('assistant pending', '', { meta: '' }); latest = ''; afterTool = false; }
+          pending.className = 'chat-line assistant';
+          latest += e.text;
+          pulse();
+          if (!frame) frame = requestAnimationFrame(() => { frame = 0; const stick = nearBottom(); paint(false); follow(stick); });
+          break;
+        case 'resume': // reconnected while the reply was being written: the server sends what it has so far
+          latest = e.text;
+          pending.className = 'chat-line assistant';
+          paint(false);
+          break;
+        case 'tool.call':
+          if (latest) { cancelAnimationFrame(frame); frame = 0; paint(true); stamp(pending); } else if (pending.classList.contains('pending')) pending.remove();
+          toolLine = addLine('system', `${e.name}  on ${(link.machines[e.target]?.label ?? e.target)}...`, { meta: '' });
+          follow(following);
+          afterTool = true;
+          break;
+        case 'tool.result':
+          if (toolLine) setText(toolLine, `${toolLine.querySelector('.chat-text').textContent.replace(/...$/, '')}  ${e.ok ? 'done' : e.queued ? 'queued for approval' : e.denied ? 'not approved' : 'failed'}`);
+          pending = addLine('assistant pending', 'Thinking...', { meta: '' });
+          latest = '';
+          afterTool = false;
+          break;
+        case 'chat.done':
+          cancelAnimationFrame(frame);
+          if (e.text) { latest = e.text; pending.className = 'chat-line assistant'; paint(true); stamp(pending); } else pending.remove();
+          follow(following);
+          end();
+          break;
+        case 'chat.error': fail(e.reason === 'aborted' ? 'Stopped' : e.reason, e.reason === 'aborted' ? 'system' : 'error'); break;
+        case 'status':
+          if (link.status !== 'online' && link.status !== 'connecting') setText(pending, 'Lost the connection to the JARVIS server. Reconnecting; the reply continues there.');
+          break;
+        case 'state': { // back online: if the reply finished while we were away, it is in the snapshot
+          if (link.conversation.streaming) break;
+          const last = link.conversation.messages.at(-1);
+          if (last?.role === 'assistant' && last.content) { latest = last.content; pending.className = 'chat-line assistant'; paint(true); stamp(pending); end(); }
+          break;
+        }
+        case 'title': document.getElementById('chat-title').textContent = e.title; break;
+        default: break;
+      }
+    });
+  });
+}
 
 async function send() {
   const quiet = input.dataset.quiet === '1'; // a command the app typed (open a chat, new chat): not shown as the user's message
@@ -303,6 +394,9 @@ async function send() {
     }
     return;
   }
+
+  // With the JARVIS server on, the server owns the model, the tools, the approvals and the conversation.
+  if (serverMode()) { await sendViaServer(text); return; }
 
   // Images only work on the vision model.
   if (hasImages() && getMode() !== 'visual') selectMode('visual');
@@ -820,6 +914,7 @@ registerCommandHost({
   },
   clear: () => {
     if (working) return 'JARVIS is busy. Use /stop first.';
+    document.dispatchEvent(new CustomEvent('jarvis:cleared'));
     history.length = 0;
     turn = null;
     lastSent = '';

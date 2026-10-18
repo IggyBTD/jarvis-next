@@ -80,7 +80,7 @@ export async function startApi(r, extra = {}) {
   let build = wsApi.buildState;
   const handler = createHttpHandler({ cfg: r.cfg, auth, llmProxy, health, audit: r.audit, conversations: r.conversations, digest: extra.digest, buildState: () => build() });
   server.on('request', handler);
-  await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
+  await new Promise((ok) => server.listen(extra.port ?? 0, '127.0.0.1', ok));
   const port = server.address().port;
   r.state.clients = 0;
   const origCount = wsApi.clientCount;

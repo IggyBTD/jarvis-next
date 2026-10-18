@@ -50,6 +50,11 @@ export function createGate({ audit, bus, clientCount, dataDir, timeoutMs = 120_0
         const timer = setTimeout(() => finish(request.id, 'deny', null, 'approval timed out'), request.expiresAt - now());
         timer.unref?.();
         waiting.set(request.id, { request, resolve, timer });
+        // a caller that no longer wants the answer (a task was aborted, OpenCode restarted) withdraws the request: that is a denial
+        if (input.signal) {
+          if (input.signal.aborted) { finish(request.id, 'deny', null, 'cancelled'); return; }
+          input.signal.addEventListener('abort', () => finish(request.id, 'deny', null, 'cancelled'), { once: true });
+        }
         bus.publish('gate.request', { request: view(request) });
         log(request, 'asked', 'pending', request.summary);
       });

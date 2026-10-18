@@ -39,14 +39,14 @@ Commits are per phase (see decisions.md D-01), not per step.
 ## P5 API and frontend
 - [x] P5.1 WS and HTTP API
 - [x] P5.2 Telemetry
-- [ ] P5.3 Frontend integration (target switcher, gate popup, chat over the server, panels)
-- [~] P5.4 Tauri packaging notes, keychain, global shortcut (config only)
+- [x] P5.3 Frontend integration (target switcher, gate popup, chat over the server, panels)
+- [~] P5.4 Tauri: wake_on_lan command added; keychain and global shortcut left as human steps (see decisions D-11)
 
 ## P6 OpenCode
 - [ ] P6.1 Verification tests (shell-route bypass)
-- [ ] P6.2 opencode-manager
-- [ ] P6.3 Permission bridge
-- [ ] P6.4 agent_task tool and task records
+- [x] P6.2 opencode-manager
+- [x] P6.3 Permission bridge
+- [x] P6.4 agent_task tool and task records
 - [~] P6.5 Acceptance on the real install
 
 ## P7 Digest and scheduler

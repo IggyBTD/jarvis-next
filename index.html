@@ -15,10 +15,15 @@
   <link rel="stylesheet" href="/src/ui/code.css">
   <link rel="stylesheet" href="/src/ui/pages.css">
   <link rel="stylesheet" href="/src/ui/icons.css">
+  <link rel="stylesheet" href="/src/ui/server.css">
 </head>
 <body data-page="chat">
 <div id="app">
   <header id="titlebar">
+    <div id="target-switch" class="target-switch" role="group" aria-label="Computer JARVIS controls" hidden>
+      <button type="button" data-target="pc" aria-pressed="true"><i class="dot" aria-hidden="true"></i>PC</button>
+      <button type="button" data-target="mac" aria-pressed="false"><i class="dot" aria-hidden="true"></i>Mac</button>
+    </div>
     <div class="window-controls-cluster">
       <button type="button" id="win-min" class="win-control-btn" title="Minimize" aria-label="Minimize"><span class="icon" data-icon="win-min"></span></button>
       <button type="button" id="win-max" class="win-control-btn" title="Maximize" aria-label="Maximize"><span class="icon win-icon-max" data-icon="win-max"></span><span class="icon win-icon-restore" data-icon="win-restore"></span></button>
@@ -42,7 +47,7 @@
               <button type="button" class="chip-btn" id="model-chip" aria-haspopup="true" aria-expanded="false"><span class="lbl">Model</span><span id="model-chip-label" class="val">General</span><span class="icon" data-icon="chevron-down" data-size="16"></span></button>
               <div id="model-menu" hidden role="menu">
                 <button type="button" id="btn-general" class="matrix-btn active-mode" data-preset="general" role="menuitem"><span class="m-name">General</span><span class="m-sub">qwen3-14b</span></button>
-                <button type="button" id="btn-code" class="matrix-btn" data-preset="coding" role="menuitem"><span class="m-name">Coding and finance</span><span class="m-sub">qwen3.8-27b</span></button>
+                <button type="button" id="btn-code" class="matrix-btn" data-preset="coding" role="menuitem"><span class="m-name">Coding and finance</span><span class="m-sub">qwen3.8-27b q3_k_xl</span></button>
                 <button type="button" id="btn-visual" class="matrix-btn" data-preset="visual" role="menuitem"><span class="m-name">Visual</span><span class="m-sub">qwen3-vl-8b</span></button>
                 <button type="button" id="btn-abliterated" class="matrix-btn" data-preset="abliterated" role="menuitem"><span class="m-name">Abliterated</span><span class="m-sub">qwen3-14b, no refusals</span></button>
                 <button type="button" id="btn-auto" class="matrix-btn" data-preset="auto" role="menuitem" disabled><span class="m-name">Auto router</span><span class="m-sub">not available yet</span></button>
@@ -54,6 +59,7 @@
       <button type="button" class="nav-item" data-page="projects" aria-pressed="false"><span class="icon" data-icon="folder"></span>Projects</button>
       <button type="button" class="nav-item" data-page="artifacts" aria-pressed="false"><span class="icon" data-icon="artifacts"></span>Artifacts</button>
       <button type="button" class="nav-item" id="nav-system" aria-pressed="false"><span class="icon" data-icon="system"></span>System</button>
+      <button type="button" class="nav-item" id="nav-server" aria-pressed="false" hidden><span class="icon" data-icon="wifi"></span>Server</button>
       <button type="button" class="nav-item" data-page="settings" aria-pressed="false"><span class="icon" data-icon="settings"></span>Settings</button>
     </div>
     <div class="side-label"><span>Chats</span><button type="button" id="chat-search-btn" class="icon-btn" aria-pressed="false" title="Search chats" aria-label="Search chats"><span class="icon" data-icon="search"></span></button></div>
@@ -96,6 +102,7 @@
               <button id="dock-web" class="tool-btn" type="button" title="Internet access"><span class="icon" data-icon="globe"></span></button>
               <button id="dock-link" class="tool-btn" type="button" title="Network link"><span class="icon" data-icon="wifi"></span></button>
               <span class="grow"></span>
+              <span id="target-tag" class="target-tag" hidden title="The computer JARVIS controls"></span>
               <span id="ctx-meter" title="Context used"></span>
               <button id="dock-stop" class="stop-btn" type="button" hidden title="Stop (Ctrl+.)" aria-label="Stop the reply"><span class="icon" data-icon="stop"></span></button>
               <button id="send-btn" class="send-btn" type="button" title="Send (Enter)" aria-label="Send"><span class="icon" data-icon="send"></span></button>
@@ -109,6 +116,7 @@
       <aside id="workspace" aria-label="Workspace">
         <div id="ws-tabs" role="tablist" data-tauri-drag-region></div>
         <div id="ws-body">
+          <div id="ws-server" class="ws-pane" role="tabpanel" hidden></div>
           <div id="ws-system" class="ws-pane" role="tabpanel" hidden>
             <section class="sys-card c-cpu"><h3>Processor</h3><div class="t-hero"><div class="t-val"><span id="cpu-val" class="mono-data na">N/A</span></div><span class="t-sub">load</span></div><svg class="spark" data-key="cpu" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"></svg><div class="cores-grid"><div class="core-node"><span class="core-num">1</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">2</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">3</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">4</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">5</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">6</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">7</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div><div class="core-node"><span class="core-num">8</span><span class="core-load-val">N/A</span><div class="core-track"><div class="core-node-fill" style="transform: scaleX(0)"></div></div></div></div><div class="sys-list"><div class="metric-group"><div class="metric-label">Temperature <span id="cpu-temp-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="cpu-temp-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div></div></section>
             <section class="sys-card c-gpu"><h3>Graphics</h3><div class="t-hero"><div class="t-val"><span id="gpu-compute-val" class="mono-data na">N/A</span></div><span class="t-sub">load</span></div><svg class="spark" data-key="gpu" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"></svg><div class="sys-list"><div class="metric-group"><div class="metric-label">Temperature <span id="gpu-temp-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="gpu-temp-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div><div class="metric-group"><div class="metric-label">Video memory <span id="gpu-vram-val" class="mono-data na">N/A</span></div><div class="progress-bar"><div id="gpu-vram-bar" class="progress-fill" style="transform: scaleX(0)"></div></div></div></div></section>
@@ -250,6 +258,15 @@
             <button type="button" data-theme="dark" aria-pressed="false">Dark</button>
           </div>
         </div>
+        <div class="set-card" id="set-server">
+          <h2>JARVIS server</h2>
+          <p>Run the model, the tools and the approvals on your PC, and use this app as a light client. Off keeps the original behaviour: this app talks to LM Studio directly and controls only this computer.</p>
+          <div class="set-row"><label for="srv-enabled">Use the JARVIS server</label><input type="checkbox" id="srv-enabled"></div>
+          <div class="set-row"><label for="srv-url">Server address</label><input type="text" id="srv-url" class="set-input" placeholder="ws://pc:7410" autocomplete="off" spellcheck="false"></div>
+          <div class="set-row"><label for="srv-token">UI token</label><input type="password" id="srv-token" class="set-input" placeholder="from data/tokens/ui.token" autocomplete="off" spellcheck="false"></div>
+          <div class="set-row"><label for="srv-mac">PC MAC address (for Wake-on-LAN)</label><input type="text" id="srv-mac" class="set-input" placeholder="aa:bb:cc:dd:ee:ff" autocomplete="off" spellcheck="false"></div>
+          <div class="set-row"><span id="srv-status" class="does" aria-live="polite">Off</span><button type="button" class="av-btn" id="srv-save">Save and connect</button></div>
+        </div>
         <div class="set-card">
           <h2>Services</h2>
           <div id="set-services"></div>
@@ -266,6 +283,16 @@
       </div>
     </section>
   </main>
+  <dialog id="gate-dialog" aria-labelledby="gate-title" aria-describedby="gate-summary">
+    <div class="gate-head"><span id="gate-target" class="target-pill">PC</span><h2 id="gate-title">Approve this action?</h2><span id="gate-count" class="gate-count"></span></div>
+    <p id="gate-summary" class="gate-summary"></p>
+    <dl class="gate-meta"><div><dt>Action</dt><dd id="gate-action" class="mono-data"></dd></div><div><dt>Risk</dt><dd id="gate-tier"></dd></div><div><dt>Asked by</dt><dd id="gate-source"></dd></div></dl>
+    <h3 class="gate-sub">Exact arguments</h3>
+    <pre id="gate-args" class="gate-pre"></pre>
+    <div id="gate-dry-wrap" hidden><h3 class="gate-sub">What it would do</h3><pre id="gate-dry" class="gate-pre"></pre></div>
+    <img id="gate-shot" class="gate-shot" alt="Screenshot of the page" hidden>
+    <div class="gate-actions"><button type="button" class="av-btn" id="gate-deny">Deny</button><button type="button" class="av-btn primary" id="gate-approve">Approve</button></div>
+  </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
 </div>
 <script type="module" src="/src/main.js"></script>

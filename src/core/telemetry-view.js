@@ -110,6 +110,20 @@ const sys = $('ws-system');
 let stale = false;
 if (sys) new MutationObserver(() => { if (!sys.hidden && stale) { stale = false; render(latest); } }).observe(sys, { attributes: true, attributeFilter: ['hidden'] });
 
+// Where readings come from: this computer's own sensors ('local', the Tauri stream) or the JARVIS server ('server', the PC's
+// readings, which is how a client on the Mac sees them). Only the chosen source is drawn.
+let source = 'local';
+export function useTelemetrySource(next) { source = next; }
+function onReading(payload) {
+  sawData = true;
+  lastUpdate = Date.now();
+  if (notchMeta && notchMeta.textContent === 'Sensors offline') notchMeta.textContent = '';
+  if (sys?.hidden) stale = true; else render(payload);
+  publish(payload, false);
+  reportService('sensors', 'ok', 'readings arriving');
+}
+export function ingestTelemetry(payload) { if (source === 'server') onReading(payload ?? {}); }
+
 export async function initTelemetry() {
   showUnavailable(''); // N/A until the first real reading arrives
   const started = Date.now();

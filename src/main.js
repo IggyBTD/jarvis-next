@@ -26,6 +26,8 @@ import './core/code-home.js';
 import './core/intel-tabs.js';
 import './core/intel-page.js';
 import './core/osint-map.js';
+import './core/server-link.js';
+import './core/server-ui.js';
 
 // Dev only: Ctrl+Shift+I opens the icon switcher. Vite drops this branch from production builds.
 if (import.meta.env.DEV) import('./dev/icon-switcher.js');

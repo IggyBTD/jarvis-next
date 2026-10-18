@@ -134,6 +134,10 @@ const ROWS = [
   ['caffeinate', 'mac', 'T1', 'd', 'Prevent sleep for a number of minutes.', 'minutes:i1-720!'],
 
   ['run_user_script', 'scripts', 'T1', 'wd', 'Run a script that is listed in scripts.json (tier per entry).', 'name:s! args:s', 'mvp'],
+
+  // system actions: run on an agent, used only by the server for its own bookkeeping (task snapshots), never offered to the model
+  ['git_snapshot', 'dev', 'T1', 'wd', 'Record the current state of a workspace repository under refs/jarvis/ without changing any file.', 'path:s! name:s!', 'system'],
+  ['git_changes', 'dev', 'T0', 'wd', 'List the files changed in a workspace repository since a snapshot.', 'path:s! name:s!', 'system'],
 ];
 
 function paramSchema(spec) {
@@ -158,10 +162,11 @@ try { for (const a of JSON.parse(fs.readFileSync(file, 'utf8')).actions) prior[a
 const platforms = (p) => [...(p.includes('w') ? ['win32'] : []), ...(p.includes('d') ? ['darwin'] : [])];
 const actions = ROWS.map(([name, category, tier, p, description, params, flags = '']) => ({
   name, description, category, tier, platforms: platforms(p),
-  enabled: prior[name] ?? (flags.includes('mvp') || flags.includes('internal')),
+  enabled: prior[name] ?? (flags.includes('mvp') || flags.includes('internal') || flags.includes('system')),
   params: paramSchema(params), returns: 'object',
   ...(flags.includes('mvp') ? { mvp: true } : {}),
   ...(flags.includes('internal') ? { internal: true } : {}),
+  ...(flags.includes('system') ? { system: true } : {}),
 }));
 fs.writeFileSync(file, `${JSON.stringify({ maxToolsPerRequest: 15, actions }, null, 2)}\n`);
 console.log(`${actions.length} actions written to ${path.relative(process.cwd(), file)}`);

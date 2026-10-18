@@ -2480,6 +2480,68 @@
       },
       "returns": "object",
       "mvp": true
+    },
+    {
+      "name": "git_snapshot",
+      "description": "Record the current state of a workspace repository under refs/jarvis/ without changing any file.",
+      "category": "dev",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "system": true
+    },
+    {
+      "name": "git_changes",
+      "description": "List the files changed in a workspace repository since a snapshot.",
+      "category": "dev",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "system": true
     }
   ]
 }

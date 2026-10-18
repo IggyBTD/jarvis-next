@@ -7,6 +7,7 @@ import dgram from 'node:dgram';
 import crypto from 'node:crypto';
 import { action, safePath, dirPath, expandHome, spawnTracked } from './common.js';
 import { parseLhm } from '../../shared/lhm.js';
+import { gitSnapshot, gitChanges } from './git.js';
 import { validate } from '../../shared/schema.js';
 
 const GiB = 1024 ** 3;
@@ -247,6 +248,9 @@ export const portable = {
     return { stopped: `${workspace}/${command}` };
   } }),
   list_dev_servers: action({ async run(_a, ctx) { return [...ctx.background.entries()].filter(([k]) => k.startsWith('dev:')).map(([k, v]) => ({ name: k.slice(4), pid: v.child.pid, since: new Date(v.startedAt).toISOString() })); } }),
+
+  git_snapshot: action({ run: ({ path: p, name }, ctx) => gitSnapshot(p, name, ctx) }),
+  git_changes: action({ run: ({ path: p, name }, ctx) => gitChanges(p, name, ctx) }),
 
   // --- user scripts ------------------------------------------------------------------------------------------------------
   run_user_script: action({

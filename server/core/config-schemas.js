@@ -37,7 +37,7 @@ export const SCHEMAS = {
         name: { type: 'string', pattern: '^[a-z][a-z0-9_]{1,48}$' }, description: str, category: str, tier,
         platforms: { type: 'array', items: { enum: ['win32', 'darwin'] }, minItems: 1 },
         enabled: { type: 'boolean' }, params: { type: 'object' }, returns: { type: 'string' },
-        primary: { type: 'string' }, mvp: { type: 'boolean' }, internal: { type: 'boolean' }, timeoutMs: { type: 'integer', minimum: 100 },
+        primary: { type: 'string' }, mvp: { type: 'boolean' }, internal: { type: 'boolean' }, system: { type: 'boolean' }, timeoutMs: { type: 'integer', minimum: 100 },
       }, ['name', 'description', 'category', 'tier', 'platforms', 'enabled', 'params']),
     },
   }, ['actions']),

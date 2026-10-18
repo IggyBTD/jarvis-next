@@ -41,5 +41,5 @@ export function parseClientMessage(raw) {
 export const BROADCAST = new Set([
   'chat.delta', 'chat.done', 'chat.error', 'chat.title', 'tool.call', 'tool.result',
   'gate.request', 'gate.resolved', 'gate.queued', 'target.changed', 'telemetry', 'agent.status',
-  'digest.ready', 'digest.error', 'health', 'reminder.fire', 'auth.banner',
+  'digest.ready', 'digest.error', 'health', 'reminder.fire', 'auth.banner', 'chat.note',
 ]);
