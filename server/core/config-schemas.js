@@ -50,7 +50,7 @@ export const SCHEMAS = {
     browser: obj({ allowDomains: strs, denyDomains: strs, submitPatterns: strs }),
   }, ['modes', 'approvalTimeoutMs', 'pendingExpiryMs', 'opencode', 'browser']),
   'apps.json': { type: 'object', additionalProperties: obj({ win32: { type: 'string' }, darwin: { type: 'string' }, args: strs }, []) },
-  'workspaces.json': { type: 'object', additionalProperties: obj({ apps: strs, urls: strs, folders: strs, devCommands: { type: 'object', additionalProperties: strs } }, []) },
+  'workspaces.json': { type: 'object', additionalProperties: obj({ apps: strs, urls: strs, folders: strs, closeApps: strs, devCommands: { type: 'object', additionalProperties: strs } }, []) },
   'schedules.json': obj({
     timezone: str, catchUpWindowMinutes: { type: 'integer', minimum: 0 },
     jobs: { type: 'object', additionalProperties: obj({ at: hhmm, everyMinutes: { type: 'integer', minimum: 1 }, enabled: { type: 'boolean' } }, ['enabled']) },

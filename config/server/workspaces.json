@@ -1,4 +1,33 @@
 {
-  "dev": { "apps": ["code", "terminal"], "urls": [], "folders": [], "devCommands": { "jarvis": ["npm", "run", "dev"] } },
-  "chill": { "apps": ["spotify"], "urls": [], "folders": [] }
+  "dev": {
+    "apps": [
+      "code",
+      "terminal"
+    ],
+    "urls": [],
+    "folders": [],
+    "devCommands": {
+      "jarvis": [
+        "npm",
+        "run",
+        "dev"
+      ]
+    }
+  },
+  "chill": {
+    "apps": [
+      "spotify"
+    ],
+    "urls": [],
+    "folders": []
+  },
+  "game": {
+    "apps": [],
+    "closeApps": [
+      "discord",
+      "spotify"
+    ],
+    "urls": [],
+    "folders": []
+  }
 }

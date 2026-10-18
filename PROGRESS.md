@@ -24,11 +24,11 @@ Commits are per phase (see decisions.md D-01), not per step.
 - [~] P2.4 bench-model harness (real numbers are a human step)
 
 ## P3 Agent and registry
-- [ ] P3.1 Agent skeleton
-- [ ] P3.2 Registry loader, run helper, app aliases, dry run
-- [ ] P3.3 MVP actions on win32
-- [ ] P3.4 Same on darwin
-- [ ] P3.5 Unsupported actions hidden per OS
+- [x] P3.1 Agent skeleton
+- [x] P3.2 Registry loader, run helper, app aliases, dry run
+- [~] P3.3 MVP actions on win32 (mock-tested; real-machine check is a human step)
+- [~] P3.4 Same on darwin (mock-tested; Mac check is a human step)
+- [x] P3.5 Unsupported actions hidden per OS
 
 ## P4 Target and routing
 - [ ] P4.1 target-state
