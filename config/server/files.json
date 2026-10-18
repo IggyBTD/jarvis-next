@@ -1,0 +1,8 @@
+{
+  "roots": {
+    "win32": ["C:\\Users\\bethe\\jarvis-workspace", "C:\\Users\\bethe\\Documents", "C:\\Users\\bethe\\Downloads", "C:\\Users\\bethe\\Desktop"],
+    "darwin": ["~/jarvis-workspace", "~/Documents", "~/Downloads", "~/Desktop"]
+  },
+  "maxReadBytes": 200000,
+  "maxListEntries": 300
+}

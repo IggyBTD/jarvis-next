@@ -43,3 +43,15 @@ Only checked in a browser pane with a scripted fake LM Studio and a stubbed tele
 ## OSINT map
 
 `src/core/osint-map.js`: aircraft and ships are icons (three instanced meshes, one per kind) that glide between reports by dead reckoning (`geo.js`, tested in `tools/tests/geo.test.mjs`). `config/osint-watch.json` is the list of airlines (callsign prefixes) and companies (ship names, IMO or MMSI numbers, words in the name or destination) shown while "My list" is on; AIS never says who owns a ship, so company matches are only as good as that file. OpenSky: anonymous 400 credits a day (refresh every 15 min); an API client saved through the OpenSky button goes to `data/opensky.json` (git-ignored) and gives 4000 a day (refresh every 100 s). Ships need a free aisstream.io key.
+
+## JARVIS server build (branch `jarvis-build`)
+
+Spec: `docs/JARVIS_BUILD_SPEC.md` (single source of truth for this part), judgment calls in `docs/decisions.md`, progress in `PROGRESS.md`, human-only steps in `HUMAN_TODO.md`. Anything in older notes about presets, whiteboard-only plans or other folders is superseded where it conflicts with the spec; the UI design rules above still apply to `src/`.
+
+What it is: one local model (alias `local`) on the PC behind `server/` (:7410); one `agent/` per machine (PC :7421, Mac :7422) that runs actions and hosts OpenCode and a guarded Playwright sidecar; this app (`src/`) is the thin client. The user picks the target (`pc` or `mac`); the model cannot.
+
+Rules that must survive every change:
+- Every tool call goes `tool-router -> policy -> gate -> audit -> agent`. Only `server/core/tool-router.js` imports `agent-client.js`; only `llm-client.js` calls the model. `npm run check-chokepoint` and a test enforce it. Never name a helper `exec`; use `runProgram` (argument arrays, no shell strings).
+- Policy is code (`server/core/policy.js`), not prompt. T3 is never automatic; scheduled jobs never run T3. Target never comes from the model. Web, mail, file and tool output is wrapped as untrusted. Audit log is hash-chained; never weaken auth, gate, policy or audit to make a test pass. Never send `always` to OpenCode; never call `/session/:id/shell`. Secrets are never logged.
+- Config is in `config/server/` (schema-checked at start). `npm test` must stay green (`npm run test:browser` runs the Chromium tests, one file at a time). No questions in unattended runs: pick the sensible option and write it in decisions.md.
+- Style for text JARVIS produces and for commit messages and docs: direct, no filler, no em dashes.

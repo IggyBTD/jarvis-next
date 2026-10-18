@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "calendar": true,
+  "gmail": true,
+  "telemetry": true,
+  "maxThreads": 25,
+  "maxBodyChars": 1500,
+  "thresholds": { "gpuTempC": 85, "cpuLoadPct": 95, "memoryPct": 92 },
+  "google": { "clientFile": "data/tokens/google-client.json", "tokenFile": "data/tokens/google-token.enc" }
+}

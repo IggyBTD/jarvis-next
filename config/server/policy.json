@@ -1,0 +1,22 @@
+{
+  "modes": {
+    "chat": { "T0": "auto", "T1": "auto", "T2": "ask", "T3": "ask" },
+    "scheduled": { "T0": "auto", "T1": "auto", "T2": "deny", "T3": "deny" }
+  },
+  "actions": {},
+  "scheduled_allow": { "digest": [], "telemetry-rollup": [] },
+  "approvalTimeoutMs": 120000,
+  "pendingExpiryMs": 43200000,
+  "opencode": {
+    "version": "1.19.1",
+    "taskTimeoutMs": 1800000,
+    "maxCommandLength": 400,
+    "allowCommands": ["git status*", "git diff*", "git log*", "git show*", "git branch", "git rev-parse*", "ls", "ls *", "dir", "dir *", "cat *", "head *", "tail *", "wc *", "pwd", "npm test", "npm run test", "node --version", "npm --version"],
+    "destructive": ["rm -rf*", "rm -fr*", "sudo*", "format *", "del /s*", "rd /s*", "rmdir /s*", "*| sh*", "*| bash*", "*|sh*", "*|bash*", "curl*|*", "wget*|*", "npm install -g*", "npm i -g*", "pip install*", "brew install*", "winget install*", "choco install*", "chmod -R*", "chown*", "mkfs*", "dd *", "shutdown*", "reboot*", "reg delete*", "Remove-Item*-Recurse*", "git push*", "git reset --hard*", "git clean*"]
+  },
+  "browser": {
+    "allowDomains": [],
+    "denyDomains": [],
+    "submitPatterns": ["submit", "send", "pay", "buy", "purchase", "order", "confirm", "delete", "remove", "checkout", "place order", "sign in", "log in", "post", "publish", "enviar", "pagar", "comprar", "confirmar", "eliminar", "envoyer", "payer", "acheter", "supprimer"]
+  }
+}

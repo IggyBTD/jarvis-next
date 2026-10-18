@@ -14,7 +14,16 @@
     "icons:finalise": "node scripts/finalise-icons.mjs",
     "contrast": "node scripts/contrast.mjs",
     "lint:spacing": "node scripts/audit-css.mjs --fail",
-    "measure": "node scripts/measure-ui.mjs"
+    "measure": "node scripts/measure-ui.mjs",
+    "test": "node --test --test-force-exit --test-timeout=90000 \"tests/unit/*.test.js\" \"tests/integration/*.test.js\"",
+    "test:browser": "node --test --test-force-exit --test-timeout=120000 \"tests/browser/*.test.js\"",
+    "server": "node server/index.js",
+    "agent": "node agent/index.js",
+    "doctor": "node scripts/doctor.js",
+    "gen-tokens": "node scripts/gen-tokens.js",
+    "verify-audit": "node scripts/verify-audit.js",
+    "check-chokepoint": "node scripts/check-chokepoint.js",
+    "lint": "node scripts/check-chokepoint.js && node scripts/lint.js"
   },
   "devDependencies": {
     "@iconify-json/solar": "^1.2.13",
@@ -47,6 +56,10 @@
     "pdfjs-dist": "^6.4.299",
     "three": "^0.186.1",
     "topojson-client": "^3.1.0",
-    "world-atlas": "^2.0.2"
+    "world-atlas": "^2.0.2",
+    "ws": "^8.22.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

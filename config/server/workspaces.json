@@ -1,0 +1,4 @@
+{
+  "dev": { "apps": ["code", "terminal"], "urls": [], "folders": [], "devCommands": { "jarvis": ["npm", "run", "dev"] } },
+  "chill": { "apps": ["spotify"], "urls": [], "folders": [] }
+}

@@ -1,0 +1,2485 @@
+{
+  "maxToolsPerRequest": 15,
+  "actions": [
+    {
+      "name": "open_app",
+      "description": "Open an application by its alias from apps.json.",
+      "category": "apps",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "app"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "focus_app",
+      "description": "Bring a running application to the front.",
+      "category": "apps",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "app"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "list_running_apps",
+      "description": "List the applications that are running.",
+      "category": "apps",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "close_app",
+      "description": "Ask an application to quit.",
+      "category": "apps",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "app"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "force_quit_app",
+      "description": "Force an application to quit (unsaved work is lost).",
+      "category": "apps",
+      "tier": "T3",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "app"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "open_url",
+      "description": "Open an http or https address in the default browser.",
+      "category": "apps",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "open_file",
+      "description": "Open a file inside the allowed folders with its default application.",
+      "category": "apps",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "open_folder",
+      "description": "Open a folder inside the allowed folders in the file manager.",
+      "category": "apps",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "reveal_in_file_manager",
+      "description": "Show a file in the file manager.",
+      "category": "apps",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "show_desktop",
+      "description": "Minimise windows to show the desktop.",
+      "category": "apps",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "list_windows",
+      "description": "List open windows with their titles.",
+      "category": "apps",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "tile_windows",
+      "description": "Tile the open windows side by side.",
+      "category": "apps",
+      "tier": "T1",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "open_workspace",
+      "description": "Open a named workspace: its apps, addresses and folders from workspaces.json.",
+      "category": "workspaces",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "close_workspace",
+      "description": "Close the apps of a named workspace.",
+      "category": "workspaces",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "list_workspaces",
+      "description": "List the configured workspaces.",
+      "category": "workspaces",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "start_dev_server",
+      "description": "Start a predefined dev command of a workspace.",
+      "category": "workspaces",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "workspace": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "command": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "workspace",
+          "command"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "stop_dev_server",
+      "description": "Stop a dev server that JARVIS started.",
+      "category": "workspaces",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "workspace": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "command": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "workspace",
+          "command"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "list_dev_servers",
+      "description": "List the dev servers that JARVIS started.",
+      "category": "workspaces",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "set_volume",
+      "description": "Set the system volume from 0 to 100.",
+      "category": "audio",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "level"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "get_volume",
+      "description": "Read the system volume.",
+      "category": "audio",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "mute",
+      "description": "Mute the system audio.",
+      "category": "audio",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "unmute",
+      "description": "Unmute the system audio.",
+      "category": "audio",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "list_audio_devices",
+      "description": "List audio output devices.",
+      "category": "audio",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "set_audio_output",
+      "description": "Switch the audio output device by name.",
+      "category": "audio",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "device": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "device"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "media_play_pause",
+      "description": "Play or pause the current media.",
+      "category": "audio",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "media_next",
+      "description": "Skip to the next track.",
+      "category": "audio",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "media_previous",
+      "description": "Go to the previous track.",
+      "category": "audio",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "turn_off_display",
+      "description": "Turn the display off (the session stays unlocked).",
+      "category": "display",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "set_brightness",
+      "description": "Set the screen brightness from 0 to 100.",
+      "category": "display",
+      "tier": "T1",
+      "platforms": [
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "level"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "toggle_dark_mode",
+      "description": "Switch between light and dark appearance.",
+      "category": "display",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "list_displays",
+      "description": "List the connected displays.",
+      "category": "display",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "set_wallpaper",
+      "description": "Set the desktop wallpaper to an image inside the allowed folders.",
+      "category": "display",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "night_light",
+      "description": "Turn the night light on or off.",
+      "category": "display",
+      "tier": "T1",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "get_power_plan",
+      "description": "Read the active power plan or mode.",
+      "category": "power",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "set_power_plan",
+      "description": "Switch the Windows power plan.",
+      "category": "power",
+      "tier": "T2",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "string",
+            "enum": [
+              "balanced",
+              "high_performance",
+              "power_saver"
+            ]
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "lock_screen",
+      "description": "Lock the screen.",
+      "category": "power",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "sleep",
+      "description": "Put the computer to sleep.",
+      "category": "power",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "hibernate",
+      "description": "Hibernate the computer.",
+      "category": "power",
+      "tier": "T2",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "keep_awake",
+      "description": "Keep the computer awake for a number of minutes.",
+      "category": "power",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 720
+          }
+        },
+        "required": [
+          "minutes"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "cancel_keep_awake",
+      "description": "Stop keeping the computer awake.",
+      "category": "power",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "schedule_shutdown",
+      "description": "Shut the computer down after a number of minutes.",
+      "category": "power",
+      "tier": "T3",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          }
+        },
+        "required": [
+          "minutes"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "cancel_shutdown",
+      "description": "Cancel a scheduled shutdown.",
+      "category": "power",
+      "tier": "T3",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "shutdown",
+      "description": "Shut the computer down now.",
+      "category": "power",
+      "tier": "T3",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "restart",
+      "description": "Restart the computer now.",
+      "category": "power",
+      "tier": "T3",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "sign_out",
+      "description": "Sign the current user out.",
+      "category": "power",
+      "tier": "T3",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "battery_status",
+      "description": "Read the battery level and charging state.",
+      "category": "power",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "game_mode_on",
+      "description": "Switch to the high performance plan, enable Game Mode, close the configured apps and optionally launch a game.",
+      "category": "performance",
+      "tier": "T2",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "launch": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "game_mode_off",
+      "description": "Return to the balanced plan.",
+      "category": "performance",
+      "tier": "T2",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "list_top_processes",
+      "description": "List the processes using the most CPU.",
+      "category": "performance",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "set_process_priority",
+      "description": "Change the priority of a process.",
+      "category": "performance",
+      "tier": "T2",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4194304
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "below_normal",
+              "normal",
+              "above_normal",
+              "high"
+            ]
+          }
+        },
+        "required": [
+          "pid",
+          "priority"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "kill_process",
+      "description": "Terminate a process by its id.",
+      "category": "performance",
+      "tier": "T3",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4194304
+          }
+        },
+        "required": [
+          "pid"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "list_startup_items",
+      "description": "List the programs that start with the computer.",
+      "category": "performance",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "clear_temp_files",
+      "description": "Delete temporary files. Use dryRun first.",
+      "category": "performance",
+      "tier": "T3",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "empty_trash",
+      "description": "Empty the Trash.",
+      "category": "performance",
+      "tier": "T3",
+      "platforms": [
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "empty_recycle_bin",
+      "description": "Empty the Recycle Bin.",
+      "category": "performance",
+      "tier": "T3",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "get_system_info",
+      "description": "Operating system, host name, CPU, memory and uptime summary.",
+      "category": "system",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "cpu_usage",
+      "description": "Current CPU load in percent.",
+      "category": "system",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "memory_usage",
+      "description": "Memory used and total in GiB.",
+      "category": "system",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "disk_usage",
+      "description": "Free and total space per disk.",
+      "category": "system",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "gpu_usage",
+      "description": "GPU load, memory and temperature.",
+      "category": "system",
+      "tier": "T0",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "temperatures",
+      "description": "Hardware temperatures.",
+      "category": "system",
+      "tier": "T0",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "uptime",
+      "description": "Time since the last boot.",
+      "category": "system",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    },
+    {
+      "name": "installed_apps",
+      "description": "List the installed applications.",
+      "category": "system",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "pending_updates",
+      "description": "List available software updates (read only).",
+      "category": "system",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "disk_health",
+      "description": "Physical disk health status.",
+      "category": "system",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "list_services",
+      "description": "List system services and their state.",
+      "category": "system",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "network_info",
+      "description": "Network adapters and addresses.",
+      "category": "network",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "wifi_status",
+      "description": "Current Wi-Fi connection.",
+      "category": "network",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "list_wifi",
+      "description": "Wi-Fi networks in range.",
+      "category": "network",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "ping",
+      "description": "Ping a host name or address four times.",
+      "category": "network",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "host"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "public_ip",
+      "description": "The public IP address (makes an external request).",
+      "category": "network",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "flush_dns",
+      "description": "Flush the DNS cache.",
+      "category": "network",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "toggle_wifi",
+      "description": "Turn Wi-Fi on or off.",
+      "category": "network",
+      "tier": "T3",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "tailscale_status",
+      "description": "Tailscale connection status.",
+      "category": "network",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "open_ports",
+      "description": "Listening network ports.",
+      "category": "network",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "wake_on_lan",
+      "description": "Send a Wake-on-LAN packet to a MAC address.",
+      "category": "network",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "mac": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "mac"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "list_dir",
+      "description": "List a folder inside the allowed roots.",
+      "category": "files",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "read_file",
+      "description": "Read a text file inside the allowed roots.",
+      "category": "files",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "search_files",
+      "description": "Find files by name inside the allowed roots.",
+      "category": "files",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "pattern": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path",
+          "pattern"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "file_info",
+      "description": "Size and dates of a file.",
+      "category": "files",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "find_duplicates",
+      "description": "Find duplicate files in a folder by content hash.",
+      "category": "files",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "copy_file",
+      "description": "Copy a file inside the allowed roots.",
+      "category": "files",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "to": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "move_file",
+      "description": "Move a file inside the allowed roots.",
+      "category": "files",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "to": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "trash_file",
+      "description": "Move a file to the Recycle Bin or Trash.",
+      "category": "files",
+      "tier": "T3",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "zip_folder",
+      "description": "Zip a folder inside the allowed roots.",
+      "category": "files",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "to": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "transfer_file",
+      "description": "Copy a file to the other machine.",
+      "category": "files",
+      "tier": "T3",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "clean_downloads",
+      "description": "Propose and then move old files out of Downloads (proposal first).",
+      "category": "files",
+      "tier": "T3",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "apply": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "get_clipboard",
+      "description": "Read the clipboard text (may hold secrets).",
+      "category": "clipboard",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "set_clipboard",
+      "description": "Put text on the clipboard.",
+      "category": "clipboard",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "screenshot",
+      "description": "Take a screenshot and save it in the workspace. It stays on the machine.",
+      "category": "clipboard",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "show_notification",
+      "description": "Show a desktop notification.",
+      "category": "clipboard",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "title",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "set_timer",
+      "description": "Start a timer in whole minutes; the server notifies the client.",
+      "category": "time",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "minutes"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "internal": true
+    },
+    {
+      "name": "set_reminder",
+      "description": "Set a reminder at a local time (YYYY-MM-DD HH:MM).",
+      "category": "time",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "when": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "when",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "internal": true
+    },
+    {
+      "name": "list_schedules",
+      "description": "List timers, reminders and scheduled jobs.",
+      "category": "time",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "internal": true
+    },
+    {
+      "name": "open_terminal_at",
+      "description": "Open a terminal in a folder inside the allowed roots.",
+      "category": "dev",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "open_editor_at",
+      "description": "Open the code editor on a folder inside the allowed roots.",
+      "category": "dev",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "git_status",
+      "description": "git status of a workspace repository.",
+      "category": "dev",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "git_diff",
+      "description": "git diff of a workspace repository.",
+      "category": "dev",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "docker_ps",
+      "description": "List docker containers.",
+      "category": "dev",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "docker_start",
+      "description": "Start a named docker container.",
+      "category": "dev",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "docker_stop",
+      "description": "Stop a named docker container.",
+      "category": "dev",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "port_in_use",
+      "description": "Check what is listening on a port.",
+      "category": "dev",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "port": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          }
+        },
+        "required": [
+          "port"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "check_updates",
+      "description": "Check for software updates (read only).",
+      "category": "maintenance",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "install_updates",
+      "description": "Install software updates.",
+      "category": "maintenance",
+      "tier": "T3",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "create_restore_point",
+      "description": "Create a Windows restore point.",
+      "category": "maintenance",
+      "tier": "T2",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "backup_folder",
+      "description": "Copy a folder to the configured backup destination.",
+      "category": "maintenance",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "defender_status",
+      "description": "Microsoft Defender status.",
+      "category": "maintenance",
+      "tier": "T0",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "quick_scan",
+      "description": "Start a Microsoft Defender quick scan.",
+      "category": "maintenance",
+      "tier": "T2",
+      "platforms": [
+        "win32"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "run_shortcut",
+      "description": "Run a named macOS Shortcut.",
+      "category": "mac",
+      "tier": "T2",
+      "platforms": [
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "run_applescript_named",
+      "description": "Run a named AppleScript from the scripts manifest.",
+      "category": "mac",
+      "tier": "T2",
+      "platforms": [
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "spotlight_search",
+      "description": "Search with Spotlight inside the allowed roots.",
+      "category": "mac",
+      "tier": "T0",
+      "platforms": [
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "caffeinate",
+      "description": "Prevent sleep for a number of minutes.",
+      "category": "mac",
+      "tier": "T1",
+      "platforms": [
+        "darwin"
+      ],
+      "enabled": false,
+      "params": {
+        "type": "object",
+        "properties": {
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 720
+          }
+        },
+        "required": [
+          "minutes"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
+      "name": "run_user_script",
+      "description": "Run a script that is listed in scripts.json (tier per entry).",
+      "category": "scripts",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "args": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "mvp": true
+    }
+  ]
+}
