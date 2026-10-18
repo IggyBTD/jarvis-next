@@ -37,8 +37,8 @@ Commits are per phase (see decisions.md D-01), not per step.
 - [x] P4.4 orchestrator
 
 ## P5 API and frontend
-- [ ] P5.1 WS and HTTP API
-- [ ] P5.2 Telemetry
+- [x] P5.1 WS and HTTP API
+- [x] P5.2 Telemetry
 - [ ] P5.3 Frontend integration (target switcher, gate popup, chat over the server, panels)
 - [~] P5.4 Tauri packaging notes, keychain, global shortcut (config only)
 
