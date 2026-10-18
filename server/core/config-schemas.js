@@ -27,6 +27,7 @@ export const SCHEMAS = {
     thinkingMethod: { enum: ['chat_template_kwargs', 'no_think', 'request_field'] },
     requestTimeoutMs: { type: 'integer', minimum: 1000 }, maxOutputTokens: { type: 'integer', minimum: 16 },
     preemptInteractive: { type: 'boolean' }, keepThinkInHistory: { type: 'boolean' },
+    maxIterations: { type: 'integer', minimum: 1, maximum: 30 }, maxToolCalls: { type: 'integer', minimum: 1, maximum: 60 },
   }, ['baseUrl', 'modelId', 'contextLength', 'concurrency', 'thinking', 'thinkingMethod', 'requestTimeoutMs']),
   'actions.json': obj({
     maxToolsPerRequest: { type: 'integer', minimum: 1, maximum: 40 },

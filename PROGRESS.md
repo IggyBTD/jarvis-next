@@ -31,10 +31,10 @@ Commits are per phase (see decisions.md D-01), not per step.
 - [x] P3.5 Unsupported actions hidden per OS
 
 ## P4 Target and routing
-- [ ] P4.1 target-state
-- [ ] P4.2 prompt-builder
-- [ ] P4.3 tool-router and agent-client
-- [ ] P4.4 orchestrator
+- [x] P4.1 target-state
+- [x] P4.2 prompt-builder
+- [x] P4.3 tool-router and agent-client
+- [x] P4.4 orchestrator
 
 ## P5 API and frontend
 - [ ] P5.1 WS and HTTP API
