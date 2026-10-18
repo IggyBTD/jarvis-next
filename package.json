@@ -23,7 +23,9 @@
     "gen-tokens": "node scripts/gen-tokens.js",
     "verify-audit": "node scripts/verify-audit.js",
     "check-chokepoint": "node scripts/check-chokepoint.js",
-    "lint": "node scripts/check-chokepoint.js && node scripts/lint.js"
+    "lint": "node scripts/check-chokepoint.js && node scripts/lint.js",
+    "bench": "node scripts/bench-model.js",
+    "test:real": "node --test --test-timeout=120000 tests/real/*.test.js"
   },
   "devDependencies": {
     "@iconify-json/solar": "^1.2.13",

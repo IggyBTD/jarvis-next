@@ -18,9 +18,9 @@ Commits are per phase (see decisions.md D-01), not per step.
 - [x] P1.5 Static chokepoint test
 
 ## P2 Model path
-- [ ] P2.1 llm-client
-- [ ] P2.2 llm-queue
-- [ ] P2.3 llm-proxy
+- [x] P2.1 llm-client
+- [x] P2.2 llm-queue
+- [x] P2.3 llm-proxy
 - [~] P2.4 bench-model harness (real numbers are a human step)
 
 ## P3 Agent and registry
