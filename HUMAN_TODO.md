@@ -67,3 +67,10 @@ Run an OpenAI-compatible speech-to-text server on :8770 and text-to-speech on :8
 - Decide whether the PC should wake for the 07:00 digest (BIOS wake timer) or stay on.
 - Sync method between machines: a private git remote.
 - Desktop build: `npm run tauri build` on each OS. Store the UI token in the OS keychain (see docs/setup-mac.md); the browser build keeps it in localStorage.
+
+## 11. Light Mac setup (the short path)
+1. On the PC: `node scripts/make-mac-bundle.js` (makes `dist-mac\jarvis-mac.zip`, about 80 KB) and `node scripts/client-link.js` (the link for the Mac browser; treat it like a password).
+2. Move `jarvis-mac.zip` and `data\tokens\mac.token` to the Mac by AirDrop or USB.
+3. Paste the prompt in `docs/MAC_PROMPT.md` into Claude Code on the Mac (fill in the PC's address).
+4. When it tells you the Mac's address, put it into the PC's `config\server\machines.json` as `machines.mac.host`, then restart the server (`npm run server`).
+5. Open the link from step 1 in a browser on the Mac.

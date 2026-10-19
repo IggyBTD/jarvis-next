@@ -34,7 +34,9 @@ export function createHealth({ llm, queue, router, machines, ttlMs = 4000, now =
   };
 }
 
-export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversations, digest, buildState, log = () => {} }) {
+const readBody = (req) => new Promise((resolve, reject) => { const c = []; let n = 0; req.on('data', (d) => { n += d.length; if (n > 20_000) { reject(Object.assign(new Error('body too large'), { status: 413 })); req.destroy(); } else c.push(d); }); req.on('end', () => { try { resolve(c.length ? JSON.parse(Buffer.concat(c).toString('utf8')) : {}); } catch { reject(Object.assign(new Error('body must be JSON'), { status: 400 })); } }); req.on('error', reject); });
+
+export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversations, digest, osint, buildState, log = () => {} }) {
   const origins = cfg.machines.server.origins ?? [];
   return async function handle(req, res) {
     try {
@@ -61,6 +63,12 @@ export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversa
       if (verdict.principal.role !== 'ui') return json(res, 403, { error: 'this token cannot use this route' }, cors);
       if (req.method === 'GET' && p === '/api/state') return json(res, 200, await buildState(), cors);
       if (req.method === 'GET' && p === '/api/audit') return json(res, 200, { entries: audit.tail(Math.min(200, Number(url.searchParams.get('n')) || 50)), verify: url.searchParams.get('verify') === '1' ? audit.verify() : undefined }, cors);
+      if (osint && p === '/api/osint/aircraft' && req.method === 'GET') { const q = url.searchParams; return json(res, 200, await osint.aircraft({ force: q.get('force') === '1', since: q.get('since') ?? 0, mine: q.get('watch') !== '0' }), cors); }
+      if (osint && p === '/api/osint/watch' && req.method === 'GET') return json(res, 200, osint.watch(), cors);
+      if (osint && p === '/api/osint/opensky') {
+        if (req.method === 'GET') return json(res, 200, osint.status(), cors);
+        if (req.method === 'POST') { const b = await readBody(req); try { return json(res, 200, await osint.login(b.clientId, b.clientSecret), cors); } catch (e) { return json(res, e.status ?? 500, { error: e.message }, cors); } }
+      }
       if (req.method === 'GET' && p === '/api/conversations') return json(res, 200, { conversations: conversations.list() }, cors);
       if (req.method === 'GET' && p === '/api/digest') {
         const date = url.searchParams.get('date');

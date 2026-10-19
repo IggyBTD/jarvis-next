@@ -47,3 +47,17 @@ test('server boots, serves a chat turn with a tool call through the router, and 
     await c.close();
   } finally { await app.stop(); await pc.close(); await mac.close(); await model.close(); t.cleanup(); }
 });
+
+test('server bound to a network address also answers on loopback', async () => {
+  const { networkInterfaces } = await import('node:os');
+  const lan = Object.values(networkInterfaces()).flat().find((i) => i.family === 'IPv4' && !i.internal)?.address;
+  if (!lan) return;
+  const model = await startFakeModel();
+  const t = testConfig((f) => { f['models.json'].baseUrl = model.url; f['schedules.json'].jobs.digest.enabled = false; });
+  const app = await createServerApp({ cfg: t.cfg, log: () => {} });
+  try {
+    const a = await app.start({ port: 0, host: lan });
+    assert.equal((await request(`http://${lan}:${a.port}/health`)).status, 401);
+    assert.equal((await request(`http://127.0.0.1:${a.port}/health`)).status, 401);
+  } finally { await app.stop(); await model.close(); t.cleanup(); }
+});

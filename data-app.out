@@ -22,3 +22,4 @@ tauri-plugin-dialog (v2.7.3) : @tauri-apps/plugin-dialog (v2.8.1)
 [1m[96m    Building[0m [=======================> ] 404/406: app     [1m[96m    Building[0m [=======================> ] 405/406: app(bin)                                                            [1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 21.54s
 [1m[92m     Running[0m `target\debug\app.exe`
 [2m7:10:44 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/server-link.js[22m
+[2m7:44:34 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/browser-client.js[22m

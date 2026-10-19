@@ -1,5 +1,7 @@
 // The one place that talks to the browser sidecar (sidecars/browser/server.mjs). The app starts the sidecar
 // through Tauri; in a plain browser tab it has to be running already (`npm run browser`).
+import { serverMode, getSettings } from './server-link.js';
+
 const PORT = 8766;
 const BASE = `http://127.0.0.1:${PORT}`;
 let ready = null;
@@ -43,26 +45,34 @@ export async function shot() {
   return { src: URL.createObjectURL(await res.blob()), url: decodeURIComponent(res.headers.get('X-Url') ?? ''), title: decodeURIComponent(res.headers.get('X-Title') ?? '') };
 }
 
-// Aircraft for the OSINT map (the sidecar asks OpenSky and caches the answer). `mine`: only the airlines in the watch list.
-export async function aircraft(force = false, since = 0, mine = true) {
+// The globe's data. With the JARVIS server on, the server fetches it (OpenSky refuses browser pages, and the login stays on the
+// PC), so a browser on the Mac gets the same feed; otherwise the old local sidecar does, as before.
+async function osintFetch(path, init = {}) {
+  if (serverMode()) {
+    const s = getSettings();
+    const base = s.url.trim().replace(/^ws/i, 'http').replace(/\/ws$/, '').replace(/\/+$/, '');
+    return fetch(`${base}/api${path}`, { ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${s.token}` } });
+  }
   await ensureBrowser();
-  const res = await fetch(`${BASE}/osint/aircraft?since=${since}&mode=${mine ? 'watch' : 'all'}&watch=${mine ? 1 : 0}${force ? '&force=1' : ''}`);
-  if (!res.ok) throw new Error(`Aircraft data: the sidecar answered ${res.status}`);
+  return fetch(`${BASE}${path}`, init);
+}
+
+// Aircraft for the OSINT map. `mine`: only the airlines in the watch list.
+export async function aircraft(force = false, since = 0, mine = true) {
+  const res = await osintFetch(`/osint/aircraft?since=${since}&mode=${mine ? 'watch' : 'all'}&watch=${mine ? 1 : 0}${force ? '&force=1' : ''}`);
+  if (!res.ok) throw new Error(`Aircraft data: the ${serverMode() ? 'server' : 'sidecar'} answered ${res.status}`);
   return res.json();
 }
 
 export async function osintWatch() {
-  await ensureBrowser();
-  return (await fetch(`${BASE}/osint/watch`)).json();
+  return (await osintFetch('/osint/watch')).json();
 }
 export async function osintLoginStatus() {
-  await ensureBrowser();
-  return (await fetch(`${BASE}/osint/opensky`)).json();
+  return (await osintFetch('/osint/opensky')).json();
 }
 // An OpenSky API client (id and secret). Empty strings remove the saved login.
 export async function osintLogin(clientId, clientSecret) {
-  await ensureBrowser();
-  const res = await fetch(`${BASE}/osint/opensky`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientId, clientSecret }) });
+  const res = await osintFetch('/osint/opensky', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientId, clientSecret }) });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error ?? `The sidecar answered ${res.status}`);
   return data;

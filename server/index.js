@@ -25,6 +25,7 @@ import { createScheduler } from './core/scheduler.js';
 import { createTelemetry, createLhmProvider, createMacProvider } from './telemetry/index.js';
 import { summarize } from './telemetry/summary.js';
 import { createGoogle } from './digest/google.js';
+import { createOpensky } from './osint/opensky.js';
 import { createDigest } from './digest/pipeline.js';
 import { createVoice } from './voice/session.js';
 import { createVad, createStt, createTts } from './voice/engines.js';
@@ -88,13 +89,20 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   const health = createHealth({ llm, queue, router, machines });
   const server = http.createServer();
   wsApi = attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks: tasks, reminders, voice, log });
-  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, health, audit, conversations, digest, buildState: () => wsApi.buildState(), log }));
+  const osint = createOpensky({ dataDir: cfg.dataDir, watchFile: path.join(cfg.root, 'config', 'osint-watch.json') });
+  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, health, audit, conversations, digest, osint, buildState: () => wsApi.buildState(), log }));
+
+  // The same handlers also answer on loopback, so this PC's own app works whatever the network address does (Tailscale down, a new LAN IP).
+  const loopback = http.createServer();
+  for (const ev of ['request', 'upgrade']) server.listeners(ev).forEach((l) => loopback.on(ev, l));
 
   return {
     cfg, bus, router, gate, audit, orchestrator, targetState, telemetry, scheduler, digest, reminders, tasks, wsApi, server,
     async start({ port = cfg.machines.server.port, host } = {}) {
       const bind = host ? { host, reason: 'given' } : resolveBind(cfg.machines.server.bind);
       await new Promise((ok, no) => { server.once('error', no); server.listen(port, bind.host, ok); });
+      const a0 = server.address();
+      if (!['127.0.0.1', '0.0.0.0', '::', '::1'].includes(bind.host)) await new Promise((ok) => { loopback.once('error', (e) => { log(`not also listening on 127.0.0.1: ${e.message}`); ok(); }); loopback.listen(a0.port, '127.0.0.1', ok); });
       bridge.start(); telemetry.start(); scheduler.start();
       const rem = setInterval(() => reminders.tick(), 10_000); rem.unref();
       const a = server.address();
@@ -104,7 +112,9 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
     async stop() {
       gate.denyAll(); orchestrator.abortAll(); bridge.stop(); scheduler.stop(); telemetry.stop(); wsApi.close();
       server.closeAllConnections?.();
+      loopback.closeAllConnections?.();
       await new Promise((ok) => server.close(ok));
+      if (loopback.listening) await new Promise((ok) => loopback.close(ok));
     },
   };
 }
