@@ -12,7 +12,7 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
 
   const budgetFor = (system, tools) => models.contextLength - (models.maxOutputTokens ?? 4096) - estimateTokens({ content: system }) - Math.ceil(JSON.stringify(tools).length / 3.5) - 512;
 
-  async function runTurn({ convId, text, source = 'user' }) {
+  async function runTurn({ convId, text, source = 'user', voiceMode = false }) {
     const conv = conversations.ensure(convId);
     if (active.has(conv.id)) throw new BusyError();
     const ctl = new AbortController();
@@ -28,7 +28,8 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
       conversations.append(conv, { role: 'user', content: text, target });
       if (!conv.title) { conv.title = text.replace(/\s+/g, ' ').slice(0, 60); conversations.save(conv); emit('chat.title', { title: conv.title }); }
 
-      const system = await prompts.build(target, { now: now() });
+      const built = await prompts.build(target, { now: now() });
+      const system = voiceMode ? `${built}\n\nThis reply will be spoken aloud: lead with the answer, use short plain sentences, no tables, lists, headings or symbols, and never read code or long numbers.` : built;
       let calls = 0;
       let malformed = 0;
       let finalText = '';

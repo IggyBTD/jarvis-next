@@ -1,0 +1,1 @@
+Read docs/scan/round<N>.md. Fix every critical and high finding, one at a time, each with a regression test and its own commit. Move medium and low findings to docs/known-issues.md. Run npm test after each fix. Do not weaken security controls. Stop when all critical and high are fixed.

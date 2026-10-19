@@ -61,19 +61,19 @@ Commits are per phase (see decisions.md D-01), not per step.
 - [x] P8.2 Guardrails, gate integration, CAPTCHA handoff
 
 ## P9 Voice
-- [ ] P9.1 Client capture, playback, barge-in
-- [ ] P9.2 Server VAD, STT, TTS, turn detection
-- [ ] P9.3 Voice target-switch matcher
+- [~] P9.1 Client capture, playback, barge-in
+- [x] P9.2 Server VAD, STT, TTS, turn detection
+- [x] P9.3 Voice target-switch matcher
 
 ## P10 Action library
-- [ ] P10.1 Categories implemented (all disabled except MVP)
-- [ ] P10.2 Tool exposure cap
-- [ ] P10.3 User scripts
+- [~] P10.1 Categories implemented (all disabled except MVP)
+- [x] P10.2 Tool exposure cap
+- [x] P10.3 User scripts
 
 ## P11 Ship
-- [ ] P11.1 Installers, autostart, doctor
+- [x] P11.1 Installers, autostart, doctor
 - [ ] P11.2 Docs
-- [ ] P11.3 Expiry, rotation, backup
+- [x] P11.3 Expiry, rotation, backup
 
 ## P12 Scan
 - [ ] P12.1 Review and fix rounds

@@ -68,6 +68,7 @@ export function connect() {
   let socket;
   try { socket = new WebSocket(wsUrl(), ['jarvis.v1', `bearer.${settings.token}`]); } catch (e) { setStatus('refused', 'The server address is not valid.'); return; }
   ws = socket;
+  socket.binaryType = 'arraybuffer';
   const openedAt = { t: 0 };
   socket.onopen = () => {
     openedAt.t = Date.now();
@@ -75,7 +76,7 @@ export function connect() {
     state.attempts = 0;
     socket.send(JSON.stringify({ type: 'hello', clientId: `app-${Math.random().toString(36).slice(2, 8)}`, version: '1' }));
   };
-  socket.onmessage = (ev) => { if (typeof ev.data === 'string') handle(JSON.parse(ev.data)); };
+  socket.onmessage = (ev) => { if (typeof ev.data === 'string') handle(JSON.parse(ev.data)); else emit({ type: 'voice.audio', frame: new Uint8Array(ev.data) }); };
   socket.onerror = () => {};
   socket.onclose = () => {
     if (ws !== socket) return;
@@ -141,6 +142,10 @@ export function setTarget(target) {
   emit({ type: 'target', optimistic: true, from: previous, to: target });
   send({ type: 'target.set', id: reqId(), target });
 }
+export const sendBinary = (bytes) => { if (ws?.readyState === 1) ws.send(bytes); };
+export const voiceStart = (mode = 'push_to_talk') => send({ type: 'voice.start', mode });
+export const voiceStop = () => send({ type: 'voice.stop' });
+export const voiceBargeIn = () => send({ type: 'voice.barge_in' });
 export const replyGate = (id, decision) => send({ type: 'gate.reply', id, decision });
 export const runAction = (name, args = {}) => send({ type: 'action.invoke', id: reqId(), name, args });
 export const requestDigest = () => send({ type: 'digest.run' });

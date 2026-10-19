@@ -1,0 +1,121 @@
+// The JARVIS server (runs on the PC): composes the model path, the chokepoint (router, policy, gate, audit), the chat loop, the
+// coding-agent and browser tools, telemetry, the scheduler and digest, voice, and the HTTP/WebSocket API. Start: npm run server
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { loadConfig, dataPath, resolveData } from './core/config.js';
+import { createAuth, loadTokens, generateTokens } from './core/auth.js';
+import { createAuditLog } from './core/audit-log.js';
+import { createPolicy } from './core/policy.js';
+import { createGate } from './core/gate.js';
+import { createBus } from './core/event-bus.js';
+import { createToolRouter } from './core/tool-router.js';
+import { createTargetState } from './core/target-state.js';
+import { createConversations } from './core/conversations.js';
+import { createPromptBuilder } from './core/prompt-builder.js';
+import { createLlmClient } from './core/llm-client.js';
+import { createQueue } from './core/llm-queue.js';
+import { createLlmProxy } from './core/llm-proxy.js';
+import { createOrchestrator } from './core/orchestrator.js';
+import { createAgentTasks, registerAgentTaskTool } from './core/agent-tasks.js';
+import { createOpencodeBridge } from './core/opencode-bridge.js';
+import { registerBrowserTools } from './core/browser-tools.js';
+import { createReminders, registerTimeTools } from './core/reminders.js';
+import { createScheduler } from './core/scheduler.js';
+import { createTelemetry, createLhmProvider, createMacProvider } from './telemetry/index.js';
+import { summarize } from './telemetry/summary.js';
+import { createGoogle } from './digest/google.js';
+import { createDigest } from './digest/pipeline.js';
+import { createVoice } from './voice/session.js';
+import { createVad, createStt, createTts } from './voice/engines.js';
+import { createHttpHandler, createHealth } from './api/http.js';
+import { attachWs } from './api/ws.js';
+import { resolveBind } from '../shared/net.js';
+import { installProcessGuards, isMain } from '../shared/util.js';
+
+export async function createServerApp({ cfg = loadConfig(), log = (l) => console.error(`${new Date().toISOString()} ${l}`), env = process.env } = {}) {
+  const machines = cfg.machines.machines;
+  const ids = Object.keys(machines);
+  const created = generateTokens(cfg);
+  if (created.length) log(`created tokens: ${created.join(', ')} (copy mac and ui to the Mac by hand)`);
+  let tokens = loadTokens(cfg);
+  const reload = () => { tokens = loadTokens(cfg); return tokens; };
+
+  const bus = createBus();
+  const audit = createAuditLog({ dir: dataPath(cfg, 'audit') });
+  let wsApi = null;
+  const clientCount = () => wsApi?.clientCount() ?? 0;
+  const gate = createGate({ audit, bus, clientCount, dataDir: cfg.dataDir, timeoutMs: cfg.policy.approvalTimeoutMs, expiryMs: cfg.policy.pendingExpiryMs });
+  const policy = createPolicy(cfg.policy);
+  const router = createToolRouter({ cfg, policy, gate, audit, tokens: (id) => tokens.machines[id]?.[0] ?? '' });
+  const targetState = createTargetState({ dataDir: cfg.dataDir, machines: ids, bus });
+  const conversations = createConversations({ dir: dataPath(cfg, 'conversations') });
+  const prompts = createPromptBuilder({ prompts: cfg.prompts, machines, timezone: cfg.schedules.timezone, getInfo: (id) => router.info(id) });
+  const llm = createLlmClient({ config: cfg.models });
+  const queue = createQueue({ concurrency: cfg.models.concurrency, preempt: !!cfg.models.preemptInteractive });
+  const orchestrator = createOrchestrator({ llm, queue, router, prompts, conversations, targetState, bus, models: cfg.models });
+  const llmProxy = createLlmProxy({ llm, queue, audit, modelId: cfg.models.modelId });
+
+  const tasks = createAgentTasks({ router, bus, audit, conversations, dataDir: cfg.dataDir, taskTimeoutMs: cfg.policy.opencode.taskTimeoutMs });
+  registerAgentTaskTool(router, tasks);
+  registerBrowserTools(router, { notify: (m) => bus.publish(m.type, m) });
+  const bridge = createOpencodeBridge({ router, gate, audit, tasks, policyCfg: cfg.policy, machines, log });
+
+  const reminders = createReminders({ dataDir: cfg.dataDir, bus, clientCount, timezone: cfg.schedules.timezone });
+  const jobRun = async (name) => {
+    if (name === 'digest') return digest.run({});
+    if (name === 'pending-approvals-expire') { gate.expire(); return reminders.tick(); }
+    if (name === 'audit-verify') { const v = audit.verify(); if (!v.ok) { bus.publish('digest.error', { reason: `audit log check failed: ${v.errors[0]}` }); throw new Error(v.errors[0]); } return undefined; }
+    if (name === 'log-rotate') return telemetry.prune();
+    return undefined; // telemetry-rollup: the telemetry service already writes minute rows; this job exists so the schedule shows it
+  };
+  const scheduler = createScheduler({ schedules: cfg.schedules, dataDir: cfg.dataDir, run: jobRun, log });
+  registerTimeTools(router, { reminders, scheduler, timezone: cfg.schedules.timezone });
+
+  const macInvoke = async (name) => { const r = await router.invoke({ name, args: {} }, { target: 'mac', source: 'scheduled', job: 'telemetry-rollup' }); if (!r.ok) throw new Error(r.error ?? 'failed'); return r.data; };
+  const telemetry = createTelemetry({ bus, dataDir: cfg.dataDir, providers: { pc: createLhmProvider({ url: env.LHM_URL }), mac: createMacProvider({ invoke: macInvoke }) }, log });
+  const google = createGoogle({ clientFile: resolveData(cfg, cfg.digest.google.clientFile), tokenFile: resolveData(cfg, cfg.digest.google.tokenFile) });
+  const digest = createDigest({ llm, queue, google, cfg: cfg.digest, dataDir: cfg.dataDir, bus, timezone: cfg.schedules.timezone, log, summarizeTelemetry: (fromMs, toMs) => summarize({ dir: telemetry.dir, machine: 'pc', fromMs, toMs, thresholds: cfg.digest.thresholds }) });
+
+  let voice = null;
+  if (cfg.voice.enabled) {
+    voice = createVoice({ voiceCfg: cfg.voice, vad: createVad(cfg.voice.vad), stt: createStt(cfg.voice.stt), tts: createTts(cfg.voice.tts), targetState, orchestrator, labelOf: (id) => machines[id].label, log,
+      send: (c, o) => c.ws.readyState === 1 && c.ws.send(JSON.stringify(o)), sendBinary: (c, b) => c.ws.readyState === 1 && c.ws.send(b) });
+  }
+
+  const auth = createAuth({ tokens, reload });
+  setInterval(() => { reload(); auth.reload(); }, 60_000).unref();
+  const health = createHealth({ llm, queue, router, machines });
+  const server = http.createServer();
+  wsApi = attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks: tasks, reminders, voice, log });
+  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, health, audit, conversations, digest, buildState: () => wsApi.buildState(), log }));
+
+  return {
+    cfg, bus, router, gate, audit, orchestrator, targetState, telemetry, scheduler, digest, reminders, tasks, wsApi, server,
+    async start({ port = cfg.machines.server.port, host } = {}) {
+      const bind = host ? { host, reason: 'given' } : resolveBind(cfg.machines.server.bind);
+      await new Promise((ok, no) => { server.once('error', no); server.listen(port, bind.host, ok); });
+      bridge.start(); telemetry.start(); scheduler.start();
+      const rem = setInterval(() => reminders.tick(), 10_000); rem.unref();
+      const a = server.address();
+      log(`JARVIS server listening on ${a.address}:${a.port} (${bind.reason})`);
+      return a;
+    },
+    async stop() {
+      gate.denyAll(); orchestrator.abortAll(); bridge.stop(); scheduler.stop(); telemetry.stop(); wsApi.close();
+      server.closeAllConnections?.();
+      await new Promise((ok) => server.close(ok));
+    },
+  };
+}
+
+if (isMain(import.meta.url)) {
+  const logFile = path.join(dataPath(loadConfig({ only: ['machines.json'] }), 'logs'), 'server.log');
+  fs.mkdirSync(path.dirname(logFile), { recursive: true });
+  const log = (l) => { const line = `${new Date().toISOString()} ${l}\n`; process.stderr.write(line); try { fs.appendFileSync(logFile, line); } catch { /* disk full: keep running */ } };
+  installProcessGuards(log);
+  const app = await createServerApp({ log });
+  await app.start();
+  const stop = async () => { await app.stop(); process.exit(0); };
+  process.on('SIGINT', stop); process.on('SIGTERM', stop);
+}
