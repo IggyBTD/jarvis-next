@@ -183,7 +183,16 @@ test('http: tokens decide the route; the proxy takes machine and model tokens on
     assert.match(chat.text, /\[DONE\]/);
     assert.equal((await request(`${t.api.url}/api/audit?n=5`, { headers: ui })).json.entries.length > 0, true);
     assert.equal((await request(`${t.api.url}/api/digest?date=nope`, { headers: ui })).status, 400);
-    assert.equal((await request(`${t.api.url}/nope`, { headers: ui })).status, 404);
+    assert.equal((await request(`${t.api.url}/api/nope`, { headers: ui })).status, 404);
+    // the built app is served without a token (it holds no secrets), never outside dist/, and a same-origin page may open the socket
+    const page = await request(`${t.api.url}/`);
+    assert.ok([200, 503].includes(page.status));
+    assert.equal((await request(`${t.api.url}/%2e%2e/%2e%2e/package.json`)).status === 200 && /"jarvis-next"/.test((await request(`${t.api.url}/%2e%2e/%2e%2e/package.json`)).text), false);
+    assert.equal((await request(`${t.api.url}/..%2f..%2fpackage.json`)).text.includes('jarvis-next'), false);
+    assert.equal((await request(`${t.api.url}/api/state`)).status, 401); // data routes still need a token
+    const same = wsClient(t.api.wsUrl, { token: t.api.uiToken, origin: new URL(t.api.url).origin });
+    assert.equal(await same.opened, true);
+    same.ws.terminate();
 
     const pre = await request(`${t.api.url}/api/state`, { method: 'OPTIONS', headers: { origin: ORIGIN } });
     assert.equal(pre.status, 204);

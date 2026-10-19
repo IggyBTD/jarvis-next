@@ -107,7 +107,17 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
   }
 
   // History sent back to the model: only API fields; thinking text is dropped unless configured otherwise.
-  const cleanMessages = (messages) => messages.map((m) => {
+  // Many chat templates (Qwen3.x, gpt-oss) refuse a system message anywhere but first ("System message must be at the beginning").
+  // Leading system messages are merged into one; a later one (a target-switch notice, an agent task note) is sent as a user message.
+  function placeSystem(messages) {
+    const lead = [];
+    let i = 0;
+    while (i < messages.length && messages[i].role === 'system') lead.push(messages[i++].content);
+    const rest = messages.slice(i).map((m) => (m.role === 'system' ? { ...m, role: 'user', content: `[note from JARVIS] ${m.content}` } : m));
+    return lead.length ? [{ role: 'system', content: lead.join('\n\n') }, ...rest] : rest;
+  }
+
+  const cleanMessages = (messages) => placeSystem(messages).map((m) => {
     const out = { role: m.role, content: m.role === 'assistant' && !config.keepThinkInHistory && typeof m.content === 'string' ? stripThink(m.content) : m.content };
     for (const k of ['name', 'tool_call_id', 'tool_calls']) if (m[k] !== undefined) out[k] = m[k];
     return out;

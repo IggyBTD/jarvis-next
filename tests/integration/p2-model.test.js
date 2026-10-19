@@ -262,3 +262,14 @@ test('proxy: passes the stream through untouched, forces the alias and thinking 
     assert.equal(bad.status, 502);
   } finally { srv.close(); await r.close(); }
 });
+
+test('system messages are only ever first: later ones become user notes so strict chat templates accept them', async () => {
+  const r = await rig();
+  try {
+    await r.llm.chat({ messages: [{ role: 'system', content: 'base' }, { role: 'system', content: 'more' }, { role: 'user', content: 'hi' }, { role: 'assistant', content: 'yo' }, { role: 'system', content: 'Target changed from PC to Mac.' }, { role: 'user', content: 'next' }] });
+    const sent = r.fake.requests[0].body.messages;
+    assert.deepEqual(sent.map((m) => m.role), ['system', 'user', 'assistant', 'user', 'user']);
+    assert.equal(sent[0].content, 'base\n\nmore');
+    assert.match(sent[3].content, /^\[note from JARVIS\] Target changed/);
+  } finally { await r.close(); }
+});

@@ -1,0 +1,24 @@
+
+> jarvis-next@0.0.0 tauri
+> tauri dev
+
+     Running BeforeDevCommand (`npm run dev`)
+
+> jarvis-next@0.0.0 dev
+> vite
+
+
+  [32m[1mVITE[22m v8.2.2[39m  [2mready in [0m[1m168[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5174[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+     Running DevCommand (`cargo  run --no-default-features --color always --`)
+        Info Watching C:\Users\bethe\Jarvis-Next\src-tauri for changes...
+       Error Found version mismatched Tauri packages. Make sure the NPM package and Rust crate versions are on the same major/minor releases:
+tauri (v2.11.5) : @tauri-apps/api (v2.12.1)
+tauri-plugin-fs (v2.5.2) : @tauri-apps/plugin-fs (v2.6.0)
+tauri-plugin-dialog (v2.7.3) : @tauri-apps/plugin-dialog (v2.8.1)
+[1m[92m   Compiling[0m app v0.1.0 (C:\Users\bethe\Jarvis-Next\src-tauri)
+[1m[96m    Building[0m [=======================> ] 404/406: app     [1m[96m    Building[0m [=======================> ] 405/406: app(bin)                                                            [1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 21.54s
+[1m[92m     Running[0m `target\debug\app.exe`
+[2m7:10:44 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/core/server-link.js[22m

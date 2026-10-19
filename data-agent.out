@@ -1,0 +1,7 @@
+
+> jarvis-next@0.0.0 agent
+> node agent/index.js
+
+2026-10-19T17:00:39.945Z agent pc listening on 127.0.0.1:7421 (only local callers are allowed)
+2026-10-19T17:00:39.946Z OpenCode not started: OpenCode is not installed or does not start (cannot start opencode: ENOENT)
+2026-10-19T17:00:40.210Z browser sidecar ready

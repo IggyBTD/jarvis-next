@@ -300,7 +300,7 @@ test('orchestrator: a switch mid-turn does not redirect; the next turn gets the 
     assert.match(notice.content, /Target changed from PC to Mac/);
     const lastReq = r.model.requests.at(-1).body.messages;
     assert.match(lastReq[0].content, /ACTIVE TARGET: Mac/);
-    assert.ok(lastReq.some((m) => m.role === 'system' && /Target changed/.test(m.content)));
+    assert.ok(lastReq.slice(1).every((m) => m.role !== 'system') && lastReq.some((m) => m.role === 'user' && /Target changed/.test(m.content)));
   } finally { await r.close(); }
 });
 

@@ -10,6 +10,17 @@ const DEFAULTS = { enabled: false, url: 'ws://pc:7410', token: '', pcMac: '' };
 
 const read = () => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') }; } catch { return { ...DEFAULTS }; } };
 let settings = read();
+// Served by the JARVIS server itself (a browser on the Mac): the address is this page's own, and a token in the #fragment
+// (http://pc:7410/#token=...) is taken once, saved, and removed from the address bar. The fragment is never sent anywhere.
+if (!window.__TAURI_INTERNALS__ && /^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname) || location.port === '7410') {
+  const hash = new URLSearchParams(location.hash.slice(1));
+  const fromHash = hash.get('token');
+  if (fromHash || !settings.url || settings.url === DEFAULTS.url) {
+    settings = { ...settings, url: `ws://${location.host}`, ...(fromHash ? { token: fromHash, enabled: true } : {}) };
+    try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch { /* storage blocked */ }
+    if (fromHash) history.replaceState(null, '', location.pathname + location.search);
+  }
+}
 export const getSettings = () => ({ ...settings });
 export function saveSettings(next) {
   settings = { ...settings, ...next };

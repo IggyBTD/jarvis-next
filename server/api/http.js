@@ -1,6 +1,24 @@
 // HTTP side of the server. Every route needs a bearer token (UI, machine or model token, per route); /v1 is the authenticated
 // OpenAI-compatible proxy for OpenCode. Browser pages may call the REST routes only from the configured origins.
+import fs from 'node:fs';
+import path from 'node:path';
 import { ipAllowed } from '../../shared/net.js';
+
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ico': 'image/x-icon', '.wasm': 'application/wasm', '.map': 'application/json' };
+
+// The built app (dist/) is served to browsers, so a Mac needs nothing installed: open the server's address. It holds no secrets
+// (the token is typed in or passed in the #fragment, which a browser never sends); every data route below still needs a token.
+function serveStatic(req, res, root, pathname) {
+  let rel;
+  try { rel = decodeURIComponent(pathname); } catch { res.writeHead(400); return res.end(); }
+  if (rel.includes('\0') || rel.split(/[\\/]/).includes('..')) { res.writeHead(400); return res.end(); }
+  let file = path.join(root, rel === '/' ? 'index.html' : rel);
+  if (!file.startsWith(root + path.sep) && file !== root) { res.writeHead(400); return res.end(); }
+  if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(root, 'index.html');
+  if (!fs.existsSync(file)) { res.writeHead(503, { 'content-type': 'text/plain' }); return res.end('The app is not built yet: run npm run build on the PC.'); }
+  res.writeHead(200, { 'content-type': TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream', 'cache-control': file.endsWith('index.html') ? 'no-cache' : 'public, max-age=3600', 'x-content-type-options': 'nosniff' });
+  return req.method === 'HEAD' ? res.end() : fs.createReadStream(file).pipe(res);
+}
 
 const json = (res, status, obj, headers = {}) => { res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers }); res.end(JSON.stringify(obj)); };
 
@@ -22,7 +40,8 @@ export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversa
     try {
       const ip = req.socket.remoteAddress;
       const origin = req.headers.origin;
-      const cors = origin && origins.includes(origin) ? { 'access-control-allow-origin': origin, vary: 'Origin' } : {};
+      const sameOrigin = !!origin && origin === `http://${req.headers.host}`;
+      const cors = origin && (sameOrigin || origins.includes(origin)) ? { 'access-control-allow-origin': origin, vary: 'Origin' } : {};
       if (req.method === 'OPTIONS') {
         if (!cors['access-control-allow-origin']) return json(res, 403, { error: 'origin not allowed' });
         res.writeHead(204, { ...cors, 'access-control-allow-headers': 'authorization, content-type', 'access-control-allow-methods': 'GET, POST', 'access-control-max-age': '600' });
@@ -32,6 +51,7 @@ export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversa
 
       const url = new URL(req.url, 'http://server');
       const p = url.pathname;
+      if ((req.method === 'GET' || req.method === 'HEAD') && !/^\/(api|v1|health|ws)(\/|$)/.test(p)) return serveStatic(req, res, path.join(cfg.root, 'dist'), p);
       const need = p.startsWith('/v1/') || p === '/v1' ? ['machine', 'model'] : ['ui', 'machine'];
       const verdict = auth.check(req.headers.authorization, { roles: need, ip });
       if (!verdict.ok) return json(res, verdict.status, { error: verdict.status === 429 ? 'too many attempts' : verdict.status === 403 ? 'this token cannot use this route' : 'unauthorized' }, cors);
