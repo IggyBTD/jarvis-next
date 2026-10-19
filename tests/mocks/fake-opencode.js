@@ -6,7 +6,8 @@ import http from 'node:http';
 const DOC_NEW = { openapi: '3.1.0', info: { version: '1.19.1' }, paths: { '/doc': { get: {} }, '/global/health': { get: {} }, '/event': { get: {} }, '/session': { get: {}, post: {} }, '/session/{sessionID}': { get: {} }, '/session/{sessionID}/message': { post: {} }, '/session/{sessionID}/prompt_async': { post: {} }, '/session/{sessionID}/abort': { post: {} }, '/session/{sessionID}/shell': { post: {} }, '/permission': { get: {} }, '/permission/{requestID}/reply': { post: {} } } };
 const DOC_OLD = { openapi: '3.1.0', info: { version: '1.14.0' }, paths: { ...DOC_NEW.paths, '/permission/{requestID}/reply': undefined, '/session/{sessionID}/prompt_async': undefined, '/session/{sessionID}/permissions/{permissionID}': { post: {} } } };
 
-export async function createFakeOpencode({ port = 0, password = null, variant = 'new', version = '1.19.1' } = {}) {
+// shell: 'bypass' runs the command at once (the dangerous behaviour to detect), 'ask' raises a permission, 'refuse' answers 403
+export async function createFakeOpencode({ port = 0, password = null, variant = 'new', version = '1.19.1', shell = 'refuse', cwd = process.cwd() } = {}) {
   const sessions = new Map();
   const pending = new Map();
   const stream = new Set();
@@ -45,7 +46,13 @@ export async function createFakeOpencode({ port = 0, password = null, variant = 
         return undefined; // held open until finish()
       }
       if ((m = p.match(/^\/session\/([\w-]+)\/abort$/)) && req.method === 'POST') { rec.aborts.push(m[1]); return json(200, true); }
-      if ((m = p.match(/^\/session\/([\w-]+)\/shell$/))) { rec.shellCalls.push({ session: m[1], body }); return json(200, { ran: true }); }
+      if ((m = p.match(/^\/session\/([\w-]+)\/shell$/))) {
+        rec.shellCalls.push({ session: m[1], body });
+        if (shell === 'refuse') return json(403, { error: 'no' });
+        if (shell === 'ask') { const id = `per_${++seq}`; const props = { id, sessionID: m[1], permission: 'bash', patterns: [body.command], metadata: { command: body.command } }; pending.set(id, props); emit({ type: 'permission.asked', properties: props }); return json(200, { waiting: true }); }
+        if (/jarvis-shell-bypass-marker/.test(body.command ?? '')) import('node:fs').then((fs) => fs.writeFileSync(`${cwd}/jarvis-shell-bypass-marker.txt`, 'x'));
+        return json(200, { ran: true });
+      }
       if (p === '/permission' && req.method === 'GET') return json(200, [...pending.values()]);
       const reply = p.match(/^\/permission\/([\w-]+)\/reply$/) ?? p.match(/^\/session\/([\w-]+)\/permissions\/([\w-]+)$/);
       if (reply && req.method === 'POST') {

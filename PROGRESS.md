@@ -50,15 +50,15 @@ Commits are per phase (see decisions.md D-01), not per step.
 - [~] P6.5 Acceptance on the real install
 
 ## P7 Digest and scheduler
-- [ ] P7.1 Scheduler
-- [ ] P7.2 Calendar and Gmail clients
-- [ ] P7.3 Telemetry summary
-- [ ] P7.4 Digest pipeline
+- [x] P7.1 Scheduler
+- [x] P7.2 Calendar and Gmail clients
+- [x] P7.3 Telemetry summary
+- [x] P7.4 Digest pipeline
 - [~] P7.5 Real OAuth setup
 
 ## P8 Browser
-- [ ] P8.1 Sidecar and tools
-- [ ] P8.2 Guardrails, gate integration, CAPTCHA handoff
+- [x] P8.1 Sidecar and tools
+- [x] P8.2 Guardrails, gate integration, CAPTCHA handoff
 
 ## P9 Voice
 - [ ] P9.1 Client capture, playback, barge-in

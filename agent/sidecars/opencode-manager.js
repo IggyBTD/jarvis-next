@@ -195,5 +195,15 @@ export function createOpencodeManager({
     return undefined;
   }
 
-  return { start, stop, proxy, events, status: () => ({ ...st }), command };
+  // A direct call from the agent itself (verification script, tests). Callers outside the agent use proxy().
+  function call(method, sub, body) {
+    return new Promise((resolve, reject) => {
+      const req = http.request(`${base}${sub}`, { method, headers: { authorization: auth(), 'content-type': 'application/json' }, timeout: 10_000 }, (res) => { const c = []; res.on('data', (d) => c.push(d)); res.on('end', () => resolve({ status: res.statusCode, text: Buffer.concat(c).toString('utf8') })); });
+      req.on('error', reject);
+      req.on('timeout', () => req.destroy(new Error('timeout')));
+      req.end(body === undefined ? undefined : JSON.stringify(body));
+    });
+  }
+
+  return { start, stop, proxy, call, events, status: () => ({ ...st }), command };
 }

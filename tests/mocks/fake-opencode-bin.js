@@ -12,5 +12,5 @@ const arg = (n) => { const i = args.indexOf(n); return i === -1 ? null : args[i 
 if (process.env.FAKE_OPENCODE_LOG) {
   fs.appendFileSync(process.env.FAKE_OPENCODE_LOG, `${JSON.stringify({ args, cwd: process.cwd(), env: process.env, password: process.env.OPENCODE_SERVER_PASSWORD ?? null, config: process.env.OPENCODE_CONFIG_CONTENT ?? null })}\n`);
 }
-await createFakeOpencode({ port: Number(arg('--port')), password: process.env.OPENCODE_SERVER_PASSWORD ?? null, variant: process.env.FAKE_OPENCODE_VARIANT ?? 'new' });
+await createFakeOpencode({ cwd: process.env.FAKE_OPENCODE_CWD ?? process.cwd(), port: Number(arg('--port')), password: process.env.OPENCODE_SERVER_PASSWORD ?? null, variant: process.env.FAKE_OPENCODE_VARIANT ?? 'new', shell: process.env.FAKE_OPENCODE_SHELL ?? 'refuse' });
 if (process.env.FAKE_OPENCODE_CRASH_MS) setTimeout(() => process.exit(1), Number(process.env.FAKE_OPENCODE_CRASH_MS));
