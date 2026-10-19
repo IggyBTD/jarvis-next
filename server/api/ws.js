@@ -87,7 +87,7 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
       clients.add(c);
       ws.isAlive = true;
       ws.on('pong', () => { ws.isAlive = true; });
-      ws.on('close', () => { clients.delete(c); voice?.stop(c); });
+      ws.on('close', () => { clients.delete(c); voice?.forget(c); });
       ws.on('error', () => {});
       ws.on('message', async (data, isBinary) => {
         if (isBinary) { voice?.onBinary(c, data); return; }

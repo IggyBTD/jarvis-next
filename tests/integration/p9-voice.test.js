@@ -158,3 +158,15 @@ test('open mode ends the turn on silence; wake word and disabled voice say so; t
   off.start({ id: 'x' }, {});
   assert.match(off.got.reason, /switched off/);
 });
+
+test('a client that disconnects mid-utterance is forgotten: nothing it said is transcribed or run', async () => {
+  const r = rig();
+  try {
+    r.voice.start(r.c, {});
+    r.voice.onBinary(r.c, frame(MIC, loud(400)));
+    r.voice.forget(r.c);
+    await new Promise((ok) => setTimeout(ok, 50));
+    assert.equal(r.turns.length, 0);
+    assert.ok(!r.sent.some((m) => m.type === 'voice.transcript'));
+  } finally { r.close(); }
+});

@@ -1,5 +1,5 @@
-STATUS: IN_PROGRESS
-LAST_ITERATION: 1
+STATUS: BLOCKED_ON_HUMAN
+LAST_ITERATION: 2
 
 Branch `jarvis-build`. Spec: `docs/JARVIS_BUILD_SPEC.md`. Judgment calls: `docs/decisions.md`. Human steps: `HUMAN_TODO.md`.
 Legend: `[ ]` todo, `[x]` done and tested, `[~]` built and mock-tested, waiting on a human step, `[!]` failed three times.
@@ -72,8 +72,8 @@ Commits are per phase (see decisions.md D-01), not per step.
 
 ## P11 Ship
 - [x] P11.1 Installers, autostart, doctor
-- [ ] P11.2 Docs
+- [x] P11.2 Docs
 - [x] P11.3 Expiry, rotation, backup
 
 ## P12 Scan
-- [ ] P12.1 Review and fix rounds
+- [~] P12.1 Self review done (docs/scan/round1-self.md); an independent scan is still to be run

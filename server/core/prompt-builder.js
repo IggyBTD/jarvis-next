@@ -11,6 +11,8 @@ export function createPromptBuilder({ prompts, machines, timezone, getInfo }) {
     let facts;
     let reachable = true;
     try { facts = await getInfo(machine); } catch { reachable = false; facts = { os: m.os, hostname: m.host, workspace_dir: m.workspaceDir }; }
+    // facts come from the OS (host and user names): keep them to one short plain line so they cannot carry instructions or break the template
+    facts = Object.fromEntries(Object.entries(facts).map(([k, v]) => [k, String(v ?? '').replace(/[\u0000-\u001f\u007f\u2028\u2029{}<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200)]));
     cache.set(machine, { facts, reachable, at: Date.now() });
     return cache.get(machine);
   }

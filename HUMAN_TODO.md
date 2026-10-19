@@ -13,7 +13,7 @@ npm test                  # must be green before anything else
 ## 2. Model on the PC
 1. Install LM Studio 0.4.14 or newer, or `llama-server`. Load Qwen3.8-27B at Q4. Keep it bound to localhost:1234.
 2. Set the model alias to `local` (LM Studio: model settings, API identifier) and the context to 65536.
-3. Run `npm run bench -- --help` (scripts\bench-model.js) and record the numbers in `docs\benchmarks.md`. Try MTP on and off, ROCm and Vulkan.
+3. Run `npm run bench -- --label "rocm mtp-off" --write` (scripts\bench-model.js) and record the numbers in `docs\benchmarks.md`. Try MTP on and off, ROCm and Vulkan.
 4. Confirm the thinking switch works: `node scripts\bench-model.js --check-thinking`. If thinking text still appears, change `thinkingMethod` in `config\server\models.json` to `no_think`.
 
 ## 3. Network
@@ -39,13 +39,13 @@ xcode-select --install
 # install Node 22+, Rust and the Tauri prerequisites, then:
 git clone <your private remote> ~/jarvis && cd ~/jarvis   # not inside iCloud Desktop or Documents
 npm install
-bash scripts/install-mac.sh
+node scripts/install.js --os darwin --apply
 ```
 Grant Accessibility, Automation and Microphone (and Screen Recording if you enable `screenshot`) when macOS asks. Then run the Mac action checklist in `docs/setup-mac.md`.
 
 ## 6. Install autostart (PC)
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\install-pc.ps1     # prints firewall commands, creates the scheduled tasks
+node scripts\install.js --os win32   # preview; add --apply to register the startup tasks (firewall commands are only printed)
 node scripts\doctor.js                                              # pass/fail table
 ```
 

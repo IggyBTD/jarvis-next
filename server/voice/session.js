@@ -87,7 +87,7 @@ export function createVoice({ voiceCfg, stt, tts, vad, targetState, orchestrator
       s.chunks.push(Buffer.from(f.pcm));
       if (s.mode === 'open' && s.turn.push(speech, f.pcm.length / 32) === 'end') finish(c, s).catch((e) => log(`voice: ${e.message}`));
     },
-    forget(c) { sessions.delete(c); },
+    forget(c) { const s = sessions.get(c); if (s) s.epoch += 1; sessions.delete(c); }, // a client that left is not heard: nothing it was saying is transcribed or run
     state: (c) => sessions.get(c)?.state ?? 'idle',
   };
 }
