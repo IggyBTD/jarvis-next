@@ -50,6 +50,17 @@ Everything the build could do alone is done. These are the steps only you can do
 - [ ] **16.** On the Mac, open the link from step 4 in Safari or Chrome. Settings should say **Connected**, and a **PC / Mac** switcher appears at the top right.
 - [ ] **17.** Send a message. Click **Mac** in the switcher and ask it to do something on the Mac (for example "what is the volume?"). Anything risky shows an approval dialog first.
 
+## F. Using it away from home
+
+Follow `docs/remote.md` (about 15 minutes). Short version:
+
+- [ ] **18.** Install Tailscale on the PC and the Mac, same account.
+- [ ] **19.** On the PC (admin PowerShell): `powercfg /change standby-timeout-ac 0` and `powercfg /change hibernate-timeout-ac 0` so it never sleeps while plugged in.
+- [ ] **20.** On the PC: `tailscale serve --bg 7410` (gives an HTTPS address, needed for the microphone).
+- [ ] **21.** Put the Tailscale names into `machines.json` on both machines (see the doc), restart the server and the Mac agent.
+- [ ] **22.** `node scripts/client-link.js` on the PC; open the **away** link on the Mac.
+- [ ] **23.** Test: turn Mac Wi-Fi off, use a phone hotspot, and check Settings still says Connected.
+
 ## Optional, later
 
 | Item | Why | How |

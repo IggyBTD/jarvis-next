@@ -12,4 +12,6 @@ The Mac runs only an agent (port 7422) and, if you want the desktop app, the cli
 
 Mac action checklist (try each once for real, then enable its category): open_app, set_volume, lock_screen (needs "require password immediately" or Accessibility), system info set. `memory_usage` uses `vm_stat` (free plus inactive plus speculative pages) because `os.freemem()` on macOS ignores cache.
 
+Away from home: see `docs/remote.md` (Tailscale on both machines, then use the away link from `node scripts/client-link.js`).
+
 The UI token is stored in the app's local storage; moving it to the macOS keychain needs a Tauri plugin and is a known item.

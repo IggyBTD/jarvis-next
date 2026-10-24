@@ -47,6 +47,7 @@ export function plan(os, { cfg = loadConfig(), root = ROOT, node = process.execP
       const file = P.join(cfg.dataDir, 'install', `jarvis-${name}.xml`);
       steps.push({ title: `Task Scheduler: JARVIS ${name} at logon`, write: { file, content: taskXml({ name, node, script: P.join(root, script), cwd: root, args }) }, run: ['schtasks.exe', ['/Create', '/F', '/TN', `JARVIS ${name}`, '/XML', file]] });
     }
+    steps.push({ title: 'Keep the PC reachable when you are away (run yourself; a sleeping PC cannot answer)', print: ['powercfg /change standby-timeout-ac 0', 'powercfg /change hibernate-timeout-ac 0', '# the screen may still turn off; only sleep is disabled while plugged in'] });
     steps.push({ title: 'Firewall (run these yourself in an elevated PowerShell; they are never run for you)', print: [`New-NetFirewallRule -DisplayName "JARVIS server" -Direction Inbound -Protocol TCP -LocalPort ${m.server.port} -RemoteAddress 100.64.0.0/10 -Action Allow`, `# LAN only instead of Tailscale: -RemoteAddress 192.168.0.0/16 (weaker, see docs/network.md)`, `# The PC agent (${m.machines.pc.agentPort}) listens on localhost only and needs no rule.`] });
   } else {
     const ws = expandHome(m.machines.mac.workspaceDir.replace(/^~/, home));

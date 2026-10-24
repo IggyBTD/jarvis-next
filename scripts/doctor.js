@@ -9,10 +9,12 @@ import { createAuditLog } from '../server/core/audit-log.js';
 import { createLlmClient } from '../server/core/llm-client.js';
 import { loadToken } from '../server/digest/google.js';
 import { isMain } from '../shared/util.js';
+import { runProgram } from '../agent/registry/common.js';
+import { tailscaleName } from './client-link.js';
 
 const portFree = (port, host = '127.0.0.1') => new Promise((ok) => { const s = net.createServer(); s.once('error', () => ok(false)); s.listen(port, host, () => s.close(() => ok(true))); });
 
-export async function runDoctor({ cfg = loadConfig(), fetchImpl = fetch, agentOnly = false } = {}) {
+export async function runDoctor({ cfg = loadConfig(), fetchImpl = fetch, agentOnly = false, run = runProgram } = {}) {
   const rows = [];
   const add = (name, ok, detail = '') => rows.push({ name, ok, detail });
   add('Node 22 or newer', Number(process.versions.node.split('.')[0]) >= 22, process.versions.node);
@@ -49,6 +51,8 @@ export async function runDoctor({ cfg = loadConfig(), fetchImpl = fetch, agentOn
     const v = createAuditLog({ dir: dataPath(cfg, 'audit') }).verify();
     add('Audit log chain', v.ok, `${v.entries} entries${v.ok ? '' : `: ${v.errors[0]}`}`);
   }
+  const ts = await tailscaleName(run);
+  add('Tailscale (use away from home)', true, ts ? `running as ${ts}` : 'not running here: only needed away from home (docs/remote.md)');
   try { const s = fs.statfsSync(cfg.dataDir.length && fs.existsSync(cfg.dataDir) ? cfg.dataDir : path.dirname(cfg.dataDir)); const gb = (s.bavail * s.bsize) / 1024 ** 3; add('Disk space for data', gb > 2, `${gb.toFixed(1)} GB free`); } catch { add('Disk space for data', true, 'unknown'); }
   return rows;
 }

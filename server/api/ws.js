@@ -77,7 +77,7 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
     const url = new URL(req.url, 'http://server');
     if (url.pathname !== '/ws') return refuse(404, 'Not Found');
     // the app served by this very server is same-origin; anything else must be a listed origin
-    if (!auth.originAllowed(req.headers.origin, [...origins, `http://${req.headers.host}`])) return refuse(403, 'Forbidden');
+    if (!auth.originAllowed(req.headers.origin, [...origins, `http://${req.headers.host}`, `https://${req.headers.host}`])) return refuse(403, 'Forbidden');
     const proto = String(req.headers['sec-websocket-protocol'] ?? '').split(',').map((s) => s.trim());
     const fromProto = proto.find((p) => p.startsWith('bearer.'));
     const header = req.headers.authorization ?? (fromProto ? `Bearer ${fromProto.slice(7)}` : undefined);

@@ -57,7 +57,7 @@ export async function buildMacBundle({ root = ROOT, outDir = path.join(root, 'di
   const inDirs = WHOLE_DIRS.filter((d) => d !== 'config/server').flatMap((d) => walk(path.join(root, d)).filter((f) => /.js$/.test(f)).map((f) => path.relative(root, f)));
   const files = new Set(closure(root, [...ENTRIES, ...inDirs]));
   for (const dir of WHOLE_DIRS) for (const f of walk(path.join(root, dir))) files.add(path.relative(root, f).split(path.sep).join('/'));
-  for (const extra of ['docs/MAC_PROMPT.md', 'docs/setup-mac.md']) if (fs.existsSync(path.join(root, extra))) files.add(extra);
+  for (const extra of ['docs/MAC_PROMPT.md', 'docs/setup-mac.md', 'docs/remote.md']) if (fs.existsSync(path.join(root, extra))) files.add(extra);
   const stage = path.join(outDir, 'stage');
   fs.rmSync(stage, { recursive: true, force: true });
   for (const rel of [...files].sort()) { fs.mkdirSync(path.dirname(path.join(stage, rel)), { recursive: true }); fs.copyFileSync(path.join(root, rel), path.join(stage, rel)); }

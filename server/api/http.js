@@ -16,7 +16,7 @@ function serveStatic(req, res, root, pathname) {
   if (!file.startsWith(root + path.sep) && file !== root) { res.writeHead(400); return res.end(); }
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(root, 'index.html');
   if (!fs.existsSync(file)) { res.writeHead(503, { 'content-type': 'text/plain' }); return res.end('The app is not built yet: run npm run build on the PC.'); }
-  res.writeHead(200, { 'content-type': TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream', 'cache-control': file.endsWith('index.html') ? 'no-cache' : 'public, max-age=3600', 'x-content-type-options': 'nosniff' });
+  res.writeHead(200, { 'content-type': TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream', 'cache-control': file.endsWith('index.html') ? 'no-cache' : 'public, max-age=3600', 'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY', 'referrer-policy': 'no-referrer', 'permissions-policy': 'microphone=(self), camera=(), geolocation=()' });
   return req.method === 'HEAD' ? res.end() : fs.createReadStream(file).pipe(res);
 }
 
@@ -42,7 +42,7 @@ export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversa
     try {
       const ip = req.socket.remoteAddress;
       const origin = req.headers.origin;
-      const sameOrigin = !!origin && origin === `http://${req.headers.host}`;
+      const sameOrigin = !!origin && (origin === `http://${req.headers.host}` || origin === `https://${req.headers.host}`); // https when reached through tailscale serve
       const cors = origin && (sameOrigin || origins.includes(origin)) ? { 'access-control-allow-origin': origin, vary: 'Origin' } : {};
       if (req.method === 'OPTIONS') {
         if (!cors['access-control-allow-origin']) return json(res, 403, { error: 'origin not allowed' });

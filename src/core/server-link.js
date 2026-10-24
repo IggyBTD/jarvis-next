@@ -16,7 +16,7 @@ if (!window.__TAURI_INTERNALS__ && /^https?:$/.test(location.protocol) && !/^(lo
   const hash = new URLSearchParams(location.hash.slice(1));
   const fromHash = hash.get('token');
   if (fromHash || !settings.url || settings.url === DEFAULTS.url) {
-    settings = { ...settings, url: `ws://${location.host}`, ...(fromHash ? { token: fromHash, enabled: true } : {}) };
+    settings = { ...settings, url: `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`, ...(fromHash ? { token: fromHash, enabled: true } : {}) };
     try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch { /* storage blocked */ }
     if (fromHash) history.replaceState(null, '', location.pathname + location.search);
   }
@@ -187,4 +187,6 @@ export async function wakePc() {
 }
 
 if (serverMode()) { useTelemetrySource('server'); connect(); }
+// Coming back from a different network (leaving the house, a VPN switching): reconnect at once instead of waiting out the backoff.
+window.addEventListener('online', () => { if (wanted && serverMode() && !ws) { attempts = 0; connect(); } });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && wanted && serverMode() && !ws) { attempts = 0; connect(); } });
