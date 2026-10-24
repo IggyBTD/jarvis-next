@@ -29,7 +29,7 @@ test('chat: streams content, reports usage and stats, ends on [DONE]', async () 
     assert.equal(out.truncated, false);
     assert.ok(out.stats.ttftMs >= 0);
     assert.equal(out.usage.prompt_tokens, 10);
-    assert.equal(r.fake.requests[0].body.model, 'local');
+    assert.equal(r.fake.requests[0].body.model, base.modelId);
     assert.equal(r.fake.requests[0].body.stream, true);
   } finally { await r.close(); }
 });
@@ -236,7 +236,7 @@ test('proxy: passes the stream through untouched, forces the alias and thinking 
     assert.match(res.text, /streamed through|stre|ream/);
     assert.match(res.text, /\[DONE\]/);
     const sent = r.fake.requests[0].body;
-    assert.equal(sent.model, 'local');
+    assert.equal(sent.model, base.modelId);
     assert.equal(sent.chat_template_kwargs.enable_thinking, true); // agent use
     assert.ok(sent.max_tokens <= base.contextLength / 2);
     assert.equal((await request(`${url}/v1/models`)).json.data[0].id, 'local');

@@ -1,0 +1,73 @@
+# What you need to do
+
+Everything the build could do alone is done. These are the steps only you can do, in order. Tick them off as you go.
+
+## A. On the PC (about 10 minutes)
+
+- [ ] **1. Load the model in LM Studio.** Load Qwen at Q4 and set its API identifier (model settings) to `local`. Until you do, chat says the alias "local" is not loaded.
+- [ ] **2. Start JARVIS.** In `C:\Users\bethe\Jarvis-Next`, run these in two terminals and leave them open:
+  ```
+  npm run server
+  npm run agent
+  ```
+- [ ] **3. Build the app and the Mac bundle** (once, and again after any change):
+  ```
+  npm run build
+  node scripts/make-mac-bundle.js
+  ```
+  The bundle is created at `dist-mac\jarvis-mac.zip` (about 84 KB).
+- [ ] **4. Get the link for the Mac** and keep it private (it contains your token):
+  ```
+  node scripts/client-link.js
+  ```
+- [ ] **5. Check everything:**
+  ```
+  node scripts/doctor.js
+  ```
+  Expect FAIL lines for the Mac agent, OpenCode and Google until the later steps are done.
+
+## B. Move two files to the MacBook
+
+- [ ] **6.** Copy `dist-mac\jarvis-mac.zip` to the Mac's Downloads folder (AirDrop or USB).
+- [ ] **7.** Copy `data\tokens\mac.token` to the Mac the same way. **Never** through iCloud, email or chat.
+
+## C. On the MacBook
+
+- [ ] **8. Open Claude Code on the Mac** in your home folder.
+- [ ] **9. Paste the prompt** from `docs\MAC_PROMPT.md` (everything between the two lines). Replace `<PC_ADDRESS>` with `192.168.1.32`, or the PC's Tailscale name if you set that up.
+- [ ] **10. Answer its questions.** It will ask before installing Node, before installing OpenCode (optional) and before creating the startup item.
+- [ ] **11. Grant the macOS permissions** it tells you about: Accessibility, Automation, Microphone (System Settings > Privacy & Security). Only you can do this.
+- [ ] **12. Write down the Mac's address** that Claude Code reports at the end.
+
+## D. Back on the PC
+
+- [ ] **13.** Open `config\server\machines.json` and set `"host"` for `mac` to the Mac's address from step 12.
+- [ ] **14.** Stop and restart `npm run server` so it picks that up.
+- [ ] **15.** Run `node scripts/doctor.js` again. "Agent mac reachable" should now say PASS.
+
+## E. Use it
+
+- [ ] **16.** On the Mac, open the link from step 4 in Safari or Chrome. Settings should say **Connected**, and a **PC / Mac** switcher appears at the top right.
+- [ ] **17.** Send a message. Click **Mac** in the switcher and ask it to do something on the Mac (for example "what is the volume?"). Anything risky shows an approval dialog first.
+
+## Optional, later
+
+| Item | Why | How |
+|---|---|---|
+| Tailscale on both machines | Encrypts the link and stops the address changing | Install it on both, then use the Tailscale names instead of `192.168.1.32` |
+| OpenCode (coding agent) | Lets JARVIS write code on either computer | Install version 1.19.1, then `node scripts/opencode-verify.js` |
+| Google sign-in (morning digest) | Reads your calendar and mail (read only) | Steps in `HUMAN_TODO.md`, section 4 |
+| Voice | Push-to-talk (hold Ctrl+Space) | Needs speech engines on ports 8770 and 8771; `HUMAN_TODO.md`, section 9 |
+| Firewall rule | Lets the Mac reach the PC through Windows Firewall | `node scripts/install.js --os win32` prints the command to run in an admin PowerShell |
+
+## If something goes wrong
+
+| Symptom | Fix |
+|---|---|
+| "not connected, retrying" | The address or token is wrong, or the server is not running. Use the link from step 4. |
+| "alias local is not loaded" | Step 1: set the model's API identifier to `local` in LM Studio. |
+| Mac page loads but cannot connect | Both machines must be on the same network, and Windows Firewall must allow port 7410 (see the table above). |
+| Agent mac reachable: FAIL | Steps 13 and 14, and check the Mac agent is running (`node scripts/doctor.js --agent-only` on the Mac). |
+| Anything else | Paste the exact error text to me. |
+
+More detail: `HUMAN_TODO.md` (everything only you can do), `docs/setup-mac.md`, `docs/network.md`, `docs/known-issues.md`.

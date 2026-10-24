@@ -1,6 +1,6 @@
 {
   "baseUrl": "http://127.0.0.1:1234/v1",
-  "modelId": "local",
+  "modelId": "unsloth/qwen3.8-27b",
   "contextLength": 65536,
   "kvCache": "q8_0",
   "mtp": {

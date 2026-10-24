@@ -15,7 +15,7 @@ export async function startFakeModel({ port = 0 } = {}) {
     const url = new URL(req.url, 'http://x');
     if (req.method === 'GET' && url.pathname === '/v1/models') {
       res.writeHead(200, { 'content-type': 'application/json' });
-      return res.end(JSON.stringify({ data: [{ id: 'local', object: 'model' }] }));
+      return res.end(JSON.stringify({ data: [{ id: 'local', object: 'model' }, { id: 'unsloth/qwen3.8-27b', object: 'model' }] }));
     }
     if (req.method !== 'POST' || url.pathname !== '/v1/chat/completions') { res.writeHead(404); return res.end('{}'); }
     const chunks = [];
