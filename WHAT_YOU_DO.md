@@ -4,7 +4,7 @@ Everything the build could do alone is done. These are the steps only you can do
 
 ## A. On the PC (about 10 minutes)
 
-- [ ] **1. Load the model in LM Studio.** Load Qwen at Q4 and set its API identifier (model settings) to `local`. Until you do, chat says the alias "local" is not loaded.
+- [ ] **1. Load the model in LM Studio.** Load Qwen at Q4 and load it; its identifier is `qwen3.8-27b`, which JARVIS is already set to.
 - [ ] **2. Start JARVIS.** In `C:\Users\bethe\Jarvis-Next`, run these in two terminals and leave them open:
   ```
   npm run server
@@ -65,7 +65,7 @@ Everything the build could do alone is done. These are the steps only you can do
 | Symptom | Fix |
 |---|---|
 | "not connected, retrying" | The address or token is wrong, or the server is not running. Use the link from step 4. |
-| "alias local is not loaded" | Step 1: set the model's API identifier to `local` in LM Studio. |
+| "model not loaded" | Step 1: load `qwen3.8-27b` in LM Studio. |
 | Mac page loads but cannot connect | Both machines must be on the same network, and Windows Firewall must allow port 7410 (see the table above). |
 | Agent mac reachable: FAIL | Steps 13 and 14, and check the Mac agent is running (`node scripts/doctor.js --agent-only` on the Mac). |
 | Anything else | Paste the exact error text to me. |
