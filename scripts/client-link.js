@@ -11,7 +11,8 @@ import { isMain } from '../shared/util.js';
 import { runProgram } from '../agent/registry/common.js';
 
 export async function tailscaleName(run = runProgram) {
-  const r = await run({ file: 'tailscale', args: ['status', '--json'], timeoutMs: 5000 }).catch(() => null);
+  // the installer adds Tailscale to PATH only for new sessions, so the default Windows location is tried too
+  const r = (await run({ file: 'tailscale', args: ['status', '--json'], timeoutMs: 5000 }).catch(() => null)) ?? (process.platform === 'win32' ? await run({ file: 'C:\\Program Files\\Tailscale\\tailscale.exe', args: ['status', '--json'], timeoutMs: 5000 }).catch(() => null) : null);
   if (!r || r.code !== 0) return null;
   try { const j = JSON.parse(r.stdout); return j.BackendState === 'Running' && j.Self?.DNSName ? j.Self.DNSName.replace(/\.$/, '') : null; } catch { return null; }
 }
