@@ -1,6 +1,6 @@
 {
   "baseUrl": "http://127.0.0.1:1234/v1",
-  "modelId": "qwen3.8-27b",
+  "modelId": "qwen/qwen3-coder-30b",
   "contextLength": 65536,
   "kvCache": "q8_0",
   "mtp": {

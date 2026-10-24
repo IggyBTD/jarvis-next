@@ -58,5 +58,5 @@ test('doctor reports Tailscale as information, never as a failure', async () => 
     assert.match(none.detail, /only needed away from home/);
     const on = (await runDoctor({ cfg: t.cfg, agentOnly: true, run: async () => running })).find((r) => r.name.startsWith('Tailscale'));
     assert.match(on.detail, /pc\.tail1234\.ts\.net/);
-  } finally { await model.close(); t.cleanup(); }
+  } finally { await new Promise((r) => setTimeout(r, 150)); await model.close(); t.cleanup(); }
 });
