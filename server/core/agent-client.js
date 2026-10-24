@@ -14,7 +14,7 @@ const OPENCODE_ROUTES = [
   /^\/session$/, /^\/session\/[\w.-]+$/, /^\/session\/[\w.-]+\/(message|prompt_async|abort|diff|children)$/,
   /^\/session\/[\w.-]+\/permissions\/[\w.-]+$/, /^\/permission$/, /^\/permission\/[\w.-]+(\/reply)?$/,
 ];
-const BROWSER_ROUTES = [/^\/(health|navigate|click|type|press|read|screenshot|back|close|resume|confirm|state)$/];
+const BROWSER_ROUTES = [/^\/(health|navigate|click|type|press|read|screenshot|back|close|resume|confirm|state)$/, /^\/view_(navigate|click|type|press|scroll|back|forward|reload)$/];
 const SHELL = /(^|\/)shell(\/|$)/i;
 
 // Returns the cleaned path or throws. No query strings: the agent sets the workspace itself.

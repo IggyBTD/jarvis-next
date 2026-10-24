@@ -115,6 +115,21 @@ export function createBrowserService({ token, policy, headed = false, allowLoopb
     },
     async screenshot() { const p = await ensure(); return { status: 'ok', jpeg: await shot(p) }; },
     async back() { const p = await ensure(); await p.goBack({ timeout: 10_000 }).catch(() => null); return done(p); },
+    // --- the person driving the page from the Intel view (these names are not model tools; only the UI token reaches them) ---
+    async view_navigate({ url }) {
+      const v = await checkUrl(String(url ?? ''), opts);
+      if (!v.ok) return { status: 'refused', reason: v.reason };
+      const p = await ensure();
+      await p.goto(url, { timeout: 30_000 });
+      return done(p);
+    },
+    async view_click({ x, y }) { const p = await ensure(); await p.mouse.click(Number(x), Number(y)); await p.waitForLoadState('domcontentloaded', { timeout: 3000 }).catch(() => {}); return done(p); },
+    async view_type({ text }) { const p = await ensure(); await p.keyboard.type(String(text ?? '').slice(0, 500)); return { status: 'ok' }; },
+    async view_press({ key }) { if (!KEYS.has(key)) return { status: 'refused', reason: 'key not allowed' }; const p = await ensure(); await p.keyboard.press(key); await p.waitForLoadState('domcontentloaded', { timeout: 3000 }).catch(() => {}); return done(p); },
+    async view_scroll({ dy }) { const p = await ensure(); await p.mouse.wheel(0, Math.max(-3000, Math.min(3000, Number(dy) || 0))); return { status: 'ok' }; },
+    async view_back() { const p = await ensure(); await p.goBack({ timeout: 10_000 }).catch(() => null); return done(p); },
+    async view_forward() { const p = await ensure(); await p.goForward({ timeout: 10_000 }).catch(() => null); return done(p); },
+    async view_reload() { const p = await ensure(); await p.reload({ timeout: 30_000 }).catch(() => null); return done(p); },
     async close() { await context?.close().catch(() => {}); page = null; context = null; typedSites.clear(); challenges.clear(); return { status: 'ok' }; },
     async resume() { paused = false; const p = await ensure(); return done(p); },
     // Runs a stored action once, only if it is the same element on the same page and has not expired.
@@ -129,7 +144,8 @@ export function createBrowserService({ token, policy, headed = false, allowLoopb
   };
 
   async function handle(name, args) {
-    if (paused && !['resume', 'close', 'read'].includes(name)) return { status: 'captcha', message: 'Paused for a CAPTCHA. Ask the user to solve it, then resume.' };
+    if (name.startsWith('view_')) paused = false; // a person is acting; done() pauses again if a CAPTCHA is still showing
+    if (paused && !['resume', 'close', 'read', 'screenshot'].includes(name)) return { status: 'captcha', message: 'Paused for a CAPTCHA. Ask the user to solve it, then resume.' };
     return actions[name](args ?? {});
   }
   return { handle, names: Object.keys(actions), state: () => ({ running: !!page && !page.isClosed(), url: page && !page.isClosed() ? page.url() : null, paused }), async stop() { await context?.close().catch(() => {}); await browser?.close().catch(() => {}); browser = null; page = null; } };

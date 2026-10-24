@@ -1,6 +1,7 @@
 // The JARVIS server (runs on the PC): composes the model path, the chokepoint (router, policy, gate, audit), the chat loop, the
 // coding-agent and browser tools, telemetry, the scheduler and digest, voice, and the HTTP/WebSocket API. Start: npm run server
 import http from 'node:http';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadConfig, dataPath, resolveData } from './core/config.js';
@@ -89,8 +90,33 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   const health = createHealth({ llm, queue, router, machines, contextLength: cfg.models.contextLength });
   const server = http.createServer();
   wsApi = attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks: tasks, reminders, voice, log });
+  // The Intel page's browser view: the guarded browser of whichever computer is the active target, driven by the person. Reaches the
+  // agent only through router.capabilities (allowlisted routes). Everything but looking is audited; typed text is never logged.
+  const VIEW = { navigate: 'view_navigate', click: 'view_click', type: 'view_type', press: 'view_press', scroll: 'view_scroll', back: 'view_back', forward: 'view_forward', reload: 'view_reload', close: 'close' };
+  const browserView = {
+    async shot(ifNoneMatch) {
+      const target = targetState.get();
+      const caps = router.capabilities(target);
+      const st = await caps.browser('GET', '/state').catch(() => null);
+      if (!st?.json?.running) return null;
+      const r = await caps.browser('GET', '/screenshot');
+      if (!r.json?.jpeg) return null;
+      const jpeg = Buffer.from(r.json.jpeg, 'base64');
+      const etag = `"${target}-${crypto.createHash('sha1').update(jpeg).digest('hex')}"`;
+      return ifNoneMatch === etag ? { unchanged: true, etag } : { jpeg, etag, url: st.json.url, target };
+    },
+    async act(body) {
+      const route = Object.hasOwn(VIEW, body?.type) ? VIEW[body.type] : null;
+      if (!route) return { status: 'refused', reason: 'unknown action' };
+      const target = targetState.get();
+      const { type, ...args } = body;
+      if (type !== 'scroll') audit.append({ component: 'browser-view', source: 'user', target, action: `view_${type}`, args: type === 'type' ? { characters: String(args.text ?? '').length } : args, tier: 'T1', decision: 'auto', outcome: 'sent' }).catch(() => {});
+      const r = await router.capabilities(target).browser('POST', `/${route}`, args).catch((e) => ({ json: { status: 'error', reason: e.message } }));
+      return r.json ?? { status: 'error', reason: 'the browser did not answer' };
+    },
+  };
   const osint = createOpensky({ dataDir: cfg.dataDir, watchFile: path.join(cfg.root, 'config', 'osint-watch.json') });
-  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, health, audit, conversations, digest, osint, buildState: () => wsApi.buildState(), log }));
+  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, health, audit, conversations, digest, osint, browserView, buildState: () => wsApi.buildState(), log }));
 
   // The same handlers also answer on loopback, so this PC's own app works whatever the network address does (Tailscale down, a new LAN IP).
   const loopback = http.createServer();

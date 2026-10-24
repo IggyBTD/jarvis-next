@@ -13,6 +13,7 @@ const PAGES = {
   '/captcha': '<h1>Checking</h1><p>Please verify you are human</p>',
   '/leak': '<img src="http://10.255.255.1/x.png"><script>fetch("http://169.254.169.254/latest").then(()=>document.title="leaked").catch(()=>document.title="blocked")</script><h1>Leak</h1>',
   '/done': '<h1>Submitted</h1>',
+  '/abs': '<form method="post" action="/done"><input name="pw" type="password" style="position:absolute;left:100px;top:20px;width:300px;height:40px"><button style="position:absolute;left:100px;top:100px;width:200px;height:60px">Buy now</button></form>',
 };
 let server; let svc; let base; const hits = [];
 before(async () => {
@@ -79,4 +80,22 @@ test('a CAPTCHA pauses everything until resume', async () => {
   await svc.handle('navigate', { url: `${base}/` }).catch(() => {});
   const back = await svc.handle('resume');
   assert.ok(['ok', 'captcha'].includes(back.status));
+});
+
+test('the person driving the view is not challenged, can type anywhere, and can solve a CAPTCHA that blocks the model', async () => {
+  assert.equal((await svc.handle('view_navigate', { url: `${base}/abs` })).status, 'ok'); // the person's navigation also clears the pause left by the test before
+  hits.length = 0;
+  // a click at coordinates on a submit button goes through: the person is the approver
+  assert.equal((await svc.handle('view_click', { x: 150, y: 40 })).status, 'ok');
+  assert.equal((await svc.handle('view_type', { text: 'hunter2' })).status, 'ok');
+  assert.equal((await svc.handle('view_press', { key: 'Delete; rm' })).status, 'refused');
+  assert.equal((await svc.handle('view_click', { x: 150, y: 130 })).status, 'ok');
+  assert.ok(hits.some((h) => h.startsWith('POST /done')));
+  assert.equal((await svc.handle('view_scroll', { dy: 99999 })).status, 'ok');
+  assert.equal((await svc.handle('view_navigate', { url: 'http://10.0.0.1/' })).status, 'refused'); // private networks stay blocked for people too
+  assert.equal((await svc.handle('view_navigate', { url: `${base}/captcha` })).status, 'captcha');
+  assert.equal((await svc.handle('click', { text: 'x' })).status, 'captcha'); // the model stays blocked
+  assert.equal((await svc.handle('screenshot')).status, 'ok'); // looking is always allowed
+  assert.equal((await svc.handle('view_navigate', { url: `${base}/` })).status, 'ok'); // the person moved on: unpaused
+  assert.equal((await svc.handle('click', { text: 'Show more' })).status, 'ok');
 });

@@ -37,7 +37,7 @@ export function createHealth({ llm, queue, router, machines, contextLength = nul
 
 const readBody = (req) => new Promise((resolve, reject) => { const c = []; let n = 0; req.on('data', (d) => { n += d.length; if (n > 20_000) { reject(Object.assign(new Error('body too large'), { status: 413 })); req.destroy(); } else c.push(d); }); req.on('end', () => { try { resolve(c.length ? JSON.parse(Buffer.concat(c).toString('utf8')) : {}); } catch { reject(Object.assign(new Error('body must be JSON'), { status: 400 })); } }); req.on('error', reject); });
 
-export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversations, digest, osint, buildState, log = () => {} }) {
+export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversations, digest, osint, browserView, buildState, log = () => {} }) {
   const origins = cfg.machines.server.origins ?? [];
   return async function handle(req, res) {
     try {
@@ -70,6 +70,14 @@ export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversa
         if (req.method === 'GET') return json(res, 200, osint.status(), cors);
         if (req.method === 'POST') { const b = await readBody(req); try { return json(res, 200, await osint.login(b.clientId, b.clientSecret), cors); } catch (e) { return json(res, e.status ?? 500, { error: e.message }, cors); } }
       }
+      if (browserView && p === '/api/browser/shot' && req.method === 'GET') {
+        const s = await browserView.shot(req.headers['if-none-match']);
+        if (!s) { res.writeHead(204, cors); return res.end(); }
+        if (s.unchanged) { res.writeHead(304, { ...cors, etag: s.etag }); return res.end(); }
+        res.writeHead(200, { ...cors, 'content-type': 'image/jpeg', 'cache-control': 'no-store', etag: s.etag, 'x-url': encodeURIComponent(s.url ?? ''), 'x-target': s.target, 'access-control-expose-headers': 'x-url, x-target, etag' });
+        return res.end(s.jpeg);
+      }
+      if (browserView && p === '/api/browser/do' && req.method === 'POST') return json(res, 200, await browserView.act(await readBody(req)), cors);
       if (req.method === 'GET' && p === '/api/conversations') return json(res, 200, { conversations: conversations.list() }, cors);
       if (req.method === 'GET' && p === '/api/digest') {
         const date = url.searchParams.get('date');

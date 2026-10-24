@@ -38,7 +38,12 @@ async function refresh() {
 
 async function guarded(fn) {
   say('Working...');
-  try { await flush(); await fn(); } catch (e) { say(e.message ?? String(e), true); return; }
+  try {
+    await flush();
+    const r = await fn();
+    if (r?.status === 'refused' || r?.status === 'error') { say(r.reason ?? 'That did not work.', true); return; }
+    if (r?.status === 'captcha') say('A CAPTCHA is showing. Solve it here with the mouse, then carry on.');
+  } catch (e) { say(e.message ?? String(e), true); return; }
   await refresh();
 }
 

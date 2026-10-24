@@ -7,6 +7,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 let ready = null;
 
 export function ensureBrowser() {
+  if (serverMode()) return Promise.resolve(); // the server drives the guarded browser of the active computer: no local sidecar to start
   ready ??= (async () => {
     if (window.__TAURI_INTERNALS__) {
       const { invoke } = await import('@tauri-apps/api/core');
@@ -22,6 +23,11 @@ export function ensureBrowser() {
 }
 
 async function post(path, body) {
+  if (serverMode()) {
+    const res = await osintFetch('/browser/do', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(`The server answered ${res.status}`);
+    return res.json();
+  }
   await ensureBrowser();
   const res = await fetch(`${BASE}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const data = await res.json().catch(() => ({}));
@@ -29,15 +35,24 @@ async function post(path, body) {
   return data;
 }
 
-export const openUrl = (url) => post('/open', { url });
-export const doAction = (body) => post('/do', body);
+export const openUrl = (url) => (serverMode() ? post('/browser/do', { type: 'navigate', url }) : post('/open', { url }));
+export const doAction = (body) => (serverMode() ? post('/browser/do', body) : post('/do', body));
 export async function health() {
+  if (serverMode()) return { running: false };
   await ensureBrowser();
   return (await fetch(`${BASE}/health`)).json();
 }
 // The current page as an object URL (the caller revokes it); undefined when nothing changed since `since`; null when no page is open.
 let frame = -1;
+let serverTag = '';
 export async function shot() {
+  if (serverMode()) { // the active computer's browser, as a picture; unchanged pictures answer 304 and cost nothing
+    const r = await osintFetch('/browser/shot', { headers: serverTag ? { 'if-none-match': serverTag } : {}, cache: 'no-store' });
+    if (r.status === 304) return undefined;
+    if (r.status !== 200) return null;
+    serverTag = r.headers.get('etag') ?? '';
+    return { src: URL.createObjectURL(await r.blob()), url: decodeURIComponent(r.headers.get('x-url') ?? ''), title: '' };
+  }
   const res = await fetch(`${BASE}/shot?since=${frame}`, { cache: 'no-store' });
   if (res.status === 204) return res.headers.get('X-Open') === '0' ? null : undefined;
   if (!res.ok) return null;
