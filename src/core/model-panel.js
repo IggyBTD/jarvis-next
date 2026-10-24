@@ -3,6 +3,7 @@ import { listModels, onEvent, getPreset, unloadModel } from './llm-client.js';
 import { icon } from '../icons/index.js';
 import { getSwitches, onSwitchChange } from './switches.js';
 import { reportService } from './service-status.js';
+import { serverMode, onLink, state as link } from './server-link.js';
 
 const body = document.getElementById('model-info-body');
 const tag = document.getElementById('model-info-tag');
@@ -38,7 +39,7 @@ export function onModelHealth(cb) {
   return () => healthListeners.delete(cb);
 }
 export function getModelHealth() {
-  const entry = loaded.find((l) => l.model.key === getPreset().model) ?? loaded[0];
+  const entry = (serverMode() ? null : loaded.find((l) => l.model.key === getPreset().model)) ?? loaded[0];
   if (!entry) return {};
   const stats = lastStats.get(entry.model.key);
   return {
@@ -65,7 +66,7 @@ function modelCard({ model, instance }) {
   name.textContent = model.display_name || model.key;
   const quant = document.createElement('span');
   quant.className = 'quant-pill';
-  quant.textContent = model.quantization?.name ?? '?';
+  quant.textContent = serverMode() ? 'server' : (model.quantization?.name ?? '?');
   const eject = document.createElement('button');
   eject.type = 'button';
   eject.className = 'icon-btn model-eject';
@@ -73,7 +74,8 @@ function modelCard({ model, instance }) {
   eject.setAttribute('aria-label', eject.title);
   eject.innerHTML = icon('eject');
   eject.addEventListener('click', () => { eject.disabled = true; unloadModel(instance.id, model.key).catch(() => { eject.disabled = false; }); });
-  head.append(name, quant, eject);
+  head.append(name, quant);
+  if (!serverMode()) head.append(eject); // the model lives on the PC: unloading it is done in LM Studio there
 
   const grid = document.createElement('div');
   grid.className = 'model-stat-grid';
@@ -83,7 +85,7 @@ function modelCard({ model, instance }) {
     statCell('First token', stats ? `${fmt(stats.ttft, 2)} s` : dash),
     statCell('Context', `${fmtK(ctxUsed)} / ${fmtK(ctxMax)}`),
     statCell('Tokens out', stats ? fmtK(stats.completionTokens) : dash),
-    statCell('Size', `${(model.size_bytes / 1e9).toFixed(1)} GB`),
+    statCell('Size', model.size_bytes ? `${(model.size_bytes / 1e9).toFixed(1)} GB` : dash),
     statCell('Parameters', model.params_string ?? dash),
     statCell('Unloads in', fmtTtl(instance.remaining_ttl_seconds)),
   );
@@ -105,14 +107,29 @@ function render() {
   if (!loaded.length && !(phase && phase.phase !== 'idle')) {
     const none = document.createElement('div');
     none.className = 'model-note';
-    none.textContent = !getSwitches().link ? 'Network link cut' : unreachable ? 'LM Studio is not reachable' : 'No model loaded';
+    none.textContent = serverMode() ? (unreachable ? 'The server cannot reach the model' : 'No model loaded on the PC') : !getSwitches().link ? 'Network link cut' : unreachable ? 'LM Studio is not reachable' : 'No model loaded';
     body.append(none);
   }
   loaded.forEach((entry) => body.append(modelCard(entry)));
   healthListeners.forEach((cb) => cb());
 }
 
+// With the JARVIS server on, the model is the server's: what is loaded, its context size and the speed of its last reply come
+// from the server's health (already pushed over the socket), not from an LM Studio on this computer.
+function refreshFromServer() {
+  const h = link.health;
+  if (!h) { loaded = []; unreachable = link.status !== 'online'; } else {
+    unreachable = !h.model?.reachable;
+    loaded = h.model?.modelPresent ? [{ model: { key: h.model.modelId, display_name: h.model.modelId, max_context_length: h.model.contextLength, size_bytes: null }, instance: { id: h.model.modelId, config: { context_length: h.model.contextLength }, remaining_ttl_seconds: null } }] : [];
+    if (h.last) lastStats.set(h.model.modelId, { tps: h.last.tokensPerSec, promptTokens: h.last.promptTokens, completionTokens: h.last.completionTokens, ttft: h.last.ttftMs == null ? null : h.last.ttftMs / 1000 });
+  }
+  reportService('lmstudio', unreachable ? 'error' : 'ok', unreachable ? 'the server cannot reach the model' : `on the PC, ${loaded.length} loaded`);
+  render();
+}
+onLink((e) => { if (serverMode() && ['health', 'state', 'status'].includes(e.type)) refreshFromServer(); });
+
 async function refresh() {
+  if (serverMode()) { refreshFromServer(); return; }
   try {
     const models = await listModels();
     loaded = models

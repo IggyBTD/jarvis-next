@@ -23,8 +23,16 @@ const sw = $('target-switch');
 const tag = $('target-tag');
 const navServer = $('nav-server');
 
+// The model is chosen on the PC (config/server/models.json), so the preset menu has nothing to offer in server mode: the chip just names it.
+function paintModelChip(on) {
+  const chipEl = $('model-chip');
+  const id = state.health?.model?.modelId;
+  if (on && id) { $('model-chip-label').textContent = id.split('/').pop(); chipEl.disabled = true; chipEl.title = 'The model is set on the PC (config/server/models.json)'; $('model-menu').hidden = true; } else if (chipEl.disabled) { chipEl.disabled = false; chipEl.title = ''; }
+}
+
 function paintTarget() {
   const on = serverMode();
+  paintModelChip(on);
   sw.hidden = !on;
   tag.hidden = !on;
   navServer.hidden = !on;

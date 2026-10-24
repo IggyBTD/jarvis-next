@@ -47,6 +47,17 @@ test('connects, shows the switcher with the PC active and both computers reachab
   assert.equal(await page.getAttribute('#target-switch', 'data-link'), 'on');
 });
 
+test('the model chip and the context meter come from the server, not from an LM Studio on this computer', async () => {
+  await waitFor(async () => (await page.textContent('#model-chip-label')).trim() === rig.cfg.models.modelId.split('/').pop());
+  assert.equal(await page.isDisabled('#model-chip'), true);
+  assert.equal(await page.locator('#model-menu:not([hidden])').count(), 0);
+  await page.click('#nav-system');
+  await waitFor(async () => /server/.test(await page.textContent('#model-info-body')));
+  assert.equal(await page.locator('#model-info-body .model-eject').count(), 0);
+  assert.match(await page.textContent('#model-info-body'), new RegExp(rig.cfg.models.modelId.split('/').pop().replace('.', '\\.')));
+  await page.click('#nav-server');
+});
+
 test('a reply streams in and carries the PC tag', async () => {
   rig.model.script({ content: 'Hello from the server.', chunk: 3 });
   await send('hello');
@@ -115,7 +126,7 @@ test('the Server tab shows the connection, the model and both computers', async 
   await page.waitForSelector('#ws-server:not([hidden]) .sys-card');
   const text = await page.textContent('#ws-server');
   assert.match(text, /Connected/);
-  assert.match(text, /local/);
+  assert.match(text, new RegExp(rig.cfg.models.modelId.replace('/', '.')));
   assert.match(text, /PC/);
   assert.match(text, /Mac/);
   await page.screenshot({ path: path.join(SHOTS, 'server-tab.png') });

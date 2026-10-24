@@ -86,7 +86,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
 
   const auth = createAuth({ tokens, reload });
   setInterval(() => { reload(); auth.reload(); }, 60_000).unref();
-  const health = createHealth({ llm, queue, router, machines });
+  const health = createHealth({ llm, queue, router, machines, contextLength: cfg.models.contextLength });
   const server = http.createServer();
   wsApi = attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks: tasks, reminders, voice, log });
   const osint = createOpensky({ dataDir: cfg.dataDir, watchFile: path.join(cfg.root, 'config', 'osint-watch.json') });

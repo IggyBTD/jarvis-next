@@ -66,6 +66,8 @@ test('prompts: per-OS text, live facts, no hardcoded machine facts, switch notic
     assert.match(await r.prompts.build('pc'), /pc-host/); // cached until a switch or session start refreshes it
     assert.match(await r.prompts.build('pc', { refreshFacts: true }), /renamed-box/);
 
+    // the app's screen rules travel with every prompt: replies are Markdown and artifacts use the tags the page renders
+    for (const p of [pc, mac]) { assert.match(p, /<jarvis-artifact id="short-kebab-id"/); assert.match(p, /Artifact types:/); assert.match(p, /<jarvis-board/); assert.ok(!/\{\{/.test(p)); }
     const note = r.prompts.switchNotice({ from: 'pc', to: 'mac' });
     assert.match(note, /Target changed from PC to Mac at .*Mac is a macOS computer\. Previous tool results, paths, open apps and working directories refer to PC/);
 

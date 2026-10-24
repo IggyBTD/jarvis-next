@@ -57,7 +57,7 @@ export function loadConfig({ configDir = process.env.JARVIS_CONFIG_DIR ?? path.j
 
   cfg.prompts = {};
   const promptDir = path.join(configDir, 'prompts');
-  for (const f of ['base.md', 'target-pc.md', 'target-mac.md', 'switch-notice.md']) {
+  for (const f of ['base.md', 'target-pc.md', 'target-mac.md', 'switch-notice.md', 'ui.md']) {
     try { cfg.prompts[f.replace(/\.md$/, '')] = fs.readFileSync(path.join(promptDir, f), 'utf8'); } catch { if (!only) problems.push(`prompts/${f}: file is missing`); }
   }
   if (problems.length) throw new ConfigError(problems);

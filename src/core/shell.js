@@ -9,6 +9,7 @@ import { getModelHealth, onModelHealth } from './model-panel.js';
 import { getServices } from './service-status.js';
 import { SHORTCUTS } from './shortcuts.js';
 import { getPreset } from './llm-client.js';
+import { serverMode } from './server-link.js';
 import { run } from './chat-list.js';
 import './context-menus.js';
 import './projects-page.js';
@@ -207,7 +208,7 @@ function paintMachine() {
   if (document.getElementById('chat-stack')?.querySelector('.chat-line')) return;
   const { data: d, offline } = getTelemetry();
   const { ctxMax } = getModelHealth();
-  const facts = [fact('Model', getPreset().model.split('/').pop())];
+  const facts = [fact('Model', serverMode() ? ($('model-chip-label').textContent || 'server') : getPreset().model.split('/').pop())];
   if (ctxMax) facts.push(fact('Context', fmtK(ctxMax)));
   if (!offline && Number.isFinite(d.GPU_Temperature)) facts.push(fact('GPU', `${Math.round(d.GPU_Temperature)} °C`));
   if (!offline && Number.isFinite(d.Memory_Usage)) facts.push(fact('RAM', `${d.Memory_Usage.toFixed(1)} of ${Math.round(d.Memory_Total)} GB`));
