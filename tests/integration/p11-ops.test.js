@@ -31,6 +31,7 @@ test('install plans: logon tasks and launch agents, firewall commands printed an
     assert.deepEqual(agent.run, ['launchctl', ['load', '-w', '/Users/me/Library/LaunchAgents/com.jarvis.agent.plist']]);
     assert.ok(taskXml({ name: 'x', node: 'n', script: 's', cwd: 'c' }).includes('RestartOnFailure'));
     assert.ok(launchAgentPlist({ label: 'l', node: 'n', script: 's', cwd: 'c', logDir: 'd' }).includes('RunAtLoad'));
+    assert.match(launchAgentPlist({ label: 'l', node: 'n', script: 's', cwd: 'c', logDir: 'd' }), /<key>PATH<\/key><string>\/opt\/homebrew\/bin/); // a LaunchAgent has no shell PATH: Homebrew tools (opencode) would not be found
   } finally { t.cleanup(); }
 });
 

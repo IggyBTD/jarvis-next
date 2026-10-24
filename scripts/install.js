@@ -28,6 +28,7 @@ export function launchAgentPlist({ label, node, script, cwd, logDir, args = [] }
   <key>Label</key><string>${esc(label)}</string>
   <key>ProgramArguments</key><array><string>${esc(node)}</string><string>${esc(script)}</string>${args.map((a) => `<string>${esc(a)}</string>`).join('')}</array>
   <key>WorkingDirectory</key><string>${esc(cwd)}</string>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string></dict>
   <key>RunAtLoad</key><true/><key>KeepAlive</key><true/>
   <key>StandardOutPath</key><string>${esc(path.posix.join(logDir, `${label}.out.log`))}</string>
   <key>StandardErrorPath</key><string>${esc(path.posix.join(logDir, `${label}.err.log`))}</string>

@@ -20,13 +20,15 @@ export async function runDoctor({ cfg = loadConfig(), fetchImpl = fetch, agentOn
   add('Node 22 or newer', Number(process.versions.node.split('.')[0]) >= 22, process.versions.node);
   add('Configuration files valid', true, 'config/server');
   const tokens = loadTokens(cfg);
-  for (const id of Object.keys(cfg.machines.machines)) {
+  // on a machine that only runs its agent, only that machine's own token is expected; the PC and UI tokens live on the PC
+  const here = agentOnly ? Object.keys(cfg.machines.machines).filter((id) => cfg.machines.machines[id].os === process.platform) : Object.keys(cfg.machines.machines);
+  for (const id of here) {
     const f = tokenPath(cfg, id);
     let mode = '';
     try { mode = process.platform === 'win32' ? 'n/a' : (fs.statSync(f).mode & 0o077) === 0 ? 'private' : 'readable by others'; } catch { /* missing */ }
     add(`Token for ${id}`, !!tokens.machines[id], tokens.machines[id] ? (mode && mode !== 'n/a' ? mode : 'present') : 'missing: npm run gen-tokens');
   }
-  add('UI token', tokens.ui.length > 0, tokens.ui.length ? 'present' : 'missing: npm run gen-tokens');
+  if (!agentOnly) add('UI token', tokens.ui.length > 0, tokens.ui.length ? 'present' : 'missing: npm run gen-tokens');
   for (const [id, m] of Object.entries(cfg.machines.machines)) {
     if (agentOnly && m.os !== process.platform) continue;
     try {
