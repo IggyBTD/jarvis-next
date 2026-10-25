@@ -8,7 +8,7 @@ import { ROOT } from '../server/core/config.js';
 import { isMain } from '../shared/util.js';
 import zlib from 'node:zlib';
 
-const ENTRIES = ['scripts/update.js', 'agent/index.js', 'sidecars/browser-guard/server.js', 'scripts/install.js', 'scripts/doctor.js', 'scripts/opencode-verify.js', 'scripts/gen-tokens.js'];
+const ENTRIES = ['scripts/update.js', 'scripts/wake.js', 'scripts/wake-relay.js', 'agent/index.js', 'sidecars/browser-guard/server.js', 'scripts/install.js', 'scripts/doctor.js', 'scripts/opencode-verify.js', 'scripts/gen-tokens.js'];
 const WHOLE_DIRS = ['agent', 'sidecars/browser-guard', 'config/server'];
 const IMPORT = /(?:from\s+|import\s*\(\s*)['"](\.{1,2}\/[^'"]+)['"]/g;
 

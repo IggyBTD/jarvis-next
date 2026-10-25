@@ -94,3 +94,15 @@ cd ~/jarvis-folder && node scripts/update.js
 (use the folder where you put JARVIS on the Mac). It downloads the current helper from the PC, keeps your tokens and addresses, and restarts the Mac agent. The PC must be on and reachable (Tailscale connected). The first time, the Mac still has the old bundle without `update.js`: copy a fresh `dist-mac\jarvis-mac.zip` once (run `node scripts/make-mac-bundle.js` on the PC), unzip over the folder, then use `update.js` from then on.
 
 The Mac also needs OpenCode at the exact version JARVIS expects: `npm install -g opencode-ai@1.19.1`.
+
+## Start the PC from the Mac when it is asleep (away from home)
+
+A sleeping PC cannot answer, and a wake-up packet from another network cannot reach your home network on its own. So you need **one small always-on device at home** that is on your Tailscale network and on the same network as the PC (a Raspberry Pi, a NAS, an old laptop, anything that can run Node). It sends the packet for you. No port is opened to the internet.
+
+1. **On the PC (once):** `node scripts/wake.js --check` must list your network adapter. Also enable Wake on LAN in the BIOS/UEFI. Your PC is on Wi-Fi: that is the weak point. Plug in an Ethernet cable if you can; Wi-Fi wake from sleep works on some machines and never from a full shut down. Use Sleep, not Shut down, when you leave.
+2. **On the PC (once):** make the server start by itself at logon, or waking the PC will not bring JARVIS back: `node scripts/install.js --os win32 --apply`.
+3. **On the home device:** put the JARVIS folder on it (the Mac bundle is enough), install Tailscale, then run `node scripts/wake-relay.js --mac AC:36:1B:E9:A4:91 --host <its Tailscale address>`. It creates `data/tokens/wake.token`. Keep it running (the install script's startup item, or a systemd service).
+4. **On the Mac (once):** copy that `wake.token` to the Mac's `data/tokens/` by hand. Create `data/wake.json` with `{ "mac": "AC:36:1B:E9:A4:91", "relay": "http://<the device's Tailscale address>:7430" }`.
+5. **Whenever you need it:** `node scripts/wake.js`. It asks the relay, waits until JARVIS answers (up to 3 minutes), then you open your usual link.
+
+At home, with no relay in `wake.json`, the same command sends the packet from the Mac directly.

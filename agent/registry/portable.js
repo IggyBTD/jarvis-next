@@ -3,9 +3,9 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import dgram from 'node:dgram';
 import crypto from 'node:crypto';
 import { action, safePath, dirPath, expandHome, spawnTracked } from './common.js';
+import { sendWol } from '../../shared/wol.js';
 import { parseLhm } from '../../shared/lhm.js';
 import { gitSnapshot, gitChanges } from './git.js';
 import { validate } from '../../shared/schema.js';
@@ -42,11 +42,6 @@ async function lhm(ctx) {
   return parseLhm(await res.json());
 }
 
-function wolPacket(mac) {
-  const bytes = Buffer.from(mac.replace(/[:-]/g, ''), 'hex');
-  return Buffer.concat([Buffer.alloc(6, 0xff), ...Array.from({ length: 16 }, () => bytes)]);
-}
-
 export const portable = {
   get_system_info: action({ async run(_a, ctx) {
     const cpus = os.cpus();
@@ -72,12 +67,7 @@ export const portable = {
   wake_on_lan: action({
     describe: (a) => ({ would: `send a Wake-on-LAN broadcast to ${a.mac}` }),
     async run({ mac }) {
-      if (!/^([0-9a-f]{2}[:-]){5}[0-9a-f]{2}$/i.test(mac)) throw new Error('MAC address must look like aa:bb:cc:dd:ee:ff');
-      await new Promise((resolve, reject) => {
-        const s = dgram.createSocket('udp4');
-        s.once('error', (e) => { s.close(); reject(e); });
-        s.bind(() => { s.setBroadcast(true); s.send(wolPacket(mac), 9, '255.255.255.255', (e) => { s.close(); e ? reject(e) : resolve(); }); });
-      });
+      await sendWol(mac);
       return { sentTo: mac };
     },
   }),

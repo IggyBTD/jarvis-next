@@ -17,3 +17,5 @@ Medium and low findings, and things that were built and tested only against fake
 - **Plan mode, skills and the Code page's file and diff panes** still belong to the original local mode. In server mode the Code page's task list shows the coding agent's tasks (OpenCode on the active computer); changes are reviewed through the approval dialogs and the Server tab.
 - **The Mac shows its System readout once a minute**, the PC every second.
 - **Mac OpenCode version**: the Mac must have exactly the pinned version (`npm install -g opencode-ai@1.19.1`), or the agent refuses it.
+- **Remote start was not tried for real**: the PC is on Wi-Fi only, and there is no relay device yet. The packet, relay and wait loop are tested against fakes; whether this PC wakes from sleep over Wi-Fi is unknown until the relay is running at home.
+- **LaTeX pad**: the local converter knows fractions, powers, subscripts, roots, Greek letters, common functions, absolute value and comparisons. Sums, integrals, limits, matrices and sentences go to the model, which can be wrong; the preview shows what it made before you copy.
