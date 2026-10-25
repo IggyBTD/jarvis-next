@@ -8,7 +8,7 @@ const optStr = (max = 200) => ({ type: 'string', maxLength: max });
 const msg = (props, required = []) => ({ type: 'object', properties: { type: str(40), id: optStr(80), ...props }, required: ['type', ...required], additionalProperties: false });
 
 export const CLIENT_MESSAGES = {
-  hello: msg({ clientId: str(80), version: optStr(40) }, ['clientId']),
+  hello: msg({ clientId: str(80), version: optStr(40), convId: str(64) }, ['clientId']),
   ping: msg({}),
   'chat.send': msg({ convId: str(64), text: { type: 'string', minLength: 1, maxLength: 8000 } }, ['text']),
   'chat.abort': msg({ convId: str(64) }, ['convId']),

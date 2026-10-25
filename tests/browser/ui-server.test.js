@@ -156,4 +156,13 @@ test('offline: nothing is sent, nothing runs locally, the text comes back, and i
 });
 
 // Outside the desktop app there is no Tauri bridge, so the original telemetry start-up logs one rejection; that is not ours.
+test('the sidebar lists the saved chats from the server, a click reopens one, a reload restores the open chat', async () => {
+  await page.waitForSelector('#chat-list .chat-item', { timeout: 15000 });
+  assert.ok(await page.locator('#chat-list .chat-item').count() >= 1);
+  await page.click('#chat-list .chat-item');
+  await page.waitForSelector('#chat-output .chat-line.user');
+  await page.reload();
+  await page.waitForSelector('#chat-output .chat-line.user', { timeout: 15000 }); // the chat this window was in comes back
+});
+
 test('no script errors on the page', () => { assert.deepEqual(errors.filter((e) => !/transformCallback/.test(e)), []); });

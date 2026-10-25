@@ -38,7 +38,23 @@ export function createConversations({ dir, now = () => new Date() }) {
     ensure: (id) => (id && get(id)) || create(id && ID_RE.test(id) ? id : undefined),
     append(c, msg) { c.messages.push({ ts: now().toISOString(), ...msg }); save(c); return msg; },
     save,
-    list: () => fs.readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => readJson(path.join(dir, f))).filter(Boolean).map(({ id, title, updatedAt, lastTarget }) => ({ id, title, updatedAt, lastTarget })).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    list: () => fs.readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => readJson(path.join(dir, f))).filter(Boolean).map(({ id, title, updatedAt, lastTarget, pinned, messages }) => ({ id, title, updatedAt, lastTarget, pinned: !!pinned, messages: messages.filter((m) => m.role === 'user').length })).filter((c) => c.messages > 0).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    // rename or pin from the sidebar; a name given by hand stops the automatic one
+    patch(id, { title, pinned }) {
+      const c = get(id);
+      if (!c) return null;
+      if (typeof title === 'string' && title.trim()) { c.title = title.trim().slice(0, 80); c.manual = true; }
+      if (typeof pinned === 'boolean') c.pinned = pinned;
+      save(c);
+      return c;
+    },
+    remove(id) {
+      if (!ID_RE.test(id)) throw new Error('bad conversation id');
+      cache.delete(id);
+      fs.rmSync(file(id), { force: true });
+    },
+    // the whole spoken conversation, for opening a saved chat
+    transcript: (c) => c.messages.filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content).map((m) => ({ role: m.role, content: m.content, target: m.target ?? null, ts: m.ts })),
     // A snapshot for a newly connected client: the last few messages without internals.
     recent(c, n = 30) { return c.messages.slice(-n).filter((m) => m.role !== 'tool' && m.content).map((m) => ({ role: m.role, content: typeof m.content === 'string' ? m.content : '', target: m.target ?? null, ts: m.ts })); },
   };

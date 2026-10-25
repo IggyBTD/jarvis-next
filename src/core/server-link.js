@@ -32,6 +32,17 @@ export function saveSettings(next) {
 const newConv = () => `c-${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
 let convId = (() => { try { return localStorage.getItem(CONV_KEY) || newConv(); } catch { return newConv(); } })();
 export const getConvId = () => convId;
+// Opens a saved chat: this window talks in it from now on.
+export function setConvId(id) {
+  convId = id;
+  try { localStorage.setItem(CONV_KEY, convId); } catch { /* storage blocked */ }
+  state.conversation = { id: convId, title: '', messages: [], streaming: null };
+}
+// An authenticated call to the server's HTTP API (saved chats, the globe's data).
+export function serverFetch(path, init = {}) {
+  const base = settings.url.trim().replace(/^ws/i, 'http').replace(/\/ws$/, '').replace(/\/+$/, '');
+  return fetch(`${base}/api${path}`, { ...init, headers: { 'content-type': 'application/json', ...(init.headers ?? {}), authorization: `Bearer ${settings.token}` } });
+}
 export function newConversation() {
   convId = newConv();
   try { localStorage.setItem(CONV_KEY, convId); } catch { /* storage blocked */ }
@@ -85,7 +96,7 @@ export function connect() {
     openedAt.t = Date.now();
     attempts = 0;
     state.attempts = 0;
-    socket.send(JSON.stringify({ type: 'hello', clientId: `app-${Math.random().toString(36).slice(2, 8)}`, version: '1' }));
+    socket.send(JSON.stringify({ type: 'hello', convId, clientId: `app-${Math.random().toString(36).slice(2, 8)}`, version: '1' }));
   };
   socket.onmessage = (ev) => { if (typeof ev.data === 'string') handle(JSON.parse(ev.data)); else emit({ type: 'voice.audio', frame: new Uint8Array(ev.data) }); };
   socket.onerror = () => {};

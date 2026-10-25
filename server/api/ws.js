@@ -42,7 +42,7 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
   }
 
   const handlers = {
-    async hello(c) { c.hello = true; send(c, await buildState()); await reminders?.deliverMissed?.(); },
+    async hello(c, m) { c.hello = true; send(c, await buildState(/^[\w-]{1,64}$/.test(m?.convId ?? '') ? m.convId : undefined)); await reminders?.deliverMissed?.(); },
     ping(c, m) { send(c, { type: 'pong', id: m.id }); },
     'chat.send'(c, m) {
       const convId = m.convId ?? DEFAULT_CONV;

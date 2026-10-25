@@ -47,7 +47,7 @@ export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversa
       const cors = origin && (sameOrigin || origins.includes(origin)) ? { 'access-control-allow-origin': origin, vary: 'Origin' } : {};
       if (req.method === 'OPTIONS') {
         if (!cors['access-control-allow-origin']) return json(res, 403, { error: 'origin not allowed' });
-        res.writeHead(204, { ...cors, 'access-control-allow-headers': 'authorization, content-type', 'access-control-allow-methods': 'GET, POST', 'access-control-max-age': '600' });
+        res.writeHead(204, { ...cors, 'access-control-allow-headers': 'authorization, content-type', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE', 'access-control-max-age': '600' });
         return res.end();
       }
       if (origin && !cors['access-control-allow-origin']) return json(res, 403, { error: 'origin not allowed' });
@@ -84,6 +84,14 @@ export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversa
       }
       if (browserView && p === '/api/browser/do' && req.method === 'POST') return json(res, 200, await browserView.act(await readBody(req)), cors);
       if (req.method === 'GET' && p === '/api/conversations') return json(res, 200, { conversations: conversations.list() }, cors);
+      const one = p.match(/^\/api\/conversations\/([\w-]{1,64})$/);
+      if (one) {
+        const c = conversations.get(one[1]);
+        if (!c) return json(res, 404, { error: 'no such conversation' }, cors);
+        if (req.method === 'GET') return json(res, 200, { id: c.id, title: c.title, pinned: !!c.pinned, messages: conversations.transcript(c) }, cors);
+        if (req.method === 'PATCH') { conversations.patch(c.id, await readBody(req)); return json(res, 200, { ok: true }, cors); }
+        if (req.method === 'DELETE') { conversations.remove(c.id); return json(res, 200, { ok: true }, cors); }
+      }
       if (req.method === 'GET' && p === '/api/digest') {
         const date = url.searchParams.get('date');
         if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return json(res, 400, { error: 'date must be YYYY-MM-DD' }, cors);

@@ -24,7 +24,7 @@ import { toolDefinitions, runToolCall, registerActionHost, undoEdit, loadLocalRu
 import { restoreProject } from './agent-client.js';
 import { actionCard, approvalCard, planCard } from './tool-cards.js';
 import { assistantToolMessage, toolResultMessage } from './tool-calls.js';
-import { serverMode, sendChat, abortChat, onLink, state as link } from './server-link.js';
+import { serverMode, sendChat, abortChat, onLink, state as link, setConvId } from './server-link.js';
 
 const input = document.getElementById('hud-chat-input');
 const output = document.getElementById('chat-output');
@@ -301,7 +301,7 @@ async function sendViaServer(text) {
   output.scrollTop = output.scrollHeight;
 
   await new Promise((finish) => {
-    const end = () => { cancelAnimationFrame(frame); off(); serverTurn = null; setThinking(false); busy = false; setWorking(false); finish(); };
+    const end = () => { cancelAnimationFrame(frame); off(); serverTurn = null; setThinking(false); busy = false; setWorking(false); document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')); finish(); };
     serverTurn = { end };
     const fail = (message, kind = 'error') => { pending.className = `chat-line ${kind}`; pending.querySelector('.thought')?.remove(); setText(pending, message); end(); };
     const off = onLink((e) => {
@@ -743,6 +743,7 @@ async function resumeCommand(arg) {
     : lastListing.find((s) => s.id === q) ?? lastListing.find((s) => s.name.toLowerCase().includes(q.toLowerCase()));
   if (!pick) return `No saved session matches "${q}". Type /sessions.`;
   const saved = await loadSession(pick.id);
+  if (serverMode()) setConvId(pick.id);
   history.length = 0;
   history.push(...saved);
   turnEdits.clear();
@@ -755,6 +756,18 @@ async function resumeCommand(arg) {
   renderHistory();
   return `Resumed "${pick.name}" (${history.length} messages). File changes from before cannot be rewound, but the conversation can.`;
 }
+
+// With the server on, a reload (or another device) shows the chat this window was in, and the list of chats appears once connected.
+onLink((e) => {
+  if (!serverMode()) return;
+  if (e.type === 'status' && link.status === 'online') document.dispatchEvent(new CustomEvent('jarvis:sessions-changed'));
+  if (e.type === 'state' && !working && !history.length && !output.querySelector('.chat-line') && link.conversation.messages.length) {
+    history.push(...link.conversation.messages.map(({ role, content }) => ({ role, content })));
+    session.name = link.conversation.title || session.name;
+    renderHistory();
+    announceName(false);
+  }
+});
 
 async function exportCommand() {
   if (!history.length) return 'Nothing to export yet.';
