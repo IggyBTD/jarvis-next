@@ -148,6 +148,20 @@ test('thinking policy: per-use switch by method; history never carries thinking 
   } finally { await r.close(); }
 });
 
+test('sampling from models.json goes on every request; request_field sends top-level reasoning_effort', async () => {
+  const r = await rig();
+  try {
+    const sampling = { temperature: 0.6, top_p: 0.95, top_k: 20, min_p: 0, presence_penalty: 0, repeat_penalty: 1 };
+    const llm = createLlmClient({ config: { ...r.config, sampling, thinkingMethod: 'request_field' }, sleepFn: noSleep });
+    await llm.chat({ messages: user('q'), use: 'chat' });
+    await llm.chat({ messages: user('q'), use: 'agent' });
+    for (const [k, v] of Object.entries(sampling)) assert.equal(r.fake.requests[0].body[k], v);
+    assert.equal(r.fake.requests[0].body.reasoning_effort, 'none');
+    assert.equal(r.fake.requests[0].body.chat_template_kwargs, undefined);
+    assert.equal(r.fake.requests[1].body.reasoning_effort, 'medium');
+  } finally { await r.close(); }
+});
+
 test('health: reachable, unreachable, tokens per second after a request', async () => {
   const r = await rig();
   try {

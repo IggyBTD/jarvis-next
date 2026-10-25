@@ -13,7 +13,13 @@ import { createLlmClient } from '../server/core/llm-client.js';
 import { isMain } from '../shared/util.js';
 import { HARD_TASKS } from './bench-hard-tasks.js';
 
-const SYSTEM = 'You are an expert JavaScript programmer. Reply with ONLY the complete code in a single ```js block, CommonJS (module.exports = ...), no explanation, no tests, no comments longer than one line.';
+// Per-model request settings (vendor values, docs/MODEL_TUNING_PLAN.md section 3). Thinking off for the 27B uses the top-level reasoning_effort field (docs/decisions.md).
+const PROFILES = {
+  'qwen3.8-27b': { thinkingMethod: 'request_field', thinking: { chat: false, tools: false, digest: false, agent: false }, sampling: { temperature: 0.6, top_p: 0.95, top_k: 20, min_p: 0, presence_penalty: 0, repeat_penalty: 1 } },
+  'qwen/qwen3-coder-30b': { sampling: { temperature: 0.7, top_p: 0.8, top_k: 20, min_p: 0, presence_penalty: 0, repeat_penalty: 1.05 } },
+};
+
+const SYSTEM ='You are an expert JavaScript programmer. Reply with ONLY the complete code in a single ```js block, CommonJS (module.exports = ...), no explanation, no tests, no comments longer than one line.';
 
 export const CODE_TASKS = [
   {
@@ -64,12 +70,14 @@ export function gradeCode(code, cases) {
   try {
     fs.writeFileSync(path.join(dir, 'solution.cjs'), code);
     const harness = `const m = require('./solution.cjs'); globalThis.same = (a, b) => JSON.stringify(a) === JSON.stringify(b); globalThis.throws = async (f) => { try { await f(); return false; } catch { return true; } }; const cases = ${JSON.stringify(cases.map((c) => [c[0], c[1].toString()]))}; let passed = 0; const failed = [];
-(async () => { for (const [name, src] of cases) { try { if (await (0, eval)('(' + src + ')')(m)) passed++; else failed.push(name); } catch (e) { failed.push(name + ': ' + e.message); } }
-console.log(JSON.stringify({ passed, total: cases.length, failed })); })();`;
+process.on('unhandledRejection', () => {}); // a leaked rejection in one case must not zero the others
+const limit = (p) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('case timed out (3 s)')), 3000))]); // a hanging case fails alone
+(async () => { for (const [name, src] of cases) { try { if (await limit((0, eval)('(' + src + ')')(m))) passed++; else failed.push(name); } catch (e) { failed.push(name + ': ' + e.message); } }
+console.log(JSON.stringify({ passed, total: cases.length, failed })); process.exit(0); })();`;
     fs.writeFileSync(path.join(dir, 'run.cjs'), harness);
     const r = spawnSync(process.execPath, ['run.cjs'], { cwd: dir, encoding: 'utf8', timeout: 20_000 });
     if (r.error || r.status !== 0) return { passed: 0, total: cases.length, error: (r.stderr || r.error?.message || 'did not run').split('\n').find((l) => /Error/.test(l)) ?? 'did not run', failed: ['all'] };
-    return JSON.parse(r.stdout.trim().split('\n').pop());
+    try { return JSON.parse(r.stdout.trim().split('\n').pop()); } catch { return { passed: 0, total: cases.length, error: 'printed no result', failed: ['all'] }; }
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 }
 export const extractCode = (text) => { const m = text.match(/```(?:js|javascript|cjs)?\s*\n([\s\S]*?)```/); return (m ? m[1] : text).trim(); };
@@ -96,25 +104,26 @@ async function useOnly(base, key, log) {
   if (!(await loadedNow(base)).some((i) => i.key === key)) { log(`  loading ${key} (this can take a minute)`); await native(base, '/models/load', { model: key }); }
 }
 
-export async function benchModel({ base, key, modelCfg, maxTokens, log, tasks: codeTasks = CODE_TASKS, taskTimeoutMs = 240_000, codeWeight = 25, toolWeight = 25 }) {
+export async function benchModel({ base, key, modelCfg, maxTokens, log, tasks: codeTasks = CODE_TASKS, taskTimeoutMs = 240_000, codeWeight = 25, toolWeight = 25, profile = PROFILES[key], addendum = '' }) {
   const t0 = Date.now();
   await useOnly(base, key, log);
   const loadSec = (Date.now() - t0) / 1000;
-  const llm = createLlmClient({ config: { ...modelCfg, baseUrl: `${base}/v1`, modelId: key, requestTimeoutMs: 180_000 } });
+  const llm = createLlmClient({ config: { ...modelCfg, ...profile, baseUrl: `${base}/v1`, modelId: key, requestTimeoutMs: 180_000 } });
   const tasks = [];
   const speeds = [];
   for (const t of codeTasks) {
     log(`  ${t.name}...`);
+    const tStart = Date.now();
     try {
-      const r = await llm.chat({ messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: t.prompt }], use: 'chat', maxTokens, signal: AbortSignal.timeout(taskTimeoutMs) });
+      const r = await llm.chat({ messages: [{ role: 'system', content: addendum ? `${SYSTEM} ${addendum}` : SYSTEM },{ role: 'user', content: t.prompt }], use: 'chat', maxTokens, signal: AbortSignal.timeout(taskTimeoutMs) });
       if (r.stats.tokensPerSec) speeds.push(r.stats.tokensPerSec);
       const g = r.truncated && !/```[\s\S]*```/.test(r.content) ? { passed: 0, total: t.cases.length, failed: ['answer cut off before the code ended'] } : gradeCode(extractCode(r.content), t.cases);
-      tasks.push({ name: t.name, ...g, score: Math.round((g.passed / g.total) * codeWeight), tokens: r.stats.completionTokens, reasoningChars: r.reasoning.length });
-    } catch (e) { tasks.push({ name: t.name, passed: 0, total: t.cases.length, score: 0, failed: [/timeout|abort/i.test(`${e.name} ${e.message}`) ? `timed out after ${Math.round(taskTimeoutMs / 1000)} s` : `error: ${e.message}`] }); }
+      tasks.push({ name: t.name, ...g, score: Math.round((g.passed / g.total) * codeWeight), tokens: r.stats.completionTokens, reasoningChars: r.reasoning.length, sec: (Date.now() - tStart) / 1000 });
+    } catch (e) { tasks.push({ name: t.name, passed: 0, total: t.cases.length, score: 0, sec: (Date.now() - tStart) / 1000, failed: [/timeout|abort/i.test(`${e.name} ${e.message}`) ? `timed out after ${Math.round(taskTimeoutMs / 1000)} s` : `error: ${e.message}`] }); }
   }
   log('  tool calls...');
   try {
-    const r = await llm.chat({ messages: [{ role: 'system', content: 'You control a computer with the tools provided. Use them; do not explain.' }, { role: 'user', content: 'Turn the volume down to 15 percent and open spotify.' }], tools: TOOLS, use: 'tools', maxTokens: 400 });
+    const r = await llm.chat({ messages: [{ role: 'system', content: 'You control a computer with the tools provided. Use them; do not explain.' }, { role: 'user', content: 'Turn the volume down to 15 percent and open spotify.' }], tools: TOOLS, use: 'tools', maxTokens: 4000 });
     if (r.stats.tokensPerSec) speeds.push(r.stats.tokensPerSec);
     const g = gradeTools(r.toolCalls);
     tasks.push({ name: 'tool calls', ...g, score: Math.round((g.passed / g.total) * toolWeight) });
@@ -125,8 +134,9 @@ export async function benchModel({ base, key, modelCfg, maxTokens, log, tasks: c
 
 export const report = (results) => {
   const names = results[0].tasks.map((t) => t.name);
-  const head = `| Model | Total /100 | ${names.join(' | ')} | Tokens/s |\n|---|---|${names.map(() => '---').join('|')}|---|`;
-  const rows = results.map((r) => `| ${r.key} | **${r.total}** | ${r.tasks.map((t) => `${t.passed}/${t.total}`).join(' | ')} | ${r.tokensPerSec ?? 'n/a'} |`);
+  const head = `| Model | Total /100 | ${names.join(' | ')} | Tokens/s | Median s per code task |\n|---|---|${names.map(() => '---').join('|')}|---|---|`;
+  const med = (r) => { const s = r.tasks.map((t) => t.sec).filter((x) => x !== undefined).sort((a, b) => a - b); return s.length ? ((s[(s.length - 1) >> 1] + s[s.length >> 1]) / 2).toFixed(0) : 'n/a'; };
+  const rows = results.map((r) => `| ${r.key} | **${r.total}** | ${r.tasks.map((t) => `${t.passed}/${t.total}`).join(' | ')} | ${r.tokensPerSec ?? 'n/a'} | ${med(r)} |`);
   const fails = results.flatMap((r) => r.tasks.filter((t) => t.failed?.length).map((t) => `- ${r.key}, ${t.name}: failed ${t.failed.join(', ')}`));
   const best = [...results].sort((a, b) => b.total - a.total);
   const verdict = best.length > 1 && best[0].total - best[1].total >= 8 ? `${best[0].key} is clearly better (${best[0].total} vs ${best[1].total}).` : best.length > 1 && best[0].total === best[1].total ? 'A tie on quality: take the faster one.' : `Close: ${best[0].key} ahead by ${best[0].total - (best[1]?.total ?? 0)} points; the speed difference may decide it.`;

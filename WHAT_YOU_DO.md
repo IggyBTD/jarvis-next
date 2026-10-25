@@ -106,3 +106,7 @@ A sleeping PC cannot answer, and a wake-up packet from another network cannot re
 5. **Whenever you need it:** `node scripts/wake.js`. It asks the relay, waits until JARVIS answers (up to 3 minutes), then you open your usual link.
 
 At home, with no relay in `wake.json`, the same command sends the packet from the Mac directly.
+
+## Start JARVIS NEXT like any other app (PC)
+
+`node scripts/make-shortcut.js` puts **JARVIS NEXT** on the Desktop and in the Start menu, with its icon. Clicking it starts the server and the PC agent in the background if they are not running, then opens JARVIS in its own window (no tabs, no address bar, its own taskbar icon). Right-click it in the taskbar or Start menu to pin it. Logs are in `data/logs/`. Run the script again if you move the folder; `node scripts/make-icon.js` redraws the icon.
