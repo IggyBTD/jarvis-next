@@ -37,7 +37,7 @@ export function createHealth({ llm, queue, router, machines, contextLength = nul
 
 const readBody = (req) => new Promise((resolve, reject) => { const c = []; let n = 0; req.on('data', (d) => { n += d.length; if (n > 20_000) { reject(Object.assign(new Error('body too large'), { status: 413 })); req.destroy(); } else c.push(d); }); req.on('end', () => { try { resolve(c.length ? JSON.parse(Buffer.concat(c).toString('utf8')) : {}); } catch { reject(Object.assign(new Error('body must be JSON'), { status: 400 })); } }); req.on('error', reject); });
 
-export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversations, digest, osint, browserView, buildState, log = () => {} }) {
+export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversations, digest, osint, browserView, bundle, buildState, log = () => {} }) {
   const origins = cfg.machines.server.origins ?? [];
   return async function handle(req, res) {
     try {
@@ -61,6 +61,11 @@ export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversa
 
       if (need.includes('model') && (p.startsWith('/v1/') || p === '/v1')) return llmProxy.handle(req, res, verdict.principal);
       if (req.method === 'GET' && p === '/health') return json(res, 200, await health({ fresh: url.searchParams.get('fresh') === '1' }), cors);
+      if (bundle && p === '/api/bundle' && req.method === 'GET' && ['machine', 'ui'].includes(verdict.principal.role)) { // a machine updates itself from here; the bundle holds code and config, never tokens
+        const zip = await bundle();
+        res.writeHead(200, { 'content-type': 'application/zip', 'cache-control': 'no-store', 'content-length': zip.length });
+        return res.end(zip);
+      }
       if (verdict.principal.role !== 'ui') return json(res, 403, { error: 'this token cannot use this route' }, cors);
       if (req.method === 'GET' && p === '/api/state') return json(res, 200, await buildState(), cors);
       if (req.method === 'GET' && p === '/api/audit') return json(res, 200, { entries: audit.tail(Math.min(200, Number(url.searchParams.get('n')) || 50)), verify: url.searchParams.get('verify') === '1' ? audit.verify() : undefined }, cors);

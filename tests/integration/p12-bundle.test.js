@@ -41,3 +41,26 @@ test('the Mac bundle is small, leaves out the app, models, tests and tokens, and
     assert.equal(health.machine, 'pc');
   } finally { child?.kill(); await new Promise((r) => setTimeout(r, 200)); rmDir(out); rmDir(dest); rmDir(data); }
 });
+
+test('update: the bundle unpacks with our own reader, keeps local machines.json and data, rewrites changed code, refuses unsafe names', async () => {
+  const { readZip } = await import('../../shared/zip.js');
+  const { applyBundle } = await import('../../scripts/update.js');
+  const out = tmpDir('upd-bundle');
+  const dest = tmpDir('upd-dest');
+  try {
+    const b = await buildMacBundle({ outDir: out });
+    const zip = fs.readFileSync(b.zip);
+    assert.equal(readZip(zip).length, b.files.length);
+    fs.mkdirSync(path.join(dest, 'config', 'server'), { recursive: true });
+    fs.mkdirSync(path.join(dest, 'agent'), { recursive: true });
+    fs.writeFileSync(path.join(dest, 'config', 'server', 'machines.json'), 'MINE');
+    fs.writeFileSync(path.join(dest, 'agent', 'index.js'), 'old');
+    const r = applyBundle(zip, dest);
+    assert.equal(fs.readFileSync(path.join(dest, 'config', 'server', 'machines.json'), 'utf8'), 'MINE');
+    assert.notEqual(fs.readFileSync(path.join(dest, 'agent', 'index.js'), 'utf8'), 'old');
+    assert.ok(r.written.includes('agent/index.js') && r.written.includes('scripts/update.js'));
+    assert.equal(applyBundle(zip, dest).written.length, 0); // second run: nothing changed
+    const evil = Buffer.from(zip); const at = evil.indexOf('agent/index.js'); evil.write('../../x/index.js', at);
+    assert.throws(() => readZip(evil)); // any refusal: tampered bytes never get written
+  } finally { rmDir(out); rmDir(dest); }
+});

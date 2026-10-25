@@ -22,7 +22,7 @@ export function createBrowserManager({ cfg, port = 4001, env = process.env, log 
 
   async function start() {
     stopping = false;
-    child = spawnFn(process.execPath, [script, '--port', String(port)], { windowsHide: true, stdio: ['pipe', 'ignore', 'pipe'], env: cleanEnv(env, { JARVIS_BROWSER_TOKEN: token, ...extraEnv }) });
+    child = spawnFn(process.execPath, [script, '--port', String(port)], { windowsHide: true, stdio: ['pipe', 'ignore', 'pipe'], env: cleanEnv(env, { JARVIS_BROWSER_TOKEN: token, ...(env.JARVIS_BROWSER_CHANNEL ? { JARVIS_BROWSER_CHANNEL: env.JARVIS_BROWSER_CHANNEL } : {}), ...extraEnv }) });
     const me = child;
     me.on('exit', () => {
       if (child !== me) return;

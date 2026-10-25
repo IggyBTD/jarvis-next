@@ -13,7 +13,7 @@ import { safeEqual, isMain } from '../../shared/util.js';
 const KEYS = new Set(['Enter', 'Tab', 'Escape', 'Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End', 'Space']);
 const MAX_TEXT = 8000;
 
-export function createBrowserService({ token, policy, headed = false, allowLoopback = false, launch = () => chromium.launch({ headless: !headed, channel: process.env.JARVIS_BROWSER_CHANNEL || undefined }).catch(() => chromium.launch({ headless: !headed })), now = Date.now }) {
+export function createBrowserService({ token, policy, headed = false, allowLoopback = false, launch = async () => { let last; for (const channel of [...new Set([process.env.JARVIS_BROWSER_CHANNEL, 'chrome', 'msedge', undefined])]) { try { return await chromium.launch({ headless: !headed, channel: channel || undefined }); } catch (e) { last = e; } } throw new Error(`no browser could be started (${String(last?.message).split('\n')[0]}). Install Google Chrome or run: npx playwright install chromium`); }, now = Date.now }) {
   let browser = null;
   let context = null;
   let page = null;
