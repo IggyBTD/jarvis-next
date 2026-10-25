@@ -3,6 +3,7 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
 import os from 'node:os';
+import { cleanLatex } from '../shared/latex.js';
 import { buildMacBundle } from '../scripts/make-mac-bundle.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -120,7 +121,13 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
       return r.json ?? { status: 'error', reason: 'the browser did not answer' };
     },
   };
-  let bundleCache = { at: 0, zip: null };
+  // The LaTeX pad (Ctrl+L) asks here when what was typed is words, not symbols: one short model call, bare LaTeX back.
+  const latex = async (text) => {
+    if (!text.trim()) return { latex: '' };
+    const r = await queue.run('interactive', (signal) => llm.chat({ messages: [{ role: 'system', content: 'Convert the maths the user describes into LaTeX. Reply with the LaTeX only: no dollar signs, no code fences, no explanation.' }, { role: 'user', content: text }], tools: null, use: 'tools', signal, maxTokens: 300 }));
+    return { latex: cleanLatex(r.content) };
+  };
+  let bundleCache ={ at: 0, zip: null };
   const bundle = async () => {
     if (bundleCache.zip && Date.now() - bundleCache.at < 60_000) return bundleCache.zip;
     const out = fs.mkdtempSync(path.join(os.tmpdir(), 'jarvis-bundle-'));
@@ -128,7 +135,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
     return bundleCache.zip;
   };
   const osint = createOpensky({ dataDir: cfg.dataDir, watchFile: path.join(cfg.root, 'config', 'osint-watch.json') });
-  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, health, audit, conversations, digest, osint, browserView, bundle, buildState: () => wsApi.buildState(), log }));
+  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, health, audit, conversations, digest, osint, browserView, bundle, latex, buildState: () => wsApi.buildState(), log }));
 
   // The same handlers also answer on loopback, so this PC's own app works whatever the network address does (Tailscale down, a new LAN IP).
   const loopback = http.createServer();

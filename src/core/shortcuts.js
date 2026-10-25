@@ -5,6 +5,7 @@ import { isWhiteboardMode, enterWhiteboardMode, exitWhiteboardMode, setPage } fr
 import { toggleWidget, openArtifact, closePanelById, openPanelIds } from './whiteboard.js';
 import { listArtifacts } from './artifacts.js';
 import { zoomBy, zoomReset } from './zoom.js';
+import { openLatexPad } from './latex-pad.js';
 
 const input = document.getElementById('hud-chat-input');
 const PRESETS = ['btn-general', 'btn-code', 'btn-visual', 'btn-abliterated'];
@@ -16,7 +17,8 @@ export const SHORTCUTS = [
   { keys: 'Ctrl+\\', does: 'Hide or show the sidebar' },
   { keys: 'Ctrl+,', does: 'Open Settings' },
   { keys: 'Ctrl+ + / Ctrl+ - / Ctrl+0', does: 'Zoom the app in, out, or back to 100% (Ctrl and the mouse wheel too)' },
-  { keys: 'Ctrl+L', does: 'Jump to the message field' },
+  { keys: 'Ctrl+L', does: 'Type maths and get LaTeX (a pad: x^2/2 or words, Enter copies)' },
+  { keys: 'Ctrl+J', does: 'Jump to the message field' },
   { keys: 'Ctrl+.', does: 'Stop the reply that is running' },
   { keys: 'Ctrl+M', does: 'Microphone on or off' },
   { keys: 'F8 (hold)', does: 'Talk while held, release to send (keys are in config/voice.json)' },
@@ -43,7 +45,8 @@ function run(e) {
   if (digit && key !== '0') togglePanelNumber(Number(digit));
   else if (key === 'b') (isWhiteboardMode() ? exitWhiteboardMode : enterWhiteboardMode)();
   else if (key === 'i') toggleWidget('system');
-  else if (key === 'l') input.focus();
+  else if (key === 'l') openLatexPad();
+  else if (key === 'j') input.focus();
   else if (key === '\\') document.dispatchEvent(new CustomEvent('jarvis:sidebar'));
   else if (key === ',') setPage('settings');
   else if (key === '=' || key === '+') zoomBy(1);

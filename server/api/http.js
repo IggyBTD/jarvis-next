@@ -37,7 +37,7 @@ export function createHealth({ llm, queue, router, machines, contextLength = nul
 
 const readBody = (req) => new Promise((resolve, reject) => { const c = []; let n = 0; req.on('data', (d) => { n += d.length; if (n > 20_000) { reject(Object.assign(new Error('body too large'), { status: 413 })); req.destroy(); } else c.push(d); }); req.on('end', () => { try { resolve(c.length ? JSON.parse(Buffer.concat(c).toString('utf8')) : {}); } catch { reject(Object.assign(new Error('body must be JSON'), { status: 400 })); } }); req.on('error', reject); });
 
-export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversations, digest, osint, browserView, bundle, buildState, log = () => {} }) {
+export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversations, digest, osint, browserView, bundle, latex, buildState, log = () => {} }) {
   const origins = cfg.machines.server.origins ?? [];
   return async function handle(req, res) {
     try {
@@ -82,6 +82,7 @@ export function createHttpHandler({ cfg, auth, llmProxy, health, audit, conversa
         res.writeHead(200, { ...cors, 'content-type': 'image/jpeg', 'cache-control': 'no-store', etag: s.etag, 'x-url': encodeURIComponent(s.url ?? ''), 'x-target': s.target, 'access-control-expose-headers': 'x-url, x-target, etag' });
         return res.end(s.jpeg);
       }
+      if (latex && p === '/api/latex' && req.method === 'POST') { try { return json(res, 200, await latex(String((await readBody(req)).text ?? '').slice(0, 500)), cors); } catch (e) { return json(res, e.status ?? 502, { error: 'the model could not be reached' }, cors); } }
       if (browserView && p === '/api/browser/do' && req.method === 'POST') return json(res, 200, await browserView.act(await readBody(req)), cors);
       if (req.method === 'GET' && p === '/api/conversations') return json(res, 200, { conversations: conversations.list() }, cors);
       const one = p.match(/^\/api\/conversations\/([\w-]{1,64})$/);

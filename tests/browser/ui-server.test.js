@@ -165,4 +165,16 @@ test('the sidebar lists the saved chats from the server, a click reopens one, a 
   await page.waitForSelector('#chat-output .chat-line.user', { timeout: 15000 }); // the chat this window was in comes back
 });
 
+test('Ctrl+L opens the LaTeX pad: symbols typeset live, Enter closes it, words wait for the model', async () => {
+  await page.keyboard.press('Control+l');
+  await page.waitForSelector('#latex-pad[open]');
+  await page.fill('.latex-in', 'x^2/2 + sqrt(x)');
+  await page.waitForSelector('.latex-preview .katex');
+  assert.equal(await page.textContent('.latex-code'), String.raw`\frac{x^{2}}{2}+\sqrt{x}`);
+  await page.fill('.latex-in', 'integral of x squared from 0 to 1');
+  assert.match(await page.textContent('.latex-hint'), /asks JARVIS/);
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('#latex-pad:not([open])', { state: 'attached' });
+});
+
 test('no script errors on the page', () => { assert.deepEqual(errors.filter((e) => !/transformCallback/.test(e)), []); });
