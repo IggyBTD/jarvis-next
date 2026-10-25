@@ -82,3 +82,15 @@ Follow `docs/remote.md` (about 15 minutes). Short version:
 | Anything else | Paste the exact error text to me. |
 
 More detail: `HUMAN_TODO.md` (everything only you can do), `docs/setup-mac.md`, `docs/network.md`, `docs/known-issues.md`.
+
+## Updating the Mac later (no AirDrop)
+
+When the PC's JARVIS gets new features, the Mac helper needs them too. In Terminal on the Mac:
+
+```bash
+cd ~/jarvis-folder && node scripts/update.js
+```
+
+(use the folder where you put JARVIS on the Mac). It downloads the current helper from the PC, keeps your tokens and addresses, and restarts the Mac agent. The PC must be on and reachable (Tailscale connected). The first time, the Mac still has the old bundle without `update.js`: copy a fresh `dist-mac\jarvis-mac.zip` once (run `node scripts/make-mac-bundle.js` on the PC), unzip over the folder, then use `update.js` from then on.
+
+The Mac also needs OpenCode at the exact version JARVIS expects: `npm install -g opencode-ai@1.19.1`.

@@ -122,7 +122,9 @@ function onReading(payload) {
   publish(payload, false);
   reportService('sensors', 'ok', 'readings arriving');
 }
-export function ingestTelemetry(payload) { if (source === 'server') onReading(payload ?? {}); }
+// The Mac reports once a minute, the PC every second: `slow` allows the longer silence before "Sensors offline".
+let staleMs = STALE_MS;
+export function ingestTelemetry(payload, slow = false) { if (source === 'server') { staleMs = slow ? 150_000 : STALE_MS; onReading(payload ?? {}); } }
 
 export async function initTelemetry() {
   showUnavailable(''); // N/A until the first real reading arrives
@@ -130,7 +132,7 @@ export async function initTelemetry() {
 
   // Watchdog: the Rust side only emits while the sensor source answers.
   setInterval(() => {
-    const quiet = sawData ? Date.now() - lastUpdate > STALE_MS : Date.now() - started > INITIAL_GRACE_MS;
+    const quiet = sawData ? Date.now() - lastUpdate > staleMs : Date.now() - started > INITIAL_GRACE_MS;
     if (quiet) showUnavailable('Sensors offline');
   }, 1000);
 

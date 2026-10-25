@@ -117,23 +117,29 @@ function reconnect() { disconnect(); attempts = 0; if (serverMode()) { useTeleme
 const send = (obj) => { if (ws?.readyState === 1) { ws.send(JSON.stringify(obj)); return true; } return false; };
 const reqId = () => Math.random().toString(36).slice(2, 10);
 
+// The System readout shows the active computer.
+function ingestActive() {
+  const t = state.telemetry[state.target];
+  if (t && !t.offline) ingestTelemetry(t.metrics, state.target !== 'pc');
+}
+
 function handle(m) {
   switch (m.type) {
     case 'state':
       Object.assign(state, { target: m.target, machines: m.machines, health: m.health, pending: m.pendingApprovals ?? [], telemetry: m.telemetry ?? {}, digest: m.digest, agentTasks: m.agentTasks ?? [], reminders: m.reminders ?? [], voice: m.voice ?? { enabled: false } });
       state.conversation = { ...m.conversation, id: m.conversation?.id ?? convId };
       setStatus('online');
-      for (const [machine, t] of Object.entries(state.telemetry)) if (machine === 'pc' && t && !t.offline) ingestTelemetry(t.metrics);
+      ingestActive();
       emit({ type: 'state' });
       // the server's default conversation is "main"; this window talks in its own
       if (m.conversation?.streaming && m.conversation.id === convId) emit({ type: 'resume', text: m.conversation.streaming.text });
       return;
-    case 'target.changed': state.target = m.to; emit({ type: 'target', from: m.from, to: m.to }); return;
+    case 'target.changed': state.target = m.to; ingestActive(); emit({ type: 'target', from: m.from, to: m.to }); return;
     case 'target.rejected': state.target = m.target; emit({ type: 'target', rejected: true, reason: m.reason }); return;
     case 'health': state.health = m; for (const [id, v] of Object.entries(m.machines ?? {})) if (state.machines[id]) state.machines[id].online = v.online; emit({ type: 'health' }); return;
     case 'telemetry':
       state.telemetry[m.machine] = { ts: m.ts, metrics: m.metrics, offline: !!m.offline };
-      if (m.machine === 'pc' && !m.offline) ingestTelemetry(m.metrics);
+      if (m.machine === state.target) ingestActive();
       emit({ type: 'telemetry', machine: m.machine });
       return;
     case 'gate.request': state.pending = [...state.pending.filter((p) => p.id !== m.request.id), m.request]; emit({ type: 'gate.request', request: m.request }); return;

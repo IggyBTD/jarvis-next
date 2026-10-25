@@ -14,3 +14,6 @@ Medium and low findings, and things that were built and tested only against fake
 - **`transfer_file`, `set_audio_output` and `night_light`** are in the contract but not implemented on any OS (they need a second machine hop, a third-party audio module, and an undocumented registry blob).
 - **Two low-severity advisories** from `npm audit` in the old app's dependencies (mermaid, katex); not part of the server.
 - The app's target switcher has exactly two buttons; a third machine needs a small UI change.
+- **Plan mode, skills and the Code page's file and diff panes** still belong to the original local mode. In server mode the Code page's task list shows the coding agent's tasks (OpenCode on the active computer); changes are reviewed through the approval dialogs and the Server tab.
+- **The Mac shows its System readout once a minute**, the PC every second.
+- **Mac OpenCode version**: the Mac must have exactly the pinned version (`npm install -g opencode-ai@1.19.1`), or the agent refuses it.
