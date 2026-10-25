@@ -9,8 +9,9 @@ import { isMain } from '../shared/util.js';
 const tokens = fs.readFileSync(path.join(ROOT, 'src', 'styles', 'tokens.css'), 'utf8');
 const token = (name) => new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`).exec(tokens)?.[1] ?? '#000000'; // first (dark) value
 
-export function iconSvg() {
-  const [bg, edge, accent, mid] = [token('--bg'), token('--surface-4'), token('--accent'), token('--accent-mid')];
+// `old` draws the JARVIS (old) icon: the same mark in the warm amber, so the two sit apart in the taskbar.
+export function iconSvg({ old = false } = {}) {
+  const [bg, edge, accent, mid] = [token('--bg'), token('--surface-4'), token(old ? '--warm' : '--accent'), old ? token('--warm') : token('--accent-mid')];
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
   <rect x="6" y="6" width="244" height="244" rx="58" fill="${bg}" stroke="${edge}" stroke-width="4"/>
   <circle cx="128" cy="128" r="86" stroke="${accent}" stroke-width="14" stroke-linecap="round" stroke-dasharray="150 31.5" transform="rotate(-70 128 128)"/>
@@ -41,9 +42,11 @@ export function packIco(images) {
 
 if (isMain(import.meta.url)) {
   const svg = iconSvg();
+  const oldSvg = iconSvg({ old: true });
   fs.writeFileSync(path.join(ROOT, 'public', 'favicon.svg'), svg);
   const browser = await chromium.launch({ channel: 'chrome', headless: true }).catch(() => chromium.launch({ headless: true }));
-  const png = async (size) => {
+  const png = async (size, svg = null) => {
+    svg ??= iconSvg();
     const page = await browser.newPage({ viewport: { width: size, height: size } });
     await page.setContent(`<style>html,body{margin:0;background:transparent}svg{display:block;width:${size}px;height:${size}px}</style>${svg}`);
     const buf = await page.screenshot({ omitBackground: true });
@@ -53,11 +56,13 @@ if (isMain(import.meta.url)) {
   const icons = path.join(ROOT, 'src-tauri', 'icons');
   const sizes = [16, 24, 32, 48, 64, 128, 256, 512];
   const made = Object.fromEntries(await Promise.all(sizes.map(async (s) => [s, await png(s)])));
-  await browser.close();
   fs.writeFileSync(path.join(icons, 'icon.png'), made[512]);
   fs.writeFileSync(path.join(icons, '32x32.png'), made[32]);
   fs.writeFileSync(path.join(icons, '128x128.png'), made[128]);
   fs.writeFileSync(path.join(icons, '128x128@2x.png'), made[256]);
+  const oldMade = await Promise.all([16, 24, 32, 48, 64, 128, 256].map(async (size) => ({ size, png: await png(size, oldSvg) })));
+  fs.writeFileSync(path.join(icons, 'icon-old.ico'), packIco(oldMade));
   fs.writeFileSync(path.join(icons, 'icon.ico'), packIco([16, 24, 32, 48, 64, 128, 256].map((size) => ({ size, png: made[size] }))));
+  await browser.close();
   console.log('Icon written: public/favicon.svg and src-tauri/icons/ (icon.ico, icon.png, 32x32, 128x128). icon.icns (Mac app) is not regenerated.');
 }

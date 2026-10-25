@@ -109,4 +109,4 @@ At home, with no relay in `wake.json`, the same command sends the packet from th
 
 ## Start JARVIS NEXT like any other app (PC)
 
-`node scripts/make-shortcut.js` puts **JARVIS NEXT** on the Desktop and in the Start menu, with its icon. Clicking it starts the server and the PC agent in the background if they are not running, then opens JARVIS in its own window (no tabs, no address bar, its own taskbar icon). Right-click it in the taskbar or Start menu to pin it. Logs are in `data/logs/`. Run the script again if you move the folder; `node scripts/make-icon.js` redraws the icon.
+`node scripts/make-shortcut.js` puts **JARVIS NEXT** (and **Start JARVIS Old**, which replaces run_JARVIS.bat: same `npm run tauri dev`, no console window) on the Desktop and in the Start menu, with its icon. Clicking it starts the server and the PC agent in the background if they are not running, then opens JARVIS in its own window (no tabs, no address bar, its own taskbar icon). Right-click it in the taskbar or Start menu to pin it. Logs are in `data/logs/`. Run the script again if you move the folder; `node scripts/make-icon.js` redraws the icon.

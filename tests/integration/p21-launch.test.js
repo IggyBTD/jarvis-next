@@ -31,3 +31,13 @@ test('the .ico packs each PNG with its size and offset', () => {
   assert.equal(ico.readUInt32LE(6 + 12), 38); // first image starts after the 6 + 2 x 16 byte header
   assert.equal(ico.subarray(38).toString(), 'aabbb');
 });
+
+test('launch-old: does nothing if the old dev server already answers, refuses a missing project, otherwise runs npm run tauri dev in the old folder', async () => {
+  const { launchOld } = await import('../../scripts/launch-old.js');
+  const calls = [];
+  const run = (cmd, args, opts) => { calls.push([args.join(' '), opts.cwd]); return { unref() {} }; };
+  assert.deepEqual(await launchOld({ dir: process.cwd(), probe: async () => true, run }), { already: true });
+  assert.deepEqual(await launchOld({ dir: process.cwd(), probe: async () => false, run }), { already: false });
+  assert.deepEqual(calls, [['/d /c npm run tauri dev', process.cwd()]]);
+  await assert.rejects(launchOld({ dir: 'C:/nowhere-at-all', probe: async () => false, run }), /not at/);
+});
