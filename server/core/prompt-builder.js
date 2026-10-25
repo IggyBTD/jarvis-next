@@ -3,7 +3,7 @@
 // An unreachable agent gives a prompt that says so instead of guessed facts.
 const FIELDS = ['label', 'os', 'os_version', 'hostname', 'user', 'home', 'shell', 'path_sep', 'workspace_dir', 'package_manager', 'modifier_key', 'locale', 'timezone', 'date'];
 
-export function createPromptBuilder({ prompts, machines, timezone, getInfo }) {
+export function createPromptBuilder({ prompts, machines, timezone, getInfo, notes = () => '' }) {
   const cache = new Map(); // machine -> { facts, reachable, at }
 
   async function refresh(machine) {
@@ -38,7 +38,7 @@ export function createPromptBuilder({ prompts, machines, timezone, getInfo }) {
       const base = render(prompts.base, values);
       const os = render(m.os === 'win32' ? prompts['target-pc'] : prompts['target-mac'], values);
       const note = entry.reachable ? '' : `\n\nNote: ${m.label} could not be reached when this prompt was built, so some facts above are unknown. Say so if a task depends on them.`;
-      return `${base}\n\n${os}${note}${prompts.ui ? `\n\n${prompts.ui}` : ''}`; // how to write replies and artifacts for the app's screen
+      return `${base}\n\n${os}${note}${prompts.ui ? `\n\n${prompts.ui}` : ''}${notes() ? `\n\n${notes()}` : ''}`; // how to write replies and artifacts for the app's screen
     },
     switchNotice({ from, to, now = new Date() }) {
       const m = machines[to];

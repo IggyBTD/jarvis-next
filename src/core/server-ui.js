@@ -5,6 +5,7 @@ import { state, onLink, serverMode, setTarget, replyGate, getSettings, saveSetti
 import { reportService } from './service-status.js';
 import { renderMarkdown } from './markdown.js';
 import { openWidget } from './whiteboard.js';
+import { setTasks } from './work-state.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, { dataset, ...props } = {}, ...kids) => { const n = Object.assign(document.createElement(tag), props); if (dataset) Object.assign(n.dataset, dataset); n.append(...kids.filter((k) => k != null)); return n; };
@@ -211,6 +212,13 @@ $('srv-save').addEventListener('click', () => {
 });
 fillSettings();
 
+// The Code page's task list shows what the coding agent (OpenCode) is doing on the active computer.
+const TASK_STATUS = { queued: 'todo', running: 'doing', done: 'done' };
+function showCodingTasks() {
+  if (!serverMode()) return;
+  setTasks(state.agentTasks.slice(-8).map((t) => ({ text: `${t.prompt || t.taskId}${t.state === 'failed' || t.state === 'aborted' ? ` (${t.state})` : ''}`, status: TASK_STATUS[t.state] ?? 'done' })));
+}
+
 // ---- events ----------------------------------------------------------------------------------------------------------
 onLink((e) => {
   switch (e.type) {
@@ -224,6 +232,7 @@ onLink((e) => {
     case 'server-error': toast(e.reason); break;
     default: break;
   }
+  if (e.type === 'state' || e.type === 'agent.status') showCodingTasks();
   paint();
 });
 document.addEventListener('jarvis:cleared', () => { if (serverMode()) newConversation(); });

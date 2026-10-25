@@ -111,6 +111,9 @@ const ROWS = [
   ['set_timer', 'time', 'T1', 'wd', 'Start a timer in whole minutes; the server notifies the client.', 'minutes:i1-1440! label:s', 'internal'],
   ['set_reminder', 'time', 'T1', 'wd', 'Set a reminder at a local time (YYYY-MM-DD HH:MM).', 'when:s! text:s!', 'internal'],
   ['list_schedules', 'time', 'T0', 'wd', 'List timers, reminders and scheduled jobs.', '', 'internal'],
+  ['remember', 'memory', 'T1', 'wd', 'Save a short note about the user (a preference, a fact, a name) when they ask you to remember something. It is shown to you on every later turn.', 'text:s!', 'internal'],
+  ['forget', 'memory', 'T1', 'wd', 'Delete a saved note, by its id or a distinctive part of its text, when the user asks you to forget it.', 'note:s!', 'internal'],
+  ['list_memories', 'memory', 'T0', 'wd', 'List the notes the user asked you to remember.', '', 'internal'],
 
   ['open_terminal_at', 'dev', 'T1', 'wd', 'Open a terminal in a folder inside the allowed roots.', 'path:s!'],
   ['open_editor_at', 'dev', 'T1', 'wd', 'Open the code editor on a folder inside the allowed roots.', 'path:s!'],

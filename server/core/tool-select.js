@@ -13,6 +13,7 @@ const KEYWORDS = {
   network: ['wifi', 'wi-fi', 'network', 'internet', 'ping', 'ip address', 'dns', 'port', 'tailscale', 'wake on lan', 'red', 'conexión', 'réseau', 'connexion', 'adresse ip'],
   files: ['file', 'folder', 'directory', 'copy', 'move', 'delete', 'zip', 'download', 'downloads', 'duplicate', 'archivo', 'carpeta', 'fichero', 'copiar', 'mover', 'borrar', 'descargas', 'fichier', 'dossier', 'copier', 'déplacer', 'supprimer', 'téléchargements'],
   clipboard: ['clipboard', 'screenshot', 'notification', 'notify', 'portapapeles', 'captura', 'notificación', 'presse-papiers', 'capture d\'écran'],
+  memory: ['remember', 'forget', 'memorize', 'memorise', 'note that', 'keep in mind', 'recuerda', 'recuérdalo', 'olvida', 'souviens', 'oublie', 'retiens'],
   time: ['timer', 'remind', 'reminder', 'alarm', 'schedule', 'minutes', 'in an hour', 'temporizador', 'recordatorio', 'recuérdame', 'recuerdame', 'avísame', 'rappel', 'rappelle', 'minuteur'],
   dev: ['git', 'docker', 'terminal', 'editor', 'vscode', 'repo', 'repository', 'commit', 'branch', 'diff', 'repositorio', 'dépôt'],
   maintenance: ['update', 'updates', 'upgrade', 'backup', 'restore point', 'defender', 'antivirus', 'actualizar', 'actualización', 'copia de seguridad', 'mise à jour', 'sauvegarde'],
