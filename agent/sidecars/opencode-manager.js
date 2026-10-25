@@ -49,11 +49,19 @@ Every shell command and every action outside the workspace asks the user for app
 `;
 }
 
+// On Windows the npm shim is a .cmd file, which cannot be started without a shell; the real program sits next to it.
+export function findOpencode(env = process.env, platform = process.platform) {
+  if (env.JARVIS_OPENCODE_BIN) return env.JARVIS_OPENCODE_BIN;
+  if (platform === 'win32' && env.APPDATA) { const exe = path.join(env.APPDATA, 'npm', 'node_modules', 'opencode-ai', 'bin', 'opencode.exe'); if (fs.existsSync(exe)) return exe; }
+  return 'opencode';
+}
+
 export function createOpencodeManager({
-  workspaceDir, serverUrl, modelToken, contextLength, version: pinned, facts = null, command = 'opencode', argsPrefix = [], commandArgs = [], extraEnv = {}, port = 4096,
+  workspaceDir, serverUrl, modelToken, contextLength, version: pinned, facts = null, command: commandIn = 'opencode', argsPrefix = [], commandArgs = [], extraEnv = {}, port = 4096,
   env = process.env, spawnFn = spawn, runProgram = realRun, fetchImpl = fetch, log = () => {}, allowOtherVersion = false,
   backoff = { min: 1000, max: 30_000, stable: 60_000 }, readyTimeoutMs = 20_000,
 }) {
+  const command = commandIn === 'opencode' ? findOpencode(env) : commandIn;
   const events = new EventEmitter();
   const st = { installed: null, running: false, version: null, pid: null, restarts: 0, error: null, routes: null, lastExit: null };
   let child = null;
