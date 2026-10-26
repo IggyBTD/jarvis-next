@@ -133,7 +133,7 @@ export function createOpencodeManager({
     const config = buildConfig({ serverUrl, modelToken, contextLength });
     child = spawnFn(command, [...argsPrefix, 'serve', '--hostname', '127.0.0.1', '--port', String(port), ...commandArgs], {
       cwd: workspaceDir, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
-      env: cleanEnv(env, { OPENCODE_SERVER_PASSWORD: password, OPENCODE_CONFIG_CONTENT: JSON.stringify(config), OPENCODE_DISABLE_PROJECT_CONFIG: '1', OPENCODE_DISABLE_AUTOUPDATE: '1', OPENCODE_DISABLE_LSP_DOWNLOAD: '1', ...extraEnv }),
+      env: cleanEnv(env, { OPENCODE_SERVER_PASSWORD: password, OPENCODE_CONFIG_CONTENT: JSON.stringify(config), OPENCODE_DISABLE_PROJECT_CONFIG: '1', OPENCODE_DISABLE_AUTOUPDATE: '1', OPENCODE_DISABLE_CLAUDE_CODE: '1', OPENCODE_DISABLE_LSP_DOWNLOAD: '1', ...extraEnv }),
     });
     st.pid = child.pid ?? null;
     const tail = [];
