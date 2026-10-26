@@ -59,6 +59,38 @@ test('the model chip and the context meter come from the server, not from an LM 
   await page.click('#nav-server');
 });
 
+test('the switcher lists only the ticked models; Settings lists all of them with their full names and a checkbox each', async () => {
+  await page.click('#model-chip');
+  await waitFor(async () => (await page.locator('#model-server-list button').count()) === 1); // the coder model is not one of the three shown by default
+  await page.keyboard.press('Escape');
+  await page.click('#sidebar [data-page="settings"]');
+  await page.waitForSelector('#set-models-list input[type="checkbox"]');
+  assert.match(await page.textContent('#set-models-list'), /unsloth\/qwen3\.8-27b[\s\S]*qwen\/qwen3-coder-30b/);
+  assert.deepEqual(await page.locator('#set-models-list input').evaluateAll((i) => i.map((x) => x.checked)), [true, false]);
+  await page.locator('#set-models-list input').nth(1).check();
+  await page.click('.mode-btn[data-page="chat"]');
+  await page.click('#model-chip');
+  await waitFor(async () => (await page.locator('#model-server-list button').count()) === 2);
+  await page.keyboard.press('Escape');
+});
+
+test('the effort level is plain text beside the model name; hovering outlines it, clicking opens the four levels, and the choice is sent with the message', async () => {
+  assert.equal((await page.textContent('#effort-chip')).trim(), 'Medium');
+  assert.equal(await page.locator('#effort-chip .icon, #model-chip .icon').count(), 0); // no arrows
+  const border = (sel) => page.$eval(sel, (e) => getComputedStyle(e).borderTopColor);
+  const rest = await border('#effort-chip');
+  await page.hover('#effort-chip');
+  assert.notEqual(await border('#effort-chip'), rest);
+  await page.click('#effort-chip');
+  assert.deepEqual(await page.locator('#effort-menu [data-effort]').evaluateAll((b) => b.map((x) => x.dataset.effort)), ['low', 'medium', 'high', 'max']);
+  await page.click('#effort-menu [data-effort="high"]');
+  assert.equal((await page.textContent('#effort-chip')).trim(), 'High');
+  rig.model.script({ content: 'ok' });
+  await send('check effort');
+  await waitFor(() => rig.model.requests.some((r) => JSON.stringify(r.body.messages).includes('[Effort: high.')));
+  await page.click('#effort-chip'); await page.click('#effort-menu [data-effort="medium"]');
+});
+
 test('the model menu lists the PC\'s models with the loaded one marked; picking one loads it on the PC and renames the chip', async () => {
   rig.model.native.loaded.clear(); rig.model.native.loaded.set('unsloth/qwen3.8-27b', 65536);
   await page.click('#model-chip');

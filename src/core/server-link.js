@@ -3,6 +3,7 @@
 // Settings (server address, UI token) live in localStorage; the desktop build can move the token to the OS keychain later.
 // Reconnects with exponential backoff and jitter, never blocks the interface, and shows a plain "offline" state.
 import { ingestTelemetry, useTelemetrySource } from './telemetry-view.js';
+import { getEffort } from './effort-ui.js';
 
 const KEY = 'jarvis.server';
 const CONV_KEY = 'jarvis.server.conv';
@@ -171,7 +172,7 @@ function handle(m) {
 // ---- actions ---------------------------------------------------------------------------------------------------------
 export function sendChat(text) {
   if (!isOnline()) return { ok: false, reason: state.status === 'connecting' ? 'Still connecting to the JARVIS server.' : 'The JARVIS server is not reachable. Nothing was sent, and nothing was run on this computer instead.' };
-  send({ type: 'chat.send', convId, text });
+  send({ type: 'chat.send', convId, text, effort: getEffort() });
   return { ok: true };
 }
 export const abortChat = () => send({ type: 'chat.abort', convId });

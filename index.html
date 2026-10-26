@@ -105,7 +105,7 @@
                 <span id="target-tag" class="target-tag" hidden title="The computer JARVIS controls"></span>
                 <span id="ctx-meter" title="Context used"></span>
                 <div id="model-wrap">
-                  <button type="button" class="chip-btn" id="model-chip" aria-haspopup="true" aria-expanded="false" title="Model"><span id="model-chip-label" class="val">General</span><span class="icon" data-icon="chevron-down" data-size="16"></span></button>
+                  <button type="button" class="chip-btn" id="model-chip" aria-haspopup="true" aria-expanded="false" title="Model"><span id="model-chip-label" class="val">General</span></button>
                   <div id="model-menu" hidden role="menu">
                     <button type="button" id="btn-general" class="matrix-btn active-mode" data-preset="general" role="menuitem"><span class="m-name">General</span><span class="m-sub">qwen3-14b</span></button>
                     <button type="button" id="btn-code" class="matrix-btn" data-preset="coding" role="menuitem"><span class="m-name">Coding and finance</span><span class="m-sub">qwen3.8-27b q3_k_xl</span></button>
@@ -113,6 +113,10 @@
                     <button type="button" id="btn-abliterated" class="matrix-btn" data-preset="abliterated" role="menuitem"><span class="m-name">Abliterated</span><span class="m-sub">qwen3-14b, no refusals</span></button>
                     <button type="button" id="btn-auto" class="matrix-btn" data-preset="auto" role="menuitem" disabled><span class="m-name">Auto router</span><span class="m-sub">not available yet</span></button>
                   </div>
+                </div>
+                <div id="effort-wrap">
+                  <button type="button" class="chip-btn" id="effort-chip" aria-haspopup="true" aria-expanded="false">Medium</button>
+                  <div id="effort-menu" hidden role="menu"></div>
                 </div>
               </div>
               <input type="file" id="attach-input" multiple hidden>
@@ -286,7 +290,12 @@
     <section id="page-settings" class="page" aria-label="Settings">
       <div class="page-inner">
         <h1>Settings</h1>
-                <div class="set-card" id="set-server">
+        <div class="set-card" id="set-models">
+          <h2>Models</h2>
+          <p>Every model on the PC. A ticked model is listed in the model switcher.</p>
+          <div id="set-models-list"></div>
+        </div>
+        <div class="set-card" id="set-server">
           <h2>JARVIS server</h2>
           <p>Run the model, the tools and the approvals on your PC, and use this app as a light client. Off keeps the original behaviour: this app talks to LM Studio directly and controls only this computer.</p>
           <div class="set-row"><label for="srv-enabled">Use the JARVIS server</label><input type="checkbox" id="srv-enabled"></div>

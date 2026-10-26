@@ -1,6 +1,7 @@
 // The interface for the JARVIS server: target switcher (title strip) and target tag (composer), the approval dialog,
 // the Server tab (connection, approvals waiting, agent tasks, digest, recent activity), reminders, and the settings card.
 // Everything here reads server-link.js; nothing here talks to the network or decides anything.
+import { isShown } from './models-shown.js';
 import { state, onLink, serverMode, setTarget, replyGate, getSettings, saveSettings, requestDigest, fetchAudit, wakePc, abortAgentTask, dismissReminder, newConversation, isOnline, fetchModels, chooseModel } from './server-link.js';
 import { reportService } from './service-status.js';
 import { renderMarkdown } from './markdown.js';
@@ -39,7 +40,7 @@ async function renderModelList() {
   if (!box.childElementCount) box.replaceChildren(note('Asking the PC for its models...'));
   const data = await fetchModels();
   if (!data) { box.replaceChildren(note(isOnline() ? 'The PC did not answer the model list. Try again in a moment.' : 'The JARVIS server is not reachable, so there is no model to pick. Check the server address and token in Settings.', !isOnline())); return; }
-  box.replaceChildren(...data.models.map((m) => {
+  box.replaceChildren(...data.models.filter((m) => isShown(m.key)).map((m) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'matrix-btn'; b.setAttribute('role', 'menuitem');
     b.dataset.loaded = String(m.loaded);

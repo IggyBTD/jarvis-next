@@ -15,6 +15,8 @@ import './context-menus.js';
 import './projects-page.js';
 import './pages-extra.js';
 import './pages-accounts.js';
+import './effort-ui.js';
+import './models-shown.js';
 import { prettyModelName } from './model-name.js';
 import './panel-pc.js';
 import './panel-llm.js';

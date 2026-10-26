@@ -2,6 +2,7 @@
 // Limits per turn (models.json): 8 model calls and 12 tool calls by default. The target is bound when the turn starts and
 // stays for the whole turn. The user can abort at any time; the conversation never keeps a tool call without a result.
 import { fit, estimateTokens } from './conversations.js';
+import { effortNote, DEFAULT_EFFORT } from '../../shared/effort.js';
 
 export class BusyError extends Error { constructor() { super('This conversation is still answering the last message.'); this.name = 'BusyError'; } }
 
@@ -12,7 +13,7 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
 
   const budgetFor = (system, tools) => models.contextLength - (models.maxOutputTokens ?? 4096) - estimateTokens({ content: system }) - Math.ceil(JSON.stringify(tools).length / 3.5) - 512;
 
-  async function runTurn({ convId, text, source = 'user', voiceMode = false }) {
+  async function runTurn({ convId, text, source = 'user', voiceMode = false, effort = DEFAULT_EFFORT }) {
     const conv = conversations.ensure(convId);
     if (active.has(conv.id)) throw new BusyError();
     const ctl = new AbortController();
@@ -44,7 +45,8 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
         const sel = wrapUp ? { tools: [] } : router.toolDefs(target, { text: `${lastUser}\n${conv.messages.filter((m) => m.role === 'user').slice(-3).map((m) => m.content).join('\n')}`, recent, unlocked: conv.unlocked });
         const history = fit(conv.messages, budgetFor(system, sel.tools));
         const lastUserAt = history.findLastIndex((m) => m.role === 'user' && typeof m.content === 'string');
-        if (lastUserAt !== -1) history[lastUserAt] = { ...history[lastUserAt], content: `${history[lastUserAt].content}\n\n${prompts.timeNote(now())}` }; // request only, never stored
+        if (lastUserAt !== -1) history[lastUserAt] = { ...history[lastUserAt], content: `${history[lastUserAt].content}\n\n${prompts.timeNote(now())}${effortNote(effort) ? `
+${effortNote(effort)}` : ''}` }; // request only, never stored
         const messages = [{ role: 'system', content: system }, ...history];
         streamed = '';
         const res = await queue.run('interactive', (signal) => llm.chat({

@@ -1,6 +1,7 @@
 // Client -> server messages (Appendix A of the build spec). Every message is JSON { type, id?, ... }; binary frames are used
 // only for voice audio (shared/voice-frames.js). parseClientMessage() validates shape and size before anything acts on it.
 import { validate } from '../../shared/schema.js';
+import { EFFORTS } from '../../shared/effort.js';
 
 export const MAX_FRAME = 256 * 1024;
 const str = (max = 200) => ({ type: 'string', minLength: 1, maxLength: max });
@@ -10,7 +11,7 @@ const msg = (props, required = []) => ({ type: 'object', properties: { type: str
 export const CLIENT_MESSAGES = {
   hello: msg({ clientId: str(80), version: optStr(40), convId: str(64) }, ['clientId']),
   ping: msg({}),
-  'chat.send': msg({ convId: str(64), text: { type: 'string', minLength: 1, maxLength: 8000 } }, ['text']),
+  'chat.send': msg({ convId: str(64), text: { type: 'string', minLength: 1, maxLength: 8000 }, effort: { enum: EFFORTS } }, ['text']),
   'chat.abort': msg({ convId: str(64) }, ['convId']),
   'target.set': msg({ target: { enum: ['pc', 'mac'] } }, ['target']),
   'gate.reply': msg({ decision: { enum: ['approve', 'deny'] } }, ['id', 'decision']),

@@ -4,7 +4,7 @@ const DROP = /^(q\d.*|iq\d.*|ud|gguf|instruct|it|chat|fp\d+|bf16|f16|mtp|a\d+b|\
 const ACRONYM = { gpt: 'GPT', vl: 'VL', ai: 'AI', moe: 'MoE', oss: 'OSS' };
 
 export function prettyModelName(id) {
-  const last = String(id ?? '').split('/').pop().replace(/\.gguf$/i, '').replace(/[-_ ]i?q\d(?:_[a-z0-9]+)*/gi, ''); // "-q4_k_m", "_Q3_K_XL" and the like are one tag
+  const last = String(id ?? '').replace(/^huihui[-_ ]ai[-_ ]/i, '').split('/').pop().replace(/\.gguf$/i, '').replace(/[-_ ]i?q\d(?:_[a-z0-9]+)*/gi, ''); // "-q4_k_m", "_Q3_K_XL" and the like are one tag
   const words = [];
   for (const raw of last.split(/[-_\s]+/).filter(Boolean)) {
     if (DROP.test(raw)) continue;
