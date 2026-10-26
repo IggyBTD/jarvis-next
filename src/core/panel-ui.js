@@ -30,8 +30,18 @@ export function meter(label, value, ratio, { level = ratio == null ? '' : levelO
 export function onTabPaint(id, paint) {
   let active = document.querySelector('#ws-tabs [aria-selected="true"]')?.dataset.id ?? null; // whiteboard.js drew the tabs before this module loaded
   let queued = false;
-  const run = () => { if (active !== id || queued) return; queued = true; requestAnimationFrame(() => { queued = false; if (active === id) paint(); }); };
+  const on = () => active === id || active === 'overview'; // the cards of the Overview each have their own module
+  const run = () => { if (!on() || queued) return; queued = true; requestAnimationFrame(() => { queued = false; if (on()) paint(); }); };
   document.addEventListener('jarvis:tab', (e) => { active = e.detail.id; run(); });
   run();
-  return { poke: run, isActive: () => active === id };
+  return { poke: run, isActive: on };
 }
+
+// The Overview's cards fold; which ones are open is kept on this device.
+const CARDS = 'jarvis.cards';
+const savedCards = () => { try { return JSON.parse(localStorage.getItem(CARDS)) ?? {}; } catch { return {}; } };
+document.querySelectorAll('details.p-card').forEach((d) => {
+  const was = savedCards()[d.dataset.card];
+  if (typeof was === 'boolean') d.open = was;
+  d.addEventListener('toggle', () => { try { localStorage.setItem(CARDS, JSON.stringify({ ...savedCards(), [d.dataset.card]: d.open })); } catch { /* storage blocked */ } });
+});

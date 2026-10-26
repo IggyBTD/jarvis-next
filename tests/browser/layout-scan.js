@@ -7,6 +7,7 @@ export const scanLayout = () => {
     for (let n = el; n && n !== document.documentElement; n = n.parentElement) {
       const cs = getComputedStyle(n);
       if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0' || n.hasAttribute('hidden') || n.inert) return false;
+      if (n.parentElement?.tagName === 'DETAILS' && !n.parentElement.open && n.tagName !== 'SUMMARY') return false; // the body of a folded card is not drawn
     }
     const r = el.getBoundingClientRect();
     return r.width > 0 && r.height > 0;

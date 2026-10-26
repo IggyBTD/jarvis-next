@@ -75,10 +75,9 @@ for (const [w, h] of SIZES) {
 test('chat page: every panel tab, the System tab, the Server tab', async () => {
   for (const [w, h] of [[1100, 700], [1440, 900]]) {
     await setSize(w, h); await goto('chat'); await sidebar(true); await panel(true);
-    for (const id of ['pc', 'llm', 'outputs', 'changes', 'tasks', 'env']) {
-      await page.click(`#ws-tabs [data-id="${id}"] .t-label`);
-      await check(`${w}x${h} tab ${id}`);
-    }
+    await page.click('#ws-tabs [data-id="overview"] .t-label');
+    await page.evaluate(() => document.querySelectorAll('details.p-card, details.p-more').forEach((d) => { d.open = true; })); // every card open: the most there is to lay out
+    await check(`${w}x${h} overview`);
     await page.click('#nav-system'); await check(`${w}x${h} tab system`);
     await page.click('#nav-server'); await check(`${w}x${h} tab server`);
     await page.click('#workspace [data-id="system"] .t-x'); await page.click('#workspace [data-id="server"] .t-x');

@@ -55,7 +55,7 @@ test('a new chat shows the greeting and the input card together, in the middle; 
   // what the reply cost the local model is shown under it and counted in the panel
   await page.waitForSelector('#chat-output .chat-line.assistant .chat-stats');
   assert.match(await page.textContent('#chat-output .chat-line.assistant .chat-stats'), /\d+ tokens/);
-  await page.click('#ws-tabs [data-id="llm"] .t-label');
+  await page.click('.p-more > summary');
   await waitFor(async () => /Replies\s*1/.test(await page.textContent('#llm-speed-rows')));
   assert.equal((await page.textContent('#llm-name')).trim(), 'Qwen 3.8 27B'); // the title is the name, not the file name
   await page.click('#env-reset');
@@ -100,15 +100,20 @@ test('the title menu and the row\'s more button open the chat menu', async () =>
   await page.keyboard.press('Escape');
 });
 
-test('the panel: six info tabs that cannot be closed, each shows its own content; outputs lists files by type and a click shows the raw code', async () => {
-  assert.equal(await page.locator('#ws-tabs .ws-tab[data-kind="info"]').count(), 6);
+test('the panel: one Overview tab that cannot be closed, with cards that fold; outputs lists files by type and a click shows the raw code', async () => {
+  assert.equal(await page.locator('#ws-tabs .ws-tab[data-kind="info"]').count(), 1);
+  assert.deepEqual(await page.locator('details.p-card').evaluateAll((d) => d.map((x) => x.dataset.card)), ['pc', 'model', 'env', 'changes', 'outputs', 'tasks']);
+  await page.click('[data-card="pc"] > summary'); // a card folds and opens again
+  assert.equal(await page.isHidden('#pc-meters'), true);
+  await page.click('[data-card="pc"] > summary');
+  assert.equal(await page.isVisible('#pc-meters'), true);
   assert.equal(await page.locator('#ws-tabs .ws-tab[data-kind="info"] .t-x').count(), 0);
   rig.model.script({ content: 'Done.\n\n<jarvis-artifact id="pg" type="html" title="A page">\n<!doctype html><body><h1>hi</h1></body>\n</jarvis-artifact>' });
   await send('make a page');
   await page.waitForSelector('#ws-docs [data-id="pg"]');
   await page.click('#ws-docs [data-id="pg"] .t-x');
   assert.equal(await page.locator('#ws-docs [data-id="pg"]').count(), 0);
-  await page.click('#ws-tabs [data-id="outputs"] .t-label');
+  await page.evaluate(() => { document.querySelector('[data-card="outputs"]').open = true; });
   await page.waitForSelector('#out-list .out-file');
   assert.match(await page.textContent('#out-list'), /HTML pages[\s\S]*pg\.html/); // sorted by type, the file named by its type
   await page.click('#out-list .out-group > summary'); // a type folds
@@ -119,8 +124,7 @@ test('the panel: six info tabs that cannot be closed, each shows its own content
   assert.match(await page.textContent('#out-body'), /<h1>hi<\/h1>|&lt;h1&gt;|h1/);
   await page.click('#out-back');
   await page.waitForSelector('#out-list .out-file');
-  for (const [id, pane, text] of [['pc', '#pc-meters', /CPU usage[\s\S]*SSD space/], ['llm', '#llm-ctx', /Tokens in the window/], ['tasks', '#bg-list', /Nothing running/], ['env', '#env-branch', /Current\s*main/]]) {
-    await page.click(`#ws-tabs [data-id="${id}"] .t-label`);
+  for (const [id, pane, text] of [['pc', '#pc-meters', /GPU temp[\s\S]*CPU temp[\s\S]*GPU compute load[\s\S]*CPU compute load/], ['llm', '#llm-ctx', /Context left/], ['tasks', '#bg-list', /Nothing running/], ['env', '#env-branch', /Current\s*main/]]) {
     await waitFor(async () => text.test(await page.textContent(pane)));
   }
   assert.match(await page.textContent('#env-remote'), /Status\s*on/);
@@ -134,7 +138,7 @@ test('Code: the Plan chip shows only there and switches plan mode; the changes a
   await page.click('#cli-toggle-plan');
   assert.equal(await page.getAttribute('#cli-toggle-plan', 'aria-pressed'), 'true');
   await page.click('#cli-toggle-plan');
-  for (const id of ['changes', 'tasks']) { await page.click(`#ws-tabs [data-id="${id}"] .t-label`); assert.equal(await page.isVisible(`#ws-${id}`), true); }
+  for (const id of ['changes', 'tasks']) assert.equal(await page.isVisible(`[data-card="${id}"]`), true);
   await page.click('.mode-btn[data-page="chat"]');
 });
 

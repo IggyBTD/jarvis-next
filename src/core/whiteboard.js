@@ -21,7 +21,7 @@ const SYSTEM = 'system';
 const SERVER = 'server';
 const serverPane = $('ws-server');
 // [id, label, icon]: the pane of each is #ws-<id>
-export const INFO_TABS = [['pc', 'PC', 'system'], ['llm', 'LLM', 'spark'], ['outputs', 'Outputs', 'artifacts'], ['changes', 'Changes', 'diff'], ['tasks', 'Background tasks', 'terminal'], ['env', 'Environment', 'folder']];
+export const INFO_TABS = [['overview', 'Overview', 'layers']];
 const INFO = new Map(INFO_TABS.map(([id, label, ic]) => [id, { id, label, icon: ic, pane: $(`ws-${id}`) }]));
 const isWidgetId = (id) => id === SYSTEM || id === SERVER || INFO.has(id);
 
@@ -382,5 +382,5 @@ split.addEventListener('keydown', (e) => {
 
 INFO.forEach((t) => tabs.set(t.id, t));
 if (stored) tabs.set(SYSTEM, { id: SYSTEM, label: 'System', pane: sysPane });
-active = INFO.has(savedTab) ? savedTab : 'pc';
+active = INFO.has(savedTab) ? savedTab : 'overview';
 paint();

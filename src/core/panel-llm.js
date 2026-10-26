@@ -44,11 +44,8 @@ function paint() {
   // context: tokens of the window used by the conversation so far
   const used = live.ctxUsed;
   const max = live.ctxMax;
-  const lines = [...document.querySelectorAll('#chat-output .chat-line')];
-  const mine = lines.filter((l) => l.classList.contains('user')).length;
   $('llm-ctx').replaceChildren(
-    meter('Tokens in the window', used == null || !max ? '' : `${fmtK(used)} of ${fmtK(max)}  (${Math.round((used / max) * 100)}%)`, used == null || !max ? null : used / max),
-    Object.assign(document.createElement('div'), { className: 'info-note', textContent: `${mine} message${mine === 1 ? '' : 's'} sent in this chat.` }),
+    meter('Context left', used == null || !max ? '' : `${fmtK(Math.max(0, max - used))} of ${fmtK(max)}`, used == null || !max ? null : used / max),
   );
 
   // how the model is set up (what the server sends with every request)

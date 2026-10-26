@@ -151,3 +151,19 @@ body:not(.ws-off) #ws-head { margin-right: var(--wc-w); /* the strip ends where 
 .env-tree[open] > summary::before { rotate: 90deg; }
 .env-tree .cli-body { max-height: 240px; margin: 0 calc(-1 * var(--s-4)); }
 .env-tree .cli-row { padding: 0 var(--s-4); }
+
+/* The Overview: stacked cards that fold (details), each with its title, a count or dot, and a chevron on the right */
+.p-card { flex: none; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); }
+.p-card > summary { display: flex; align-items: center; gap: var(--s-2); min-height: var(--h-lg); padding: 0 var(--s-4); cursor: pointer; list-style: none; font-weight: 600; font-size: var(--fs-4); color: var(--text); border-radius: var(--r-md); }
+.p-card > summary::-webkit-details-marker { display: none; }
+.p-card > summary:hover { background: var(--surface-3); }
+.p-card > summary .p-title { flex: 1; min-width: 0; }
+.p-card > summary .sub { color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
+.p-chev { color: var(--text-3); transition: transform var(--dur-fast) var(--ease-out); }
+.p-card:not([open]) .p-chev { transform: rotate(-90deg); }
+.p-body { padding: 0 var(--s-4) var(--s-4); }
+.p-body h4 { display: flex; align-items: center; justify-content: space-between; margin: var(--s-3) 0 var(--s-1); font: 600 var(--fs-2)/var(--lh-xs) var(--sans); color: var(--text-3); text-transform: none; }
+.p-more { margin-top: var(--s-2); }
+.p-more > summary { cursor: pointer; color: var(--text-3); font-size: var(--fs-3); padding: var(--s-1) 0; }
+.p-more > summary:hover { color: var(--text); }
+@media (prefers-reduced-motion: reduce) { .p-chev { transition: none; } }
