@@ -71,7 +71,8 @@ let wanted = false;
 
 // The server usually runs on the PC this app runs on, and its LAN address changes (DHCP) while 127.0.0.1 does not. When the saved address
 // fails twice in the desktop app, the next tries go to the same port on this computer; if that fails twice too, back to the saved one.
-let viaLoopback = false;
+// The desktop app starts on this computer's own address: a saved LAN or Tailscale address that is unreachable hangs for ~20 s before it fails.
+let viaLoopback = !!window.__TAURI_INTERNALS__;
 const isLoopback = (url) => { try { return ['127.0.0.1', 'localhost', '[::1]'].includes(new URL(url.trim().replace(/^ws/i, 'http')).hostname); } catch { return false; } };
 const savedOrLocal = () => {
   if (!viaLoopback) return settings.url;
@@ -100,6 +101,7 @@ export function connect() {
   ws = socket;
   socket.binaryType = 'arraybuffer';
   const openedAt = { t: 0 };
+  const stall = setTimeout(() => { if (!openedAt.t) try { socket.close(); } catch { /* closed */ } }, 4000); // a silent address is given up on after 4 s
   socket.onopen = () => {
     openedAt.t = Date.now();
     attempts = 0;
@@ -109,6 +111,7 @@ export function connect() {
   socket.onmessage = (ev) => { if (typeof ev.data === 'string') handle(JSON.parse(ev.data)); else emit({ type: 'voice.audio', frame: new Uint8Array(ev.data) }); };
   socket.onerror = () => {};
   socket.onclose = () => {
+    clearTimeout(stall);
     if (ws !== socket) return;
     ws = null;
     attempts += 1;
@@ -121,7 +124,7 @@ export function connect() {
   };
 }
 export function disconnect() { wanted = false; clearTimeout(timer); const s = ws; ws = null; try { s?.close(); } catch { /* closed */ } setStatus(serverMode() ? 'offline' : 'off'); }
-function reconnect() { disconnect(); attempts = 0; viaLoopback = false; if (serverMode()) { useTelemetrySource('server'); connect(); } else useTelemetrySource('local'); }
+function reconnect() { disconnect(); attempts = 0; viaLoopback = !!window.__TAURI_INTERNALS__; if (serverMode()) { useTelemetrySource('server'); connect(); } else useTelemetrySource('local'); }
 
 const send = (obj) => { if (ws?.readyState === 1) { ws.send(JSON.stringify(obj)); return true; } return false; };
 const reqId = () => Math.random().toString(36).slice(2, 10);
