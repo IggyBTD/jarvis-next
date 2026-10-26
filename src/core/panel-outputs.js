@@ -31,7 +31,7 @@ let viewing = null;      // key of the file open in the viewer
 
 function listView() {
   const all = files();
-  $('out-count').textContent = all.length ? String(all.length) : '';
+  $('out-count').textContent = String(all.length);
   const box = $('out-list');
   if (!all.length) { box.replaceChildren(el('div', { className: 'info-note', textContent: 'Nothing yet. Ask for a page, a chart, a diagram, a document or a script and it is listed here, sorted by type.' })); return; }
   const groups = new Map();

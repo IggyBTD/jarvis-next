@@ -5,7 +5,7 @@ import { isWhiteboardMode, enterWhiteboardMode, exitWhiteboardMode, setPage } fr
 import { toggleWidget, openArtifact, closePanelById, openPanelIds } from './whiteboard.js';
 import { listArtifacts } from './artifacts.js';
 import { zoomBy, zoomReset } from './zoom.js';
-import { openLatexPad } from './latex-pad.js';
+import { toggleLatexMode } from './latex-mode.js';
 
 const input = document.getElementById('hud-chat-input');
 const PRESETS = ['btn-general', 'btn-code', 'btn-visual', 'btn-abliterated'];
@@ -46,7 +46,7 @@ function run(e) {
   if (digit && key !== '0') togglePanelNumber(Number(digit));
   else if (key === 'b') (isWhiteboardMode() ? exitWhiteboardMode : enterWhiteboardMode)();
   else if (key === 'i') toggleWidget('system');
-  else if (key === 'l') openLatexPad();
+  else if (key === 'l') toggleLatexMode();
   else if (key === 'j') input.focus();
   else if (key === '\\') document.dispatchEvent(new CustomEvent('jarvis:sidebar'));
   else if (key === ',') setPage('settings');

@@ -135,7 +135,7 @@ body.ws-off .col-head { padding-right: var(--wc-w); }
 
 /* panel splitter */
 #ws-split { grid-column: 2; cursor: col-resize; touch-action: none; position: relative; }
-#ws-split::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; /* optical: 1px rule */ background: var(--border); transition: background-color var(--dur-fast) var(--ease-out); }
+#ws-split::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; /* optical: 1px rule */ background: transparent; transition: background-color var(--dur-fast) var(--ease-out); }
 #ws-split:hover::after, #ws-split.dragging::after, #ws-split:focus-visible::after { background: var(--accent); width: 2px; /* optical: active rule */ }
 #ws-split:focus-visible { outline: none; }
 

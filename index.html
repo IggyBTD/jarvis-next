@@ -84,6 +84,7 @@
                 <div id="attach-row" aria-live="polite"></div>
                 <canvas id="voice-wave" aria-hidden="true" hidden></canvas>
                 <div id="composer">
+                  <button type="button" id="latex-chip" class="latex-chip" hidden title="LaTeX mode is on: symbols you type become LaTeX. Click or press Ctrl+L to turn it off.">LaTeX</button>
                   <textarea id="hud-chat-input" class="chat-input" rows="1" placeholder="Message JARVIS" aria-label="Message JARVIS. Enter sends, Shift and Enter start a new line." autocomplete="off" spellcheck="false"></textarea>
                   <button id="dock-stop" class="stop-btn" type="button" hidden title="Stop (Ctrl+.)" aria-label="Stop the reply"><span class="icon" data-icon="stop"></span></button>
                   <button id="send-btn" class="send-btn" type="button" title="Send (Enter)" aria-label="Send"><span class="icon" data-icon="send"></span></button>
@@ -134,8 +135,8 @@
         <div id="ws-docs" role="tablist" hidden></div>
         <div id="ws-body">
           <div id="ws-overview" class="ws-pane info-pane" role="tabpanel" hidden>
-            <details class="p-card" data-card="pc" open><summary><span class="p-title"><span id="pc-title">PC</span></span><span class="sub" id="pc-sub"></span><span class="icon p-chev" data-icon="chevron-down" data-size="16"></span></summary><div class="p-body"><div id="pc-meters" class="meters"></div><div id="pc-hint" class="info-note" hidden></div></div></details>
-            <details class="p-card" data-card="model" open><summary><span class="p-title">Model</span><span class="sub"><i class="dot" id="llm-dot" data-state="idle"></i></span><span class="icon p-chev" data-icon="chevron-down" data-size="16"></span></summary><div class="p-body">
+            <details class="p-card" data-card="pc" open><summary><span class="p-title"><span id="pc-title">PC</span></span><span class="sub p-sum" id="pc-sub"></span><span class="icon p-chev" data-icon="chevron-down" data-size="16"></span></summary><div class="p-body"><div id="pc-meters" class="meters"></div><div id="pc-hint" class="info-note" hidden></div></div></details>
+            <details class="p-card" data-card="model" open><summary><span class="p-title">Model</span><span class="sub p-sum" id="llm-sum"></span><i class="dot" id="llm-dot" data-state="idle" hidden></i><span class="icon p-chev" data-icon="chevron-down" data-size="16"></span></summary><div class="p-body">
               <div class="info-row"><span class="k">Name</span><span class="v" id="llm-name">No model</span></div>
               <div id="llm-ctx" class="meters"></div>
               <div class="info-row"><span class="k">Speed</span><span class="v"><span id="llm-tps">--</span> tok/s</span></div>
@@ -145,21 +146,21 @@
                 <h4>Memory</h4><div id="llm-meters" class="meters"></div>
                 <h4>Settings</h4><div id="env-model" class="info-rows"></div>
               </details></div></details>
-            <details class="p-card" data-card="env" open><summary><span class="p-title">Environment</span><span class="icon p-chev" data-icon="chevron-down" data-size="16"></span></summary><div class="p-body">
+            <details class="p-card" data-card="env" open><summary><span class="p-title">Environment</span><span class="sub p-sum" id="env-sum"></span><span class="icon p-chev" data-icon="chevron-down" data-size="16"></span></summary><div class="p-body">
               <h4 id="env-pc-title">This PC</h4><div id="env-pc" class="info-rows"></div>
               <h4>Folder</h4><div id="env-folder" class="info-rows"></div><details class="env-tree"><summary>Files</summary><div id="cli-tree" class="cli-body"></div></details>
               <h4>Branch</h4><div id="env-branch" class="info-rows"></div>
               <h4>Remote control</h4><div id="env-remote" class="info-rows"></div>
             </div></details>
-            <details class="p-card" data-card="changes" open><summary><span class="p-title">Changes</span><span class="sub" id="cli-changes-count"></span><span class="icon p-chev" data-icon="chevron-down" data-size="16"></span></summary><div class="p-body"><div id="cli-changes" class="cli-body"></div></div></details>
-            <details class="p-card" data-card="outputs"><summary><span class="p-title">Outputs</span><span class="sub" id="out-count"></span><span class="icon p-chev" data-icon="chevron-down" data-size="16"></span></summary><div class="p-body">
+            <details class="p-card" data-card="changes" open><summary><span class="p-title">Changes</span><span class="sub p-sum" id="cli-changes-count"></span><span class="icon p-chev" data-icon="chevron-down" data-size="16"></span></summary><div class="p-body"><div id="cli-changes" class="cli-body"></div></div></details>
+            <details class="p-card" data-card="outputs"><summary><span class="p-title">Outputs</span><span class="sub p-sum" id="out-count"></span><span class="icon p-chev" data-icon="chevron-down" data-size="16"></span></summary><div class="p-body">
               <div id="out-list-view"><div id="out-list" class="out-groups"></div></div>
               <div id="out-viewer" class="out-viewer" hidden>
                 <div class="out-viewer-bar"><button type="button" class="icon-btn" id="out-back" title="Back to the list" aria-label="Back to the list"><span class="icon" data-icon="chevron-left"></span></button><span class="out-viewer-name" id="out-name"></span><button type="button" class="av-btn av-act" id="out-copy" title="Copy the code"><span class="icon" data-icon="copy"></span><span>Copy</span></button></div>
                 <div class="out-viewer-body" id="out-body" tabindex="0"></div>
               </div>
             </div></details>
-            <details class="p-card" data-card="tasks"><summary><span class="p-title">Background tasks</span><span class="sub" id="bg-count"></span><span class="icon p-chev" data-icon="chevron-down" data-size="16"></span></summary><div class="p-body"><div id="bg-list" class="bg-list"></div><h4>Checklist <span class="sub" id="cli-tasks-count"></span></h4><div id="cli-tasks" class="cli-body"></div></div></details>
+            <details class="p-card" data-card="tasks"><summary><span class="p-title">Background tasks</span><span class="sub p-sum" id="bg-count"></span><span class="icon p-chev" data-icon="chevron-down" data-size="16"></span></summary><div class="p-body"><div id="bg-list" class="bg-list"></div><h4>Checklist <span class="sub" id="cli-tasks-count"></span></h4><div id="cli-tasks" class="cli-body"></div></div></details>
           </div>
           <div id="ws-server" class="ws-pane" role="tabpanel" hidden></div>
           <div id="ws-system" class="ws-pane" role="tabpanel" hidden>

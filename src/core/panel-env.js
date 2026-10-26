@@ -19,6 +19,7 @@ async function load() {
 function paint() {
   const server = serverMode();
   if (!server) {
+    $('env-sum').textContent = '';
     fill('env-pc', [row('Computer', 'This computer', 'ok'), row('Model server', 'LM Studio on this PC')]);
     fill('env-folder', [note('Shown when the JARVIS server is on.')]);
     fill('env-branch', [note('Shown when the JARVIS server is on.')]);
@@ -26,6 +27,7 @@ function paint() {
     return;
   }
   const m = state.machines?.[state.target];
+  $('env-sum').textContent = env?.project ? env.project.split(/[\/]/).filter(Boolean).pop() : '';
   $('env-pc-title').textContent = env?.label ? `This ${env.label}` : 'This computer';
   fill('env-pc', env ? [row('Hostname', env.hostname ?? '--', m?.online ? 'ok' : 'bad'), row('Computer', env.label), row('System', env.os ?? '--'), row('User', env.user ?? '--')] : [note(state.status === 'online' ? 'Asking the PC...' : 'The server is not reachable.')]);
   const change = el('button', { type: 'button', className: 'link-btn', textContent: 'Change', title: 'Pick the project folder the branch is read from' });

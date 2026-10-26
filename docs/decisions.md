@@ -33,3 +33,6 @@ models.json now points at unsloth/qwen3.8-27b: thinkingMethod request_field with
 
 ## 2026-10-25 Model menu in server mode
 The chip in server mode is now a working menu: GET /api/models lists what the PC's LM Studio has installed (loaded ones marked), POST /api/model loads the chosen model, unloads the others (409 while a reply is running), and switches the request settings to that model's profile in models.json (profiles; a model without one gets thinking off and LM Studio's own sampling). The choice is saved in data/active-model.json and applied at start. Only llm-client.js talks to LM Studio. The system prompt carries the date only; the time is added to the newest user message in the request (not stored), so the prompt prefix stays the same and LM Studio's prompt cache is reused.
+
+## 2026-10-26 LaTeX mode replaces the LaTeX pad
+D-23 is replaced: Ctrl+L no longer opens a window. It turns LaTeX mode on and off, with a "LaTeX" chip beside the input. In the mode, symbol-only text sent from the ordinary input is converted locally (`shared/latex.js`) and sent between $ signs; text with words is sent as typed. The /api/latex route stays but nothing in the app calls it.

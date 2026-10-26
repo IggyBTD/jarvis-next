@@ -217,16 +217,15 @@ test('the sidebar lists the saved chats from the server, a click reopens one, a 
   await page.waitForSelector('#chat-output .chat-line.user', { timeout: 15000 }); // the chat this window was in comes back
 });
 
-test('Ctrl+L opens the LaTeX pad: symbols typeset live, Enter closes it, words wait for the model', async () => {
+test('Ctrl+L turns LaTeX mode on with a chip beside the input and no window; symbols you send become LaTeX', async () => {
   await page.keyboard.press('Control+l');
-  await page.waitForSelector('#latex-pad[open]');
-  await page.fill('.latex-in', 'x^2/2 + sqrt(x)');
-  await page.waitForSelector('.latex-preview .katex');
-  assert.equal(await page.textContent('.latex-code'), String.raw`\frac{x^{2}}{2}+\sqrt{x}`);
-  await page.fill('.latex-in', 'integral of x squared from 0 to 1');
-  assert.match(await page.textContent('.latex-hint'), /asks JARVIS/);
-  await page.keyboard.press('Escape');
-  await page.waitForSelector('#latex-pad:not([open])', { state: 'attached' });
+  await page.waitForSelector('#latex-chip:not([hidden])');
+  assert.equal(await page.locator('dialog[open]').count(), 0);
+  rig.model.script({ content: 'ok' });
+  await send('x^2/2 + sqrt(x)');
+  await waitFor(() => rig.model.requests.some((r) => r.body.messages.some((m) => typeof m.content === 'string' && m.content.includes(String.raw`$\frac{x^{2}}{2}+\sqrt{x}$`))));
+  await page.keyboard.press('Control+l');
+  assert.equal(await page.isHidden('#latex-chip'), true);
 });
 
 test('no script errors on the page', () => { assert.deepEqual(errors.filter((e) => !/transformCallback/.test(e)), []); });

@@ -11,11 +11,11 @@ function paint() {
   const v = offline ? {} : d;
   const label = serverMode() ? (state.machines?.[state.target]?.label ?? state.target.toUpperCase()) : 'This PC';
   $('pc-title').textContent = label;
-  $('pc-sub').textContent = offline ? 'no readings' : '';
   const cpuTemp = num(v, 'CPU_Temperature');
   const gpuTemp = num(v, 'GPU_Temperature');
   const cpu = num(v, 'CPU_Load');
   const gpu = num(v, 'GPU_Compute_Load');
+  $('pc-sub').textContent = `GPU: ${gpuTemp == null ? '--' : Math.round(gpuTemp)}°C  CPU: ${cpuTemp == null ? '--' : Math.round(cpuTemp)}°C`;
   $('pc-meters').replaceChildren(
     meter('GPU temp', gpuTemp == null ? '' : `${Math.round(gpuTemp)} °C`, gpuTemp == null ? null : gpuTemp / 90),
     meter('CPU temp', cpuTemp == null ? '' : `${Math.round(cpuTemp)} °C`, cpuTemp == null ? null : cpuTemp / 100),

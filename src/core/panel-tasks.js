@@ -44,7 +44,7 @@ function paint() {
     items.push(item('bell', r.text, `missed  ·  ${r.when}`, 'missed', dismiss));
   }
   if (state.digest?.date) items.push(item('mail', 'Morning digest', `last one ${state.digest.date}`, 'scheduled', null));
-  $('bg-count').textContent = running ? `${running} running` : '';
+  $('bg-count').textContent = `${running} running`;
   box.replaceChildren(...(items.length ? items : [el('div', { className: 'info-note', textContent: 'Nothing running. The coding agent, reminders and the morning digest are listed here.' })]));
 }
 

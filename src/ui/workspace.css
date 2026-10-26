@@ -123,8 +123,8 @@ body:not(.ws-off) #ws-head { margin-right: var(--wc-w); /* the strip ends where 
 .chg-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); color: var(--text); }
 .chg-dir { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); }
 .chg-count { font: 400 var(--fs-2)/var(--lh-xs) var(--mono); white-space: nowrap; }
-.chg-count .plus { color: var(--ok); font-weight: 400; }
-.chg-count .minus { color: var(--danger); font-weight: 400; }
+.chg-count .plus, .p-sum .plus { color: var(--ok); font-weight: 400; }
+.chg-count .minus, .p-sum .minus { color: var(--danger); font-weight: 400; }
 .chg .tc-diff { max-height: 320px; }
 
 /* Background tasks */
@@ -167,3 +167,7 @@ body:not(.ws-off) #ws-head { margin-right: var(--wc-w); /* the strip ends where 
 .p-more > summary { cursor: pointer; color: var(--text-3); font-size: var(--fs-3); padding: var(--s-1) 0; }
 .p-more > summary:hover { color: var(--text); }
 @media (prefers-reduced-motion: reduce) { .p-chev { transition: none; } }
+
+/* one line of the card's most important number, shown only while the card is folded */
+.p-card[open] .p-sum { display: none; }
+.p-card > summary .p-sum { color: var(--text-2); }

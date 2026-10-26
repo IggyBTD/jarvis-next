@@ -163,7 +163,7 @@ function renderChanges() {
     d.append(s, body);
     return d;
   });
-  $('cli-changes-count').textContent = list.length ? `${list.length} file${list.length === 1 ? '' : 's'}  +${plus} -${minus}` : '';
+  $('cli-changes-count').innerHTML = `<b class="plus">+${plus}</b> <b class="minus">-${minus}</b>`;
   box.replaceChildren(...(rows.length ? rows : [empty('Nothing changed yet')]));
   document.dispatchEvent(new CustomEvent('jarvis:changes'));
 }

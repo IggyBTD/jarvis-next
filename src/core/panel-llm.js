@@ -16,6 +16,7 @@ function paint() {
   const id = server ? m?.modelId : getPreset().model;
   const present = server ? !!m?.modelPresent : live.ctxMax != null || live.tps != null;
   $('llm-name').textContent = id ? prettyModelName(id) : 'No model';
+  $('llm-sum').textContent = $('llm-name').textContent;
   $('llm-dot').dataset.state = present ? 'ok' : 'idle';
   const gb = m?.sizeBytes ? `${(m.sizeBytes / 1e9).toFixed(1)} GB on disk` : null;
   $('llm-sub').textContent = [present ? 'loaded' : server && m?.reachable === false ? 'not reachable' : 'not loaded', live.ctxMax ? `${fmtK(live.ctxMax)} window` : null, gb].filter(Boolean).join('  ·  ');

@@ -105,6 +105,13 @@ test('the panel: one Overview tab that cannot be closed, with cards that fold; o
   assert.deepEqual(await page.locator('details.p-card').evaluateAll((d) => d.map((x) => x.dataset.card)), ['pc', 'model', 'env', 'changes', 'outputs', 'tasks']);
   await page.click('[data-card="pc"] > summary'); // a card folds and opens again
   assert.equal(await page.isHidden('#pc-meters'), true);
+  assert.match(await page.innerText('#pc-sub'), /^GPU: \S+C\s+CPU: \S+C$/); // folded, the card shows its one line
+  await page.evaluate(() => document.querySelectorAll('details.p-card').forEach((d) => { d.open = false; }));
+  assert.equal((await page.innerText('#llm-sum')).trim(), 'Qwen 3.8 27B');
+  assert.match(await page.innerText('#cli-changes-count'), /^\+\d+\s+-\d+$/);
+  assert.match(await page.innerText('#out-count'), /^\d+$/);
+  assert.match(await page.innerText('#bg-count'), /^\d+ running$/);
+  assert.equal(await page.$eval('#cli-changes-count .plus', (e) => getComputedStyle(e).color) !== await page.$eval('#cli-changes-count .minus', (e) => getComputedStyle(e).color), true); // green and red  await page.click('[data-card="pc"] > summary');
   await page.click('[data-card="pc"] > summary');
   assert.equal(await page.isVisible('#pc-meters'), true);
   assert.equal(await page.locator('#ws-tabs .ws-tab[data-kind="info"] .t-x').count(), 0);
