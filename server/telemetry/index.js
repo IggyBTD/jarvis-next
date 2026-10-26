@@ -3,6 +3,7 @@
 // OpenCode, browser or digest code, and an error in one provider never stops another: kill everything else and it keeps running.
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { parseLhm } from '../../shared/lhm.js';
 
 export const LHM_DEFAULT = 'http://127.0.0.1:8085';
@@ -13,6 +14,39 @@ export function createLhmProvider({ url = LHM_DEFAULT, fetchImpl = fetch, timeou
       const res = await fetchImpl(`${url}/data.json`, { signal: AbortSignal.timeout(timeoutMs) });
       if (!res.ok) throw new Error(`LibreHardwareMonitor answered ${res.status}`);
       return parseLhm(await res.json());
+    },
+  };
+}
+
+// The numbers that need no sensor program: processor load, memory and free space on the home drive.
+// LibreHardwareMonitor adds the temperatures, the graphics card and the video memory.
+export function createBasicProvider({ homeDir = os.homedir() } = {}) {
+  let prev = null;
+  const cpuTimes = () => os.cpus().reduce((a, c) => { const t = Object.values(c.times); a.total += t.reduce((x, y) => x + y, 0); a.idle += c.times.idle; return a; }, { total: 0, idle: 0 });
+  return {
+    async sample() {
+      const m = {};
+      const cur = cpuTimes();
+      if (prev && cur.total > prev.total) m.CPU_Load = Number((100 * (1 - (cur.idle - prev.idle) / (cur.total - prev.total))).toFixed(1));
+      prev = cur;
+      m.Memory_Total = Number((os.totalmem() / 2 ** 30).toFixed(2));
+      m.Memory_Usage = Number(((os.totalmem() - os.freemem()) / 2 ** 30).toFixed(2));
+      try { const s = fs.statfsSync(homeDir); m.Storage_Total_Space = Number(((s.blocks * s.bsize) / 2 ** 30).toFixed(1)); m.Storage_Free_Space = Number(((s.bavail * s.bsize) / 2 ** 30).toFixed(1)); } catch { /* no drive reading */ }
+      return m;
+    },
+  };
+}
+
+// The PC: sensor readings from LibreHardwareMonitor when it answers, the basic numbers under them either way. Sensors_Basic = 1
+// says the sensor program is not running, so the temperatures and the graphics card are missing.
+export function createPcProvider({ lhm, basic = createBasicProvider() }) {
+  return {
+    async sample() {
+      const [fromBasic, fromLhm] = await Promise.allSettled([basic.sample(), lhm.sample()]);
+      const m = { ...(fromBasic.status === 'fulfilled' ? fromBasic.value : {}), ...(fromLhm.status === 'fulfilled' ? fromLhm.value : {}) };
+      m.Sensors_Basic = fromLhm.status === 'fulfilled' ? 0 : 1;
+      if (!Object.keys(m).length) throw new Error('no readings from this PC');
+      return m;
     },
   };
 }

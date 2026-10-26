@@ -14,7 +14,12 @@ import { run } from './chat-list.js';
 import './context-menus.js';
 import './projects-page.js';
 import './pages-extra.js';
-import './panel-info.js';
+import { prettyModelName } from './model-name.js';
+import './panel-pc.js';
+import './panel-llm.js';
+import './panel-outputs.js';
+import './panel-tasks.js';
+import './panel-env.js';
 
 const $ = (id) => document.getElementById(id);
 const input = $('hud-chat-input');
@@ -106,28 +111,6 @@ document.addEventListener('jarvis:toast', (e) => {
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.remove('on'), 3200);
 });
-
-// --- live readout in the sidebar ---------------------------------------------------------------------
-function mini(id, ratio, text) {
-  $(`mini-${id}`).textContent = text;
-  const bar = $(`mini-${id}-bar`);
-  bar.style.transform = `scaleX(${ratio ?? 0})`;
-  bar.dataset.level = ratio == null ? '' : level(ratio);
-}
-function paintMini() {
-  const { data: d, offline } = getTelemetry();
-  const n = (k) => (!offline && typeof d[k] === 'number' ? d[k] : null);
-  const cpu = n('CPU_Load');
-  const gpu = n('GPU_Compute_Load');
-  const ram = n('Memory_Usage');
-  const ramTotal = n('Memory_Total');
-  mini('cpu', cpu == null ? null : cpu / 100, cpu == null ? 'N/A' : `${Math.round(cpu)}%`);
-  mini('gpu', gpu == null ? null : gpu / 100, gpu == null ? 'N/A' : `${Math.round(gpu)}%`);
-  // memory shows what is used out of what there is, so its bar reads like the other two
-  mini('ram', ram == null || !ramTotal ? null : ram / ramTotal, ram == null ? 'N/A' : ramTotal ? `${ram.toFixed(1)} / ${Math.round(ramTotal)} GB` : `${ram.toFixed(1)} GB`);
-}
-onTelemetry(paintMini);
-paintMini();
 
 // --- services (sidebar footer and settings) ---------------------------------------------------------------------
 let servicesSeen = '';
@@ -225,7 +208,7 @@ function paintMachine() {
   if (document.getElementById('chat-stack')?.querySelector('.chat-line')) return;
   const { data: d, offline } = getTelemetry();
   const { ctxMax } = getModelHealth();
-  const facts = [fact('Model', serverMode() ? (link.health?.model?.modelId?.split('/').pop() ?? 'server') : getPreset().model.split('/').pop())];
+  const facts = [fact('Model', serverMode() ? (link.health?.model?.modelId ? prettyModelName(link.health.model.modelId) : 'server') : prettyModelName(getPreset().model))];
   if (ctxMax) facts.push(fact('Context', fmtK(ctxMax)));
   if (!offline && Number.isFinite(d.GPU_Temperature)) facts.push(fact('GPU', `${Math.round(d.GPU_Temperature)} °C`));
   if (!offline && Number.isFinite(d.Memory_Usage)) facts.push(fact('RAM', `${d.Memory_Usage.toFixed(1)} of ${Math.round(d.Memory_Total)} GB`));

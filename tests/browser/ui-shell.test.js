@@ -55,10 +55,11 @@ test('a new chat shows the greeting and the input card together, in the middle; 
   // what the reply cost the local model is shown under it and counted in the panel
   await page.waitForSelector('#chat-output .chat-line.assistant .chat-stats');
   assert.match(await page.textContent('#chat-output .chat-line.assistant .chat-stats'), /\d+ tokens/);
-  await page.click('#ws-tabs [data-id="env"] .t-label');
-  await waitFor(async () => /Replies\s*1/.test(await page.textContent('#env-session')));
+  await page.click('#ws-tabs [data-id="llm"] .t-label');
+  await waitFor(async () => /Replies\s*1/.test(await page.textContent('#llm-speed-rows')));
+  assert.equal((await page.textContent('#llm-name')).trim(), 'Qwen 3.8 27B'); // the title is the name, not the file name
   await page.click('#env-reset');
-  await waitFor(async () => /No replies yet/.test(await page.textContent('#env-session')));
+  await waitFor(async () => /shows here/.test(await page.textContent('#llm-speed-rows')));
 });
 
 test('folders: add one and name it, drag a chat into it, it opens to show the chat, the count follows, drag it back to Recents', async () => {
@@ -99,8 +100,8 @@ test('the title menu and the row\'s more button open the chat menu', async () =>
   await page.keyboard.press('Escape');
 });
 
-test('the panel: seven info tabs that cannot be closed, each shows its own content; outputs lists the artifact and a click opens it', async () => {
-  assert.equal(await page.locator('#ws-tabs .ws-tab[data-kind="info"]').count(), 7);
+test('the panel: six info tabs that cannot be closed, each shows its own content; outputs lists files by type and a click shows the raw code', async () => {
+  assert.equal(await page.locator('#ws-tabs .ws-tab[data-kind="info"]').count(), 6);
   assert.equal(await page.locator('#ws-tabs .ws-tab[data-kind="info"] .t-x').count(), 0);
   rig.model.script({ content: 'Done.\n\n<jarvis-artifact id="pg" type="html" title="A page">\n<!doctype html><body><h1>hi</h1></body>\n</jarvis-artifact>' });
   await send('make a page');
@@ -108,24 +109,32 @@ test('the panel: seven info tabs that cannot be closed, each shows its own conte
   await page.click('#ws-docs [data-id="pg"] .t-x');
   assert.equal(await page.locator('#ws-docs [data-id="pg"]').count(), 0);
   await page.click('#ws-tabs [data-id="outputs"] .t-label');
-  await page.waitForSelector('#out-list .info-row.clickable');
-  assert.match(await page.textContent('#out-list'), /A page/);
-  await page.click('#out-list .info-row.clickable');
-  await page.waitForSelector('#ws-docs [data-id="pg"][aria-selected="true"]');
-  for (const [id, pane, text] of [['env', '#env-model', /qwen3\.8-27b/], ['connectors', '#conn-list', /JARVIS server/], ['context', '#ctx-rows', /Messages/]]) {
+  await page.waitForSelector('#out-list .out-file');
+  assert.match(await page.textContent('#out-list'), /HTML pages[\s\S]*pg\.html/); // sorted by type, the file named by its type
+  await page.click('#out-list .out-group > summary'); // a type folds
+  assert.equal(await page.isHidden('#out-list .out-file'), true);
+  await page.click('#out-list .out-group > summary');
+  await page.click('#out-list .out-file'); // a click shows the raw code
+  await page.waitForSelector('#out-viewer:not([hidden])');
+  assert.match(await page.textContent('#out-body'), /<h1>hi<\/h1>|&lt;h1&gt;|h1/);
+  await page.click('#out-back');
+  await page.waitForSelector('#out-list .out-file');
+  for (const [id, pane, text] of [['pc', '#pc-meters', /CPU usage[\s\S]*SSD space/], ['llm', '#llm-ctx', /Tokens in the window/], ['tasks', '#bg-list', /Nothing running/], ['env', '#env-branch', /Current\s*main/]]) {
     await page.click(`#ws-tabs [data-id="${id}"] .t-label`);
     await waitFor(async () => text.test(await page.textContent(pane)));
   }
+  assert.match(await page.textContent('#env-remote'), /Status\s*on/);
+  assert.match(await page.textContent('#env-pc'), /pc-host/);
 });
 
-test('Code: the Plan chip shows only there and switches plan mode; the files, changes and tasks tabs are in the panel', async () => {
+test('Code: the Plan chip shows only there and switches plan mode; the changes and tasks tabs are in the panel', async () => {
   assert.equal(await page.isVisible('#cli-toggle-plan'), false);
   await page.click('.mode-btn[data-page="code"]');
   assert.equal(await page.isVisible('#cli-toggle-plan'), true);
   await page.click('#cli-toggle-plan');
   assert.equal(await page.getAttribute('#cli-toggle-plan', 'aria-pressed'), 'true');
   await page.click('#cli-toggle-plan');
-  for (const id of ['files', 'changes', 'tasks']) { await page.click(`#ws-tabs [data-id="${id}"] .t-label`); assert.equal(await page.isVisible(`#ws-${id}`), true); }
+  for (const id of ['changes', 'tasks']) { await page.click(`#ws-tabs [data-id="${id}"] .t-label`); assert.equal(await page.isVisible(`#ws-${id}`), true); }
   await page.click('.mode-btn[data-page="chat"]');
 });
 

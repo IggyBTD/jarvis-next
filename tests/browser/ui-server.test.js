@@ -48,7 +48,7 @@ test('connects, shows the switcher with the PC active and both computers reachab
 });
 
 test('the model chip and the context meter come from the server, not from an LM Studio on this computer', async () => {
-  await waitFor(async () => (await page.textContent('#model-chip-label')).trim() === rig.cfg.models.modelId.split('/').pop());
+  await waitFor(async () => (await page.textContent('#model-chip-label')).trim() === 'Qwen 3.8 27B');
   assert.equal(await page.isDisabled('#model-chip'), false);
   assert.equal(await page.getAttribute('#model-chip', 'data-loaded'), 'yes'); // the dot: this model is loaded on the PC
   assert.equal(await page.locator('#model-menu:not([hidden])').count(), 0);
@@ -72,7 +72,7 @@ test('the model menu lists the PC\'s models with the loaded one marked; picking 
   assert.match(rows.find((r) => r.current !== 'true').sub, /^not loaded$/);
   await page.screenshot({ path: path.join(SHOTS, 'server-model-menu.png'), clip: { x: 0, y: 0, width: 520, height: 320 } });
   await page.click('#model-server-list button[data-loaded="false"]');
-  await waitFor(async () => (await page.textContent('#model-chip-label')).trim() === 'qwen3-coder-30b');
+  await waitFor(async () => (await page.textContent('#model-chip-label')).trim() === 'Qwen 3 Coder 30B');
   assert.equal(await page.getAttribute('#model-chip', 'data-loaded'), 'yes');
   assert.deepEqual(rig.model.native.log.map((x) => x.path.split('/').pop()), ['unload', 'load']);
   assert.equal(await page.locator('#model-menu:not([hidden])').count(), 0);

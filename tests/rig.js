@@ -78,7 +78,7 @@ export async function startApi(r, extra = {}) {
   const telemetry = extra.telemetry ?? createTelemetry({ bus: r.bus, dataDir: r.cfg.dataDir, providers: {} });
   const wsApi = attachWs({ server, cfg: r.cfg, auth, bus: r.bus, gate: r.gate, orchestrator: r.orchestrator, targetState: r.target, prompts: r.prompts, router: r.router, conversations: r.conversations, telemetry, health, ...extra });
   let build = wsApi.buildState;
-  const handler = createHttpHandler({ cfg: r.cfg, auth, llmProxy, models: { list: () => r.llm.listModels(), select: (k) => r.llm.selectModel(k) }, health, audit: r.audit, conversations: r.conversations, digest: extra.digest, osint: extra.osint, buildState: () => build() });
+  const handler = createHttpHandler({ cfg: r.cfg, auth, llmProxy, models: { list: () => r.llm.listModels(), select: (k) => r.llm.selectModel(k) }, environment: async () => ({ machine: 'pc', label: 'PC', hostname: 'pc-host', os: 'Windows 11', user: 'tester', folder: '/ws', branch: 'main', dirty: 2, repo: true, remote: { on: true, url: 'http://100.1.2.3:7410', devices: 1 } }), health, audit: r.audit, conversations: r.conversations, digest: extra.digest, osint: extra.osint, buildState: () => build() });
   server.on('request', handler);
   await new Promise((ok) => server.listen(extra.port ?? 0, '127.0.0.1', ok));
   const port = server.address().port;

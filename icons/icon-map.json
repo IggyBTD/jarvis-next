@@ -358,5 +358,37 @@
     "remix": "git-pull-request",
     "solar": "code-file",
     "lucide": "git-compare"
+  },
+  "terminal": {
+    "phosphor": "terminal-window",
+    "tabler": "terminal-2",
+    "iconoir": "terminal",
+    "remix": "terminal-box",
+    "solar": "code-square",
+    "lucide": "terminal"
+  },
+  "bell": {
+    "phosphor": "bell",
+    "tabler": "bell",
+    "iconoir": "bell",
+    "remix": "notification",
+    "solar": "bell",
+    "lucide": "bell"
+  },
+  "mail": {
+    "phosphor": "envelope-simple",
+    "tabler": "mail",
+    "iconoir": "mail",
+    "remix": "mail",
+    "solar": "letter",
+    "lucide": "mail"
+  },
+  "play": {
+    "phosphor": "play",
+    "tabler": "player-play",
+    "iconoir": "play",
+    "remix": "play",
+    "solar": "play",
+    "lucide": "play"
   }
 }

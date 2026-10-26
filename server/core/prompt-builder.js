@@ -29,6 +29,7 @@ export function createPromptBuilder({ prompts, machines, timezone, getInfo, note
 
   return {
     refresh,
+    facts: (machine) => cache.get(machine)?.facts ?? null,
     async build(machine, { now = new Date(), refreshFacts = false } = {}) {
       if (!machines[machine]) throw new Error(`unknown machine ${machine}`);
       const entry = refreshFacts || !cache.has(machine) ? await refresh(machine) : cache.get(machine);

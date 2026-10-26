@@ -2,9 +2,6 @@
 // panels that float over the page. The conversation is the real one (the same as Chat), and the files, changes and tasks
 // live in the right panel's tabs (index.html, panel-info.js). Only real data is shown; see .md Files/JARVIS_CLI_Brief.md.
 import { getProject, listDir } from './agent-client.js';
-import { getModelHealth, onModelHealth } from './model-panel.js';
-import { getPreset } from './llm-client.js';
-import { serverMode, state } from './server-link.js';
 import { diffBody } from './tool-cards.js';
 import { getTasks, onTasks, taskSummary, isPlanMode, setPlanMode, onPlanMode } from './work-state.js';
 
@@ -13,7 +10,7 @@ const chatOutput = $('chat-output');
 const STEP = 8; // floating panels move and resize in 8 px steps
 
 document.addEventListener('jarvis:page', (e) => {
-  if (e.detail.page === 'code') { refreshTree(); refreshContext(); syncApprovals(); }
+  if (e.detail.page === 'code') { refreshTree(); syncApprovals(); }
 });
 
 // --- workspace -----------------------------------------------------------
@@ -48,7 +45,6 @@ async function refreshTree() {
   let root = null;
   try { root = await getProject(); } catch { /* no backend */ }
   if (token !== treeToken) return;
-  $('cli-project').textContent = root ? root.split(/[\\/]/).filter(Boolean).pop() : '';
   if (!root) {
     tree.replaceChildren(empty(window.__TAURI_INTERNALS__ ? 'No project folder. Use /project <path>' : 'Needs the desktop app'));
     return;
@@ -66,17 +62,6 @@ async function refreshTree() {
     tree.replaceChildren(empty(`Cannot list: ${String(err).slice(0, 80)}`));
   }
 }
-
-// --- context -------------------------------------------------------------
-const fmtK = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n));
-function refreshContext() {
-  const { ctxUsed, ctxMax } = getModelHealth();
-  const known = ctxUsed != null && ctxMax;
-  $('cli-model').textContent = (serverMode() ? (state.health?.model?.modelId ?? '') : getPreset().model).split('/').pop();
-  $('cli-ctx-val').textContent = known ? `${fmtK(ctxUsed)} / ${fmtK(ctxMax)}` : '--';
-  $('cli-ctx-bar').style.transform = `scaleX(${known ? Math.min(1, ctxUsed / ctxMax) : 0})`;
-}
-onModelHealth(refreshContext);
 
 // --- floating panels ------------------------------------------------------
 // Extra panels over the frame. Drag by the title bar, resize from the corner; with the title bar
@@ -148,24 +133,39 @@ document.addEventListener('jarvis:float', (e) => {
 });
 
 // --- changes: files the agent edited or wrote this session ------------------
-// A click on a file opens its diff (first "before" to latest "after") in a floating panel.
+// Each file is a row (what happened, where it is, how many lines); a click opens its diff, first "before" to latest "after", under it.
 const changed = new Map(); // path -> { kind, count, before, after }, oldest first
-function showDiff(path) {
-  const c = changed.get(path);
-  if (!c) return;
-  const { body, added, removed } = diffBody({ before: c.before, after: c.after });
-  const panel = openFloat(`diff:${path}`, `Diff  ${path}`, { w: 640, h: 400 });
-  panel.head.querySelector('.title-sub').textContent = `+${added} -${removed}`;
-  panel.body.replaceChildren(body);
-}
+export const changedFiles = () => [...changed].map(([path, v]) => ({ path, ...v }));
+const open = new Set(); // paths whose diff is open
+const KIND = { NEW: 'New', WRITE: 'Written', EDIT: 'Edited' };
 function renderChanges() {
   const box = $('cli-changes');
-  $('cli-changes-count').textContent = changed.size ? String(changed.size) : '';
-  if (!changed.size) {
-    box.replaceChildren(empty('Nothing changed yet'));
-    return;
-  }
-  box.replaceChildren(...[...changed].reverse().map(([path, c]) => row(path, 0, false, `${c.kind}${c.count > 1 ? ` x${c.count}` : ''}`, () => showDiff(path))));
+  const list = [...changed].reverse();
+  let plus = 0; let minus = 0;
+  const rows = list.map(([path, c]) => {
+    const { body, added, removed } = diffBody({ before: c.before, after: c.after });
+    plus += added; minus += removed;
+    const d = document.createElement('details');
+    d.className = 'chg';
+    d.open = open.has(path);
+    d.addEventListener('toggle', () => { if (d.open) open.add(path); else open.delete(path); });
+    const dir = path.includes('/') || path.includes('\\') ? path.replace(/[\\/][^\\/]*$/, '') : '';
+    const name = path.split(/[\\/]/).pop();
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="chg-kind"></span><span class="chg-name"></span><span class="chg-dir"></span><span class="chg-count"><b class="plus"></b> <b class="minus"></b></span>';
+    s.querySelector('.chg-kind').textContent = KIND[c.kind] ?? c.kind;
+    s.querySelector('.chg-kind').dataset.kind = c.kind;
+    s.querySelector('.chg-name').textContent = name;
+    s.querySelector('.chg-dir').textContent = dir;
+    s.querySelector('.plus').textContent = `+${added}`;
+    s.querySelector('.minus').textContent = `-${removed}`;
+    s.title = path + (c.count > 1 ? `  (${c.count} edits)` : '');
+    d.append(s, body);
+    return d;
+  });
+  $('cli-changes-count').textContent = list.length ? `${list.length} file${list.length === 1 ? '' : 's'}  +${plus} -${minus}` : '';
+  box.replaceChildren(...(rows.length ? rows : [empty('Nothing changed yet')]));
+  document.dispatchEvent(new CustomEvent('jarvis:changes'));
 }
 document.addEventListener('jarvis:action', (e) => {
   const { name, args, ok, display } = e.detail;
@@ -179,7 +179,6 @@ document.addEventListener('jarvis:action', (e) => {
     after: display?.after ?? prev?.after ?? '',
   });
   renderChanges();
-  if (floats.has(`diff:${args.path}`)) showDiff(args.path); // an open diff follows the file
   if (document.body.dataset.page === 'code') refreshTree();
 });
 renderChanges();

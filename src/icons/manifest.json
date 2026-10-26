@@ -44,7 +44,11 @@
     "folder-plus",
     "folder-open",
     "file",
-    "diff"
+    "diff",
+    "terminal",
+    "bell",
+    "mail",
+    "play"
   ],
   "sets": {
     "phosphor": {

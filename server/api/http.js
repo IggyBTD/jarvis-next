@@ -29,7 +29,7 @@ export function createHealth({ llm, queue, router, machines, contextLength = nul
     const ids = Object.keys(machines);
     const [model, ...agents] = await Promise.all([llm.health(), ...ids.map((id) => router.health(id).then((h) => ({ online: h?.ok === true, os: h?.os ?? machines[id].os, sidecars: h?.sidecars ?? {} })).catch(() => ({ online: false, os: machines[id].os, sidecars: {} })))]);
     const last = llm.lastStats?.() ?? null;
-    const value = { model: { reachable: model.reachable, modelId: model.modelId ?? null, modelPresent: model.modelPresent ?? false, error: model.error ?? null, settings: model.settings ?? null, contextLength: llm.contextLength ?? contextLength ?? null }, last: last ? { tokensPerSec: last.tokensPerSec, promptTokens: last.promptTokens, completionTokens: last.completionTokens, ttftMs: last.ttftMs } : null, queueDepth: queue.depth(), tokensPerSec: model.tokensPerSec, machines: Object.fromEntries(ids.map((id, i) => [id, { label: machines[id].label, ...agents[i] }])), ts: now() };
+    const value = { model: { reachable: model.reachable, modelId: model.modelId ?? null, modelPresent: model.modelPresent ?? false, error: model.error ?? null, settings: model.settings ?? null, sizeBytes: model.sizeBytes ?? null, contextLength: llm.contextLength ?? contextLength ?? null }, last: last ? { tokensPerSec: last.tokensPerSec, promptTokens: last.promptTokens, completionTokens: last.completionTokens, ttftMs: last.ttftMs } : null, queueDepth: queue.depth(), tokensPerSec: model.tokensPerSec, machines: Object.fromEntries(ids.map((id, i) => [id, { label: machines[id].label, ...agents[i] }])), ts: now() };
     cached = { at: now(), value };
     return value;
   };
@@ -37,7 +37,7 @@ export function createHealth({ llm, queue, router, machines, contextLength = nul
 
 const readBody = (req) => new Promise((resolve, reject) => { const c = []; let n = 0; req.on('data', (d) => { n += d.length; if (n > 20_000) { reject(Object.assign(new Error('body too large'), { status: 413 })); req.destroy(); } else c.push(d); }); req.on('end', () => { try { resolve(c.length ? JSON.parse(Buffer.concat(c).toString('utf8')) : {}); } catch { reject(Object.assign(new Error('body must be JSON'), { status: 400 })); } }); req.on('error', reject); });
 
-export function createHttpHandler({ cfg, auth, llmProxy, models, health, audit, conversations, digest, osint, browserView, bundle, latex, buildState, log = () => {} }) {
+export function createHttpHandler({ cfg, auth, llmProxy, models, environment, setProject, health, audit, conversations, digest, osint, browserView, bundle, latex, buildState, log = () => {} }) {
   const origins = cfg.machines.server.origins ?? [];
   return async function handle(req, res) {
     try {
@@ -73,6 +73,8 @@ export function createHttpHandler({ cfg, auth, llmProxy, models, health, audit, 
         const key = String((await readBody(req)).model ?? '');
         try { return json(res, 200, await models.select(key), cors); } catch (e) { return json(res, e.status === 409 || e.status === 404 ? e.status : 502, { error: e.message }, cors); }
       }
+      if (environment && p === '/api/environment' && req.method === 'GET') return json(res, 200, await environment(), cors);
+      if (setProject && p === '/api/project' && req.method === 'POST') { try { return json(res, 200, setProject((await readBody(req)).folder), cors); } catch (e) { return json(res, e.status ?? 500, { error: e.message }, cors); } }
       if (req.method === 'GET' && p === '/api/audit') return json(res, 200, { entries: audit.tail(Math.min(200, Number(url.searchParams.get('n')) || 50)), verify: url.searchParams.get('verify') === '1' ? audit.verify() : undefined }, cors);
       if (osint && p === '/api/osint/aircraft' && req.method === 'GET') { const q = url.searchParams; return json(res, 200, await osint.aircraft({ force: q.get('force') === '1', since: q.get('since') ?? 0, mine: q.get('watch') !== '0' }), cors); }
       if (osint && p === '/api/osint/watch' && req.method === 'GET') return json(res, 200, osint.watch(), cors);

@@ -1,5 +1,5 @@
-// Panel: the tabs beside the chat. Seven fixed info tabs (environment, context, connectors, outputs, files,
-// changes, tasks; icons, never closed), then the System and Server views and one tab per artifact (live preview or
+// Panel: the tabs beside the chat. Six fixed info tabs (PC, LLM, outputs, changes, background tasks, environment;
+// icons, never closed), then the System and Server views and one tab per artifact (live preview or
 // source); those close with their x, and System reopens from the sidebar. Replaces the old floating-panel whiteboard but keeps its public API, because
 // chat-ui, actions, commands, shortcuts and native-chrome call it. On the Code page there is no
 // workspace column, so an artifact opens as a floating panel there (cli-page.js listens).
@@ -21,7 +21,7 @@ const SYSTEM = 'system';
 const SERVER = 'server';
 const serverPane = $('ws-server');
 // [id, label, icon]: the pane of each is #ws-<id>
-export const INFO_TABS = [['env', 'Environment', 'system'], ['context', 'Context', 'layers'], ['connectors', 'Connectors', 'plug'], ['outputs', 'Outputs', 'artifacts'], ['files', 'Files', 'folder'], ['changes', 'Changes', 'diff'], ['tasks', 'Tasks', 'tasks']];
+export const INFO_TABS = [['pc', 'PC', 'system'], ['llm', 'LLM', 'spark'], ['outputs', 'Outputs', 'artifacts'], ['changes', 'Changes', 'diff'], ['tasks', 'Background tasks', 'terminal'], ['env', 'Environment', 'folder']];
 const INFO = new Map(INFO_TABS.map(([id, label, ic]) => [id, { id, label, icon: ic, pane: $(`ws-${id}`) }]));
 const isWidgetId = (id) => id === SYSTEM || id === SERVER || INFO.has(id);
 
@@ -382,5 +382,5 @@ split.addEventListener('keydown', (e) => {
 
 INFO.forEach((t) => tabs.set(t.id, t));
 if (stored) tabs.set(SYSTEM, { id: SYSTEM, label: 'System', pane: sysPane });
-active = INFO.has(savedTab) ? savedTab : 'env';
+active = INFO.has(savedTab) ? savedTab : 'pc';
 paint();

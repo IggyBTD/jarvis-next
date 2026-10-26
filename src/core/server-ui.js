@@ -6,6 +6,7 @@ import { reportService } from './service-status.js';
 import { renderMarkdown } from './markdown.js';
 import { openWidget } from './whiteboard.js';
 import { setPage } from './whiteboard-mode.js';
+import { prettyModelName } from './model-name.js';
 import { setTasks } from './work-state.js';
 
 const $ = (id) => document.getElementById(id);
@@ -43,7 +44,7 @@ async function renderModelList() {
     b.type = 'button'; b.className = 'matrix-btn'; b.setAttribute('role', 'menuitem');
     b.dataset.loaded = String(m.loaded);
     if (m.key === data.active) b.setAttribute('aria-current', 'true');
-    const name = document.createElement('span'); name.className = 'm-name'; name.textContent = m.name;
+    const name = document.createElement('span'); name.className = 'm-name'; name.textContent = prettyModelName(m.name);
     const sub = document.createElement('span'); sub.className = 'm-sub'; sub.textContent = `${m.key === data.active ? 'active, ' : ''}${m.loaded ? `loaded${ctxK(m.loadedContext)}` : 'not loaded'}`;
     b.append(name, sub);
     b.addEventListener('click', () => pickModel(m));
@@ -53,12 +54,12 @@ async function renderModelList() {
 
 async function pickModel(m) {
   $('model-menu').hidden = true; $('model-chip').setAttribute('aria-expanded', 'false');
-  switching = m.name; paintModelChip(true);
-  toast(`Loading ${m.name} on the PC. This can take a minute.`);
+  switching = prettyModelName(m.name); paintModelChip(true);
+  toast(`Loading ${prettyModelName(m.name)} on the PC. This can take a minute.`);
   const r = await chooseModel(m.key);
   switching = null;
   if (r.ok && state.health?.model) Object.assign(state.health.model, { modelId: r.active, modelPresent: true, reachable: true }); // until the next health push (a few seconds)
-  toast(r.ok ? `${m.name} is ready.` : `Could not switch: ${r.error}`);
+  toast(r.ok ? `${prettyModelName(m.name)} is ready.` : `Could not switch: ${r.error}`);
   paintModelChip(true);
 }
 
@@ -72,7 +73,7 @@ function paintModelChip(on) {
     return;
   }
   const m = state.health?.model;
-  const name = m?.modelId ? m.modelId.split('/').pop() : isOnline() ? 'No model' : 'Server offline';
+  const name = m?.modelId ? prettyModelName(m.modelId) : isOnline() ? 'No model' : 'Server offline';
   $('model-chip-label').textContent = switching ? `Loading ${switching}` : name;
   chipEl.dataset.loaded = switching ? 'loading' : m?.modelPresent ? 'yes' : 'no';
   chipEl.title = switching ? 'Loading on the PC' : m?.modelPresent ? 'Loaded on the PC. Click to pick another model.' : m?.reachable === false ? 'The PC cannot reach LM Studio' : 'Not loaded. Pick a model to load it.';

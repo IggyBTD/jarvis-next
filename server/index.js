@@ -27,7 +27,7 @@ import { registerBrowserTools } from './core/browser-tools.js';
 import { createReminders, registerTimeTools } from './core/reminders.js';
 import { createMemory, registerMemoryTools } from './core/memory.js';
 import { createScheduler } from './core/scheduler.js';
-import { createTelemetry, createLhmProvider, createMacProvider } from './telemetry/index.js';
+import { createTelemetry, createLhmProvider, createMacProvider, createPcProvider } from './telemetry/index.js';
 import { summarize } from './telemetry/summary.js';
 import { createGoogle } from './digest/google.js';
 import { createOpensky } from './osint/opensky.js';
@@ -38,6 +38,17 @@ import { createHttpHandler, createHealth } from './api/http.js';
 import { attachWs } from './api/ws.js';
 import { resolveBind } from '../shared/net.js';
 import { installProcessGuards, isMain } from '../shared/util.js';
+
+// The git branch of a folder on this PC, read from .git/HEAD (the server never starts programs). Null when it is not a repository.
+function gitInfo(folder) {
+  try {
+    const head = fs.readFileSync(path.join(folder, '.git', 'HEAD'), 'utf8').trim();
+    return Promise.resolve({ branch: head.startsWith('ref:') ? head.replace(/^ref:\s*refs\/heads\//, '') : `detached at ${head.slice(0, 7)}`, dirty: null });
+  } catch { return Promise.resolve(null); }
+}
+
+// The project folder the person picked in the Environment tab (read for the git branch); empty = the default.
+const projectFolder = (dataDir) => { try { const f = JSON.parse(fs.readFileSync(path.join(dataDir, 'project.json'), 'utf8')).folder; return typeof f === 'string' && fs.existsSync(f) ? f : null; } catch { return null; } };
 
 export async function createServerApp({ cfg = loadConfig(), log = (l) => console.error(`${new Date().toISOString()} ${l}`), env = process.env } = {}) {
   const machines = cfg.machines.machines;
@@ -84,7 +95,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   registerTimeTools(router, { reminders, scheduler, timezone: cfg.schedules.timezone });
 
   const macInvoke = async (name) => { const r = await router.invoke({ name, args: {} }, { target: 'mac', source: 'scheduled', job: 'telemetry-rollup' }); if (!r.ok) throw new Error(r.error ?? 'failed'); return r.data; };
-  const telemetry = createTelemetry({ bus, dataDir: cfg.dataDir, providers: { pc: createLhmProvider({ url: env.LHM_URL }), mac: createMacProvider({ invoke: macInvoke }) }, log });
+  const telemetry = createTelemetry({ bus, dataDir: cfg.dataDir, providers: { pc: createPcProvider({ lhm: createLhmProvider({ url: env.LHM_URL }) }), mac: createMacProvider({ invoke: macInvoke }) }, log });
   const google = createGoogle({ clientFile: resolveData(cfg, cfg.digest.google.clientFile), tokenFile: resolveData(cfg, cfg.digest.google.tokenFile) });
   const digest = createDigest({ llm, queue, google, cfg: cfg.digest, dataDir: cfg.dataDir, bus, timezone: cfg.schedules.timezone, log, summarizeTelemetry: (fromMs, toMs) => summarize({ dir: telemetry.dir, machine: 'pc', fromMs, toMs, thresholds: cfg.digest.thresholds }) });
 
@@ -138,7 +149,25 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
     return bundleCache.zip;
   };
   const osint = createOpensky({ dataDir: cfg.dataDir, watchFile: path.join(cfg.root, 'config', 'osint-watch.json') });
-  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, models: {
+  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, environment: async () => {
+    const machine = targetState.get();
+    const facts = prompts.facts(machine) ?? (await prompts.refresh(machine).then((e) => e.facts).catch(() => null)) ?? {};
+    const workspace = facts.workspace_dir ?? machines[machine]?.workspaceDir ?? null;
+    // the project the branch is read from: the one the person picked, else the working folder if it is a repository, else the folder JARVIS itself runs from
+    let project = machine === 'pc' ? projectFolder(cfg.dataDir) : null;
+    let git = null;
+    if (machine === 'pc') {
+      git = project ? await gitInfo(project) : null;
+      if (!git && workspace) { git = await gitInfo(workspace); if (git) project = workspace; }
+      if (!git && !projectFolder(cfg.dataDir)) { project = cfg.root; git = await gitInfo(project); }
+    }
+    return { machine, label: machines[machine]?.label ?? machine, hostname: facts.hostname ?? null, os: facts.os_version ?? facts.os ?? null, user: facts.user ?? null, folder: workspace, project, branch: git?.branch ?? null, dirty: git?.dirty ?? null, repo: git ? true : machine === 'pc' ? false : null, remote: { on: true, url: cfg.machines.server.url ?? null, devices: clientCount() } };
+  }, setProject: (p) => {
+    const folder = path.resolve(String(p ?? ''));
+    if (!fs.existsSync(folder) || !fs.statSync(folder).isDirectory()) throw Object.assign(new Error('that folder does not exist'), { status: 400 });
+    fs.writeFileSync(path.join(cfg.dataDir, 'project.json'), JSON.stringify({ folder }));
+    return { folder };
+  }, models: {
     list: () => llm.listModels(),
     select: async (key) => {
       if (queue.depth() > 0) throw Object.assign(new Error('The model is answering right now. Try again when it has finished.'), { status: 409 });
