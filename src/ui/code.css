@@ -74,3 +74,7 @@ body[data-page="code"] #code-home { display: flex; flex-direction: column; gap: 
 .ch-bar { height: var(--s-1); background: var(--surface-3); border-radius: 2px; /* optical: half of a 4px track */ overflow: hidden; }
 .ch-bar i { display: block; height: 100%; background: var(--accent-mid); transform-origin: left; }
 .ch-mnum { color: var(--text-3); font-size: var(--fs-2); white-space: nowrap; }
+
+/* Code: the input sits at the bottom and spans the whole pane, also while the session is empty (the home card stays at the top) */
+body[data-page="code"] #chat-stack:not(:has(.chat-line)) { justify-content: flex-start; padding-top: var(--s-6); padding-bottom: 0; }
+body[data-page="code"] #composer-dock { width: calc(100% - 2 * var(--chat-gutter)); margin-top: auto; margin-bottom: var(--pane-gutter); }
