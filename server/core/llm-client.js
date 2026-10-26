@@ -255,7 +255,7 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
       const res = await fetchImpl(`${base}/models`, { signal: AbortSignal.timeout(3000) });
       if (!res.ok) return { reachable: false, error: `HTTP ${res.status}`, tokensPerSec: last?.tokensPerSec ?? null };
       const ids = ((await res.json()).data ?? []).map((m) => m.id);
-      return { reachable: true, modelId: config.modelId, loaded: ids, modelPresent: ids.includes(config.modelId), tokensPerSec: last?.tokensPerSec ?? null, lastRequestAt: last?.at ?? null };
+      return { reachable: true, modelId: config.modelId, settings: { thinking: config.thinking?.chat ?? false, temperature: config.sampling?.temperature ?? null, mtp: !!config.mtp?.enabled }, loaded: ids, modelPresent: ids.includes(config.modelId), tokensPerSec: last?.tokensPerSec ?? null, lastRequestAt: last?.at ?? null };
     } catch (e) { return { reachable: false, error: e.cause?.code ?? e.message, tokensPerSec: last?.tokensPerSec ?? null }; }
   }
 

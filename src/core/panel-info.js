@@ -7,6 +7,7 @@ import { getModelHealth, onModelHealth } from './model-panel.js';
 import { getServices } from './service-status.js';
 import { getPreset } from './llm-client.js';
 import { serverMode, state, onLink } from './server-link.js';
+import { summary, onReplies, clearReplies } from './reply-stats.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, props = {}, ...kids) => { const n = Object.assign(document.createElement(tag), props); n.append(...kids); return n; };
@@ -52,7 +53,23 @@ function paintEnv() {
     row('Window', fmtK(server ? (m?.contextLength ?? live.ctxMax) : live.ctxMax)),
     row('Speed', tps == null ? '--' : `${Number(tps).toFixed(1)} tok/s`),
     ...(server ? [row('First token', last?.ttftMs == null ? '--' : `${(last.ttftMs / 1000).toFixed(1)} s`), row('Last prompt', last?.promptTokens == null ? '--' : `${fmtK(last.promptTokens)} tokens`), row('Waiting', String(h?.queueDepth ?? 0))] : []),
+    ...(server && m?.settings ? [row('Thinking', m.settings.thinking ? 'on' : 'off'), row('Temperature', m.settings.temperature == null ? '--' : String(m.settings.temperature)), row('Speculative decoding', m.settings.mtp ? 'MTP on' : 'off')] : []),
   ]);
+  paintSession();
+}
+
+// the replies of this session: how many, how much, how fast, and the speed of each one as a line
+function paintSession() {
+  const s = summary();
+  const n = (x) => (x == null ? '--' : `${x.toFixed(1)} tok/s`);
+  fill('env-session', s.count ? [row('Replies', String(s.count)), row('Tokens written', fmtK(s.tokens)), row('Average speed', n(s.avg)), row('Fastest', n(s.best)), row('Slowest', n(s.worst))] : [note('No replies yet. Speed and size of each one show here.')]);
+  const box = $('env-spark');
+  if (!box) return;
+  const v = s.speeds.slice(-40);
+  if (v.length < 2) { box.replaceChildren(); return; }
+  const max = Math.max(...v) * 1.1, min = Math.min(...v) * 0.9;
+  const pts = v.map((x, i) => `${((i / (v.length - 1)) * 120).toFixed(1)},${(36 - ((x - min) / (max - min || 1)) * 32).toFixed(1)}`).join(' ');
+  box.innerHTML = `<svg viewBox="0 0 120 40" preserveAspectRatio="none" role="img" aria-label="Speed of the last ${v.length} replies"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
 }
 
 function paintContext() {
@@ -92,6 +109,8 @@ document.addEventListener('jarvis:tab', (e) => { activeTab = e.detail.id; paint(
 paint();
 onLink(paint);
 onModelHealth(paint);
+onReplies(paint);
+$('env-reset')?.addEventListener('click', clearReplies);
 onArtifactsChange(paint);
 document.addEventListener('jarvis:sessions-changed', paint);
 new MutationObserver(paint).observe($('chat-output'), { childList: true });

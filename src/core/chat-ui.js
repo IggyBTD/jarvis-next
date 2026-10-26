@@ -24,6 +24,7 @@ import { toolDefinitions, runToolCall, registerActionHost, undoEdit, loadLocalRu
 import { restoreProject } from './agent-client.js';
 import { actionCard, approvalCard, planCard } from './tool-cards.js';
 import { assistantToolMessage, toolResultMessage } from './tool-calls.js';
+import { recordReply, statsLine } from './reply-stats.js';
 import { serverMode, sendChat, abortChat, onLink, state as link, setConvId } from './server-link.js';
 
 const input = document.getElementById('hud-chat-input');
@@ -292,11 +293,12 @@ async function sendViaServer(text) {
   let toolLine = null;
   let frame = 0;
   const paint = (final) => { if (latest) renderAssistant(pending, latest, { done: final }); };
-  const stamp = (line) => {
+  const stamp = (line, stats = null) => {
     const m = document.createElement('span');
     m.className = 'chat-meta';
     m.textContent = `${clock()}  ${target}`;
     line.append(m);
+    if (stats?.completionTokens) line.append(Object.assign(document.createElement('div'), { className: 'chat-stats', textContent: statsLine(stats), title: 'What this reply cost the local model' }));
   };
   output.scrollTop = output.scrollHeight;
 
@@ -332,7 +334,7 @@ async function sendViaServer(text) {
           break;
         case 'chat.done':
           cancelAnimationFrame(frame);
-          if (e.text) { latest = e.text; pending.className = 'chat-line assistant'; paint(true); stamp(pending); } else pending.remove();
+          if (e.text) { latest = e.text; pending.className = 'chat-line assistant'; paint(true); stamp(pending, e.stats); recordReply(e.stats); } else pending.remove();
           follow(following);
           end();
           break;

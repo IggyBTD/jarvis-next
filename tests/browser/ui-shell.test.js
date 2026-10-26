@@ -52,6 +52,13 @@ test('a new chat shows the greeting and the input card together, in the middle; 
   await page.waitForSelector('#chat-output .chat-line.assistant');
   const after = await page.evaluate(() => document.getElementById('composer-dock').getBoundingClientRect().bottom);
   assert.ok(after > 800, `the card sits at the bottom (${after})`);
+  // what the reply cost the local model is shown under it and counted in the panel
+  await page.waitForSelector('#chat-output .chat-line.assistant .chat-stats');
+  assert.match(await page.textContent('#chat-output .chat-line.assistant .chat-stats'), /\d+ tokens/);
+  await page.click('#ws-tabs [data-id="env"] .t-label');
+  await waitFor(async () => /Replies\s*1/.test(await page.textContent('#env-session')));
+  await page.click('#env-reset');
+  await waitFor(async () => /No replies yet/.test(await page.textContent('#env-session')));
 });
 
 test('folders: add one and name it, drag a chat into it, it opens to show the chat, the count follows, drag it back to Recents', async () => {

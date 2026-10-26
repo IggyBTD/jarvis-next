@@ -32,6 +32,7 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
       const system = voiceMode ? `${built}\n\nThis reply will be spoken aloud: lead with the answer, use short plain sentences, no tables, lists, headings or symbols, and never read code or long numbers.` : built;
       let calls = 0;
       let malformed = 0;
+      const turn = { requests: 0, completionTokens: 0, genSeconds: 0, promptTokens: null, ttftMs: null, startedAt: Date.now() }; // what this reply cost the model, shown under it
       let finalText = '';
       let truncated = false;
       let wrapUp = false;
@@ -51,6 +52,11 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
           onDelta: (d) => { if (d.content) { streamed += d.content; emit('chat.delta', { text: d.content }); } },
         }), { signal: ctl.signal });
 
+        turn.requests += 1;
+        turn.completionTokens += res.stats.completionTokens ?? 0;
+        if (res.stats.tokensPerSec) turn.genSeconds += (res.stats.completionTokens ?? 0) / res.stats.tokensPerSec;
+        turn.promptTokens = res.stats.promptTokens ?? turn.promptTokens;
+        turn.ttftMs ??= res.stats.ttftMs;
         if (!res.toolCalls.length) { finalText = res.content; truncated = res.truncated; break; }
 
         conversations.append(conv, {
@@ -77,7 +83,7 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
 
       if (truncated) finalText += '\n\n[The reply was cut off by the output limit.]';
       conversations.append(conv, { role: 'assistant', content: finalText, target });
-      emit('chat.done', { text: finalText });
+      emit('chat.done', { text: finalText, stats: { requests: turn.requests, tools: calls, completionTokens: turn.completionTokens, promptTokens: turn.promptTokens, ttftMs: turn.ttftMs, tokensPerSec: turn.genSeconds ? Number((turn.completionTokens / turn.genSeconds).toFixed(1)) : null, totalMs: Date.now() - turn.startedAt } });
       return { ok: true, text: finalText, target };
     } catch (e) {
       const aborted = ctl.signal.aborted || e.name === 'AbortError';

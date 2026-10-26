@@ -46,6 +46,11 @@ body:not(.ws-off) #ws-head { margin-right: var(--wc-w); /* the strip ends where 
 .info-row.clickable:hover { background: var(--surface-3); }
 .info-row.clickable .k { font: 400 var(--fs-2)/var(--lh-xs) var(--mono); text-transform: capitalize; }
 .info-row .v:empty::before { content: "--"; color: var(--text-3); }
+.link-btn { border: 0; background: none; color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--sans); padding: 0 var(--s-1); border-radius: var(--r-sm); }
+.link-btn:hover { color: var(--text); background: var(--surface-3); }
+.env-spark { height: var(--s-6); margin-top: var(--s-2); color: var(--accent-mid); }
+.env-spark:empty { display: none; }
+.env-spark svg { display: block; width: 100%; height: 100%; }
 .info-note { padding: var(--s-2) 0; color: var(--text-3); font-size: var(--fs-3); line-height: var(--lh-sm); }
 .info-pane .cli-body { flex: 1; min-height: 0; }
 

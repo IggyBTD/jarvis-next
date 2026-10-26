@@ -30,6 +30,9 @@
 .btw-a { white-space: pre-wrap; color: var(--text-2); }
 .btw-x { position: absolute; top: var(--s-1); right: var(--s-1); opacity: 1; }
 
+/* what the reply cost the local model: tokens per second, tokens, time to the first token, total time */
+.chat-stats { margin-top: var(--s-2); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); }
+
 /* the time lives in the gap under the message, so showing it never moves anything */
 .chat-meta { position: absolute; top: calc(100% + var(--s-1)); left: 0; white-space: nowrap; font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); }
 .chat-line.user .chat-meta { left: auto; right: 0; }

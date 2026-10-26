@@ -29,7 +29,7 @@ export function createHealth({ llm, queue, router, machines, contextLength = nul
     const ids = Object.keys(machines);
     const [model, ...agents] = await Promise.all([llm.health(), ...ids.map((id) => router.health(id).then((h) => ({ online: h?.ok === true, os: h?.os ?? machines[id].os, sidecars: h?.sidecars ?? {} })).catch(() => ({ online: false, os: machines[id].os, sidecars: {} })))]);
     const last = llm.lastStats?.() ?? null;
-    const value = { model: { reachable: model.reachable, modelId: model.modelId ?? null, modelPresent: model.modelPresent ?? false, error: model.error ?? null, contextLength: llm.contextLength ?? contextLength ?? null }, last: last ? { tokensPerSec: last.tokensPerSec, promptTokens: last.promptTokens, completionTokens: last.completionTokens, ttftMs: last.ttftMs } : null, queueDepth: queue.depth(), tokensPerSec: model.tokensPerSec, machines: Object.fromEntries(ids.map((id, i) => [id, { label: machines[id].label, ...agents[i] }])), ts: now() };
+    const value = { model: { reachable: model.reachable, modelId: model.modelId ?? null, modelPresent: model.modelPresent ?? false, error: model.error ?? null, settings: model.settings ?? null, contextLength: llm.contextLength ?? contextLength ?? null }, last: last ? { tokensPerSec: last.tokensPerSec, promptTokens: last.promptTokens, completionTokens: last.completionTokens, ttftMs: last.ttftMs } : null, queueDepth: queue.depth(), tokensPerSec: model.tokensPerSec, machines: Object.fromEntries(ids.map((id, i) => [id, { label: machines[id].label, ...agents[i] }])), ts: now() };
     cached = { at: now(), value };
     return value;
   };

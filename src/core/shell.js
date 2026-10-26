@@ -90,6 +90,9 @@ const ctx = $('ctx-meter');
 const paintCtx = () => {
   const { ctxUsed, ctxMax } = getModelHealth();
   ctx.textContent = ctxMax ? `${ctxUsed == null ? '--' : fmtK(ctxUsed)} / ${fmtK(ctxMax)}` : '';
+  const ratio = ctxMax && ctxUsed != null ? Math.min(1, ctxUsed / ctxMax) : 0;
+  ctx.style.setProperty('--ctx', String(ratio));
+  ctx.dataset.level = level(ratio);
   ctx.title = 'Context used / available (tokens)';
 };
 onModelHealth(paintCtx);

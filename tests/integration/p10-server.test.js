@@ -36,6 +36,9 @@ test('server boots, serves a chat turn with a tool call through the router, and 
     c.send({ type: 'chat.send', text: 'timer for tea in five minutes' });
     const done = await c.next((m) => m.type === 'chat.done', 5000);
     assert.equal(done.text, 'Timer set.');
+    assert.equal(done.stats.requests, 2); // the tool call and the answer
+    assert.equal(done.stats.tools, 1);
+    assert.ok(done.stats.completionTokens > 0 && done.stats.totalMs >= 0, 'the reply reports what it cost');
     assert.equal(app.reminders.list().length, 1); // time tools run on the server, not on an agent
     assert.equal(pc.calls.length, 0);
 
