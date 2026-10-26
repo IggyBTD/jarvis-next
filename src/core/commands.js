@@ -346,7 +346,7 @@ const handlers = {
   },
 
   async attach() {
-    document.getElementById('dock-attach')?.click();
+    document.getElementById('attach-pc')?.click();
     return 'Choose the files to attach.';
   },
 

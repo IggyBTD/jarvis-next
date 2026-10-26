@@ -80,11 +80,12 @@ async function swapTo(key) {
   usedSeen = false;
   if (seen && Date.now() - seen.at < SEEN_FRESH_MS) {
     const now = loadedInstances(seen.models);
-    if (now.length === 1 && now[0].key === key) { usedSeen = true; return now[0].id; }
+    if (now.length) { usedSeen = true; return now[0].id; }
   }
   const loaded = loadedInstances(await listModels());
-  const keep = loaded.find((i) => i.key === key);
-  const drop = loaded.filter((i) => i !== keep);
+  if (loaded.length) return loaded[0].id; // whatever is loaded is used; nothing is unloaded or swapped automatically
+  const keep = null;
+  const drop = [];
 
   for (const inst of drop) {
     emit({ type: 'phase', phase: 'unloading', model: inst.key });

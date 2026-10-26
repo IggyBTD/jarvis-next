@@ -114,7 +114,7 @@ body.dragging-chat { cursor: grabbing; user-select: none; }
 body[data-page="chat"] #page-chat, body[data-page="code"] #page-chat { display: grid; }
 body[data-page="intel"] #page-intel { display: flex; flex-direction: column; }
 body[data-page="projects"] #page-projects, body[data-page="artifacts"] #page-artifacts, body[data-page="settings"] #page-settings,
-body[data-page="scheduled"] #page-scheduled, body[data-page="customize"] #page-customize { display: block; overflow-y: auto; scrollbar-gutter: stable; }
+body[data-page="accounts"] #page-accounts, body[data-page="scheduled"] #page-scheduled, body[data-page="customize"] #page-customize { display: block; overflow-y: auto; scrollbar-gutter: stable; }
 
 /* chat and code: conversation, a splitter, the panel. One 40 strip and one divider run across all three. */
 #page-chat { grid-template-columns: minmax(0, 1fr) var(--s-2) clamp(400px, var(--ws-w), calc(100% - 400px)); }
@@ -149,8 +149,8 @@ body.ws-off .col-head { padding-right: var(--wc-w); }
 
 /* model menu: opens above the chip, which sits at the bottom of the window; below it when there is no room */
 #model-wrap { position: relative; flex: none; min-width: 0; }
-#model-menu { position: absolute; right: 0; bottom: calc(100% + var(--s-2)); z-index: 40; width: 320px; max-width: calc(100vw - 2 * var(--s-4)); max-height: min(60vh, 420px); overflow-y: auto; padding: var(--s-1); background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--r-md); box-shadow: var(--shadow); }
-#model-menu[data-dir="down"] { bottom: auto; top: calc(100% + var(--s-2)); }
+#model-menu, #attach-menu { position: absolute; right: 0; bottom: calc(100% + var(--s-2)); z-index: 40; width: 320px; max-width: calc(100vw - 2 * var(--s-4)); max-height: min(60vh, 420px); overflow-y: auto; padding: var(--s-1); background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--r-md); box-shadow: var(--shadow); }
+#model-menu[data-dir="down"], #attach-menu[data-dir="down"] { bottom: auto; top: calc(100% + var(--s-2)); }
 .chip-btn { display: inline-flex; align-items: center; gap: var(--s-1); white-space: nowrap; flex: none; max-width: 100%; height: var(--h-md); padding: 0 var(--s-2) 0 var(--s-3); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-2); font-size: var(--fs-3); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
 .chip-btn:hover, .chip-btn[aria-expanded="true"] { background: var(--surface-3); color: var(--text); }
 .chip-btn .val { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
@@ -173,3 +173,5 @@ body.ws-off .col-head { padding-right: var(--wc-w); }
 /* a short message that fades in over the corner of the window (a chat exported, a chat copied) */
 #toast { position: fixed; left: 50%; bottom: var(--s-6); translate: -50% 0; z-index: 420; max-width: min(480px, 90vw); padding: var(--s-2) var(--s-4); background: var(--surface-3); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--r-md); box-shadow: var(--shadow); font-size: var(--fs-3); line-height: var(--lh-sm); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity var(--dur-fast) var(--ease-out), visibility 0s linear var(--dur-fast); }
 #toast.on { opacity: 1; visibility: visible; transition-delay: 0s; }
+#attach-wrap { position: relative; display: inline-flex; }
+#attach-menu { right: auto; left: 0; width: 240px; }

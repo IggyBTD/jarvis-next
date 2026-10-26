@@ -48,6 +48,7 @@
     <div class="nav-group nav-more">
       <button type="button" class="nav-item" data-page="projects" aria-pressed="false"><span class="icon" data-icon="folder"></span>Projects</button>
       <button type="button" class="nav-item" data-page="artifacts" aria-pressed="false"><span class="icon" data-icon="artifacts"></span>Artifacts</button>
+      <button type="button" class="nav-item" data-page="accounts" aria-pressed="false"><span class="icon" data-icon="plug"></span>Accounts</button>
       <button type="button" class="nav-item" data-page="scheduled" aria-pressed="false"><span class="icon" data-icon="clock"></span>Scheduled</button>
       <button type="button" class="nav-item" id="nav-system" aria-pressed="false"><span class="icon" data-icon="system"></span>System</button>
       <button type="button" class="nav-item" id="nav-server" aria-pressed="false" hidden><span class="icon" data-icon="wifi"></span>Server</button>
@@ -89,7 +90,13 @@
                 </div>
               </div>
               <div class="composer-bar">
-                <button id="dock-attach" class="tool-btn" type="button" title="Attach files" aria-label="Attach files"><span class="icon" data-icon="attach"></span></button>
+                <div id="attach-wrap">
+                  <button id="dock-attach" class="tool-btn" type="button" title="Add" aria-label="Add" aria-haspopup="true" aria-expanded="false"><span class="icon" data-icon="plus"></span></button>
+                  <div id="attach-menu" hidden role="menu">
+                    <button type="button" id="attach-pc" class="matrix-btn" role="menuitem"><span class="m-name">From this PC</span><span class="m-sub">Browse files on this computer</span></button>
+                    <button type="button" id="attach-mac" class="matrix-btn" role="menuitem" disabled><span class="m-name">From Mac</span><span class="m-sub">Not available yet</span></button>
+                  </div>
+                </div>
                 <button id="dock-mic" class="tool-btn" type="button" title="Microphone" aria-label="Microphone"><span class="icon" data-icon="mic"></span></button>
                 <button id="dock-web" class="tool-btn" type="button" title="Internet access" aria-label="Internet access"><span class="icon" data-icon="globe"></span></button>
                 <button id="dock-link" class="tool-btn" type="button" title="Network link" aria-label="Network link"><span class="icon" data-icon="wifi"></span></button>
@@ -245,6 +252,9 @@
       <div class="page-inner"><h1>Artifacts</h1><div id="art-list"></div></div>
     </section>
 
+    <section id="page-accounts" class="page" aria-label="Accounts">
+      <div class="page-inner" id="acct-root"></div>
+    </section>
     <section id="page-scheduled" class="page" aria-label="Scheduled">
       <div class="page-inner" id="sched-root"></div>
     </section>

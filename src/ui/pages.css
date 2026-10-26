@@ -109,3 +109,15 @@
 .osint-key-icon.air { width: var(--icon-sm); height: var(--icon-sm); color: var(--accent); }
 #osint-mine[aria-pressed="false"], #osint-login-btn[aria-pressed="false"] { opacity: 0.75; }
 #osint-login-btn[aria-pressed="true"] { border-color: var(--accent-dim); }
+
+/* Accounts */
+.page-inner > .hint { color: var(--text-2); font-size: var(--fs-3); line-height: var(--lh-sm); margin-bottom: var(--s-4); }
+.acct-head { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-3); }
+.acct-head .grow { flex: 1; }
+.acct-head h2 { margin: 0; }
+.acct-head p { margin: 0; }
+.acct-mark { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--r-sm); background: var(--surface-4); color: var(--text); font: 600 var(--fs-5)/1 var(--sans); }
+.acct-kind { margin-left: var(--s-2); padding: 0 var(--s-2); border: 1px solid var(--border-strong); border-radius: var(--r-sm); color: var(--text-2); font-size: var(--fs-2); }
+.acct-form { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); padding: var(--s-3) 0; border-top: 1px solid var(--border); }
+.av-input, .av-select { height: var(--h-md); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-sm); background: var(--surface-1); color: var(--text); font: inherit; }
+.acct-form .av-input { flex: 1 1 160px; min-width: 0; }

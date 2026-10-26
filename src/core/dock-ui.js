@@ -86,7 +86,18 @@ export async function attachFiles(fileList) {
   }
 }
 
-attachBtn.addEventListener('click', () => fileInput.click());
+const attachMenu = $('attach-menu');
+const setAttachMenu = (open) => {
+  attachMenu.hidden = !open;
+  attachBtn.setAttribute('aria-expanded', String(open));
+  if (!open) return;
+  attachMenu.dataset.dir = 'up';
+  if (attachMenu.offsetHeight > attachBtn.getBoundingClientRect().top - 16) attachMenu.dataset.dir = 'down';
+};
+attachBtn.addEventListener('click', () => setAttachMenu(attachMenu.hidden));
+$('attach-pc').addEventListener('click', () => { setAttachMenu(false); fileInput.click(); });
+document.addEventListener('pointerdown', (e) => { if (!attachMenu.hidden && !e.target.closest('#attach-wrap')) setAttachMenu(false); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !attachMenu.hidden) { setAttachMenu(false); attachBtn.focus(); } });
 fileInput.addEventListener('change', async () => {
   const picked = [...fileInput.files];
   fileInput.value = '';

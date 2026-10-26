@@ -14,6 +14,7 @@ import { run } from './chat-list.js';
 import './context-menus.js';
 import './projects-page.js';
 import './pages-extra.js';
+import './pages-accounts.js';
 import { prettyModelName } from './model-name.js';
 import './panel-pc.js';
 import './panel-llm.js';

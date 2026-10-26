@@ -59,7 +59,7 @@ const goto = async (p) => {
 for (const [w, h] of SIZES) {
   test(`${w}x${h}: every page, sidebar and panel shown or hidden`, async () => {
     await setSize(w, h);
-    for (const p of ['chat', 'code', 'intel', 'projects', 'artifacts', 'scheduled', 'customize', 'settings']) {
+    for (const p of ['chat', 'code', 'intel', 'projects', 'artifacts', 'scheduled', 'accounts', 'customize', 'settings']) {
       await goto(p);
       for (const side of [true, false]) {
         for (const pan of p === 'chat' || p === 'code' ? [true, false] : [true]) {

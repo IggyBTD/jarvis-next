@@ -149,6 +149,32 @@ test('Customize holds appearance, commands and shortcuts; Scheduled shows the di
   await page.click('.mode-btn[data-page="chat"]');
 });
 
+test('the plus opens a menu of places to add a file from; Accounts takes several accounts per service and keeps them', async () => {
+  await page.click('.mode-btn[data-page="chat"]');
+  assert.match(await page.getAttribute('#dock-attach .icon', 'data-icon'), /plus/);
+  await page.click('#dock-attach');
+  await page.waitForSelector('#attach-menu:not([hidden])');
+  assert.match(await page.textContent('#attach-menu'), /From this PC[\s\S]*From Mac/);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.isHidden('#attach-menu'), true);
+  await page.click('#sidebar [data-page="accounts"]');
+  assert.match(await page.textContent('#acct-root'), /Google[\s\S]*Microsoft[\s\S]*GitHub/);
+  for (const [kind, name] of [['School', 'University'], ['Work', 'Company']]) {
+    await page.click('#acct-root .set-card:has(h2:text-is("Google")) .acct-head .av-btn');
+    await page.selectOption('#acct-root .acct-form select', kind);
+    await page.fill('#acct-root .acct-form input[type="text"]', name);
+    await page.click('#acct-root .acct-form .av-btn:has-text("Add account")');
+  }
+  assert.equal(await page.locator('#acct-root .set-card:has(h2:text-is("Google")) .set-row').count(), 2);
+  await page.reload();
+  await page.waitForSelector('#target-switch:not([hidden])');
+  await page.click('#sidebar [data-page="accounts"]');
+  assert.equal(await page.locator('#acct-root .set-card:has(h2:text-is("Google")) .set-row').count(), 2);
+  while (await page.locator('#acct-root .set-row .av-btn.danger').count()) await page.locator('#acct-root .set-row .av-btn.danger').first().click();
+  assert.equal(await page.locator('#acct-root .set-row').count(), 0);
+  await page.click('.mode-btn[data-page="chat"]');
+});
+
 test('the sidebar hides and comes back, and the way back is always on screen', async () => {
   await page.click('#side-toggle');
   assert.equal(await page.evaluate(() => document.body.classList.contains('side-off')), true);

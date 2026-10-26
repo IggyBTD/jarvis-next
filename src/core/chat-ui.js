@@ -1,7 +1,7 @@
 // Wires the chat input, mode buttons and transcript to llm-client.
 // A reply is rendered as blocks: optional reasoning, then text and artifact cards in order.
 import { hydrateIcons } from '../icons/index.js';
-import { chat, setMode, getMode, getPreset, syncModel, onEvent } from './llm-client.js';
+import { chat, setMode, getMode, getPreset, onEvent } from './llm-client.js';
 import { hasImages, takeAsContent } from './attachments.js';
 import { pulse, setThinking } from './mesh-state.js';
 import { renderBlocks, highlightCode } from './markdown.js';
@@ -53,13 +53,6 @@ function selectMode(name) {
     b.classList.toggle('active-mode', active);
     b.setAttribute('aria-pressed', String(active));
   });
-}
-
-// Load the newly selected model right away (after a short pause so rapid
-// clicking doesn't trigger a load for every button passed over).
-function scheduleSwap() {
-  clearTimeout(swapTimer);
-  swapTimer = setTimeout(() => syncModel().catch((e) => console.warn('[jarvis] model swap failed:', e)), 500);
 }
 
 // Keep the newest text in view until the reader scrolls up themselves; then leave them alone
@@ -884,7 +877,6 @@ output.addEventListener('scroll', () => output.classList.toggle('fade-top', outp
 
 modeButtons.forEach((b) => b.addEventListener('click', () => {
   selectMode(b.dataset.preset);
-  if (!busy) scheduleSwap();
 }));
 // Enter sends; Shift+Enter starts a new line (the field is a textarea that grows, input-grow.js).
 input.addEventListener('keydown', (e) => {
@@ -898,7 +890,7 @@ bindChat({
   notify: (text) => { addLine('system', text, { meta: '' }); follow(following); },
 });
 registerActionHost({
-  selectMode: (name, { swap = false } = {}) => { selectMode(name); if (swap && !busy) scheduleSwap(); },
+  selectMode: (name) => { selectMode(name); },
   // The approval card: shown in the transcript, answered with a click. Resolves once | always | deny.
   approve: (request) => {
     const card = approvalCard(request);
@@ -926,7 +918,6 @@ registerCommandHost({
   count: () => history.length,
   selectMode: (name) => {
     selectMode(name);
-    if (!busy) scheduleSwap();
   },
   clear: () => {
     if (working) return 'JARVIS is busy. Use /stop first.';
