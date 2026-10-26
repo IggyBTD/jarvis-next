@@ -49,13 +49,33 @@ test('connects, shows the switcher with the PC active and both computers reachab
 
 test('the model chip and the context meter come from the server, not from an LM Studio on this computer', async () => {
   await waitFor(async () => (await page.textContent('#model-chip-label')).trim() === rig.cfg.models.modelId.split('/').pop());
-  assert.equal(await page.isDisabled('#model-chip'), true);
+  assert.equal(await page.isDisabled('#model-chip'), false);
+  assert.equal(await page.getAttribute('#model-chip', 'data-loaded'), 'yes'); // the dot: this model is loaded on the PC
   assert.equal(await page.locator('#model-menu:not([hidden])').count(), 0);
   await page.click('#nav-system');
   await waitFor(async () => /server/.test(await page.textContent('#model-info-body')));
   assert.equal(await page.locator('#model-info-body .model-eject').count(), 0);
   assert.match(await page.textContent('#model-info-body'), new RegExp(rig.cfg.models.modelId.split('/').pop().replace('.', '\\.')));
   await page.click('#nav-server');
+});
+
+test('the model menu lists the PC\'s models with the loaded one marked; picking one loads it on the PC and renames the chip', async () => {
+  rig.model.native.loaded.clear(); rig.model.native.loaded.set('unsloth/qwen3.8-27b', 65536);
+  await page.click('#model-chip');
+  await page.waitForSelector('#model-server-list button');
+  assert.equal(await page.locator('#model-menu [data-preset]:visible').count(), 0); // the preset buttons are for the computer's own LM Studio
+  const rows = await page.locator('#model-server-list button').evaluateAll((bs) => bs.map((b) => ({ name: b.querySelector('.m-name').textContent, loaded: b.dataset.loaded, current: b.getAttribute('aria-current'), sub: b.querySelector('.m-sub').textContent })));
+  assert.equal(rows.length, 2);
+  const active = rows.find((r) => r.current === 'true');
+  assert.equal(active.loaded, 'true');
+  assert.match(active.sub, /active, loaded · 64k context/);
+  assert.match(rows.find((r) => r.current !== 'true').sub, /^not loaded$/);
+  await page.screenshot({ path: path.join(SHOTS, 'server-model-menu.png'), clip: { x: 0, y: 0, width: 520, height: 320 } });
+  await page.click('#model-server-list button[data-loaded="false"]');
+  await waitFor(async () => (await page.textContent('#model-chip-label')).trim() === 'qwen3-coder-30b');
+  assert.equal(await page.getAttribute('#model-chip', 'data-loaded'), 'yes');
+  assert.deepEqual(rig.model.native.log.map((x) => x.path.split('/').pop()), ['unload', 'load']);
+  assert.equal(await page.locator('#model-menu:not([hidden])').count(), 0);
 });
 
 test('a reply streams in and carries the PC tag', async () => {
@@ -65,7 +85,7 @@ test('a reply streams in and carries the PC tag', async () => {
   await waitFor(async () => (await page.textContent('#chat-output .chat-line.assistant:last-of-type')).includes('Hello from the server.'));
   assert.match(await page.textContent('#chat-output .chat-line.user .chat-meta'), /PC/);
   assert.match(await page.textContent('#chat-output .chat-line.assistant .chat-meta'), /PC/);
-  assert.equal(rig.model.requests.at(-1).body.messages.at(-1).content, 'hello');
+  assert.match(rig.model.requests.at(-1).body.messages.at(-1).content, /^hello\n\n\[Local time \d\d:\d\d\]$/); // the time rides on the newest message only, so the start of the prompt never changes
 });
 
 test('a safe tool runs without a dialog and shows as a line in the conversation', async () => {
@@ -110,7 +130,7 @@ test('Approve runs the action, and Enter on the dialog does not approve by itsel
 test('switching to the Mac moves the tag and the next tool runs there', async () => {
   await page.click('#target-switch button[data-target="mac"]');
   await waitFor(() => rig.target.get() === 'mac');
-  assert.equal((await page.textContent('#target-tag')).trim(), 'MAC');
+  await waitFor(async () => (await page.textContent('#target-tag')).trim() === 'MAC'); // the tag follows the server's broadcast, a moment after the target changes
   assert.equal(await page.getAttribute('#target-switch button[data-target="mac"]', 'aria-pressed'), 'true');
   rig.model.script({ toolCalls: [{ name: 'get_volume', arguments: {} }] }, { content: 'Mac volume read.' });
   await send('volume on the mac');

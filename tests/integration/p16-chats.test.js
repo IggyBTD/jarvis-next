@@ -22,6 +22,13 @@ test('saved chats: list shows only chats with a message, open returns the spoken
       await request(`${url}/c-one`, { method: 'PATCH', headers: h, body: { title: 'My name', pinned: true } });
       const after = (await request(url, { headers: h })).json.conversations[0];
       assert.equal(after.title, 'My name'); assert.equal(after.pinned, true);
+      assert.equal(after.project, null);
+      await request(`${url}/c-one`, { method: 'PATCH', headers: h, body: { project: 'p-abc' } }); // filed in a folder
+      assert.equal((await request(url, { headers: h })).json.conversations[0].project, 'p-abc');
+      await request(`${url}/c-one`, { method: 'PATCH', headers: h, body: { project: '../etc' } }); // anything that is not an id is ignored
+      assert.equal((await request(url, { headers: h })).json.conversations[0].project, 'p-abc');
+      await request(`${url}/c-one`, { method: 'PATCH', headers: h, body: { project: null } });
+      assert.equal((await request(url, { headers: h })).json.conversations[0].project, null);
       assert.equal((await request(`${url}/..%2Fx`, { headers: h })).status, 404);
       assert.equal((await request(`${url}/c-one`, { method: 'DELETE', headers: h })).status, 200);
       assert.equal((await request(`${url}/c-one`, { headers: h })).status, 404);

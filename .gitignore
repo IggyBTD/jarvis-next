@@ -36,3 +36,8 @@ graphify-out/cache/
 # JARVIS browser profile (cookies, logins)
 data/browser-profile/
 dist-mac/
+
+# pictures written by SHOTS=1 node --test tests/browser/ui-layout.test.js
+docs/ui-shots/layout/
+data-*.err
+data-tauri-dev.out

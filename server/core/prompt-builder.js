@@ -34,12 +34,14 @@ export function createPromptBuilder({ prompts, machines, timezone, getInfo, note
       const entry = refreshFacts || !cache.has(machine) ? await refresh(machine) : cache.get(machine);
       const m = machines[machine];
       const values = Object.fromEntries(FIELDS.map((k) => [k, 'unknown']));
-      Object.assign(values, entry.facts, { label: m.label, os: m.os === 'win32' ? 'Windows' : 'macOS', timezone, date: clock(now), locale: entry.facts.locale ?? 'en' });
+      // Date only: a clock that changes every minute would change the first tokens of the prompt, and the model server would then re-read the whole conversation on every turn. The time goes on the latest user message (timeNote).
+      Object.assign(values, entry.facts, { label: m.label, os: m.os === 'win32' ? 'Windows' : 'macOS', timezone, date: clock(now).replace(/ \d\d:\d\d$/, ''), locale: entry.facts.locale ?? 'en' });
       const base = render(prompts.base, values);
       const os = render(m.os === 'win32' ? prompts['target-pc'] : prompts['target-mac'], values);
       const note = entry.reachable ? '' : `\n\nNote: ${m.label} could not be reached when this prompt was built, so some facts above are unknown. Say so if a task depends on them.`;
       return `${base}\n\n${os}${note}${prompts.ui ? `\n\n${prompts.ui}` : ''}${notes() ? `\n\n${notes()}` : ''}`; // how to write replies and artifacts for the app's screen
     },
+    timeNote: (now = new Date()) => `[Local time ${clock(now).slice(-5)}]`,
     switchNotice({ from, to, now = new Date() }) {
       const m = machines[to];
       return render(prompts['switch-notice'], { from: machines[from].label, to: m.label, os: m.os === 'win32' ? 'Windows' : 'macOS', time: clock(now) });

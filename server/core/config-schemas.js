@@ -7,6 +7,11 @@ const tier = { enum: ['T0', 'T1', 'T2', 'T3'] };
 const hhmm = { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' };
 const obj = (properties, required = Object.keys(properties), extra = false) => ({ type: 'object', properties, required, additionalProperties: extra });
 
+const effort = { enum: [true, false, 'none', 'low', 'medium', 'xhigh'] };
+const thinkingSchema = obj(Object.fromEntries(['chat', 'tools', 'digest', 'agent'].map((k) => [k, effort])));
+const thinkingMethodSchema = { enum: ['chat_template_kwargs', 'no_think', 'request_field'] };
+const samplingSchema = obj({ temperature: { type: 'number', minimum: 0, maximum: 2 }, top_p: { type: 'number', minimum: 0, maximum: 1 }, top_k: { type: 'integer', minimum: 0 }, min_p: { type: 'number', minimum: 0, maximum: 1 }, presence_penalty: { type: 'number', minimum: -2, maximum: 2 }, repeat_penalty: { type: 'number', minimum: 0, maximum: 2 } });
+
 export const SCHEMAS = {
   'machines.json': obj({
     server: obj({ bind: str, port, origins: strs, url: str }, ['bind', 'port']),
@@ -23,8 +28,11 @@ export const SCHEMAS = {
     modelId: str, contextLength: { type: 'integer', minimum: 2048 }, kvCache: str,
     mtp: obj({ enabled: { type: 'boolean' }, flags: strs }),
     concurrency: { type: 'integer', minimum: 1, maximum: 8 },
-    thinking: obj({ chat: { type: 'boolean' }, tools: { type: 'boolean' }, digest: { type: 'boolean' }, agent: { type: 'boolean' } }),
-    thinkingMethod: { enum: ['chat_template_kwargs', 'no_think', 'request_field'] },
+    thinking: thinkingSchema,
+    thinkingMethod: thinkingMethodSchema,
+    sampling: samplingSchema,
+    // Settings that go with a model when it is picked in the app: the request side of what the benchmarks found best for it.
+    profiles: { type: 'object', additionalProperties: obj({ thinkingMethod: thinkingMethodSchema, thinking: thinkingSchema, sampling: samplingSchema, contextLength: { type: 'integer', minimum: 2048 } }, []) },
     requestTimeoutMs: { type: 'integer', minimum: 1000 }, maxOutputTokens: { type: 'integer', minimum: 16 },
     preemptInteractive: { type: 'boolean' }, keepThinkInHistory: { type: 'boolean' },
     maxIterations: { type: 'integer', minimum: 1, maximum: 30 }, maxToolCalls: { type: 'integer', minimum: 1, maximum: 60 },

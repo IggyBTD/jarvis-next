@@ -42,7 +42,7 @@ async function call(command, args) {
 
 export const saveSession = (meta, history) => (serverMode() ? Promise.resolve() : call('session_save', { id: meta.id, meta: JSON.stringify(meta), history: JSON.stringify(slimHistory(history)) }));
 export const listSessions = async () => (serverMode()
-  ? (await api('/conversations')).conversations.map((c) => ({ id: c.id, name: c.title || 'Untitled', updated: Date.parse(c.updatedAt), created: Date.parse(c.updatedAt), messages: c.messages, pinned: c.pinned, mode: 'chat', manual: false }))
+  ? (await api('/conversations')).conversations.map((c) => ({ id: c.id, name: c.title || 'Untitled', updated: Date.parse(c.updatedAt), created: Date.parse(c.updatedAt), messages: c.messages, pinned: c.pinned, project: c.project ?? undefined, mode: 'chat', manual: false }))
   : call('session_list'));
 export const loadSession = async (id) => (serverMode() ? (await api(`/conversations/${id}`)).messages.map(({ role, content }) => ({ role, content })) : JSON.parse(await call('session_load', { id })));
 export const deleteSession = (id) => (serverMode() ? api(`/conversations/${id}`, { method: 'DELETE' }) : call('session_delete', { id }));
@@ -50,7 +50,7 @@ export const exportSession = (id, text) => call('session_export', { id, text });
 
 // Changes the metadata of a saved session that is not the one open (rename, pin, project) without touching its messages.
 export async function patchSession(id, patch) {
-  if (serverMode()) return api(`/conversations/${id}`, { method: 'PATCH', body: JSON.stringify({ title: patch.name, pinned: patch.pinned }) });
+  if (serverMode()) return api(`/conversations/${id}`, { method: 'PATCH', body: JSON.stringify({ title: patch.name, pinned: patch.pinned, project: patch.project }) });
   const meta = (await listSessions()).find((s) => s.id === id);
   if (!meta) return;
   await saveSession({ ...meta, ...patch }, await loadSession(id));

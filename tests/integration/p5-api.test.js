@@ -62,7 +62,7 @@ test('websocket: hello first, snapshot contents, bad input keeps the connection 
     assert.deepEqual(Object.keys(s.machines), ['pc', 'mac']);
     assert.equal(s.machines.pc.online, true);
     assert.equal(s.health.model.reachable, true);
-    assert.equal(s.health.model.contextLength, null); // the rig does not pass a context length; the real server does
+    assert.equal(s.health.model.contextLength, t.r.cfg.models.contextLength); // the loaded model's context size, from the active profile
     assert.deepEqual(s.pendingApprovals, []);
     assert.equal(s.conversation.id, 'main');
     c.send('not json');

@@ -41,7 +41,10 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
         const lastUser = [...conv.messages].reverse().find((m) => m.role === 'user')?.content ?? '';
         const recent = conv.messages.filter((m) => m.role === 'tool').slice(-8).map((m) => m.name);
         const sel = wrapUp ? { tools: [] } : router.toolDefs(target, { text: `${lastUser}\n${conv.messages.filter((m) => m.role === 'user').slice(-3).map((m) => m.content).join('\n')}`, recent, unlocked: conv.unlocked });
-        const messages = [{ role: 'system', content: system }, ...fit(conv.messages, budgetFor(system, sel.tools))];
+        const history = fit(conv.messages, budgetFor(system, sel.tools));
+        const lastUserAt = history.findLastIndex((m) => m.role === 'user' && typeof m.content === 'string');
+        if (lastUserAt !== -1) history[lastUserAt] = { ...history[lastUserAt], content: `${history[lastUserAt].content}\n\n${prompts.timeNote(now())}` }; // request only, never stored
+        const messages = [{ role: 'system', content: system }, ...history];
         streamed = '';
         const res = await queue.run('interactive', (signal) => llm.chat({
           messages, tools: sel.tools.length ? sel.tools : null, use: sel.tools.length ? 'tools' : 'chat', signal,

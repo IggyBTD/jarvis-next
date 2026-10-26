@@ -97,7 +97,7 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
   function applyThinking(body, use) {
     const { thinking } = flags(use);
     if (config.thinkingMethod === 'chat_template_kwargs') body.chat_template_kwargs = { ...(body.chat_template_kwargs ?? {}), enable_thinking: thinking };
-    else if (config.thinkingMethod === 'request_field') body.reasoning_effort = thinking ? 'medium' : 'none';
+    else if (config.thinkingMethod === 'request_field') body.reasoning_effort = typeof thinking === 'string' ? thinking : thinking ? 'medium' : 'none'; // true = medium, or an effort name from models.json
     else if (config.thinkingMethod === 'no_think' && !thinking) {
       const msgs = body.messages ?? [];
       const i = msgs.findLastIndex((m) => m.role === 'user' && typeof m.content === 'string');
@@ -171,6 +171,7 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
       model: config.modelId, messages: cleanMessages(messages), stream: true, stream_options: { include_usage: true },
       ...(maxTokens ? { max_tokens: maxTokens } : {}),
       ...(tools?.length ? { tools, tool_choice: 'auto' } : {}),
+      ...config.sampling, // temperature, top_p, top_k, min_p, presence_penalty, repeat_penalty from models.json; absent = LM Studio's preset
     }, use);
     const t0 = now();
     const { res, ctl, arm, done } = await open(body, { signal });
@@ -260,7 +261,7 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
 
   // For llm-proxy (OpenCode): same alias, same thinking policy, bounded output, raw streamed Response back.
   function prepareProxyBody(input) {
-    const body = { ...input, model: config.modelId };
+    const body = { ...input, ...config.sampling, model: config.modelId };
     delete body.chat_template_kwargs; delete body.reasoning_effort;
     const cap = Math.floor(config.contextLength / 2);
     if (!Number.isFinite(body.max_tokens) || body.max_tokens > cap) body.max_tokens = cap;
@@ -271,5 +272,36 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
     return { res, arm, done }; // the caller calls arm() on every chunk (inactivity timeout) and done() at the end
   }
 
-  return { chat, health, raw, lastStats: () => last, modelId: config.modelId };
+  // ---- the model list and the model choice (the app's model menu) ----
+  const root = base.replace(/\/v1$/, '');
+  const native = async (p, body, signal = AbortSignal.timeout(120_000)) => {
+    const res = await fetchImpl(`${root}/api/v1${p}`, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal } : { signal });
+    if (!res.ok) throw new LlmError(`LM Studio ${p} answered ${res.status}`, { status: res.status });
+    return res.json();
+  };
+  async function listModels() {
+    const j = await native('/models', null, AbortSignal.timeout(5000));
+    const models = (j.models ?? []).filter((m) => m.type === 'llm').map((m) => ({ key: m.key, name: m.display_name ?? m.key, loaded: (m.loaded_instances?.length ?? 0) > 0, loadedContext: m.loaded_instances?.[0]?.config?.context_length ?? null, sizeBytes: m.size_bytes ?? null, instanceIds: (m.loaded_instances ?? []).map((i) => i.id) }));
+    return { active: config.modelId, models };
+  }
+  // A model without a profile gets the safe request side: thinking off by the template switch, LM Studio's own sampling.
+  const profileFor = (key) => config.profiles?.[key] ?? { thinkingMethod: 'chat_template_kwargs', thinking: { chat: false, tools: false, digest: false, agent: false } };
+  function applyProfile(key) {
+    const p = profileFor(key);
+    config.modelId = key;
+    config.thinkingMethod = p.thinkingMethod ?? config.thinkingMethod;
+    config.thinking = { ...config.thinking, ...p.thinking };
+    config.sampling = p.sampling;
+    if (p.contextLength) config.contextLength = p.contextLength;
+  }
+  async function selectModel(key) {
+    const { models } = await listModels();
+    if (!models.some((m) => m.key === key)) throw new LlmError('that model is not installed in LM Studio', { status: 404 });
+    for (const m of models) if (m.key !== key) for (const id of m.instanceIds) await native('/models/unload', { instance_id: id });
+    if (!models.find((m) => m.key === key).loaded) await native('/models/load', { model: key, context_length: profileFor(key).contextLength ?? config.contextLength });
+    applyProfile(key);
+    return listModels();
+  }
+
+  return { chat, health, raw, listModels, selectModel, applyProfile, lastStats: () => last, get modelId() { return config.modelId; }, get contextLength() { return config.contextLength; } };
 }

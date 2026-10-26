@@ -35,7 +35,16 @@
     "edit",
     "eject",
     "refresh",
-    "spark"
+    "spark",
+    "clock",
+    "sliders",
+    "more",
+    "plug",
+    "tasks",
+    "folder-plus",
+    "folder-open",
+    "file",
+    "diff"
   ],
   "sets": {
     "phosphor": {

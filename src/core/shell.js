@@ -9,10 +9,12 @@ import { getModelHealth, onModelHealth } from './model-panel.js';
 import { getServices } from './service-status.js';
 import { SHORTCUTS } from './shortcuts.js';
 import { getPreset } from './llm-client.js';
-import { serverMode } from './server-link.js';
+import { serverMode, state as link, onLink } from './server-link.js';
 import { run } from './chat-list.js';
 import './context-menus.js';
 import './projects-page.js';
+import './pages-extra.js';
+import './panel-info.js';
 
 const $ = (id) => document.getElementById(id);
 const input = $('hud-chat-input');
@@ -21,6 +23,10 @@ const fmtK = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(Math.round
 const level = (ratio) => (ratio > 0.9 ? 'high' : ratio > 0.7 ? 'mid' : '');
 
 hydrateIcons();
+
+// The window buttons (and the computer switch next to them) float over the top right corner: every strip keeps clear of exactly that width.
+const titlebar = $('titlebar');
+new ResizeObserver(() => document.documentElement.style.setProperty('--wc-w', `${Math.ceil(titlebar.getBoundingClientRect().width) + 8}px`)).observe(titlebar);
 
 // A control that is on (pressed, listening) carries data-active; its icon then uses the set's filled variant.
 const isOn = (b) => !['dock-web', 'dock-link', 'dock-attach'].includes(b.id) && (b.getAttribute('aria-pressed') === 'true' || (b.id === 'dock-mic' && b.classList.contains('is-on')) || b.classList.contains('recording'));
@@ -41,9 +47,9 @@ const pageButtons = [...document.querySelectorAll('[data-page]')].filter((b) => 
 pageButtons.forEach((b) => b.addEventListener('click', () => setPage(b.dataset.page)));
 $('nav-system').addEventListener('click', () => openWidget('system'));
 
-// The one conversation lives in the chat page, or in the Code page's session column.
+// The one conversation lives in the chat page (Chat and Code share it), or beside the browser on the Intel page.
 function placeChat() {
-  const host = { code: $('cli-session-body'), intel: $('intel-session-body') }[currentPage()] ?? $('chat-host');
+  const host = { intel: $('intel-session-body') }[currentPage()] ?? $('chat-host');
   if (stack.parentElement === host) return;
   host.append(stack);
   const out = $('chat-output');
@@ -60,7 +66,15 @@ document.addEventListener('jarvis:page', () => {
 const chip = $('model-chip');
 const menu = $('model-menu');
 const presets = [...menu.querySelectorAll('.matrix-btn')];
-const setMenu = (open) => { menu.hidden = !open; chip.setAttribute('aria-expanded', String(open)); };
+// The menu opens above the chip (the chip sits at the bottom of the window); below it when there is no room above.
+const setMenu = (open) => {
+  menu.hidden = !open;
+  chip.setAttribute('aria-expanded', String(open));
+  if (!open) return;
+  menu.dataset.dir = 'up';
+  const room = chip.getBoundingClientRect().top - 16;
+  if (menu.offsetHeight > room) menu.dataset.dir = 'down';
+};
 chip.addEventListener('click', () => setMenu(menu.hidden));
 presets.forEach((b) => b.addEventListener('click', () => setMenu(false)));
 document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !e.target.closest('#model-wrap')) setMenu(false); });
@@ -208,7 +222,7 @@ function paintMachine() {
   if (document.getElementById('chat-stack')?.querySelector('.chat-line')) return;
   const { data: d, offline } = getTelemetry();
   const { ctxMax } = getModelHealth();
-  const facts = [fact('Model', serverMode() ? ($('model-chip-label').textContent || 'server') : getPreset().model.split('/').pop())];
+  const facts = [fact('Model', serverMode() ? (link.health?.model?.modelId?.split('/').pop() ?? 'server') : getPreset().model.split('/').pop())];
   if (ctxMax) facts.push(fact('Context', fmtK(ctxMax)));
   if (!offline && Number.isFinite(d.GPU_Temperature)) facts.push(fact('GPU', `${Math.round(d.GPU_Temperature)} °C`));
   if (!offline && Number.isFinite(d.Memory_Usage)) facts.push(fact('RAM', `${d.Memory_Usage.toFixed(1)} of ${Math.round(d.Memory_Total)} GB`));
@@ -217,4 +231,5 @@ function paintMachine() {
 }
 onTelemetry(paintMachine);
 onModelHealth(paintMachine);
+onLink(paintMachine);
 paintMachine();

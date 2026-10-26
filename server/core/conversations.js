@@ -38,13 +38,15 @@ export function createConversations({ dir, now = () => new Date() }) {
     ensure: (id) => (id && get(id)) || create(id && ID_RE.test(id) ? id : undefined),
     append(c, msg) { c.messages.push({ ts: now().toISOString(), ...msg }); save(c); return msg; },
     save,
-    list: () => fs.readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => readJson(path.join(dir, f))).filter(Boolean).map(({ id, title, updatedAt, lastTarget, pinned, messages }) => ({ id, title, updatedAt, lastTarget, pinned: !!pinned, messages: messages.filter((m) => m.role === 'user').length })).filter((c) => c.messages > 0).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    list: () => fs.readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => readJson(path.join(dir, f))).filter(Boolean).map(({ id, title, updatedAt, lastTarget, pinned, project, messages }) => ({ id, title, updatedAt, lastTarget, pinned: !!pinned, messages: messages.filter((m) => m.role === 'user').length, project: project ?? null })).filter((c) => c.messages > 0).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
     // rename or pin from the sidebar; a name given by hand stops the automatic one
-    patch(id, { title, pinned }) {
+    patch(id, { title, pinned, project }) {
       const c = get(id);
       if (!c) return null;
       if (typeof title === 'string' && title.trim()) { c.title = title.trim().slice(0, 80); c.manual = true; }
       if (typeof pinned === 'boolean') c.pinned = pinned;
+      if (project === null) delete c.project; // a folder (a project of the app) the chat is filed in
+      else if (typeof project === 'string' && /^[\w-]{1,40}$/.test(project)) c.project = project;
       save(c);
       return c;
     },

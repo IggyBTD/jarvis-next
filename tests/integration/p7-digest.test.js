@@ -27,7 +27,7 @@ async function rig() {
   const google = createGoogle({ clientFile: path.join(dir, 'client.json'), tokenFile: path.join(dir, 'token.enc'), endpoints: g.endpoints });
   const bus = createBus(); const events = [];
   bus.subscribe((m) => events.push(m));
-  const llm = createLlmClient({ config: { ...base.models, baseUrl: model.url }, sleepFn: async () => {} });
+  const llm = createLlmClient({ config: { ...base.models, thinkingMethod: 'chat_template_kwargs', thinking: { chat: false, tools: false, digest: false, agent: true }, baseUrl: model.url }, sleepFn: async () => {} });
   const summaries = { calls: 0 };
   const digest = createDigest({ llm, queue: createQueue({}), google, cfg: base.digest, dataDir: dir, bus, timezone: 'Europe/Madrid', now: () => NOW, summarizeTelemetry: () => { summaries.calls += 1; return { metrics: { cpuLoadPercent: { average: 10, peak: 40, peakAt: '2026-10-18T02:01:00.000Z' }, gpuTempC: { peak: 91, peakAt: '2026-10-18T02:01:00.000Z' } }, anomalies: [{ metric: 'GPU temperature', value: 91, unit: 'C', threshold: 85 }] }; } });
   return { dir, g, model, google, bus, events, digest, summaries, async close() { await g.close(); await model.close(); rmDir(dir); } };

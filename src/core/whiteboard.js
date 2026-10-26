@@ -1,6 +1,6 @@
-// Workspace: the tabs beside the chat. A tab is an artifact (live preview or source) or the
-// System view (telemetry); every tab can be closed, System included, and reopened from the
-// sidebar. Replaces the old floating-panel whiteboard but keeps its public API, because
+// Panel: the tabs beside the chat. Seven fixed info tabs (environment, context, connectors, outputs, files,
+// changes, tasks; icons, never closed), then the System and Server views and one tab per artifact (live preview or
+// source); those close with their x, and System reopens from the sidebar. Replaces the old floating-panel whiteboard but keeps its public API, because
 // chat-ui, actions, commands, shortcuts and native-chrome call it. On the Code page there is no
 // workspace column, so an artifact opens as a floating panel there (cli-page.js listens).
 import { getArtifact, onArtifactsChange } from './artifacts.js';
@@ -10,7 +10,8 @@ import { currentPage, setPage, setWorkspaceShown, isWhiteboardMode } from './whi
 import { icon } from '../icons/index.js';
 
 const $ = (id) => document.getElementById(id);
-const tabsEl = $('ws-tabs');
+const tabsEl = $('ws-tabs'); // the seven info tabs, in the strip beside the window buttons
+const docsEl = $('ws-docs'); // the artifact, System and Server tabs, in a row of their own that exists only while one is open
 const bodyEl = $('ws-body');
 const sysPane = $('ws-system');
 
@@ -19,6 +20,10 @@ const EXTENSIONS = { html: 'html', svg: 'svg', mermaid: 'mmd', chart: 'json', ma
 const SYSTEM = 'system';
 const SERVER = 'server';
 const serverPane = $('ws-server');
+// [id, label, icon]: the pane of each is #ws-<id>
+export const INFO_TABS = [['env', 'Environment', 'system'], ['context', 'Context', 'layers'], ['connectors', 'Connectors', 'plug'], ['outputs', 'Outputs', 'artifacts'], ['files', 'Files', 'folder'], ['changes', 'Changes', 'diff'], ['tasks', 'Tasks', 'tasks']];
+const INFO = new Map(INFO_TABS.map(([id, label, ic]) => [id, { id, label, icon: ic, pane: $(`ws-${id}`) }]));
+const isWidgetId = (id) => id === SYSTEM || id === SERVER || INFO.has(id);
 
 export const fileNameFor = (a) => {
   const base = (a.id || 'artifact').replace(/[^\w.-]+/g, '-');
@@ -188,12 +193,10 @@ export function artifactView(id) {
 // --- tabs --------------------------------------------------------------------
 const tabs = new Map(); // id -> { id, label, pane, dispose? }, in tab order
 let active = null;
-const stored = (() => { try { return localStorage.getItem('jarvis.ws.system') !== 'off'; } catch { return true; } })();
+const stored = (() => { try { return localStorage.getItem('jarvis.ws.system') === 'on'; } catch { return false; } })();
+const savedTab = (() => { try { return localStorage.getItem('jarvis.ws.tab'); } catch { return null; } })();
 
-const empty = Object.assign(document.createElement('div'), { className: 'ws-empty', textContent: 'Nothing open. Artifacts the assistant makes open here; System shows the live readings.' });
-bodyEl.append(empty);
-
-export const isArtifactOpen = (id) => tabs.has(id) && active === id && isWhiteboardMode() && currentPage() === 'chat';
+export const isArtifactOpen = (id) => tabs.has(id) && active === id && isWhiteboardMode() && ['chat', 'code'].includes(currentPage());
 
 // a card in the chat that points at the artifact on screen says so, and stops offering to open it
 export function syncCards(root = document) {
@@ -206,38 +209,48 @@ export function syncCards(root = document) {
 }
 
 function paint() {
-  tabsEl.replaceChildren(...[...tabs.values()].map((t) => {
+  const els = [...tabs.values()].map((t) => {
+    const info = INFO.get(t.id);
     const tab = document.createElement('div');
     tab.className = 'ws-tab';
     tab.setAttribute('role', 'tab');
     tab.dataset.id = t.id;
+    if (info) tab.dataset.kind = 'info';
     tab.setAttribute('aria-selected', String(t.id === active));
-    const label = Object.assign(document.createElement('button'), { type: 'button', className: 't-label', textContent: t.label });
+    const label = Object.assign(document.createElement('button'), { type: 'button', className: 't-label' });
+    if (info) { label.innerHTML = `${icon(info.icon, { size: 16 })}<span class="t-text">${info.label}</span>`; label.title = info.label; label.setAttribute('aria-label', info.label); } else label.textContent = t.label;
     label.addEventListener('click', () => activate(t.id));
-    const x = Object.assign(document.createElement('button'), { type: 'button', className: 't-x', innerHTML: icon('close', { size: 14 }), title: `Close ${t.label}` });
-    x.setAttribute('aria-label', `Close ${t.label}`);
-    x.addEventListener('click', () => closeTab(t.id));
-    tab.append(label, x);
-    return tab;
-  }));
+    tab.append(label);
+    if (!info) {
+      const x = Object.assign(document.createElement('button'), { type: 'button', className: 't-x', innerHTML: icon('close', { size: 14 }), title: `Close ${t.label}` });
+      x.setAttribute('aria-label', `Close ${t.label}`);
+      x.addEventListener('click', () => closeTab(t.id));
+      tab.append(x);
+    }
+    return [t, tab];
+  });
+  tabsEl.replaceChildren(...els.filter(([t]) => INFO.has(t.id)).map(([, tab]) => tab));
+  docsEl.replaceChildren(...els.filter(([t]) => !INFO.has(t.id)).map(([, tab]) => tab));
+  docsEl.hidden = !docsEl.childElementCount;
   tabs.forEach((t) => { t.pane.hidden = t.id !== active; });
-  tabsEl.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  empty.hidden = tabs.size > 0;
+  docsEl.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   syncCards();
+  document.dispatchEvent(new CustomEvent('jarvis:tab', { detail: { id: active } }));
 }
 
 // The wheel scrolls the tab strip sideways when there are more tabs than room.
-tabsEl.addEventListener('wheel', (e) => { if (tabsEl.scrollWidth > tabsEl.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX) && !e.ctrlKey) { tabsEl.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
+docsEl.addEventListener('wheel', (e) => { if (docsEl.scrollWidth > docsEl.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX) && !e.ctrlKey) { docsEl.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
 
 function activate(id) {
   if (!tabs.has(id)) return;
   active = id;
+  if (INFO.has(id)) { try { localStorage.setItem('jarvis.ws.tab', id); } catch { /* storage blocked */ } }
   paint();
 }
 
 function closeTab(id) {
   const t = tabs.get(id);
-  if (!t) return;
+  if (!t || INFO.has(id)) return; // the info tabs stay
   t.dispose?.();
   if (t.id === SYSTEM || t.id === SERVER) {
     t.pane.hidden = true;
@@ -263,15 +276,16 @@ function ensureArtifactTab(id) {
 onArtifactsChange((a) => { const t = tabs.get(a.id); if (t && t.label !== a.title) { t.label = a.title; paint(); } });
 
 // --- public API (names kept from the floating-panel whiteboard) -------------------------------
-export const isWidgetOpen = (id) => (id === SYSTEM || id === SERVER) && tabs.has(id);
+export const isWidgetOpen = (id) => isWidgetId(id) && tabs.has(id);
 
+// Any of the panel's built-in tabs: the info tabs, System, Server.
 export function openWidget(id) {
-  if (id !== SYSTEM && id !== SERVER) return;
-  if (currentPage() !== 'chat') setPage('chat');
+  if (!isWidgetId(id)) return;
+  if (!['chat', 'code'].includes(currentPage())) setPage('chat');
   setWorkspaceShown(true);
   if (!tabs.has(id)) {
     tabs.set(id, { id, label: id === SYSTEM ? 'System' : 'Server', pane: id === SYSTEM ? sysPane : serverPane });
-    if (id === SYSTEM) { try { localStorage.removeItem('jarvis.ws.system'); } catch { /* storage blocked */ } }
+    if (id === SYSTEM) { try { localStorage.setItem('jarvis.ws.system', 'on'); } catch { /* storage blocked */ } }
   }
   activate(id);
 }
@@ -284,15 +298,14 @@ export const isSessionShown = () => true;
 export const toggleSession = () => setWorkspaceShown(!isWhiteboardMode());
 
 // An artifact finished (or its card was clicked): show it. On the Code page, as a floating panel.
-export function openArtifact(id) {
+// auto: the model finished an artifact on its own. In a narrow window the panel would replace the conversation, so then it only gets its tab
+// and its card; a click on the card (not auto) shows it.
+const NARROW = matchMedia('(max-width: 1100px)');
+export function openArtifact(id, { auto = false } = {}) {
   const a = getArtifact(id);
   if (!a) return;
-  if (currentPage() === 'code') {
-    document.dispatchEvent(new CustomEvent('jarvis:float', { detail: { id: `art:${id}`, title: a.title, mount: (body) => { const v = artifactView(id); body.append(v.el); return v.dispose; } } }));
-    return;
-  }
-  if (currentPage() !== 'chat') setPage('chat');
-  setWorkspaceShown(true);
+  if (!['chat', 'code'].includes(currentPage())) setPage('chat');
+  if (!(auto && NARROW.matches)) setWorkspaceShown(true);
   ensureArtifactTab(id);
   activate(id);
 }
@@ -304,15 +317,14 @@ export function applyBoardSpec({ panels: ids = [] }) {
   const wanted = [...new Set(ids)].filter((id) => getArtifact(id));
   const wantSystem = ids.includes(SYSTEM);
   if (!wanted.length && !wantSystem) return;
-  if (currentPage() !== 'chat') setPage('chat');
-  setWorkspaceShown(true);
+  if (!['chat', 'code'].includes(currentPage())) setPage('chat');
+  if (!NARROW.matches) setWorkspaceShown(true);
   if (wantSystem && !tabs.has(SYSTEM)) openWidget(SYSTEM);
   if (wanted.length) {
-    [...tabs.keys()].filter((id) => id !== SYSTEM && id !== SERVER && !wanted.includes(id)).forEach(closeTab);
+    [...tabs.keys()].filter((id) => !isWidgetId(id) && !wanted.includes(id)).forEach(closeTab);
     wanted.forEach(ensureArtifactTab);
     const order = new Map();
-    if (tabs.has(SYSTEM)) order.set(SYSTEM, tabs.get(SYSTEM));
-    if (tabs.has(SERVER)) order.set(SERVER, tabs.get(SERVER));
+    [...tabs].filter(([id]) => isWidgetId(id)).forEach(([id, t]) => order.set(id, t));
     wanted.forEach((id) => order.set(id, tabs.get(id)));
     tabs.clear();
     order.forEach((t, id) => tabs.set(id, t));
@@ -320,19 +332,20 @@ export function applyBoardSpec({ panels: ids = [] }) {
   }
 }
 
-export const panelCount = () => [...tabs.keys()].filter((id) => id !== SYSTEM && id !== SERVER).length;
+export const panelCount = () => [...tabs.keys()].filter((id) => !isWidgetId(id)).length;
 export function closePanelById(id) {
-  if (!tabs.has(id)) return null;
+  if (!tabs.has(id) || INFO.has(id)) return null;
   const kind = id === SYSTEM || id === SERVER ? 'widget' : 'panel';
   closeTab(id);
   return kind;
 }
-export const openPanelIds = () => [...tabs.keys()];
+export const openPanelIds = () => [...tabs.keys()].filter((id) => !INFO.has(id)); // the fixed info tabs are not panels you open or close
 export const closeWhiteboard = () => setWorkspaceShown(false);
 
 // --- workspace toggle, splitter, System tab at start ------------------------------------------
 const toggle = $('ws-toggle');
 toggle.addEventListener('click', () => setWorkspaceShown(!isWhiteboardMode()));
+$('ws-back').addEventListener('click', () => setWorkspaceShown(false)); // narrow windows show the panel instead of the conversation; this is the way back
 const syncToggle = () => toggle.setAttribute('aria-pressed', String(isWhiteboardMode()));
 document.addEventListener('jarvis:workspace', () => { syncToggle(); syncCards(); });
 document.addEventListener('jarvis:page', () => syncCards());
@@ -341,8 +354,8 @@ syncToggle();
 const split = $('ws-split');
 const chatPage = $('page-chat');
 const WS_KEY = 'jarvis.ws.width';
-// The pane keeps 360 at least (below that its tabs and cards cannot be laid out) and leaves the chat 488 (the 720 measure's gutters at their tightest).
-const clampW = (w) => Math.round(Math.max(360, Math.min(w, chatPage.clientWidth - 496)) / 8) * 8;
+// The pane keeps 400 at least (seven icon tabs and the window buttons share its top strip) and leaves the conversation 400.
+const clampW = (w) => Math.round(Math.max(400, Math.min(w, chatPage.clientWidth - 400)) / 8) * 8;
 const setW = (w) => chatPage.style.setProperty('--ws-w', `${clampW(w)}px`);
 try { const w = Number(localStorage.getItem(WS_KEY)); if (w) setW(w); } catch { /* storage blocked */ }
 split.addEventListener('pointerdown', (e) => {
@@ -367,5 +380,7 @@ split.addEventListener('keydown', (e) => {
   setW(cur + (e.key === 'ArrowLeft' ? 16 : -16));
 });
 
-if (stored) { tabs.set(SYSTEM, { id: SYSTEM, label: 'System', pane: sysPane }); active = SYSTEM; }
+INFO.forEach((t) => tabs.set(t.id, t));
+if (stored) tabs.set(SYSTEM, { id: SYSTEM, label: 'System', pane: sysPane });
+active = INFO.has(savedTab) ? savedTab : 'env';
 paint();

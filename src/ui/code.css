@@ -1,32 +1,12 @@
-/* Code page: files, the conversation, tasks and changes. Panel heads are 40 (the strip); rows are 28. */
-#page-code { grid-template-columns: var(--cli-left, 248px) var(--cli-sl, 8px) minmax(0, 1fr) var(--cli-sr, 8px) var(--cli-right, 304px); }
-#cli-left { grid-column: 1; } #cli-split-left { grid-column: 2; } #cli-session { grid-column: 3; } #cli-split-right { grid-column: 4; } #cli-right { grid-column: 5; }
-#page-code[data-left="off"] #cli-left, #page-code[data-left="off"] #cli-split-left,
-#page-code[data-right="off"] #cli-right, #page-code[data-right="off"] #cli-split-right { display: none; }
-.cli-col { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--surface-1); border-radius: var(--r-md); margin: 0 0 var(--s-2) var(--s-2); }
-#cli-right { margin: 0 var(--s-2) var(--s-2) 0; }
-.cli-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; flex: 1 1 0; }
-.cli-panel + .cli-panel { border-top: 1px solid var(--border); }
-.cli-panel.cli-fixed { flex: 0 0 auto; }
+/* Code: rows for files, changes and tasks, the floating diff and approval panels, and the usage home. Rows are 28. */
 .panel-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); height: var(--strip-h); padding: 0 var(--pane-gutter); flex: none; font: 600 var(--fs-3)/var(--lh-sm) var(--sans); color: var(--text-2); }
 .panel-head .sub { font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#cli-right .panel-head:first-child { padding-right: var(--wc-w); }
-#page-code[data-right="off"] #cli-session .panel-head { padding-right: var(--wc-w); }
-@media (max-width: 1280px) { #cli-session .panel-head { padding-right: var(--wc-w); } }
 .cli-body { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; user-select: text; }
-#cli-session { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-#cli-session .panel-head { color: var(--text); }
-#cli-session .panel-head > span:first-child::before { content: ""; display: inline-block; width: var(--s-2); height: var(--s-2); border-radius: 2px; /* optical: an 8px square mark */ background: var(--accent); margin-right: var(--s-2); vertical-align: 1px; /* optical: sits on the text centre */ }
-#cli-session-body { flex: 1; min-height: 0; display: flex; overflow: hidden; }
 .wb-controls { display: flex; align-items: center; gap: var(--s-1); }
 .wb-btn { height: var(--h-sm); padding: 0 var(--s-2); border: 1px solid var(--border-strong); border-radius: var(--r-sm); background: transparent; color: var(--text-2); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
 .wb-btn:hover { background: var(--surface-3); color: var(--text); }
 .wb-btn[aria-pressed="true"] { background: var(--accent-wash); color: var(--text); border-color: var(--accent); }
-.cli-split { cursor: col-resize; touch-action: none; position: relative; }
-.cli-split::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; /* optical: 1px rule */ background: transparent; }
-.cli-split:hover::after, .cli-split.dragging::after, .cli-split:focus-visible::after { background: var(--accent); width: 2px; /* optical: active rule */ }
-.cli-split:focus-visible { outline: none; }
-.cli-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); height: var(--h-sm); padding: 0 var(--pane-gutter); font: 400 var(--fs-3)/var(--lh-sm) var(--mono); color: var(--text-2); white-space: nowrap; }
+.cli-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); height: var(--h-sm); padding: 0 var(--s-4); font: 400 var(--fs-3)/var(--lh-sm) var(--mono); color: var(--text-2); white-space: nowrap; }
 .cli-row .cli-name { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .cli-row.dir { color: var(--text); }
 .cli-row .cli-tag { flex: none; font: 600 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--warm); }
@@ -35,7 +15,7 @@ button.cli-row:hover { background: var(--surface-3); color: var(--text); }
 #cli-tasks .cli-row, #cli-tasks .cli-name { height: auto; min-height: var(--h-sm); white-space: normal; overflow: visible; justify-content: flex-start; font-family: var(--sans); }
 #cli-tasks .cli-row.doing { color: var(--accent); }
 #cli-tasks .cli-row.done { color: var(--text-3); text-decoration: line-through; }
-.cli-empty { padding: var(--s-4) var(--pane-gutter); font-size: var(--fs-3); line-height: var(--lh-sm); color: var(--text-3); }
+.cli-empty { padding: var(--s-4); font-size: var(--fs-3); line-height: var(--lh-sm); color: var(--text-3); }
 #cli-float { position: absolute; inset: 0; pointer-events: none; z-index: 100; }
 .cli-float-panel { position: absolute; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--r-md); box-shadow: var(--shadow); pointer-events: auto; overflow: hidden; }
 .cli-float-panel .panel-head { cursor: grab; touch-action: none; border-bottom: 1px solid var(--border); background: var(--surface-1); padding: 0 var(--s-4); }
@@ -58,7 +38,8 @@ button.cli-row:hover { background: var(--surface-3); color: var(--text); }
 .cli-act.deny:hover { background: var(--danger-wash); }
 
 /* ---- Code home: usage, shown while the session is empty. Mono, hairlines, corner ticks. ------------------- */
-body[data-page="code"] #chat-empty { top: 0; bottom: calc(2 * var(--s-8) + var(--s-3)); overflow-y: auto; pointer-events: auto; padding: var(--s-5) var(--chat-gutter); }
+/* the Code home (usage) takes the place of the greeting while the session is empty */
+body[data-page="code"] #chat-empty { pointer-events: auto; }
 body[data-page="code"] #chat-empty > :not(#code-home) { display: none; }
 #code-home { display: none; font-family: var(--mono); }
 body[data-page="code"] #code-home { display: flex; flex-direction: column; gap: var(--s-4); padding: var(--card-pad); background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); }

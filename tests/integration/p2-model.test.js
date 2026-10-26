@@ -8,7 +8,8 @@ import { createLlmProxy } from '../../server/core/llm-proxy.js';
 import { loadConfig } from '../../server/core/config.js';
 import { waitFor, request } from '../helpers.js';
 
-const base = loadConfig({ only: ['models.json'] }).models;
+// The thinking policy under test is pinned here, so changing which model models.json points at does not change what these tests mean.
+const base = { ...loadConfig({ only: ['models.json'] }).models, thinkingMethod: 'chat_template_kwargs', thinking: { chat: false, tools: false, digest: false, agent: true } };
 const noSleep = () => Promise.resolve();
 async function rig(over = {}) {
   const fake = await startFakeModel();
@@ -159,6 +160,31 @@ test('sampling from models.json goes on every request; request_field sends top-l
     assert.equal(r.fake.requests[0].body.reasoning_effort, 'none');
     assert.equal(r.fake.requests[0].body.chat_template_kwargs, undefined);
     assert.equal(r.fake.requests[1].body.reasoning_effort, 'medium');
+  } finally { await r.close(); }
+});
+
+test('model menu: lists installed models with the loaded one marked; picking one unloads the others, loads it and switches to its profile', async () => {
+  const profiles = {
+    'unsloth/qwen3.8-27b': { thinkingMethod: 'request_field', thinking: { chat: false, tools: false, digest: false, agent: false }, sampling: { temperature: 0.3 }, contextLength: 65536 },
+    'qwen/qwen3-coder-30b': { thinkingMethod: 'chat_template_kwargs', thinking: { chat: false, tools: false, digest: false, agent: false }, sampling: { temperature: 0.7 }, contextLength: 32768 },
+  };
+  const r = await rig({ modelId: 'qwen/qwen3-coder-30b', thinkingMethod: 'chat_template_kwargs', sampling: profiles['qwen/qwen3-coder-30b'].sampling, profiles });
+  try {
+    const before = await r.llm.listModels();
+    assert.equal(before.active, 'qwen/qwen3-coder-30b');
+    assert.deepEqual(before.models.map((m) => [m.key, m.loaded, m.loadedContext]), [['unsloth/qwen3.8-27b', false, null], ['qwen/qwen3-coder-30b', true, 32768]]); // the embedding model is not listed
+    const after = await r.llm.selectModel('unsloth/qwen3.8-27b');
+    assert.deepEqual(r.fake.native.log.map((x) => x.path.split('/').pop()), ['unload', 'load']);
+    assert.equal(r.fake.native.log[1].body.context_length, 65536);
+    assert.equal(after.active, 'unsloth/qwen3.8-27b');
+    assert.deepEqual(after.models.map((m) => m.loaded), [true, false]);
+    await r.llm.chat({ messages: user('q'), use: 'chat' });
+    const sent = r.fake.requests[0].body;
+    assert.equal(sent.model, 'unsloth/qwen3.8-27b');
+    assert.equal(sent.reasoning_effort, 'none'); // the 27B's thinking switch, not the Coder's
+    assert.equal(sent.temperature, 0.3);
+    assert.equal(r.llm.modelId, 'unsloth/qwen3.8-27b');
+    await assert.rejects(() => r.llm.selectModel('not/installed'), (e) => e.status === 404);
   } finally { await r.close(); }
 });
 

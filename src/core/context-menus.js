@@ -25,7 +25,7 @@ registerContext('#chat-output .chat-line.user, #chat-output .chat-line.assistant
 // a workspace tab
 registerContext('.ws-tab', (tab) => {
   const id = tab.dataset.id;
-  if (!id) return [];
+  if (!id || tab.dataset.kind === 'info') return []; // the seven info tabs stay
   const others = openPanelIds().filter((x) => x !== id);
   return [
     ['Close tab', () => closePanelById(id), true],
@@ -36,10 +36,10 @@ registerContext('.ws-tab', (tab) => {
 
 // empty space in the sidebar
 registerContext('#sidebar', (_, target) => {
-  if (target.closest('button, input, #mini-sys')) return [];
+  if (target.closest('button, input, .folder-item')) return [];
   return [
     ['New chat', () => document.getElementById('new-chat').click(), true],
-    ['New project', () => { setPage('projects'); document.dispatchEvent(new CustomEvent('jarvis:new-project')); }, true],
+    ['New folder', () => document.getElementById('folder-add')?.click(), true],
     ['Search chats', () => document.dispatchEvent(new CustomEvent('jarvis:search-chats')), true],
     'sep',
     ['Settings', () => setPage('settings'), true],

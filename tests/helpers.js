@@ -16,6 +16,7 @@ export function testConfig(edit = () => {}) {
   const files = {};
   for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json'))) files[f] = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
   const before = Object.keys(files);
+  Object.assign(files['models.json'], { thinkingMethod: 'chat_template_kwargs', thinking: { chat: false, tools: false, digest: false, agent: true } }); // tests pin the thinking policy; which model models.json names does not matter to them
   edit(files);
   for (const f of before) if (!(f in files)) fs.rmSync(path.join(dir, f));
   for (const [f, json] of Object.entries(files)) fs.writeFileSync(path.join(dir, f), JSON.stringify(json));

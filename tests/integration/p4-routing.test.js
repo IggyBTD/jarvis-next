@@ -56,7 +56,9 @@ test('prompts: per-OS text, live facts, no hardcoded machine facts, switch notic
     const pc = await r.prompts.build('pc');
     assert.match(pc, /PC \(Windows Windows 11, host pc-host, user tester, home \/home\/tester\)/);
     assert.match(pc, /PowerShell/);
-    assert.match(pc, /Today is \w+day \d{4}-\d{2}-\d{2} \d{2}:\d{2}, timezone Europe\/Madrid/);
+    assert.match(pc, /Today is \w+day \d{4}-\d{2}-\d{2}, timezone Europe\/Madrid/); // date only: the prompt must not change from minute to minute
+    assert.equal(await r.prompts.build('pc', { now: new Date('2026-10-25T20:30:00Z') }), await r.prompts.build('pc', { now: new Date('2026-10-25T20:31:00Z') }));
+    assert.match(r.prompts.timeNote(new Date('2026-10-25T20:31:00Z')), /^\[Local time \d{2}:\d{2}\]$/);
     const mac = await r.prompts.build('mac');
     assert.match(mac, /Mac \(macOS macOS 15\.1, host mac-host/);
     assert.match(mac, /zsh/);

@@ -1,0 +1,118 @@
+{
+  "preset": "",
+  "operation": {
+    "fields": [
+      {
+        "key": "llm.prediction.temperature",
+        "value": 0.7
+      },
+      {
+        "key": "llm.prediction.topPSampling",
+        "value": {
+          "checked": true,
+          "value": 0.8
+        }
+      },
+      {
+        "key": "llm.prediction.topKSampling",
+        "value": 20
+      },
+      {
+        "key": "llm.prediction.minPSampling",
+        "value": {
+          "checked": true,
+          "value": 0
+        }
+      },
+      {
+        "key": "llm.prediction.repeatPenalty",
+        "value": {
+          "checked": true,
+          "value": 1.05
+        }
+      },
+      {
+        "key": "llm.prediction.systemPrompt",
+        "value": "Answer directly and concisely. Think briefly: no more than a few short sentences of reasoning, then give the answer. Do not re-check or second-guess yourself."
+      }
+    ]
+  },
+  "load": {
+    "fields": [
+      {
+        "key": "llm.load.llama.acceleration.offloadRatio",
+        "value": 1
+      },
+      {
+        "key": "llm.load.llama.flashAttention",
+        "value": true
+      },
+      {
+        "key": "llm.load.llama.kCacheQuantizationType",
+        "value": {
+          "checked": true,
+          "value": "q8_0"
+        }
+      },
+      {
+        "key": "llm.load.llama.vCacheQuantizationType",
+        "value": {
+          "checked": true,
+          "value": "q8_0"
+        }
+      },
+      {
+        "key": "llm.load.contextLength",
+        "value": 32768
+      },
+      {
+        "key": "llm.load.numParallelSessions",
+        "value": 1
+      },
+      {
+        "key": "llm.load.llama.cpuThreadPoolSize",
+        "value": 8
+      },
+      {
+        "key": "llm.load.llama.speculativeDecoding.draftMtp",
+        "value": false
+      },
+      {
+        "key": "llm.load.llama.speculativeDecoding.draftSimple",
+        "value": false
+      },
+      {
+        "key": "llm.load.llama.speculativeDecoding.draftDflashSidecar",
+        "value": false
+      },
+      {
+        "key": "llm.load.llama.speculativeDecoding.draftDsparkSidecar",
+        "value": false
+      },
+      {
+        "key": "llm.load.llama.speculativeDecoding.draftMtpSidecar",
+        "value": false
+      },
+      {
+        "key": "llm.load.llama.speculativeDecoding.draftModel",
+        "value": ""
+      },
+      {
+        "key": "llm.load.llama.speculativeDecoding.draftMaxTokens",
+        "value": 3
+      },
+      {
+        "key": "llm.load.llama.speculativeDecoding.draftMinTokens",
+        "value": 0
+      },
+      {
+        "key": "llm.load.llama.speculativeDecoding.draftMinContinueProbability",
+        "value": 0
+      },
+      {
+        "key": "llm.load.llama.evalBatchSize",
+        "value": 512
+      }
+    ]
+  }
+}

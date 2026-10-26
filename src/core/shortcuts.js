@@ -15,6 +15,7 @@ export const SHORTCUTS = [
   { keys: 'Ctrl+I', does: 'Open or close the System tab' },
   { keys: 'Ctrl+1 to 9', does: 'Open or close the tab of the 1st to 9th artifact of this session' },
   { keys: 'Ctrl+\\', does: 'Hide or show the sidebar' },
+  { keys: 'Ctrl+K', does: 'Search the chats in the sidebar' },
   { keys: 'Ctrl+,', does: 'Open Settings' },
   { keys: 'Ctrl+ + / Ctrl+ - / Ctrl+0', does: 'Zoom the app in, out, or back to 100% (Ctrl and the mouse wheel too)' },
   { keys: 'Ctrl+L', does: 'Type maths and get LaTeX (a pad: x^2/2 or words, Enter copies)' },
@@ -54,6 +55,7 @@ function run(e) {
   else if (key === '0') zoomReset();
   else if (key === '.') document.dispatchEvent(new CustomEvent('jarvis:stop'));
   else if (key === 'm') document.getElementById('dock-mic')?.click();
+  else if (key === 'k') document.dispatchEvent(new CustomEvent('jarvis:search-chats'));
   else return false;
   return true;
 }

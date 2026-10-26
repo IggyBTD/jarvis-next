@@ -1,15 +1,25 @@
-/* Workspace (right pane): tabs in the title strip, then the artifact or the System dashboard. */
+/* Panel (right pane): a strip with the tabs, then the info tab, the System dashboard or the artifact. Seven info tabs are icons (32 by 32);
+   artifact, System and Server tabs carry their name and an x. */
 #workspace { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg); }
-#ws-tabs { display: flex; align-items: center; gap: var(--s-1); height: var(--strip-h); padding: 0 var(--s-4); overflow-x: auto; flex: none; position: relative; z-index: 1; }
-body:not(.ws-off) #ws-tabs { margin-right: var(--wc-w); /* the strip ends where the window buttons begin, so tabs scroll in their own room */ }
-#ws-tabs::-webkit-scrollbar { height: 0; }
-/* tabs are centred in the strip, so they share its centre line with everything else in it */
-.ws-tab { display: flex; align-items: center; height: var(--h-md); flex: 0 1 auto; min-width: 88px; max-width: 224px; padding: 0 var(--s-1) 0 0; border-radius: var(--r-sm); background: transparent; color: var(--text-2); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
+#ws-head { display: flex; align-items: center; gap: var(--s-2); height: var(--strip-h); padding: 0 var(--s-2); flex: none; position: relative; z-index: 1; }
+body:not(.ws-off) #ws-head { margin-right: var(--wc-w); /* the strip ends where the window buttons begin, so tabs scroll in their own room */ }
+#ws-back { display: none; flex: none; }
+@media (max-width: 1100px) { #ws-back { display: grid; } }
+#ws-tabs { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--s-1); height: 100%; overflow-x: auto; }
+#ws-tabs::-webkit-scrollbar, #ws-docs::-webkit-scrollbar { height: 0; }
+#ws-docs { display: flex; align-items: center; gap: var(--s-1); flex: none; height: var(--h-lg); padding: 0 var(--s-2) var(--s-1); overflow-x: auto; border-bottom: 1px solid var(--border); }
+.ws-tab { display: flex; align-items: center; height: var(--h-md); flex: 0 0 auto; min-width: 88px; max-width: 224px; padding: 0 var(--s-1) 0 0; border-radius: var(--r-sm); background: transparent; color: var(--text-2); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
 .ws-tab:hover { background: var(--surface-3); color: var(--text); }
 .ws-tab[aria-selected="true"] { background: var(--surface-3); color: var(--text); }
 .ws-tab .t-label { display: flex; align-items: center; gap: var(--s-2); height: 100%; padding: 0 var(--s-2) 0 var(--s-3); border: 0; background: none; color: inherit; font: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 176px; min-width: 0; flex: 1; }
-.ws-tab .t-label::before { content: ""; width: var(--s-2); height: var(--s-2); border-radius: 2px; /* optical: a 8px square mark */ background: var(--text-3); flex: none; }
-.ws-tab[aria-selected="true"] .t-label::before { background: var(--accent); }
+.ws-tab:not([data-kind="info"]) .t-label::before { content: ""; width: var(--s-2); height: var(--s-2); border-radius: 2px; /* optical: a 8px square mark */ background: var(--text-3); flex: none; }
+.ws-tab[aria-selected="true"]:not([data-kind="info"]) .t-label::before { background: var(--accent); }
+.ws-tab[data-kind="info"] { min-width: 0; padding: 0; }
+.ws-tab[data-kind="info"] .t-label { width: var(--h-md); padding: 0; justify-content: center; }
+.ws-tab[data-kind="info"] .t-text { display: none; }
+.ws-tab[data-kind="info"] .icon { color: var(--text-3); }
+.ws-tab[data-kind="info"]:hover .icon { color: var(--text-2); }
+.ws-tab[data-kind="info"][aria-selected="true"] .icon { color: var(--accent); }
 .ws-tab .t-x { flex: none; width: var(--h-sm); height: var(--h-sm); display: grid; place-items: center; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-3); }
 .ws-tab .t-x:hover { background: var(--surface-4); color: var(--text); }
 .ws-tab .t-x .icon { width: var(--icon-sm); height: var(--icon-sm); color: inherit; }
@@ -17,6 +27,27 @@ body:not(.ws-off) #ws-tabs { margin-right: var(--wc-w); /* the strip ends where 
 .ws-pane { position: absolute; inset: 0; overflow: auto; scrollbar-gutter: stable; }
 .ws-pane:has(> .av) { overflow: hidden; }
 .ws-empty { padding: var(--s-6); color: var(--text-3); text-align: center; }
+
+/* info tabs: cards of rows, key on the left and value on the right */
+.info-pane:not([hidden]) { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-4); }
+.info-card { flex: none; min-width: 0; padding: var(--s-3) var(--s-4); background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); }
+.info-card h3 { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); margin-bottom: var(--s-1); font: 600 var(--fs-2)/var(--lh-xs) var(--sans); color: var(--text-3); }
+.info-card h3 .sub { font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
+.info-card.flush { flex: 1 1 auto; min-height: var(--s-8); padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+.info-card.flush h3 { padding: var(--s-3) var(--s-4) var(--s-1); margin: 0; }
+.info-rows { display: flex; flex-direction: column; }
+.info-row { display: flex; align-items: center; gap: var(--s-2); width: 100%; min-height: var(--h-md); padding: 0; border: 0; border-radius: var(--r-sm); background: none; color: var(--text); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); text-align: left; }
+.info-row .k { flex: none; color: var(--text-3); }
+.info-row .v { min-width: 0; margin-left: auto; text-align: right; overflow-wrap: anywhere; }
+.info-row .dot { flex: none; width: var(--s-2); height: var(--s-2); border-radius: 50%; border: 1.5px solid var(--text-3); /* optical: 1.5px ring */ }
+.info-row .dot[data-state="ok"] { background: var(--ok); border-color: var(--ok); }
+.info-row .dot[data-state="bad"] { background: var(--danger); border-color: var(--danger); }
+.info-row.clickable { cursor: pointer; padding: 0 var(--s-2); margin: 0 calc(-1 * var(--s-2)); width: calc(100% + 2 * var(--s-2)); }
+.info-row.clickable:hover { background: var(--surface-3); }
+.info-row.clickable .k { font: 400 var(--fs-2)/var(--lh-xs) var(--mono); text-transform: capitalize; }
+.info-row .v:empty::before { content: "--"; color: var(--text-3); }
+.info-note { padding: var(--s-2) 0; color: var(--text-3); font-size: var(--fs-3); line-height: var(--lh-sm); }
+.info-pane .cli-body { flex: 1; min-height: 0; }
 
 /* artifact view: a 48 toolbar of 28 and 32 controls on one centre line, then the work */
 .av { display: flex; flex-direction: column; height: 100%; min-height: 0; container-type: inline-size; }

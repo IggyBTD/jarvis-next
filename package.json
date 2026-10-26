@@ -16,7 +16,7 @@
     "lint:spacing": "node scripts/audit-css.mjs --fail",
     "measure": "node scripts/measure-ui.mjs",
     "test": "node --test --test-force-exit --test-timeout=90000 \"tests/unit/*.test.js\" \"tests/integration/*.test.js\"",
-    "test:browser": "node --test --test-force-exit --test-timeout=120000 \"tests/browser/*.test.js\"",
+    "test:browser": "node --test --test-concurrency=1 --test-force-exit --test-timeout=120000 \"tests/browser/*.test.js\"",
     "server": "node server/index.js",
     "agent": "node agent/index.js",
     "doctor": "node scripts/doctor.js",

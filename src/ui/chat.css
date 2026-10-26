@@ -60,15 +60,19 @@
 .chat-line.pending .chat-text::before { content: ""; flex: none; width: var(--icon-md); height: var(--icon-md); background: var(--accent); -webkit-mask: var(--mask-spark) center / contain no-repeat; mask: var(--mask-spark) center / contain no-repeat; animation: think-twinkle 1.6s ease-in-out infinite; }
 @keyframes think-twinkle { 0%, 100% { opacity: 0.5; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.05); } }
 
-/* ---- empty state ------------------------------------------------------------------------------------ */
-#chat-empty { position: absolute; left: 0; right: 0; top: 24%; padding: 0 var(--chat-gutter); pointer-events: none; width: min(var(--measure), 100%); margin: 0 auto; }
+/* ---- empty state: the greeting and the input card sit together in the middle of the pane, the way Claude's new chat does ------- */
+#chat-stack:not(:has(.chat-line)) { justify-content: center; padding-bottom: var(--s-6); overflow-y: auto; }
+#chat-stack:not(:has(.chat-line)) #chat-output { display: none; }
+#chat-stack:has(.chat-line) #chat-empty, #chat-stack:has(.chat-line) > .machine { display: none; }
+#chat-empty { flex: none; width: min(var(--measure), calc(100% - 2 * var(--chat-gutter))); margin: 0 auto var(--s-5); text-align: center; }
+#chat-empty .mark-lg { display: block; margin: 0 auto var(--s-4); }
 #chat-empty h2 { font: 400 var(--fs-6)/var(--lh-lg) var(--serif); color: var(--text); }
 #chat-empty h2 b { font-weight: 600; color: var(--accent); }
 #chat-empty p { margin-top: var(--s-2); color: var(--text-2); font-size: var(--fs-5); line-height: var(--lh-md); }
-#chat-empty .machine { margin-top: var(--s-5); display: flex; flex-wrap: wrap; gap: var(--s-2); }
-#chat-empty .fact { display: inline-flex; align-items: center; height: var(--lh-md); padding: 0 var(--s-3); border: 1px solid var(--border); border-radius: var(--r-pill); font-size: var(--fs-2); color: var(--text-2); background: var(--surface-2); }
-#chat-empty .fact b { margin-left: var(--s-1); color: var(--text); font-weight: 600; }
-#chat-stack:has(.chat-line) #chat-empty { display: none; }
+#chat-stack:not(:has(.chat-line)) #composer-dock { margin-bottom: var(--s-4); }
+#chat-stack > .machine { flex: none; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2); width: min(var(--measure), calc(100% - 2 * var(--chat-gutter))); margin: 0 auto; }
+.machine .fact { display: inline-flex; align-items: center; height: var(--lh-md); padding: 0 var(--s-3); border: 1px solid var(--border); border-radius: var(--r-pill); font-size: var(--fs-2); color: var(--text-2); background: var(--surface-2); }
+.machine .fact b { margin-left: var(--s-1); color: var(--text); font-weight: 600; }
 
 /* ---- artifact card in the chat ------------------------------------------------------------------- */
 .artifact-card { display: grid; grid-template-columns: var(--h-lg) minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-3); width: 100%; margin: var(--s-2) 0; padding: var(--s-2) var(--s-4) var(--s-2) var(--s-2); background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--r-md); text-align: left; transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }

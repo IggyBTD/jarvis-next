@@ -1,10 +1,11 @@
 // The interface for the JARVIS server: target switcher (title strip) and target tag (composer), the approval dialog,
 // the Server tab (connection, approvals waiting, agent tasks, digest, recent activity), reminders, and the settings card.
 // Everything here reads server-link.js; nothing here talks to the network or decides anything.
-import { state, onLink, serverMode, setTarget, replyGate, getSettings, saveSettings, requestDigest, fetchAudit, wakePc, abortAgentTask, dismissReminder, newConversation, isOnline } from './server-link.js';
+import { state, onLink, serverMode, setTarget, replyGate, getSettings, saveSettings, requestDigest, fetchAudit, wakePc, abortAgentTask, dismissReminder, newConversation, isOnline, fetchModels, chooseModel } from './server-link.js';
 import { reportService } from './service-status.js';
 import { renderMarkdown } from './markdown.js';
 import { openWidget } from './whiteboard.js';
+import { setPage } from './whiteboard-mode.js';
 import { setTasks } from './work-state.js';
 
 const $ = (id) => document.getElementById(id);
@@ -24,12 +25,59 @@ const sw = $('target-switch');
 const tag = $('target-tag');
 const navServer = $('nav-server');
 
-// The model is chosen on the PC (config/server/models.json), so the preset menu has nothing to offer in server mode: the chip just names it.
+// Model menu in server mode: the models LM Studio on the PC has installed, the loaded ones marked, the active one outlined.
+// Picking one has the PC load it (the others are unloaded) and switch to that model's request settings (config/server/models.json, profiles).
+// The rows carry state in attributes, not classes: shell.js re-reads the preset buttons whenever a class changes in the menu.
+let switching = null;
+const ctxK = (n) => (n ? ` · ${Math.round(n / 1024)}k context` : '');
+
+async function renderModelList() {
+  let box = $('model-server-list');
+  if (!box) { box = document.createElement('div'); box.id = 'model-server-list'; $('model-menu').append(box); }
+  const note = (text, withButton) => { const n = Object.assign(document.createElement('div'), { className: 'menu-note', textContent: text }); if (withButton) { const b = Object.assign(document.createElement('button'), { type: 'button', className: 'av-btn', textContent: 'Open the server settings' }); b.addEventListener('click', () => { $('model-menu').hidden = true; $('model-chip').setAttribute('aria-expanded', 'false'); setPage('settings'); }); n.append(b); } return n; };
+  if (!box.childElementCount) box.replaceChildren(note('Asking the PC for its models...'));
+  const data = await fetchModels();
+  if (!data) { box.replaceChildren(note(isOnline() ? 'The PC did not answer the model list. Try again in a moment.' : 'The JARVIS server is not reachable, so there is no model to pick. Check the server address and token in Settings.', !isOnline())); return; }
+  box.replaceChildren(...data.models.map((m) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'matrix-btn'; b.setAttribute('role', 'menuitem');
+    b.dataset.loaded = String(m.loaded);
+    if (m.key === data.active) b.setAttribute('aria-current', 'true');
+    const name = document.createElement('span'); name.className = 'm-name'; name.textContent = m.name;
+    const sub = document.createElement('span'); sub.className = 'm-sub'; sub.textContent = `${m.key === data.active ? 'active, ' : ''}${m.loaded ? `loaded${ctxK(m.loadedContext)}` : 'not loaded'}`;
+    b.append(name, sub);
+    b.addEventListener('click', () => pickModel(m));
+    return b;
+  }));
+}
+
+async function pickModel(m) {
+  $('model-menu').hidden = true; $('model-chip').setAttribute('aria-expanded', 'false');
+  switching = m.name; paintModelChip(true);
+  toast(`Loading ${m.name} on the PC. This can take a minute.`);
+  const r = await chooseModel(m.key);
+  switching = null;
+  if (r.ok && state.health?.model) Object.assign(state.health.model, { modelId: r.active, modelPresent: true, reachable: true }); // until the next health push (a few seconds)
+  toast(r.ok ? `${m.name} is ready.` : `Could not switch: ${r.error}`);
+  paintModelChip(true);
+}
+
 function paintModelChip(on) {
   const chipEl = $('model-chip');
-  const id = state.health?.model?.modelId;
-  if (on && id) { $('model-chip-label').textContent = id.split('/').pop(); chipEl.disabled = true; chipEl.title = 'The model is set on the PC (config/server/models.json)'; $('model-menu').hidden = true; } else if (chipEl.disabled) { chipEl.disabled = false; chipEl.title = ''; }
+  const menu = $('model-menu');
+  menu.querySelectorAll('[data-preset]').forEach((b) => { b.hidden = on; });
+  if (!on) {
+    $('model-server-list')?.remove();
+    if (chipEl.dataset.loaded !== undefined) { delete chipEl.dataset.loaded; chipEl.title = ''; $('model-chip-label').textContent = menu.querySelector('[data-preset].active-mode .m-name')?.textContent ?? 'General'; }
+    return;
+  }
+  const m = state.health?.model;
+  const name = m?.modelId ? m.modelId.split('/').pop() : isOnline() ? 'No model' : 'Server offline';
+  $('model-chip-label').textContent = switching ? `Loading ${switching}` : name;
+  chipEl.dataset.loaded = switching ? 'loading' : m?.modelPresent ? 'yes' : 'no';
+  chipEl.title = switching ? 'Loading on the PC' : m?.modelPresent ? 'Loaded on the PC. Click to pick another model.' : m?.reachable === false ? 'The PC cannot reach LM Studio' : 'Not loaded. Pick a model to load it.';
 }
+$('model-chip').addEventListener('click', () => { if (serverMode()) renderModelList(); });
 
 function paintTarget() {
   const on = serverMode();

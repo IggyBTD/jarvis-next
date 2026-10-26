@@ -10,12 +10,30 @@ export async function startFakeModel({ port = 0 } = {}) {
   const queue = [];
   let defaultReply = (body) => ({ content: `echo: ${body.messages.at(-1)?.content ?? ''}` });
   const sockets = new Set();
+  const native = { installed: new Set(['unsloth/qwen3.8-27b', 'qwen/qwen3-coder-30b']), loaded: new Map([['qwen/qwen3-coder-30b', 32768]]), log: [] };
 
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://x');
     if (req.method === 'GET' && url.pathname === '/v1/models') {
       res.writeHead(200, { 'content-type': 'application/json' });
-      return res.end(JSON.stringify({ data: [{ id: 'local', object: 'model' }, { id: 'qwen3.8-27b', object: 'model' }, { id: 'qwen/qwen3-coder-30b', object: 'model' }] }));
+      return res.end(JSON.stringify({ data: [{ id: 'local', object: 'model' }, { id: 'qwen3.8-27b', object: 'model' }, { id: 'unsloth/qwen3.8-27b', object: 'model' }, { id: 'qwen/qwen3-coder-30b', object: 'model' }] }));
+    }
+    // LM Studio's native API: which models exist and which are loaded (the app's model menu)
+    if (req.method === 'GET' && url.pathname === '/api/v1/models') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      return res.end(JSON.stringify({ models: [...native.installed].map((key) => ({ type: 'llm', key, display_name: key.split('/').pop(), size_bytes: 1e9, loaded_instances: native.loaded.has(key) ? [{ id: key, config: { context_length: native.loaded.get(key) } }] : [] })).concat([{ type: 'embedding', key: 'embed', loaded_instances: [] }]) }));
+    }
+    if (req.method === 'POST' && url.pathname.startsWith('/api/v1/models/')) {
+      const chunks = [];
+      req.on('data', (c) => chunks.push(c));
+      return req.on('end', () => {
+        const b = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+        native.log.push({ path: url.pathname, body: b });
+        if (url.pathname.endsWith('/load')) native.loaded.set(b.model, b.context_length ?? 4096);
+        if (url.pathname.endsWith('/unload')) native.loaded.delete(b.instance_id);
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end('{}');
+      });
     }
     if (req.method !== 'POST' || url.pathname !== '/v1/chat/completions') { res.writeHead(404); return res.end('{}'); }
     const chunks = [];
@@ -59,6 +77,7 @@ export async function startFakeModel({ port = 0 } = {}) {
     url: `http://127.0.0.1:${server.address().port}/v1`,
     port: server.address().port,
     requests,
+    native,
     script: (...replies) => queue.push(...replies),
     setDefault: (fn) => { defaultReply = fn; },
     close: () => new Promise((r) => { sockets.forEach((s) => s.destroy()); server.close(r); }),

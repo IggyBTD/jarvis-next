@@ -59,6 +59,9 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   const memory = createMemory({ dataDir: cfg.dataDir });
   const prompts = createPromptBuilder({ prompts: cfg.prompts, machines, timezone: cfg.schedules.timezone, getInfo: (id) => router.info(id), notes: memory.prompt });
   const llm = createLlmClient({ config: cfg.models });
+  // The model picked in the app's model menu outlives a restart; models.json names the one to start with.
+  const choiceFile = path.join(cfg.dataDir, 'active-model.json');
+  try { const key = JSON.parse(fs.readFileSync(choiceFile, 'utf8')).model; if (typeof key === 'string' && key) llm.applyProfile(key); } catch { /* no choice saved yet */ }
   const queue = createQueue({ concurrency: cfg.models.concurrency, preempt: !!cfg.models.preemptInteractive });
   const orchestrator = createOrchestrator({ llm, queue, router, prompts, conversations, targetState, bus, models: cfg.models });
   const llmProxy = createLlmProxy({ llm, queue, audit, modelId: cfg.models.modelId });
@@ -135,7 +138,16 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
     return bundleCache.zip;
   };
   const osint = createOpensky({ dataDir: cfg.dataDir, watchFile: path.join(cfg.root, 'config', 'osint-watch.json') });
-  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, health, audit, conversations, digest, osint, browserView, bundle, latex, buildState: () => wsApi.buildState(), log }));
+  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, models: {
+    list: () => llm.listModels(),
+    select: async (key) => {
+      if (queue.depth() > 0) throw Object.assign(new Error('The model is answering right now. Try again when it has finished.'), { status: 409 });
+      const r = await llm.selectModel(key);
+      try { fs.writeFileSync(choiceFile, JSON.stringify({ model: key })); } catch (e) { log(`could not save the model choice: ${e.message}`); }
+      await health({ fresh: true }).catch(() => {}); // refreshes the cached health, so the next push to the app names the new model
+      return r;
+    },
+  }, health, audit, conversations, digest, osint, browserView, bundle, latex, buildState: () => wsApi.buildState(), log }));
 
   // The same handlers also answer on loopback, so this PC's own app works whatever the network address does (Tailscale down, a new LAN IP).
   const loopback = http.createServer();

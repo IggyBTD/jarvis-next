@@ -66,7 +66,7 @@
 .start-tile .s-name { font: 600 var(--fs-5)/var(--lh-md) var(--sans); }
 .start-tile .s-sub { font: 400 var(--fs-3)/var(--lh-sm) var(--sans); color: var(--text-2); }
 /* OSINT: layer switches, the globe, one status line */
-.osint-bar { display: flex; align-items: center; gap: var(--s-2); height: 48px; padding: 0 var(--pane-gutter); flex: none; }
+.osint-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); min-height: 48px; padding: var(--s-2) var(--pane-gutter); flex: none; }
 .osint-bar .grow { flex: 1; }
 .osint-bar .av-btn { height: var(--h-md); display: inline-flex; align-items: center; gap: var(--s-2); }
 .osint-layer[aria-pressed="false"] { opacity: 0.5; }
@@ -97,9 +97,8 @@
 #intel-session-body { flex: 1; min-height: 0; display: flex; overflow: hidden; }
 
 /* OSINT toolbar rows: layers, size, logins */
-.osint-bar { flex-wrap: nowrap; }
 .osint-bar .av-btn { white-space: nowrap; flex: none; }
-.osint-bar.osint-sub { height: var(--h-lg); padding-top: 0; }
+.osint-bar.osint-sub { min-height: var(--h-lg); padding-top: 0; }
 .osint-bar.osint-sub[hidden] { display: none; }
 .osint-bar.osint-sub input { flex: 0 1 224px; min-width: 0; height: var(--h-md); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface-1); color: var(--text); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
 .osint-bar.osint-sub input:focus-visible { outline: none; border-color: var(--accent); }

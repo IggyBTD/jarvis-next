@@ -209,7 +209,7 @@ function renderAssistant(el, content, { done, quiet = false }) {
       // A source file has nothing to preview: it is already written out in the session, so it
       // gets no panel of its own unless the user clicks its card. Everything else opens beside it.
       if (quiet) { /* registered above, left closed */ }
-      else if (changed) openArtifact(p.id);
+      else if (changed) openArtifact(p.id, { auto: true });
     }
   }
   patchParts(el.querySelector('.chat-text'), parts);
@@ -819,6 +819,7 @@ document.addEventListener('jarvis:session-op', async (e) => {
         Object.assign(session, rest.patch);
         if (rest.patch.name !== undefined) announceName(true);
         if (history.length) saveSoon();
+        if (serverMode()) await patchSession(id, rest.patch); // the server keeps the chat; its name, pin and folder are saved there
       } else await patchSession(id, rest.patch);
       changed();
     } else if (op === 'delete') {

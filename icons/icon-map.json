@@ -286,5 +286,77 @@
     "remix": "sparkling",
     "solar": "stars-minimalistic",
     "lucide": "sparkles"
+  },
+  "clock": {
+    "phosphor": "clock",
+    "tabler": "clock",
+    "iconoir": "clock",
+    "remix": "time",
+    "solar": "clock-circle",
+    "lucide": "clock"
+  },
+  "sliders": {
+    "phosphor": "sliders-horizontal",
+    "tabler": "adjustments-horizontal",
+    "iconoir": "control-slider",
+    "remix": "equalizer-2",
+    "solar": "tuning-2",
+    "lucide": "sliders-horizontal"
+  },
+  "more": {
+    "phosphor": "dots-three",
+    "tabler": "dots",
+    "iconoir": "more-horiz",
+    "remix": "more",
+    "solar": "menu-dots",
+    "lucide": "ellipsis"
+  },
+  "plug": {
+    "phosphor": "plugs-connected",
+    "tabler": "plug-connected",
+    "iconoir": "plug-type-a",
+    "remix": "plug",
+    "solar": "plug-circle",
+    "lucide": "plug"
+  },
+  "tasks": {
+    "phosphor": "list-checks",
+    "tabler": "list-check",
+    "iconoir": "task-list",
+    "remix": "task",
+    "solar": "checklist-minimalistic",
+    "lucide": "list-checks"
+  },
+  "folder-plus": {
+    "phosphor": "folder-plus",
+    "tabler": "folder-plus",
+    "iconoir": "folder-plus",
+    "remix": "folder-add",
+    "solar": "add-folder",
+    "lucide": "folder-plus"
+  },
+  "folder-open": {
+    "phosphor": "folder-open",
+    "tabler": "folder-open",
+    "iconoir": "folder",
+    "remix": "folder-open",
+    "solar": "folder-open",
+    "lucide": "folder-open"
+  },
+  "file": {
+    "phosphor": "file",
+    "tabler": "file",
+    "iconoir": "page",
+    "remix": "file",
+    "solar": "file",
+    "lucide": "file"
+  },
+  "diff": {
+    "phosphor": "git-diff",
+    "tabler": "git-compare",
+    "iconoir": "git-compare",
+    "remix": "git-pull-request",
+    "solar": "code-file",
+    "lucide": "git-compare"
   }
 }

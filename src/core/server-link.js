@@ -40,7 +40,7 @@ export function setConvId(id) {
 }
 // An authenticated call to the server's HTTP API (saved chats, the globe's data).
 export function serverFetch(path, init = {}) {
-  const base = settings.url.trim().replace(/^ws/i, 'http').replace(/\/ws$/, '').replace(/\/+$/, '');
+  const base = savedOrLocal().trim().replace(/^ws/i, 'http').replace(/\/ws$/, '').replace(/\/+$/, '');
   return fetch(`${base}/api${path}`, { ...init, headers: { 'content-type': 'application/json', ...(init.headers ?? {}), authorization: `Bearer ${settings.token}` } });
 }
 export function newConversation() {
@@ -69,8 +69,16 @@ let timer = 0;
 let attempts = 0;
 let wanted = false;
 
+// The server usually runs on the PC this app runs on, and its LAN address changes (DHCP) while 127.0.0.1 does not. When the saved address
+// fails twice in the desktop app, the next tries go to the same port on this computer; if that fails twice too, back to the saved one.
+let viaLoopback = false;
+const isLoopback = (url) => { try { return ['127.0.0.1', 'localhost', '[::1]'].includes(new URL(url.trim().replace(/^ws/i, 'http')).hostname); } catch { return false; } };
+const savedOrLocal = () => {
+  if (!viaLoopback) return settings.url;
+  try { return `ws://127.0.0.1:${new URL(settings.url.trim().replace(/^ws/i, 'http')).port || 7410}`; } catch { return settings.url; }
+};
 function wsUrl() {
-  const u = settings.url.trim().replace(/^http/i, 'ws').replace(/\/+$/, '');
+  const u = savedOrLocal().trim().replace(/^http/i, 'ws').replace(/\/+$/, '');
   return /\/ws$/.test(u) ? u : `${u}/ws`;
 }
 
@@ -105,6 +113,7 @@ export function connect() {
     ws = null;
     attempts += 1;
     state.attempts = attempts;
+    if (!openedAt.t && attempts % 2 === 0 && window.__TAURI_INTERNALS__ && !isLoopback(settings.url)) viaLoopback = !viaLoopback;
     state.streaming = null;
     // Browsers hide the HTTP status of a refused upgrade, so repeated instant failures are shown as a probable wrong token or address.
     setStatus(attempts >= 3 && !openedAt.t ? 'refused' : 'offline', attempts >= 3 && !openedAt.t ? 'Cannot connect. Check the server address and the token, and that the server is running.' : '');
@@ -112,7 +121,7 @@ export function connect() {
   };
 }
 export function disconnect() { wanted = false; clearTimeout(timer); const s = ws; ws = null; try { s?.close(); } catch { /* closed */ } setStatus(serverMode() ? 'offline' : 'off'); }
-function reconnect() { disconnect(); attempts = 0; if (serverMode()) { useTelemetrySource('server'); connect(); } else useTelemetrySource('local'); }
+function reconnect() { disconnect(); attempts = 0; viaLoopback = false; if (serverMode()) { useTelemetrySource('server'); connect(); } else useTelemetrySource('local'); }
 
 const send = (obj) => { if (ws?.readyState === 1) { ws.send(JSON.stringify(obj)); return true; } return false; };
 const reqId = () => Math.random().toString(36).slice(2, 10);
@@ -182,7 +191,7 @@ export const abortAgentTask = (taskId) => send({ type: 'agent.abort', taskId });
 export const dismissReminder = (reminderId) => send({ type: 'reminder.dismiss', reminderId });
 
 export async function fetchAudit(n = 15) {
-  const base = settings.url.trim().replace(/^ws/i, 'http').replace(/\/ws$/, '').replace(/\/+$/, '');
+  const base = savedOrLocal().trim().replace(/^ws/i, 'http').replace(/\/ws$/, '').replace(/\/+$/, '');
   try {
     const res = await fetch(`${base}/api/audit?n=${n}`, { headers: { authorization: `Bearer ${settings.token}` } });
     if (!res.ok) return [];
@@ -190,6 +199,22 @@ export async function fetchAudit(n = 15) {
     emit({ type: 'audit' });
     return state.audit;
   } catch { return []; }
+}
+
+// The model menu: what LM Studio on the PC has installed (and which are loaded), and picking one (the PC loads it).
+const apiBase = () => savedOrLocal().trim().replace(/^ws/i, 'http').replace(/\/ws$/, '').replace(/\/+$/, '');
+export async function fetchModels() {
+  try {
+    const res = await fetch(`${apiBase()}/api/models`, { headers: { authorization: `Bearer ${settings.token}` } });
+    return res.ok ? await res.json() : null;
+  } catch { return null; }
+}
+export async function chooseModel(model) {
+  try {
+    const res = await fetch(`${apiBase()}/api/model`, { method: 'POST', headers: { authorization: `Bearer ${settings.token}`, 'content-type': 'application/json' }, body: JSON.stringify({ model }) });
+    const body = await res.json().catch(() => ({}));
+    return res.ok ? { ok: true, ...body } : { ok: false, error: body.error ?? `HTTP ${res.status}` };
+  } catch (e) { return { ok: false, error: e.message }; }
 }
 
 // Wake the PC when it is unreachable: the desktop build sends the magic packet itself (a browser cannot send UDP).

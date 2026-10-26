@@ -15,7 +15,7 @@ import { HARD_TASKS } from './bench-hard-tasks.js';
 
 // Per-model request settings (vendor values, docs/MODEL_TUNING_PLAN.md section 3). Thinking off for the 27B uses the top-level reasoning_effort field (docs/decisions.md).
 const PROFILES = {
-  'qwen3.8-27b': { thinkingMethod: 'request_field', thinking: { chat: false, tools: false, digest: false, agent: false }, sampling: { temperature: 0.6, top_p: 0.95, top_k: 20, min_p: 0, presence_penalty: 0, repeat_penalty: 1 } },
+  'unsloth/qwen3.8-27b': { thinkingMethod: 'request_field', thinking: { chat: false, tools: false, digest: false, agent: false }, sampling: { temperature: 0.3, top_p: 0.95, top_k: 20, min_p: 0, presence_penalty: 0, repeat_penalty: 1 } },
   'qwen/qwen3-coder-30b': { sampling: { temperature: 0.7, top_p: 0.8, top_k: 20, min_p: 0, presence_penalty: 0, repeat_penalty: 1.05 } },
 };
 
@@ -101,7 +101,7 @@ async function native(base, p, body) {
 const loadedNow = async (base) => (await native(base, '/models')).models.filter((m) => m.type === 'llm').flatMap((m) => m.loaded_instances.map((i) => ({ key: m.key, id: i.id })));
 async function useOnly(base, key, log) {
   for (const i of await loadedNow(base)) { if (i.key !== key) { log(`  unloading ${i.key}`); await native(base, '/models/unload', { instance_id: i.id }); } }
-  if (!(await loadedNow(base)).some((i) => i.key === key)) { log(`  loading ${key} (this can take a minute)`); await native(base, '/models/load', { model: key }); }
+  if (!(await loadedNow(base)).some((i) => i.key === key)) { log(`  loading ${key} (this can take a minute)`); await native(base, '/models/load', { model: key, context_length: 32768 }); }
 }
 
 export async function benchModel({ base, key, modelCfg, maxTokens, log, tasks: codeTasks = CODE_TASKS, taskTimeoutMs = 240_000, codeWeight = 25, toolWeight = 25, profile = PROFILES[key], addendum = '' }) {
@@ -147,7 +147,7 @@ if (isMain(import.meta.url)) {
   const arg = (n, d) => { const i = process.argv.indexOf(n); return i === -1 ? d : process.argv[i + 1]; };
   const cfg = loadConfig({ only: ['models.json'] });
   const base = cfg.models.baseUrl.replace(/\/v1\/?$/, '');
-  const keys = arg('--models', 'qwen3.8-27b,qwen/qwen3-coder-30b').split(',').map((s) => s.trim());
+  const keys = arg('--models', 'unsloth/qwen3.8-27b,qwen/qwen3-coder-30b').split(',').map((s) => s.trim());
   const hard = arg('--suite', 'hard') === 'hard';
   const maxTokens = Number(arg('--max-tokens', hard ? 32000 : 900));
   const taskTimeoutMs = Number(arg('--task-timeout', 240)) * 1000;

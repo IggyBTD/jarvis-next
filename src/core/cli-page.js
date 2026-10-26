@@ -1,75 +1,17 @@
-// The CLI page: docked panels in fixed slots (workspace left, session centre, changes right).
-// The session is the real conversation, moved in while the page is open (the same trick as the
-// whiteboard session, so streaming keeps working). Side columns resize by dragging a splitter
-// (8 px steps) and hide with the FILES / CHANGES buttons. Only real data is shown; see
-// .md Files/JARVIS_CLI_Brief.md.
+// The code side of the panel: the project's files, what the agent changed, its task list, plan mode, the diff and approval
+// panels that float over the page. The conversation is the real one (the same as Chat), and the files, changes and tasks
+// live in the right panel's tabs (index.html, panel-info.js). Only real data is shown; see .md Files/JARVIS_CLI_Brief.md.
 import { getProject, listDir } from './agent-client.js';
 import { getModelHealth, onModelHealth } from './model-panel.js';
 import { getPreset } from './llm-client.js';
+import { serverMode, state } from './server-link.js';
 import { diffBody } from './tool-cards.js';
 import { getTasks, onTasks, taskSummary, isPlanMode, setPlanMode, onPlanMode } from './work-state.js';
 
 const $ = (id) => document.getElementById(id);
-const page = $('page-code');
 const chatOutput = $('chat-output');
+const STEP = 8; // floating panels move and resize in 8 px steps
 
-const KEY = 'jarvis.cli';
-const MIN = 200;
-const MAX = 480;
-const STEP = 8;
-const layout = { left: 280, right: 320, leftOn: true, rightOn: true };
-try { Object.assign(layout, JSON.parse(localStorage.getItem(KEY) ?? '{}')); } catch { /* defaults */ }
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(layout)); } catch { /* storage blocked */ } };
-const clamp = (v) => Math.min(MAX, Math.max(MIN, Math.round(v / STEP) * STEP));
-
-function applyLayout() {
-  // a hidden column gives its track (and its splitter's) back to the session
-  page.style.setProperty('--cli-left', layout.leftOn ? `${clamp(layout.left)}px` : '0px');
-  page.style.setProperty('--cli-sl', layout.leftOn ? '8px' : '0px');
-  page.style.setProperty('--cli-right', layout.rightOn ? `${clamp(layout.right)}px` : '0px');
-  page.style.setProperty('--cli-sr', layout.rightOn ? '8px' : '0px');
-  page.dataset.left = layout.leftOn ? 'on' : 'off';
-  page.dataset.right = layout.rightOn ? 'on' : 'off';
-  $('cli-toggle-left').setAttribute('aria-pressed', String(layout.leftOn));
-  $('cli-toggle-right').setAttribute('aria-pressed', String(layout.rightOn));
-}
-
-// --- splitters -----------------------------------------------------------
-function splitter(el, side) {
-  const set = (v) => { layout[side] = clamp(v); applyLayout(); };
-  el.addEventListener('pointerdown', (e) => {
-    el.setPointerCapture(e.pointerId);
-    el.classList.add('dragging');
-    const box = page.getBoundingClientRect();
-    const move = (m) => set(side === 'left' ? m.clientX - box.left : box.right - m.clientX);
-    const done = () => {
-      el.classList.remove('dragging');
-      el.removeEventListener('pointermove', move);
-      el.removeEventListener('pointerup', done);
-      el.removeEventListener('pointercancel', done);
-      save();
-    };
-    el.addEventListener('pointermove', move);
-    el.addEventListener('pointerup', done);
-    el.addEventListener('pointercancel', done);
-  });
-  el.addEventListener('keydown', (e) => {
-    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    e.preventDefault();
-    const grow = (e.key === 'ArrowRight') === (side === 'left');
-    set(layout[side] + (grow ? STEP : -STEP) * (e.shiftKey ? 4 : 2));
-    save();
-  });
-}
-splitter($('cli-split-left'), 'left');
-splitter($('cli-split-right'), 'right');
-
-for (const [id, key] of [['cli-toggle-left', 'leftOn'], ['cli-toggle-right', 'rightOn']]) {
-  $(id).addEventListener('click', () => { layout[key] = !layout[key]; applyLayout(); save(); });
-}
-applyLayout();
-
-// --- session: shell.js moves the conversation into #cli-session-body while this page is open ---
 document.addEventListener('jarvis:page', (e) => {
   if (e.detail.page === 'code') { refreshTree(); refreshContext(); syncApprovals(); }
 });
@@ -130,7 +72,7 @@ const fmtK = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n));
 function refreshContext() {
   const { ctxUsed, ctxMax } = getModelHealth();
   const known = ctxUsed != null && ctxMax;
-  $('cli-model').textContent = getPreset().model.split('/').pop();
+  $('cli-model').textContent = (serverMode() ? (state.health?.model?.modelId ?? '') : getPreset().model).split('/').pop();
   $('cli-ctx-val').textContent = known ? `${fmtK(ctxUsed)} / ${fmtK(ctxMax)}` : '--';
   $('cli-ctx-bar').style.transform = `scaleX(${known ? Math.min(1, ctxUsed / ctxMax) : 0})`;
 }
@@ -196,7 +138,7 @@ function openFloat(id, title, { x, y, w = 560, h = 360, cls = '', sub = '' } = {
   return panel;
 }
 
-// Artifacts opened while this page is showing (whiteboard.js) float over it.
+// Anything else that wants a floating panel over the page (the diffs and approvals above use the same one).
 document.addEventListener('jarvis:float', (e) => {
   const { id, title, mount } = e.detail;
   const had = floats.get(id);
