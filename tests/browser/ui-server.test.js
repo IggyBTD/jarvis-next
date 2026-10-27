@@ -74,6 +74,18 @@ test('the switcher lists only the ticked models; Settings lists all of them with
   await page.keyboard.press('Escape');
 });
 
+test('the permission mode is held by the server: picked in the app, it survives a reload', async () => {
+  await page.click('.mode-btn[data-page="code"]');
+  await page.click('#mode-chip'); await page.click('#mode-menu [data-mode="accept-edits"]');
+  await page.evaluate(() => { try { localStorage.removeItem('jarvis.mode'); } catch { /* none */ } }); // only the server remembers it now
+  await page.reload();
+  await page.waitForSelector('#target-switch:not([hidden])');
+  await page.click('.mode-btn[data-page="code"]');
+  await waitFor(async () => (await page.textContent('#mode-chip')).trim() === 'Accept edits');
+  await page.click('#mode-chip'); await page.click('#mode-menu [data-mode="auto"]');
+  await page.click('.mode-btn[data-page="chat"]');
+});
+
 test('the effort level is plain text beside the model name; hovering outlines it, clicking opens the four levels, and the choice is sent with the message', async () => {
   assert.equal((await page.textContent('#effort-chip')).trim(), 'Medium');
   assert.equal(await page.locator('#effort-chip .icon, #model-chip .icon').count(), 0); // no arrows

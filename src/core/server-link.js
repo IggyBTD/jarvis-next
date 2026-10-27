@@ -139,7 +139,7 @@ function ingestActive() {
 function handle(m) {
   switch (m.type) {
     case 'state':
-      Object.assign(state, { target: m.target, machines: m.machines, health: m.health, pending: m.pendingApprovals ?? [], telemetry: m.telemetry ?? {}, digest: m.digest, agentTasks: m.agentTasks ?? [], reminders: m.reminders ?? [], voice: m.voice ?? { enabled: false } });
+      Object.assign(state, { target: m.target, machines: m.machines, health: m.health, pending: m.pendingApprovals ?? [], telemetry: m.telemetry ?? {}, digest: m.digest, agentTasks: m.agentTasks ?? [], reminders: m.reminders ?? [], voice: m.voice ?? { enabled: false }, permissionMode: m.permissionMode ?? state.permissionMode });
       state.conversation = { ...m.conversation, id: m.conversation?.id ?? convId };
       setStatus('online');
       ingestActive();
@@ -147,6 +147,7 @@ function handle(m) {
       // the server's default conversation is "main"; this window talks in its own
       if (m.conversation?.streaming && m.conversation.id === convId) emit({ type: 'resume', text: m.conversation.streaming.text });
       return;
+    case 'mode': state.permissionMode = m.mode; emit({ type: 'mode' }); return;
     case 'target.changed': state.target = m.to; ingestActive(); emit({ type: 'target', from: m.from, to: m.to }); return;
     case 'target.rejected': state.target = m.target; emit({ type: 'target', rejected: true, reason: m.reason }); return;
     case 'health': state.health = m; for (const [id, v] of Object.entries(m.machines ?? {})) if (state.machines[id]) state.machines[id].online = v.online; emit({ type: 'health' }); return;
@@ -176,6 +177,8 @@ export function sendChat(text) {
   return { ok: true };
 }
 export const abortChat = () => send({ type: 'chat.abort', convId });
+export function setPermissionMode(mode) { if (isOnline()) send({ type: 'mode.set', mode }); }
+
 export function setTarget(target) {
   if (!isOnline() || target === state.target) return;
   const previous = state.target;

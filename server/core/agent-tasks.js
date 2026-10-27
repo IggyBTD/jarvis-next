@@ -5,11 +5,12 @@
 import path from 'node:path';
 import { readJson, writeJsonAtomic, newId, clip, wrapUntrusted } from '../../shared/util.js';
 import { discoverRoutes } from '../../shared/opencode-routes.js';
+import { PLAN_NOTE } from '../../shared/permission-modes.js';
 
 const ACTIVE = new Set(['queued', 'running']);
 const WORKSPACE_RE = /^(?!.*\.\.)[\w .-]+(\/[\w .-]+)*$/;
 
-export function createAgentTasks({ router, bus, audit, conversations, dataDir, taskTimeoutMs, now = () => new Date(), setTimer = setTimeout }) {
+export function createAgentTasks({ router, bus, audit, conversations, dataDir, taskTimeoutMs, modes, now = () => new Date(), setTimer = setTimeout }) {
   const file = path.join(dataDir, 'agent-tasks.json');
   let tasks = readJson(file, []).map((t) => (ACTIVE.has(t.state) ? { ...t, state: 'failed', error: 'the server restarted while this task was running', endedAt: now().toISOString() } : t));
   const timers = new Map();   // task id -> timeout handle
@@ -76,7 +77,7 @@ export function createAgentTasks({ router, bus, audit, conversations, dataDir, t
       save();
       timers.set(t.id, setTimer(() => { abort(t.id, 'timeout').catch(() => {}); }, taskTimeoutMs));
       timers.get(t.id)?.unref?.();
-      const text = `${t.workspace ? `Work in the subfolder "${t.workspace}" of the workspace.\n\n` : ''}${t.prompt}`;
+      const text = `${modes?.get?.() === 'plan' ? `${PLAN_NOTE}\n\n` : ''}${t.workspace ? `Work in the subfolder "${t.workspace}" of the workspace.\n\n` : ''}${t.prompt}`;
       const body = { parts: [{ type: 'text', text }] };
       if (routes.promptAsync) {
         const r = await caps.opencode('POST', `/session/${t.sessionID}/prompt_async`, body);

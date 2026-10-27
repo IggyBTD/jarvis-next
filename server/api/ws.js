@@ -9,7 +9,7 @@ import { BusyError } from '../core/orchestrator.js';
 const DEFAULT_CONV = 'main';
 const MAX_BUFFER = 8 * 1024 * 1024;
 
-export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks, reminders, voice, wake, log = () => {} }) {
+export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks, modes, reminders, voice, wake, log = () => {} }) {
   const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_FRAME, perMessageDeflate: false, handleProtocols: (protocols) => (protocols.has('jarvis.v1') ? 'jarvis.v1' : false) });
   const clients = new Set();
   const streams = new Map(); // convId -> text of the reply being written
@@ -37,7 +37,7 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
       type: 'state', target: targetState.get(), machines: Object.fromEntries(Object.entries(machines).map(([id, m]) => [id, { label: m.label, os: m.os, online: h.machines[id]?.online ?? false }])),
       health: h, pendingApprovals: gate.pending(), telemetry: telemetry?.snapshot() ?? {}, digest: digest?.latestMeta?.() ?? null,
       conversation: { id: convId, title: conv?.title ?? '', messages: conv ? conversations.recent(conv) : [], streaming: streams.has(convId) ? { text: streams.get(convId) } : null },
-      agentTasks: agentTasks?.list?.() ?? [], reminders: reminders?.missedFor?.() ?? [], voice: voice ? { enabled: true } : { enabled: false },
+      permissionMode: modes?.get() ?? 'auto', agentTasks: agentTasks?.list?.() ?? [], reminders: reminders?.missedFor?.() ?? [], voice: voice ? { enabled: true } : { enabled: false },
     };
   }
 
@@ -50,6 +50,7 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
       orchestrator.runTurn({ convId, text: m.text, source: 'user', effort: m.effort }).catch((e) => send(c, { type: 'chat.error', convId, reason: e instanceof BusyError ? e.message : 'internal error' }));
     },
     'chat.abort'(c, m) { orchestrator.abort(m.convId); },
+    'mode.set'(c, m) { modes.set(m.mode); },
     'target.set'(c, m) {
       try { targetState.set(m.target, { by: 'ui', clientId: c.id }); send(c, { type: 'target.ack', id: m.id, target: m.target }); } catch (e) { send(c, { type: 'target.rejected', id: m.id, target: targetState.get(), reason: e.message }); }
     },

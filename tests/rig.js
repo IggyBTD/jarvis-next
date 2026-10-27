@@ -67,6 +67,7 @@ import { createAuth } from '../server/core/auth.js';
 import { createLlmProxy } from '../server/core/llm-proxy.js';
 import { createHttpHandler, createHealth } from '../server/api/http.js';
 import { attachWs } from '../server/api/ws.js';
+import { createPermissionMode } from '../server/core/permission-mode.js';
 import { createTelemetry } from '../server/telemetry/index.js';
 
 export async function startApi(r, extra = {}) {
@@ -76,7 +77,7 @@ export async function startApi(r, extra = {}) {
   const llmProxy = createLlmProxy({ llm: r.llm, queue: r.queue, modelId: 'local', audit: r.audit });
   const server = http.createServer();
   const telemetry = extra.telemetry ?? createTelemetry({ bus: r.bus, dataDir: r.cfg.dataDir, providers: {} });
-  const wsApi = attachWs({ server, cfg: r.cfg, auth, bus: r.bus, gate: r.gate, orchestrator: r.orchestrator, targetState: r.target, prompts: r.prompts, router: r.router, conversations: r.conversations, telemetry, health, ...extra });
+  const wsApi = attachWs({ server, cfg: r.cfg, auth, bus: r.bus, gate: r.gate, orchestrator: r.orchestrator, targetState: r.target, prompts: r.prompts, router: r.router, conversations: r.conversations, telemetry, health, modes: createPermissionMode({ dataDir: r.cfg.dataDir, bus: r.bus }), ...extra });
   let build = wsApi.buildState;
   const handler = createHttpHandler({ cfg: r.cfg, auth, llmProxy, models: { list: () => r.llm.listModels(), select: (k) => r.llm.selectModel(k) }, environment: async () => ({ machine: 'pc', label: 'PC', hostname: 'pc-host', os: 'Windows 11', user: 'tester', folder: '/ws', branch: 'main', dirty: 2, repo: true, remote: { on: true, url: 'http://100.1.2.3:7410', devices: 1 } }), health, audit: r.audit, conversations: r.conversations, digest: extra.digest, osint: extra.osint, buildState: () => build() });
   server.on('request', handler);

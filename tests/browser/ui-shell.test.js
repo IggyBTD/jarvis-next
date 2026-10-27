@@ -138,13 +138,20 @@ test('the panel: one Overview tab that cannot be closed, with cards that fold; o
   assert.match(await page.textContent('#env-pc'), /pc-host/);
 });
 
-test('Code: the Plan chip shows only there and switches plan mode; the changes and tasks tabs are in the panel', async () => {
-  assert.equal(await page.isVisible('#cli-toggle-plan'), false);
+test('Code: the permission mode shows only there (five modes, first under the input), plus is left of the input and the mic right of it; the changes and tasks cards are in the panel', async () => {
+  assert.equal(await page.isVisible('#mode-chip'), false);
   await page.click('.mode-btn[data-page="code"]');
-  assert.equal(await page.isVisible('#cli-toggle-plan'), true);
-  await page.click('#cli-toggle-plan');
-  assert.equal(await page.getAttribute('#cli-toggle-plan', 'aria-pressed'), 'true');
-  await page.click('#cli-toggle-plan');
+  assert.equal(await page.isVisible('#mode-chip'), true);
+  const box = (sel) => page.$eval(sel, (e) => { const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom }; });
+  const [plus, input, mic, bar, web, mode] = await Promise.all(['#dock-attach', '#hud-chat-input', '#dock-mic', '.composer-bar', '#dock-web', '#mode-chip'].map(box));
+  assert.ok(plus.r <= input.l && input.r <= mic.l, 'plus, input, mic from left to right');
+  assert.ok(mode.t >= input.b && mode.l < web.l, 'the mode is under the input, before the web button');
+  assert.ok(web.t >= input.b, 'web and link stay under the input');
+  await page.click('#mode-chip');
+  assert.deepEqual(await page.locator('#mode-menu [data-mode]').evaluateAll((b) => b.map((x) => x.textContent.split(/(?=[A-Z][a-z]+ )/)[0].trim().slice(0, 6))), ['Auto', 'Manual', 'Accept', 'Plan', 'Bypass']);
+  await page.click('#mode-menu [data-mode="plan"]');
+  assert.equal((await page.textContent('#mode-chip')).trim(), 'Plan');
+  await page.click('#mode-chip'); await page.click('#mode-menu [data-mode="auto"]');
   for (const id of ['changes', 'tasks']) assert.equal(await page.isVisible(`[data-card="${id}"]`), true);
   await page.click('.mode-btn[data-page="chat"]');
 });

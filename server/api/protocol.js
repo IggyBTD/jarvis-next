@@ -2,6 +2,7 @@
 // only for voice audio (shared/voice-frames.js). parseClientMessage() validates shape and size before anything acts on it.
 import { validate } from '../../shared/schema.js';
 import { EFFORTS } from '../../shared/effort.js';
+import { MODES } from '../../shared/permission-modes.js';
 
 export const MAX_FRAME = 256 * 1024;
 const str = (max = 200) => ({ type: 'string', minLength: 1, maxLength: max });
@@ -13,6 +14,7 @@ export const CLIENT_MESSAGES = {
   ping: msg({}),
   'chat.send': msg({ convId: str(64), text: { type: 'string', minLength: 1, maxLength: 8000 }, effort: { enum: EFFORTS } }, ['text']),
   'chat.abort': msg({ convId: str(64) }, ['convId']),
+  'mode.set': msg({ mode: { enum: MODES } }, ['mode']),
   'target.set': msg({ target: { enum: ['pc', 'mac'] } }, ['target']),
   'gate.reply': msg({ decision: { enum: ['approve', 'deny'] } }, ['id', 'decision']),
   'agent.task': msg({ prompt: { type: 'string', minLength: 1, maxLength: 8000 }, workspace: optStr(200) }, ['prompt']),
@@ -42,5 +44,5 @@ export function parseClientMessage(raw) {
 export const BROADCAST = new Set([
   'chat.delta', 'chat.done', 'chat.error', 'chat.title', 'tool.call', 'tool.result',
   'gate.request', 'gate.resolved', 'gate.queued', 'target.changed', 'telemetry', 'agent.status',
-  'digest.ready', 'digest.error', 'health', 'reminder.fire', 'auth.banner', 'chat.note',
+  'digest.ready', 'digest.error', 'health', 'reminder.fire', 'auth.banner', 'chat.note', 'mode',
 ]);

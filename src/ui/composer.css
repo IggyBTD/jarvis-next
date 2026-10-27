@@ -28,10 +28,6 @@
 #ctx-meter::before { content: ""; flex: none; width: var(--s-3); height: var(--s-3); border-radius: 50%; background: conic-gradient(var(--accent-mid) calc(var(--ctx, 0) * 1turn), var(--surface-4) 0); -webkit-mask: radial-gradient(circle, transparent 3px, var(--text) 3.5px); mask: radial-gradient(circle, transparent 3px, var(--text) 3.5px); }
 #ctx-meter[data-level="mid"]::before { background: conic-gradient(var(--warm) calc(var(--ctx, 0) * 1turn), var(--surface-4) 0); }
 #ctx-meter[data-level="high"]::before { background: conic-gradient(var(--danger) calc(var(--ctx, 0) * 1turn), var(--surface-4) 0); }
-.plan-chip { flex: none; height: var(--h-sm); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-pill); background: transparent; color: var(--text-2); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
-.plan-chip:hover { background: var(--surface-3); color: var(--text); }
-.plan-chip[aria-pressed="true"] { background: var(--accent-wash); color: var(--text); border-color: var(--accent); }
-body:not([data-page="code"]) .plan-chip { display: none; }
 .send-btn, .stop-btn { position: relative; flex: none; width: var(--h-md); height: var(--h-md); display: grid; place-items: center; border: 0; border-radius: var(--r-sm); transition: background-color var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out); }
 .send-btn { background: var(--accent); }
 .send-btn:hover { opacity: 0.88; }

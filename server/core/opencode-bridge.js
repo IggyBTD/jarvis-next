@@ -6,10 +6,25 @@
 import { parsePermission, replyRequest, discoverRoutes } from '../../shared/opencode-routes.js';
 import { classifyCommand } from './policy.js';
 import { clip } from '../../shared/util.js';
+import { isArming } from '../../shared/opencode-arming.js';
 
 const EDIT_KINDS = new Set(['edit', 'write', 'patch', 'multiedit']);
 
-export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, machines, log = () => {}, reconnectDelayMs = 500 }) {
+// What a mode answers without asking: 'once', 'reject', or null (ask the person). T3 (outside the workspace, destructive commands,
+// files that arm later commands) is never answered here except by Plan, which refuses all of it, and by Manual, which asks.
+export function modeAnswer(mode, { kind, cls, tier, armed }) {
+  const isEdit = EDIT_KINDS.has(kind);
+  const isShell = kind === 'bash' || kind === 'shell';
+  const safe = tier !== 'T3' && !armed;
+  if (mode === 'plan') return (isShell && cls?.class === 'allow') || kind === 'webfetch' ? 'once' : 'reject';
+  if (mode === 'manual') return null;
+  if (mode === 'accept-edits') return isEdit && safe ? 'once' : null;
+  if (mode === 'auto') return safe && (isEdit || isShell || kind === 'webfetch') ? 'once' : null;
+  if (mode === 'bypass') return safe ? 'once' : null;
+  return null;
+}
+
+export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, machines, modes, log = () => {}, reconnectDelayMs = 500 }) {
   const state = new Map();     // machine -> { routes, inflight: Map<permissionId, AbortController>, seen: Set }
   const stop = new AbortController();
   const get = (m) => { if (!state.has(m)) state.set(m, { routes: null, inflight: new Map(), seen: new Set() }); return state.get(m); };
@@ -39,8 +54,10 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, ma
     let action = `opencode_${p.kind}`;
     let args;
     let summary;
+    let cls = null;
+    let armed = false;
     if (p.kind === 'bash' || p.kind === 'shell') {
-      const cls = classifyCommand(p.command, policyCfg.opencode);
+      cls = classifyCommand(p.command, policyCfg.opencode);
       args = { command: p.command ?? '' };
       if (cls.class === 'allow') {
         await audit.append({ ...base, action, args, tier: 'T0', decision: 'auto', outcome: 'approved', reason: cls.reason });
@@ -51,7 +68,9 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, ma
       summary = `The coding agent wants to run a command on ${machines[machine].label}: ${clip(p.command ?? '(empty)', 300)}`;
     } else if (EDIT_KINDS.has(p.kind)) {
       args = { paths: p.patterns.slice(0, 10), ...(p.metadata?.filepath ? { file: p.metadata.filepath } : {}) };
-      tier = outsideWorkspace([...p.patterns, p.metadata?.filepath].filter(Boolean), machines[machine].workspaceDir) ? 'T3' : 'T2';
+      const paths = [...p.patterns, p.metadata?.filepath].filter(Boolean);
+      armed = paths.some(isArming);
+      tier = outsideWorkspace(paths, machines[machine].workspaceDir) ? 'T3' : 'T2';
       summary = `The coding agent wants to change ${p.patterns.slice(0, 3).join(', ') || 'a file'} on ${machines[machine].label}${tier === 'T3' ? ' (outside the workspace)' : ''}.`;
     } else if (p.kind === 'webfetch') {
       args = { url: p.patterns[0] ?? p.metadata?.url ?? '' };
@@ -65,6 +84,13 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, ma
       summary = `The coding agent asks for permission "${p.kind}" on ${machines[machine].label}.`;
     }
 
+    const mode = modes?.get?.() ?? 'manual';
+    const byMode = modeAnswer(mode, { kind: p.kind, cls, tier, armed });
+    if (byMode) {
+      await audit.append({ ...base, action, args, tier, decision: byMode === 'once' ? 'auto' : 'deny', outcome: byMode === 'once' ? 'approved' : 'rejected', reason: `permission mode ${mode}` });
+      await respond(machine, p, byMode);
+      return;
+    }
     const ctl = new AbortController();
     s.inflight.set(p.id, ctl);
     const answer = await gate.requestApproval({ action, args, tier, target: machine, source: 'agent', taskId: task?.id, summary, signal: ctl.signal });

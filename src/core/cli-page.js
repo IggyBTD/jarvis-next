@@ -261,6 +261,3 @@ function renderTasks(list) {
 onTasks(renderTasks);
 renderTasks(getTasks());
 
-const planBtn = $('cli-toggle-plan');
-planBtn.addEventListener('click', () => setPlanMode(!isPlanMode()));
-onPlanMode((on) => planBtn.setAttribute('aria-pressed', String(on)));
