@@ -73,7 +73,7 @@ export function createAgent({ cfg, machineId, registry, sidecars = {}, tokens, l
         res.on('close', () => { clearInterval(beat); sseClients.delete(res); });
         return undefined;
       }
-      const side = p.match(/^\/(opencode|browser)(\/.*)?$/);
+      const side = p.match(/^\/(opencode|browser|claude)(\/.*)?$/);
       if (side) {
         const sub = decodeURIComponent(side[2] ?? '/');
         if (SHELL_ROUTE.test(sub) || SHELL_ROUTE.test(side[2] ?? '')) return send(res, 403, { error: 'this route is never proxied' });

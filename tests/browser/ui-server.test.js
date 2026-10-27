@@ -61,7 +61,7 @@ test('the model chip and the context meter come from the server, not from an LM 
 
 test('the switcher lists only the ticked models; Settings lists all of them with their full names and a checkbox each', async () => {
   await page.click('#model-chip');
-  await waitFor(async () => (await page.locator('#model-server-list button').count()) === 1); // the coder model is not one of the three shown by default
+  await waitFor(async () => (await page.locator('#model-server-list button:not(#model-claude)').count()) === 1); // the coder model is not one of the three shown by default
   await page.keyboard.press('Escape');
   await page.click('#sidebar [data-page="settings"]');
   await page.waitForSelector('#set-models-list input[type="checkbox"]');
@@ -70,8 +70,23 @@ test('the switcher lists only the ticked models; Settings lists all of them with
   await page.locator('#set-models-list input').nth(1).check();
   await page.click('.mode-btn[data-page="chat"]');
   await page.click('#model-chip');
-  await waitFor(async () => (await page.locator('#model-server-list button').count()) === 2);
+  await waitFor(async () => (await page.locator('#model-server-list button:not(#model-claude)').count()) === 2);
   await page.keyboard.press('Escape');
+});
+
+test('Claude Code is a row in the model menu; picking it makes it the coder on the Code page only, and a local model puts it back', async () => {
+  await page.click('.mode-btn[data-page="code"]');
+  await page.click('#model-chip');
+  await page.click('#model-claude');
+  await waitFor(async () => (await page.textContent('#model-chip-label')).trim() === 'Claude Code');
+  await page.click('.mode-btn[data-page="chat"]');
+  assert.notEqual((await page.textContent('#model-chip-label')).trim(), 'Claude Code'); // chat keeps using the local model
+  await page.click('.mode-btn[data-page="code"]');
+  assert.equal((await page.textContent('#model-chip-label')).trim(), 'Claude Code');
+  await page.click('#model-chip');
+  await page.click('#model-server-list button:not(#model-claude)');
+  await waitFor(async () => (await page.textContent('#model-chip-label')).trim() !== 'Claude Code');
+  await page.click('.mode-btn[data-page="chat"]');
 });
 
 test('the permission mode is held by the server: picked in the app, it survives a reload', async () => {
@@ -104,18 +119,18 @@ test('the effort level is plain text beside the model name; hovering outlines it
 });
 
 test('the model menu lists the PC\'s models with the loaded one marked; picking one loads it on the PC and renames the chip', async () => {
-  rig.model.native.loaded.clear(); rig.model.native.loaded.set('unsloth/qwen3.8-27b', 65536);
+  rig.model.native.loaded.clear(); rig.model.native.loaded.set('unsloth/qwen3.8-27b', 65536); rig.model.native.log.length = 0;
   await page.click('#model-chip');
-  await page.waitForSelector('#model-server-list button');
+  await page.waitForSelector('#model-server-list button:not(#model-claude)');
   assert.equal(await page.locator('#model-menu [data-preset]:visible').count(), 0); // the preset buttons are for the computer's own LM Studio
-  const rows = await page.locator('#model-server-list button').evaluateAll((bs) => bs.map((b) => ({ name: b.querySelector('.m-name').textContent, loaded: b.dataset.loaded, current: b.getAttribute('aria-current'), sub: b.querySelector('.m-sub').textContent })));
+  const rows = await page.locator('#model-server-list button:not(#model-claude)').evaluateAll((bs) => bs.map((b) => ({ name: b.querySelector('.m-name').textContent, loaded: b.dataset.loaded, current: b.getAttribute('aria-current'), sub: b.querySelector('.m-sub').textContent })));
   assert.equal(rows.length, 2);
   const active = rows.find((r) => r.current === 'true');
   assert.equal(active.loaded, 'true');
   assert.match(active.sub, /active, loaded · 64k context/);
   assert.match(rows.find((r) => r.current !== 'true').sub, /^not loaded$/);
   await page.screenshot({ path: path.join(SHOTS, 'server-model-menu.png'), clip: { x: 0, y: 0, width: 520, height: 320 } });
-  await page.click('#model-server-list button[data-loaded="false"]');
+  await page.click('#model-server-list button:not(#model-claude)[data-loaded="false"]');
   await waitFor(async () => (await page.textContent('#model-chip-label')).trim() === 'Qwen 3 Coder 30B');
   assert.equal(await page.getAttribute('#model-chip', 'data-loaded'), 'yes');
   assert.deepEqual(rig.model.native.log.map((x) => x.path.split('/').pop()), ['unload', 'load']);

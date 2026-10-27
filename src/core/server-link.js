@@ -139,7 +139,7 @@ function ingestActive() {
 function handle(m) {
   switch (m.type) {
     case 'state':
-      Object.assign(state, { target: m.target, machines: m.machines, health: m.health, pending: m.pendingApprovals ?? [], telemetry: m.telemetry ?? {}, digest: m.digest, agentTasks: m.agentTasks ?? [], reminders: m.reminders ?? [], voice: m.voice ?? { enabled: false }, permissionMode: m.permissionMode ?? state.permissionMode });
+      Object.assign(state, { target: m.target, machines: m.machines, health: m.health, pending: m.pendingApprovals ?? [], telemetry: m.telemetry ?? {}, digest: m.digest, agentTasks: m.agentTasks ?? [], reminders: m.reminders ?? [], voice: m.voice ?? { enabled: false }, permissionMode: m.permissionMode ?? state.permissionMode, codeBackend: m.codeBackend ?? state.codeBackend });
       state.conversation = { ...m.conversation, id: m.conversation?.id ?? convId };
       setStatus('online');
       ingestActive();
@@ -148,6 +148,7 @@ function handle(m) {
       if (m.conversation?.streaming && m.conversation.id === convId) emit({ type: 'resume', text: m.conversation.streaming.text });
       return;
     case 'mode': state.permissionMode = m.mode; emit({ type: 'mode' }); return;
+    case 'backend': state.codeBackend = m.backend; emit({ type: 'backend' }); return;
     case 'target.changed': state.target = m.to; ingestActive(); emit({ type: 'target', from: m.from, to: m.to }); return;
     case 'target.rejected': state.target = m.target; emit({ type: 'target', rejected: true, reason: m.reason }); return;
     case 'health': state.health = m; for (const [id, v] of Object.entries(m.machines ?? {})) if (state.machines[id]) state.machines[id].online = v.online; emit({ type: 'health' }); return;
@@ -171,12 +172,13 @@ function handle(m) {
 }
 
 // ---- actions ---------------------------------------------------------------------------------------------------------
-export function sendChat(text) {
+export function sendChat(text, { code = false } = {}) {
   if (!isOnline()) return { ok: false, reason: state.status === 'connecting' ? 'Still connecting to the JARVIS server.' : 'The JARVIS server is not reachable. Nothing was sent, and nothing was run on this computer instead.' };
-  send({ type: 'chat.send', convId, text, effort: getEffort() });
+  send({ type: 'chat.send', convId, text, effort: getEffort(), ...(code ? { code: true } : {}) });
   return { ok: true };
 }
 export const abortChat = () => send({ type: 'chat.abort', convId });
+export function setCodeBackend(backend) { if (isOnline()) { state.codeBackend = backend; send({ type: 'backend.set', backend }); emit({ type: 'backend' }); } }
 export function setPermissionMode(mode) { if (isOnline()) send({ type: 'mode.set', mode }); }
 
 export function setTarget(target) {

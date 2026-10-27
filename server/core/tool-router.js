@@ -169,6 +169,7 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
   function capabilities(target, ctx = {}) {
     return {
       opencode: (method, sub, body, o) => agent.opencode(target, method, sub, body, { signal: ctx.signal, ...o }),
+      claude: (method, sub, body, o) => agent.claude(target, method, sub, body, { signal: ctx.signal, ...o }),
       browser: (method, sub, body, o) => agent.browser(target, method, sub, body, { signal: ctx.signal, ...o }),
       events: (onEvent, o) => agent.events(target, onEvent, o),
       call: (name, args, o) => agent.call(target, name, args, { signal: ctx.signal, ...o }), // used by tool handlers that were already approved as a whole

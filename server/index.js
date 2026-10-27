@@ -24,6 +24,7 @@ import { createOrchestrator } from './core/orchestrator.js';
 import { createAgentTasks, registerAgentTaskTool } from './core/agent-tasks.js';
 import { createOpencodeBridge } from './core/opencode-bridge.js';
 import { createPermissionMode } from './core/permission-mode.js';
+import { createCodeBackend } from './core/code-backend.js';
 import { registerBrowserTools } from './core/browser-tools.js';
 import { createReminders, registerTimeTools } from './core/reminders.js';
 import { createMemory, registerMemoryTools } from './core/memory.js';
@@ -79,7 +80,8 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   const llmProxy = createLlmProxy({ llm, queue, audit, modelId: cfg.models.modelId });
 
   const modes = createPermissionMode({ dataDir: cfg.dataDir, bus });
-  const tasks = createAgentTasks({ router, bus, audit, conversations, dataDir: cfg.dataDir, taskTimeoutMs: cfg.policy.opencode.taskTimeoutMs, modes });
+  const backend = createCodeBackend({ dataDir: cfg.dataDir, bus });
+  const tasks = createAgentTasks({ router, bus, audit, conversations, dataDir: cfg.dataDir, taskTimeoutMs: cfg.policy.opencode.taskTimeoutMs, modes, backend });
   registerAgentTaskTool(router, tasks);
   registerBrowserTools(router, { notify: (m) => bus.publish(m.type, m) });
   const bridge = createOpencodeBridge({ router, gate, audit, tasks, policyCfg: cfg.policy, machines, modes, log });
@@ -111,7 +113,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   setInterval(() => { reload(); auth.reload(); }, 60_000).unref();
   const health = createHealth({ llm, queue, router, machines, contextLength: cfg.models.contextLength });
   const server = http.createServer();
-  wsApi = attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks: tasks, modes, reminders, voice, log });
+  wsApi = attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks: tasks, modes, backend, reminders, voice, log });
   // The Intel page's browser view: the guarded browser of whichever computer is the active target, driven by the person. Reaches the
   // agent only through router.capabilities (allowlisted routes). Everything but looking is audited; typed text is never logged.
   const VIEW = { navigate: 'view_navigate', click: 'view_click', type: 'view_type', press: 'view_press', scroll: 'view_scroll', back: 'view_back', forward: 'view_forward', reload: 'view_reload', close: 'close' };

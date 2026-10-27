@@ -12,9 +12,10 @@ const msg = (props, required = []) => ({ type: 'object', properties: { type: str
 export const CLIENT_MESSAGES = {
   hello: msg({ clientId: str(80), version: optStr(40), convId: str(64) }, ['clientId']),
   ping: msg({}),
-  'chat.send': msg({ convId: str(64), text: { type: 'string', minLength: 1, maxLength: 8000 }, effort: { enum: EFFORTS } }, ['text']),
+  'chat.send': msg({ convId: str(64), text: { type: 'string', minLength: 1, maxLength: 8000 }, effort: { enum: EFFORTS }, code: { type: 'boolean' } }, ['text']),
   'chat.abort': msg({ convId: str(64) }, ['convId']),
   'mode.set': msg({ mode: { enum: MODES } }, ['mode']),
+  'backend.set': msg({ backend: { enum: ['local', 'claude'] } }, ['backend']),
   'target.set': msg({ target: { enum: ['pc', 'mac'] } }, ['target']),
   'gate.reply': msg({ decision: { enum: ['approve', 'deny'] } }, ['id', 'decision']),
   'agent.task': msg({ prompt: { type: 'string', minLength: 1, maxLength: 8000 }, workspace: optStr(200) }, ['prompt']),
@@ -44,5 +45,5 @@ export function parseClientMessage(raw) {
 export const BROADCAST = new Set([
   'chat.delta', 'chat.done', 'chat.error', 'chat.title', 'tool.call', 'tool.result',
   'gate.request', 'gate.resolved', 'gate.queued', 'target.changed', 'telemetry', 'agent.status',
-  'digest.ready', 'digest.error', 'health', 'reminder.fire', 'auth.banner', 'chat.note', 'mode',
+  'digest.ready', 'digest.error', 'health', 'reminder.fire', 'auth.banner', 'chat.note', 'mode', 'backend',
 ]);

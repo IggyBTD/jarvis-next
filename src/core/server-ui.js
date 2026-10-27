@@ -2,7 +2,7 @@
 // the Server tab (connection, approvals waiting, agent tasks, digest, recent activity), reminders, and the settings card.
 // Everything here reads server-link.js; nothing here talks to the network or decides anything.
 import { isShown } from './models-shown.js';
-import { state, onLink, serverMode, setTarget, replyGate, getSettings, saveSettings, requestDigest, fetchAudit, wakePc, abortAgentTask, dismissReminder, newConversation, isOnline, fetchModels, chooseModel } from './server-link.js';
+import { setCodeBackend, state, onLink, serverMode, setTarget, replyGate, getSettings, saveSettings, requestDigest, fetchAudit, wakePc, abortAgentTask, dismissReminder, newConversation, isOnline, fetchModels, chooseModel } from './server-link.js';
 import { reportService } from './service-status.js';
 import { renderMarkdown } from './markdown.js';
 import { openWidget } from './whiteboard.js';
@@ -40,7 +40,12 @@ async function renderModelList() {
   if (!box.childElementCount) box.replaceChildren(note('Asking the PC for its models...'));
   const data = await fetchModels();
   if (!data) { box.replaceChildren(note(isOnline() ? 'The PC did not answer the model list. Try again in a moment.' : 'The JARVIS server is not reachable, so there is no model to pick. Check the server address and token in Settings.', !isOnline())); return; }
-  box.replaceChildren(...data.models.filter((m) => isShown(m.key)).map((m) => {
+  const claude = document.createElement('button');
+  claude.type = 'button'; claude.className = 'matrix-btn'; claude.setAttribute('role', 'menuitem'); claude.id = 'model-claude';
+  if (state.codeBackend === 'claude') claude.setAttribute('aria-current', 'true');
+  claude.append(Object.assign(document.createElement('span'), { className: 'm-name', textContent: 'Claude Code' }), Object.assign(document.createElement('span'), { className: 'm-sub', textContent: 'Writes the code in Code, on your Claude subscription' }));
+  claude.addEventListener('click', () => { setCodeBackend('claude'); $('model-menu').hidden = true; $('model-chip').setAttribute('aria-expanded', 'false'); paintModelChip(true); });
+  box.replaceChildren(claude, ...data.models.filter((m) => isShown(m.key)).map((m) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'matrix-btn'; b.setAttribute('role', 'menuitem');
     b.dataset.loaded = String(m.loaded);
@@ -54,6 +59,7 @@ async function renderModelList() {
 }
 
 async function pickModel(m) {
+  setCodeBackend('local');
   $('model-menu').hidden = true; $('model-chip').setAttribute('aria-expanded', 'false');
   switching = prettyModelName(m.name); paintModelChip(true);
   toast(`Loading ${prettyModelName(m.name)} on the PC. This can take a minute.`);
@@ -75,7 +81,8 @@ function paintModelChip(on) {
   }
   const m = state.health?.model;
   const name = m?.modelId ? prettyModelName(m.modelId) : isOnline() ? 'No model' : 'Server offline';
-  $('model-chip-label').textContent = switching ? `Loading ${switching}` : name;
+  const claudeCode = state.codeBackend === 'claude' && document.body.dataset.page === 'code';
+  $('model-chip-label').textContent = switching ? `Loading ${switching}` : claudeCode ? 'Claude Code' : name;
   chipEl.dataset.loaded = switching ? 'loading' : m?.modelPresent ? 'yes' : 'no';
   chipEl.title = switching ? 'Loading on the PC' : m?.modelPresent ? 'Loaded on the PC. Click to pick another model.' : m?.reachable === false ? 'The PC cannot reach LM Studio' : 'Not loaded. Pick a model to load it.';
 }
@@ -287,3 +294,4 @@ onLink((e) => {
 });
 document.addEventListener('jarvis:cleared', () => { if (serverMode()) newConversation(); });
 paint();
+document.addEventListener('jarvis:page', () => paintModelChip(serverMode()));

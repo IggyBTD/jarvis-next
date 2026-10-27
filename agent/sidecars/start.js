@@ -3,6 +3,7 @@
 import { loadTokens, modelTokenFor } from '../../server/core/auth.js';
 import { createOpencodeManager } from './opencode-manager.js';
 import { createBrowserManager } from './browser-manager.js';
+import { createClaudeManager } from './claude-manager.js';
 import { getInfo } from '../info.js';
 
 export async function startSidecars({ cfg, machineId, registry, log = () => {}, env = process.env, overrides = {} }) {
@@ -23,6 +24,8 @@ export async function startSidecars({ cfg, machineId, registry, log = () => {}, 
     stops.push(() => oc.stop());
     oc.start().then((ok) => log(ok ? `OpenCode ready (${oc.status().version})` : `OpenCode not started: ${oc.status().error}`)).catch((e) => log(`OpenCode failed: ${e.message}`));
   }
+
+  if (env.JARVIS_CLAUDE !== '0') sidecars.claude = createClaudeManager({ workspaceDir: registry.ctx.workspaceDir, policy: cfg.policy, env, log, ...overrides.claude });
 
   if (env.JARVIS_BROWSER !== '0') {
     const br = createBrowserManager({ cfg, machineId, workspaceDir: registry.ctx.workspaceDir, dataDir: cfg.dataDir, log, env, ...overrides.browser });

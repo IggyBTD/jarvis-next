@@ -266,7 +266,7 @@ let serverTurn = null;
 async function sendViaServer(text) {
   const { content, names } = takeAsContent(text);
   const body = typeof content === 'string' ? content : textOf(content);
-  const sent = sendChat(body);
+  const sent = sendChat(body, { code: currentPage() === 'code' });
   if (!sent.ok) {
     addLine('system', sent.reason, { meta: '' });
     input.value = text;

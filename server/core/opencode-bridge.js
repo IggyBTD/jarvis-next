@@ -120,6 +120,7 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, ma
   }
 
   function onEvent(machine, ev) {
+    if (ev.sidecar === 'claude') { tasks?.onClaudeEvent?.(machine, ev); return; }
     if (ev.sidecar !== 'opencode') return;
     if (ev.type === 'permission.asked' || ev.type === 'permission.updated') { handle(machine, ev.properties).catch((e) => log(`permission failed: ${e.message}`)); return; }
     if (ev.type === 'permission.replied') { get(machine).inflight.get(ev.properties?.requestID ?? ev.properties?.permissionID)?.abort(new Error('answered elsewhere')); return; }

@@ -14,6 +14,7 @@ const OPENCODE_ROUTES = [
   /^\/session$/, /^\/session\/[\w.-]+$/, /^\/session\/[\w.-]+\/(message|prompt_async|abort|diff|children)$/,
   /^\/session\/[\w.-]+\/permissions\/[\w.-]+$/, /^\/permission$/, /^\/permission\/[\w.-]+(\/reply)?$/,
 ];
+const CLAUDE_ROUTES = [/^\/(status|run|abort)$/];
 const BROWSER_ROUTES = [/^\/(health|navigate|click|type|press|read|screenshot|back|close|resume|confirm|state)$/, /^\/view_(navigate|click|type|press|scroll|back|forward|reload)$/];
 const SHELL = /(^|\/)shell(\/|$)/i;
 
@@ -68,6 +69,10 @@ export function createAgentClient({ machines, tokens, fetchImpl = fetch, sleepFn
       const p = safeProxyPath(sub, OPENCODE_ROUTES);
       const r = await req(id, method, `/opencode${p}`, { body, ...o });
       return r;
+    },
+    async claude(id, method, sub, body, o = {}) {
+      const p = safeProxyPath(sub, CLAUDE_ROUTES);
+      return req(id, method, `/claude${p}`, { body, ...o });
     },
     async browser(id, method, sub, body, o = {}) {
       const p = safeProxyPath(sub, BROWSER_ROUTES);

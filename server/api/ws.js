@@ -9,7 +9,7 @@ import { BusyError } from '../core/orchestrator.js';
 const DEFAULT_CONV = 'main';
 const MAX_BUFFER = 8 * 1024 * 1024;
 
-export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks, modes, reminders, voice, wake, log = () => {} }) {
+export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks, modes, backend, reminders, voice, wake, log = () => {} }) {
   const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_FRAME, perMessageDeflate: false, handleProtocols: (protocols) => (protocols.has('jarvis.v1') ? 'jarvis.v1' : false) });
   const clients = new Set();
   const streams = new Map(); // convId -> text of the reply being written
@@ -37,8 +37,18 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
       type: 'state', target: targetState.get(), machines: Object.fromEntries(Object.entries(machines).map(([id, m]) => [id, { label: m.label, os: m.os, online: h.machines[id]?.online ?? false }])),
       health: h, pendingApprovals: gate.pending(), telemetry: telemetry?.snapshot() ?? {}, digest: digest?.latestMeta?.() ?? null,
       conversation: { id: convId, title: conv?.title ?? '', messages: conv ? conversations.recent(conv) : [], streaming: streams.has(convId) ? { text: streams.get(convId) } : null },
-      permissionMode: modes?.get() ?? 'auto', agentTasks: agentTasks?.list?.() ?? [], reminders: reminders?.missedFor?.() ?? [], voice: voice ? { enabled: true } : { enabled: false },
+      permissionMode: modes?.get() ?? 'auto', codeBackend: backend?.get() ?? 'local', agentTasks: agentTasks?.list?.() ?? [], reminders: reminders?.missedFor?.() ?? [], voice: voice ? { enabled: true } : { enabled: false },
     };
+  }
+
+  // Code page with the Claude backend: the message is the coding task itself (no local model in between). The reply is written into the chat when the run ends.
+  function codeTurn(c, convId, text) {
+    if (!agentTasks) return send(c, { type: 'chat.error', convId, reason: 'The coding agent is not available.' });
+    const conv = conversations.ensure(convId);
+    const target = targetState.get();
+    conversations.append(conv, { role: 'user', content: text, target });
+    const r = agentTasks.start({ prompt: text }, { target, convId, direct: true });
+    if (r.error) send(c, { type: 'chat.error', convId, reason: r.error });
   }
 
   const handlers = {
@@ -47,10 +57,12 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
     'chat.send'(c, m) {
       const convId = m.convId ?? DEFAULT_CONV;
       if (orchestrator.isBusy(convId)) return send(c, { type: 'chat.error', convId, reason: 'The last message is still being answered.' });
+      if (m.code && backend?.get() === 'claude') return codeTurn(c, convId, m.text);
       orchestrator.runTurn({ convId, text: m.text, source: 'user', effort: m.effort }).catch((e) => send(c, { type: 'chat.error', convId, reason: e instanceof BusyError ? e.message : 'internal error' }));
     },
     'chat.abort'(c, m) { orchestrator.abort(m.convId); },
     'mode.set'(c, m) { modes.set(m.mode); },
+    'backend.set'(c, m) { backend.set(m.backend); },
     'target.set'(c, m) {
       try { targetState.set(m.target, { by: 'ui', clientId: c.id }); send(c, { type: 'target.ack', id: m.id, target: m.target }); } catch (e) { send(c, { type: 'target.rejected', id: m.id, target: targetState.get(), reason: e.message }); }
     },
