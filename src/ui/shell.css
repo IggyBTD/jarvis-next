@@ -181,3 +181,5 @@ body.ws-off .col-head { padding-right: var(--wc-w); }
 #model-wrap .chip-btn:hover, #model-wrap .chip-btn[aria-expanded="true"], #effort-wrap .chip-btn:hover, #effort-wrap .chip-btn[aria-expanded="true"] { background: transparent; border-color: var(--border-strong); }
 #effort-wrap { position: relative; flex: none; }
 #effort-menu { width: 280px; }
+/* short windows: the sidebar's rows pack tighter so the chat list keeps room above the footer */
+@media (max-height: 640px) { .nav-item { height: var(--h-sm); } #chat-list { min-height: var(--s-8); } }

@@ -221,6 +221,12 @@ test('Ctrl+L turns LaTeX mode on with a chip beside the input and no window; sym
   await page.keyboard.press('Control+l');
   await page.waitForSelector('#latex-chip:not([hidden])');
   assert.equal(await page.locator('dialog[open]').count(), 0);
+  await page.fill('#hud-chat-input', 'x^2/2 + sqrt(x)');
+  await page.waitForSelector('#latex-view .katex'); // the input shows the maths typeset, not the typed text
+  assert.equal(await page.$eval('#hud-chat-input', (e) => getComputedStyle(e).color), 'rgba(0, 0, 0, 0)');
+  await page.fill('#hud-chat-input', 'integral of x');
+  assert.equal(await page.isHidden('#latex-view'), true); // words stay as typed
+  await page.fill('#hud-chat-input', '');
   rig.model.script({ content: 'ok' });
   await send('x^2/2 + sqrt(x)');
   await waitFor(() => rig.model.requests.some((r) => r.body.messages.some((m) => typeof m.content === 'string' && m.content.includes(String.raw`$\frac{x^{2}}{2}+\sqrt{x}$`))));

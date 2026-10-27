@@ -39,6 +39,10 @@
         <button type="button" class="mode-btn" data-page="intel" aria-pressed="false" title="Intel: browser, and later OSINT and finance" aria-label="Intel"><span class="icon" data-icon="globe"></span></button>
       </div>
     </div>
+    <div id="target-switch" class="target-switch" role="group" aria-label="Computer JARVIS controls" hidden>
+      <button type="button" data-target="pc" aria-pressed="true"><i class="dot" aria-hidden="true"></i>PC</button>
+      <button type="button" data-target="mac" aria-pressed="false"><i class="dot" aria-hidden="true"></i>Mac</button>
+    </div>
     <div class="nav-group nav-main">
       <button type="button" id="new-chat" class="nav-item nav-new"><span class="icon" data-icon="plus"></span>New chat</button>
       <button type="button" id="chat-search-btn" class="nav-item" aria-pressed="false" title="Search chats (Ctrl+K)"><span class="icon" data-icon="search"></span>Search</button>
@@ -68,10 +72,6 @@
           <button type="button" class="col-title-btn" id="chat-title-btn" aria-haspopup="menu" title="Chat options"><span class="col-title" id="chat-title">New chat</span><span class="icon" data-icon="chevron-down" data-size="16"></span></button>
           <span class="col-grow" data-tauri-drag-region></span>
           <div class="tools">
-            <div id="target-switch" class="target-switch" role="group" aria-label="Computer JARVIS controls" hidden>
-              <button type="button" data-target="pc" aria-pressed="true"><i class="dot" aria-hidden="true"></i>PC</button>
-              <button type="button" data-target="mac" aria-pressed="false"><i class="dot" aria-hidden="true"></i>Mac</button>
-              </div>
             <button type="button" class="icon-btn" id="ws-toggle" aria-pressed="true" title="Show or hide the panel (Ctrl+B)" aria-label="Show or hide the panel"><span class="icon" data-icon="sidebar"></span></button>
           </div>
         </div>

@@ -35,13 +35,16 @@ test('routes: discovered from /doc for both versions; only once or reject can ev
   assert.equal(parsePermission({ id: 'a', type: 'edit', pattern: 'src/x.js' }).patterns[0], 'src/x.js');
 });
 
-test('generated config: provider through the JARVIS proxy, every shell command asks, arming files ask, nothing else runs', () => {
+test('generated config: provider through the JARVIS proxy, routine shell commands allow, destructive shell and arming files ask', () => {
   const c = buildConfig({ serverUrl: 'http://pc:7410/', modelToken: 'tok', contextLength: 65536 });
   assert.equal(c.provider.jarvis.options.baseURL, 'http://pc:7410/v1');
   assert.equal(c.provider.jarvis.options.apiKey, 'tok');
   assert.equal(c.model, 'jarvis/local');
   assert.deepEqual([c.formatter, c.lsp, c.share, c.autoupdate], [false, false, 'disabled', false]);
-  assert.deepEqual(c.permission.bash, { '*': 'ask' });
+  assert.equal(c.permission.bash['*'], 'allow');
+  assert.equal(c.permission.bash['rm *'], 'ask');
+  assert.equal(c.permission.bash['git reset --hard*'], 'ask');
+  assert.equal(c.permission.bash['curl*|*'], 'ask');
   assert.equal(c.permission.webfetch, 'ask');
   assert.equal(c.permission.external_directory, 'ask');
   assert.equal(c.permission.edit['*'], 'allow');

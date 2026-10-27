@@ -1,10 +1,10 @@
 /* JARVIS server client: the target switcher, the composer's target tag, the approval dialog, the Server tab and its
    settings card. Tokens only: no colours, radii, spaces or sizes of its own. */
 
-/* Target switcher in the title strip: which computer JARVIS controls. The active side is filled; the label is the signal, not the colour. */
-.target-switch { align-self: center; display: inline-flex; height: var(--h-md); margin-right: var(--s-2); padding: 2px; /* optical: 2px frame like the theme switch */ background: var(--surface-4); border-radius: var(--r-md); }
+/* Target switcher in the sidebar, under the mode switch: which computer JARVIS controls. The active side is filled; the label is the signal, not the colour. */
+.target-switch { display: flex; height: var(--h-md); margin: var(--s-2) var(--s-2) 0; padding: 2px; /* optical: 2px frame like the theme switch */ background: var(--surface-4); border-radius: var(--r-md); }
 .target-switch[hidden] { display: none; }
-.target-switch button { display: inline-flex; align-items: center; gap: var(--s-2); height: var(--h-sm); padding: 0 var(--s-3); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-2); font: 600 var(--fs-3)/var(--lh-sm) var(--sans); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+.target-switch button { display: flex; align-items: center; justify-content: center; gap: var(--s-2); flex: 1; height: var(--h-sm); padding: 0 var(--s-3); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-2); font: 600 var(--fs-3)/var(--lh-sm) var(--sans); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
 .target-switch button:hover:not([aria-pressed="true"]) { background: var(--surface-3); color: var(--text); }
 .target-switch button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
 .target-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

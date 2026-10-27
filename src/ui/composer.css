@@ -72,3 +72,6 @@ button.attach-chip:hover { color: var(--danger); border-color: var(--danger); }
 /* LaTeX mode signal beside the input */
 .latex-chip { align-self: center; flex: none; height: var(--h-sm); padding: 0 var(--s-2); border: 1px solid var(--accent); border-radius: var(--r-sm); background: transparent; color: var(--accent); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
 .latex-chip:hover { background: var(--surface-3); }
+/* LaTeX mode: the input shows the typeset maths over its own (invisible) text; the caret stays */
+#composer .chat-input.latex-hidden { color: transparent; caret-color: var(--text); }
+#composer #latex-view { position: absolute; display: flex; align-items: center; overflow: hidden; white-space: nowrap; pointer-events: none; color: var(--text); font-size: var(--fs-5); }
