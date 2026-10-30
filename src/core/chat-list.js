@@ -58,6 +58,7 @@ export async function refreshChats() {
   try { all = (await listSessions()) ?? []; } catch { /* a plain browser has no session store */ }
   sessions = Array.isArray(all) ? all.sort((a, b) => b.updated - a.updated) : [];
   paint();
+  syncHead();
 }
 
 function label(text) {
@@ -275,6 +276,33 @@ registerContext('#chat-title-btn', () => {
 });
 titleBtn.addEventListener('click', () => openMenuAt(titleBtn, titleBtn));
 
+// --- the header's own buttons: back and forward through the chats opened so far, pin, export, search ---------------------
+const hBack = $('head-back'), hFwd = $('head-fwd'), hPin = $('head-pin'), hExport = $('head-export'), hSearch = $('head-search');
+const openId = () => current || (serverMode() ? getConvId() : '');
+const openChat = () => sessions.find((x) => x.id === openId());
+let hist = [], pos = -1;
+function syncHead() {
+  const s = openChat();
+  hBack.disabled = pos <= 0;
+  hFwd.disabled = pos >= hist.length - 1;
+  hPin.disabled = hExport.disabled = !s;
+  hPin.setAttribute('aria-pressed', String(!!s?.pinned));
+  hPin.title = s?.pinned ? 'Unpin this chat' : 'Pin this chat to the top';
+}
+function go(d) {
+  const s = sessions.find((x) => x.id === hist[pos + d]);
+  if (!s) return;
+  pos += d; // moved before the chat opens, so its session-name event finds it already at the end of the trail
+  openSession(s);
+  syncHead();
+}
+hBack.addEventListener('click', () => go(-1));
+hFwd.addEventListener('click', () => go(1));
+hPin.addEventListener('click', () => { const s = openChat(); if (s) op({ op: 'patch', id: s.id, patch: { pinned: !s.pinned } }); });
+hExport.addEventListener('click', () => { const s = openChat(); if (s) op({ op: 'export', id: s.id }); });
+hSearch.addEventListener('click', () => { document.dispatchEvent(new CustomEvent('jarvis:search-chats')); });
+syncHead();
+
 registerContext('.folder-item', (el) => {
   const p = getProjectById(el.dataset.id);
   if (!p) return [];
@@ -297,6 +325,7 @@ let named = false;
 document.addEventListener('jarvis:session-name', (e) => {
   const { id, name, animate } = e.detail;
   current = id;
+  if (id && hist[pos] !== id) { hist = hist.slice(0, pos + 1); hist.push(id); pos = hist.length - 1; }
   named = !!name;
   if (name) {
     if (animate) { typing = { id, name }; typeInto(title, name); } else title.textContent = name;

@@ -129,6 +129,10 @@ body.ws-off .col-head { padding-right: var(--wc-w); }
 .col-title-btn:hover { background: var(--surface-3); }
 .col-title-btn .icon { flex: none; width: var(--icon-sm); height: var(--icon-sm); }
 .col-title { min-width: 0; font: 600 var(--fs-4)/var(--lh-md) var(--sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col-nav { display: flex; gap: var(--s-1); flex: none; margin-left: calc(-1 * var(--s-2)); }
+.col-nav + .col-title-btn { margin-left: 0; }
+.col-head .icon-btn:disabled { opacity: .4; pointer-events: none; }
+.col-head .icon-btn[aria-pressed="true"] { color: var(--accent); }
 .col-grow { flex: 1; align-self: stretch; }
 .col-head .tools { display: flex; align-items: center; gap: var(--s-2); }
 #ws-toggle .icon { transform: scaleX(-1); }
@@ -186,3 +190,12 @@ body.ws-off .col-head { padding-right: var(--wc-w); }
 #mode-wrap { position: relative; flex: none; }
 #mode-menu { right: auto; left: 0; width: 300px; }
 body:not([data-page="code"]) #mode-wrap { display: none; }
+
+/* Installed as an app in Edge or Chrome (manifest.webmanifest): the browser's own title bar is gone and it paints the window
+   buttons over the page's top-right corner, so ours step aside, the strips keep clear of the browser's buttons, and the strips drag the window. */
+@media (display-mode: window-controls-overlay) {
+  :root { --wc-w: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)); }
+  #titlebar { display: none; }
+  .side-top, .col-head, #ws-head, .intel-strip { -webkit-app-region: drag; app-region: drag; }
+  .side-top :is(button, input, .mode-switch), .col-head :is(button, input), #ws-head :is(button, [role="tab"]), .intel-strip :is(button, [role="tab"], input) { -webkit-app-region: no-drag; app-region: no-drag; }
+}

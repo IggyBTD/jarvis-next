@@ -6,6 +6,7 @@
   <meta name="color-scheme" content="light dark">
   <title>JARVIS NEXT</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
   <link rel="stylesheet" href="/src/styles/tokens.css">
   <link rel="stylesheet" href="/src/ui/base.css">
   <link rel="stylesheet" href="/src/ui/shell.css">
@@ -69,9 +70,16 @@
     <section id="page-chat" class="page" aria-label="Chat">
       <div id="center-workspace">
         <div class="col-head" data-tauri-drag-region>
+          <div class="col-nav">
+            <button type="button" class="icon-btn" id="head-back" title="Back to the previous chat" aria-label="Back to the previous chat" disabled><span class="icon" data-icon="chevron-left"></span></button>
+            <button type="button" class="icon-btn" id="head-fwd" title="Forward to the next chat" aria-label="Forward to the next chat" disabled><span class="icon" data-icon="chevron-right"></span></button>
+          </div>
           <button type="button" class="col-title-btn" id="chat-title-btn" aria-haspopup="menu" title="Chat options"><span class="col-title" id="chat-title">New chat</span><span class="icon" data-icon="chevron-down" data-size="16"></span></button>
           <span class="col-grow" data-tauri-drag-region></span>
           <div class="tools">
+            <button type="button" class="icon-btn" id="head-search" title="Search chats (Ctrl+K)" aria-label="Search chats"><span class="icon" data-icon="search"></span></button>
+            <button type="button" class="icon-btn" id="head-pin" aria-pressed="false" aria-label="Pin this chat" disabled><span class="icon" data-icon="pin"></span></button>
+            <button type="button" class="icon-btn" id="head-export" title="Export this chat as Markdown" aria-label="Export this chat as Markdown" disabled><span class="icon" data-icon="save"></span></button>
             <button type="button" class="icon-btn" id="ws-toggle" aria-pressed="true" title="Show or hide the panel (Ctrl+B)" aria-label="Show or hide the panel"><span class="icon" data-icon="sidebar"></span></button>
           </div>
         </div>
