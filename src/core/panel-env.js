@@ -3,6 +3,9 @@ import { serverFetch, serverMode, state, onLink } from './server-link.js';
 import { el } from './panel-ui.js';
 import { $, row, note, fill, onTabPaint } from './panel-ui.js';
 
+// the last part of a path: the folder's name (the full path stays in the row's tooltip)
+const leaf = (p) => (p ? p.split(/[\\/]/).filter(Boolean).pop() ?? p : '--');
+
 let env = null;
 let at = 0;
 let asking = false;
@@ -27,7 +30,7 @@ function paint() {
     return;
   }
   const m = state.machines?.[state.target];
-  $('env-sum').textContent = env?.project ? env.project.split(/[\/]/).filter(Boolean).pop() : '';
+  $('env-sum').textContent = env?.project ? leaf(env.project) : '';
   $('env-pc-title').textContent = env?.label ? `This ${env.label}` : 'This computer';
   fill('env-pc', env ? [row('Hostname', env.hostname ?? '--', m?.online ? 'ok' : 'bad'), row('Computer', env.label), row('System', env.os ?? '--'), row('User', env.user ?? '--')] : [note(state.status === 'online' ? 'Asking the PC...' : 'The server is not reachable.')]);
   const change = el('button', { type: 'button', className: 'link-btn', textContent: 'Change', title: 'Pick the project folder the branch is read from' });
@@ -38,9 +41,12 @@ function paint() {
     if (!r?.ok) document.dispatchEvent(new CustomEvent('jarvis:toast', { detail: { text: (await r?.json().catch(() => null))?.error ?? 'Could not set the folder.' } }));
     at = 0; load();
   });
-  const projectRow = row('Project', env?.project ?? '--');
+  const projectRow = row('Project', leaf(env?.project));
+  projectRow.title = env?.project ?? '';
   if (env && env.machine === 'pc') projectRow.append(change);
-  fill('env-folder', env ? [row('Working folder', env.folder ?? '--'), ...(env.project || env.machine === 'pc' ? [projectRow] : [])] : [note('--')]);
+  const folderRow = row('Working folder', leaf(env?.folder));
+  folderRow.title = env?.folder ?? '';
+  fill('env-folder', env ? [folderRow, ...(env.project || env.machine === 'pc' ? [projectRow] : [])] : [note('--')]);
   const branch = !env ? [note('--')]
     : env.repo === true ? [row('Current', env.branch ?? '--'), ...(env.dirty == null ? [] : [row('Uncommitted', env.dirty ? `${env.dirty} file${env.dirty === 1 ? '' : 's'}` : 'clean')])]
       : env.repo === false ? [note('The working folder is not a git repository.')]

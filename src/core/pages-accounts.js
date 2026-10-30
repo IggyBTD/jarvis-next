@@ -3,12 +3,13 @@
 // The other providers are not wired yet: an added account is saved on this device as "waiting for sign-in".
 import { currentPage } from './whiteboard-mode.js';
 import { serverFetch } from './server-link.js';
+import { BRAND } from './brand-icons.js';
 
 const KEY = 'jarvis.accounts';
 const KINDS = ['Personal', 'School', 'Work'];
 // clientId: null = OAuth not set up yet. `gives` is what the account would be used for.
 export const PROVIDERS = [
-  { id: 'google', name: 'Google', gives: 'Gmail, Calendar (read only)', clientId: null },
+  { id: 'google', name: 'Google', gives: 'Gmail, Calendar, Drive (read only)', clientId: null },
   { id: 'microsoft', name: 'Microsoft', gives: 'Outlook, Calendar, OneDrive, Teams', clientId: null },
   { id: 'apple', name: 'Apple', gives: 'iCloud Mail, Calendar, Drive', clientId: null },
   { id: 'github', name: 'GitHub', gives: 'Repositories, issues, pull requests', clientId: null },
@@ -72,9 +73,22 @@ function account(a, p) {
     if (isRemote(p)) { await serverFetch(`/accounts/google/${a.id}`, { method: 'DELETE' }).catch(() => {}); return loadRemote(); }
     accounts = accounts.filter((x) => x.id !== a.id); save(accounts); paint();
   });
-  return el('div', { className: 'set-row' },
-    el('span', {}, el('b', { textContent: a.name }), el('span', { className: 'acct-kind', textContent: a.kind }), a.email ? el('span', { className: 'does', textContent: ` ${a.email}` }) : ''),
+  return el('div', { className: 'acct-row' },
+    el('span', { className: 'acct-who' }, el('b', { textContent: a.name }), el('span', { className: 'acct-kind', textContent: a.kind })),
+    ...(a.email ? [el('span', { className: 'does', textContent: a.email })] : []),
     el('span', { className: 'does', textContent: isRemote(p) ? (a.status === 'error' && a.error ? a.error : STATUS[a.status] ?? '') : p.clientId ? 'Connected' : 'Waiting for sign-in setup' }), rm);
+}
+
+// the service's logo, in the text colour (one accent rule: no brand colours)
+function mark(p) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(NS, 'path');
+  path.setAttribute('d', BRAND[p.id]);
+  svg.append(path);
+  return el('span', { className: 'acct-mark' }, svg);
 }
 
 function paint() {
@@ -83,11 +97,11 @@ function paint() {
     const mine = isRemote(p) ? remote : accounts.filter((a) => a.provider === p.id);
     const add = el('button', { type: 'button', className: 'av-btn', textContent: mine.length ? 'Add another account' : 'Add account' });
     add.addEventListener('click', () => { adding = p.id; paint(); });
-    return el('div', { className: 'set-card' },
-      el('div', { className: 'acct-head' }, el('span', { className: 'acct-mark', textContent: p.name[0] }), el('div', {}, el('h2', { textContent: p.name }), el('p', { textContent: p.gives })), el('span', { className: 'grow' }), adding === p.id ? '' : add),
-      ...mine.map((a) => account(a, p)), adding === p.id ? form(p) : '');
+    return el('div', { className: 'set-card acct-card' },
+      el('div', { className: 'acct-head' }, mark(p), el('h2', { textContent: p.name }), el('p', { textContent: p.gives })),
+      el('div', { className: 'acct-list' }, ...mine.map((a) => account(a, p))), adding === p.id ? form(p) : el('div', { className: 'acct-foot' }, add));
   });
-  root.replaceChildren(el('h1', { textContent: 'Accounts' }), el('p', { className: 'hint', textContent: 'Connect as many accounts as you need: personal, school or work. Google connects through your browser: approve access there and it shows up here. The other services are not connected yet, so accounts you add for them are only kept on this device.' }), ...(notice ? [el('p', { className: 'hint', role: 'alert', textContent: notice })] : []), ...cards);
+  root.replaceChildren(el('h1', { textContent: 'Accounts' }), el('p', { className: 'hint', textContent: 'Connect as many accounts as you need: personal, school or work. Google connects through your browser: approve access there and it shows up here. The other services are not connected yet, so accounts you add for them are only kept on this device.' }), ...(notice ? [el('p', { className: 'hint', role: 'alert', textContent: notice })] : []), el('div', { className: 'acct-grid' }, ...cards));
 }
 
 document.addEventListener('jarvis:page', () => { paint(); if (currentPage() === 'accounts') loadRemote(); });
