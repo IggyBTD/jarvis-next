@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import { saveToken, loadToken } from '../digest/google.js';
 import { readJson, writeFileAtomic } from '../../shared/util.js';
 
-const SCOPE = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly';
+const SCOPE = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/drive.readonly';
 const AUTH = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE = { token: 'https://oauth2.googleapis.com/token', profile: 'https://gmail.googleapis.com/gmail/v1/users/me/profile', revoke: 'https://oauth2.googleapis.com/revoke' };
 const KINDS = ['Personal', 'School', 'Work'];
@@ -25,6 +25,8 @@ export function createGoogleAccounts({ dataDir, clientFile, fetchImpl = fetch, e
   function finish(id, p) { patch(id, p); listeners.get(id)?.close(); listeners.delete(id); }
 
   return {
+    // what the model's Google tools read from: connected accounts only, with the file that holds each one's refresh token
+    connected: () => read().filter((a) => a.status === 'connected').map((a) => ({ id: a.id, name: a.name, kind: a.kind, email: a.email, tokenFile: tokenFor(a.id) })),
     list() {
       return read().map((a) => (a.status === 'pending' && now() - a.added > WAIT_MS ? { ...a, status: 'error', error: 'Sign-in was not finished. Try again.' } : a));
     },

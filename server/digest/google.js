@@ -27,7 +27,7 @@ export function loadToken(file) {
   return JSON.parse(Buffer.concat([d.update(Buffer.from(j.data, 'base64')), d.final()]).toString('utf8'));
 }
 
-const GOOGLE = { token: 'https://oauth2.googleapis.com/token', calendar: 'https://www.googleapis.com/calendar/v3', gmail: 'https://gmail.googleapis.com/gmail/v1' };
+const GOOGLE = { token: 'https://oauth2.googleapis.com/token', calendar: 'https://www.googleapis.com/calendar/v3', gmail: 'https://gmail.googleapis.com/gmail/v1', drive: 'https://www.googleapis.com/drive/v3' };
 
 export function createGoogle({ clientFile, tokenFile, fetchImpl = fetch, endpoints = GOOGLE, now = Date.now }) {
   let access = null;
@@ -47,13 +47,20 @@ export function createGoogle({ clientFile, tokenFile, fetchImpl = fetch, endpoin
     access = { token: j.access_token, exp: now() + (j.expires_in ?? 3600) * 1000 };
     return access.token;
   }
-  async function api(base, path) {
+  // as: 'json' or 'text'. A refusal carries Google's own reason (API not enabled, scope not granted) so the person can act on it.
+  async function api(base, path, as = 'json') {
     const res = await fetchImpl(`${base}${path}`, { headers: { authorization: `Bearer ${await accessToken()}` } });
-    if (res.status === 401 || res.status === 403) { access = null; throw new AuthError(`Google refused the request (${res.status})`); }
-    if (!res.ok) throw new Error(`Google answered ${res.status}`);
-    return res.json();
+    if (res.status === 401 || res.status === 403) {
+      access = null;
+      let why = '';
+      try { why = (await res.json())?.error?.message ?? ''; } catch { /* no body */ }
+      throw new AuthError(`Google refused the request (${res.status}${why ? `: ${why}` : ''})`);
+    }
+    if (!res.ok) throw Object.assign(new Error(`Google answered ${res.status}`), { status: res.status });
+    return as === 'text' ? res.text() : res.json();
   }
   return {
+    api, endpoints,
     async calendar(fromIso, toIso) {
       const j = await api(endpoints.calendar, `/calendars/primary/events?singleEvents=true&orderBy=startTime&maxResults=50&timeMin=${encodeURIComponent(fromIso)}&timeMax=${encodeURIComponent(toIso)}`);
       return (j.items ?? []).map((e) => ({ start: e.start?.dateTime ?? e.start?.date, end: e.end?.dateTime ?? e.end?.date, allDay: !e.start?.dateTime, summary: e.summary ?? '(no title)', location: e.location ?? '' }));

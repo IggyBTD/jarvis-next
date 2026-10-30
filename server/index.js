@@ -26,6 +26,7 @@ import { createOpencodeBridge } from './core/opencode-bridge.js';
 import { createPermissionMode } from './core/permission-mode.js';
 import { createCodeBackend } from './core/code-backend.js';
 import { registerBrowserTools } from './core/browser-tools.js';
+import { registerGoogleTools } from './core/google-tools.js';
 import { createReminders, registerTimeTools } from './core/reminders.js';
 import { createMemory, registerMemoryTools } from './core/memory.js';
 import { createScheduler } from './core/scheduler.js';
@@ -154,6 +155,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
     return bundleCache.zip;
   };
   const accounts = createGoogleAccounts({ dataDir: cfg.dataDir, clientFile: resolveData(cfg, cfg.digest.google.clientFile) });
+  registerGoogleTools(router, { accounts, clientFile: resolveData(cfg, cfg.digest.google.clientFile) });
   const osint = createOpensky({ dataDir: cfg.dataDir, watchFile: path.join(cfg.root, 'config', 'osint-watch.json') });
   server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, environment: async () => {
     const machine = targetState.get();

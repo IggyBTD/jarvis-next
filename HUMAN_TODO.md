@@ -31,6 +31,7 @@ New-NetFirewallRule -DisplayName "JARVIS server" -Direction Inbound -Protocol TC
 2. OAuth consent screen: External, add yourself as a test user, then set Publishing status to **In production** (otherwise refresh tokens die after 7 days). The unverified-app warning is expected for personal use.
 3. Credentials: OAuth client ID, type Desktop. Download the JSON to `data\tokens\google-client.json`.
 4. `node scripts\google-auth.js` and follow the link. Scopes are read-only (gmail.readonly, calendar.readonly).
+4b. Also enable the Google Drive API in the same Cloud project. The Accounts page asks for Gmail, Calendar and Drive (all read only). An account connected before Drive was added must be removed and connected again to grant it.
 5. Set `JARVIS_TOKEN_KEY` (any long random string) in the environment of the server task. It encrypts the saved Google token.
 
 ## 5. Mac
