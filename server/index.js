@@ -32,6 +32,7 @@ import { createScheduler } from './core/scheduler.js';
 import { createTelemetry, createLhmProvider, createMacProvider, createPcProvider } from './telemetry/index.js';
 import { summarize } from './telemetry/summary.js';
 import { createGoogle } from './digest/google.js';
+import { createGoogleAccounts } from './accounts/google-accounts.js';
 import { createOpensky } from './osint/opensky.js';
 import { createDigest } from './digest/pipeline.js';
 import { createVoice } from './voice/session.js';
@@ -152,6 +153,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
     try { const b = await buildMacBundle({ root: cfg.root, outDir: out }); bundleCache = { at: Date.now(), zip: fs.readFileSync(b.zip) }; } finally { fs.rmSync(out, { recursive: true, force: true }); }
     return bundleCache.zip;
   };
+  const accounts = createGoogleAccounts({ dataDir: cfg.dataDir, clientFile: resolveData(cfg, cfg.digest.google.clientFile) });
   const osint = createOpensky({ dataDir: cfg.dataDir, watchFile: path.join(cfg.root, 'config', 'osint-watch.json') });
   server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, environment: async () => {
     const machine = targetState.get();
@@ -180,7 +182,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
       await health({ fresh: true }).catch(() => {}); // refreshes the cached health, so the next push to the app names the new model
       return r;
     },
-  }, health, audit, conversations, digest, osint, browserView, bundle, latex, buildState: () => wsApi.buildState(), log }));
+  }, health, audit, conversations, digest, osint, accounts, browserView, bundle, latex, buildState: () => wsApi.buildState(), log }));
 
   // The same handlers also answer on loopback, so this PC's own app works whatever the network address does (Tailscale down, a new LAN IP).
   const loopback = http.createServer();

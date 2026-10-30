@@ -6,6 +6,7 @@ mod telemetry;
 mod voice;
 mod browser;
 mod wol;
+mod open;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -70,6 +71,7 @@ pub fn run() {
       browser::browser_start,
       browser::browser_stop,
       wol::wake_on_lan,
+      open::open_signin,
       agent::agent_set_root,
       agent::agent_get_root,
       agent::agent_list_dir,

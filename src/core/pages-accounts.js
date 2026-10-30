@@ -1,13 +1,14 @@
 // The Accounts page: the services JARVIS can be connected to, with as many accounts of each as you like (personal, school, work).
-// Sign-in is not wired yet: an added account is saved on this device as "waiting for sign-in" and connects once a provider's
-// OAuth client id is put in PROVIDERS below (clientId). Nothing leaves the device until then.
+// Google signs in through the server (server/accounts/google-accounts.js): Connect opens Google's consent page in the browser.
+// The other providers are not wired yet: an added account is saved on this device as "waiting for sign-in".
 import { currentPage } from './whiteboard-mode.js';
+import { serverFetch } from './server-link.js';
 
 const KEY = 'jarvis.accounts';
 const KINDS = ['Personal', 'School', 'Work'];
 // clientId: null = OAuth not set up yet. `gives` is what the account would be used for.
 export const PROVIDERS = [
-  { id: 'google', name: 'Google', gives: 'Gmail, Calendar, Drive', clientId: null },
+  { id: 'google', name: 'Google', gives: 'Gmail, Calendar (read only)', clientId: null },
   { id: 'microsoft', name: 'Microsoft', gives: 'Outlook, Calendar, OneDrive, Teams', clientId: null },
   { id: 'apple', name: 'Apple', gives: 'iCloud Mail, Calendar, Drive', clientId: null },
   { id: 'github', name: 'GitHub', gives: 'Repositories, issues, pull requests', clientId: null },
@@ -22,14 +23,42 @@ const load = () => { try { const v = JSON.parse(localStorage.getItem(KEY)); retu
 const save = (list) => { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch { /* storage blocked: the list lasts until the page closes */ } };
 let accounts = load();
 let adding = null; // provider id whose form is open
+let remote = []; // Google accounts, kept by the server (tokens never reach this window)
+let notice = ''; // why the last Connect did not start
+let poll = null;
+const isRemote = (p) => p.id === 'google';
+const STATUS = { connected: 'Connected', pending: 'Waiting for you to approve in the browser', error: 'Sign-in failed' };
+
+async function loadRemote() {
+  try { remote = (await (await serverFetch('/accounts/google')).json()).accounts ?? []; } catch { remote = []; }
+  const wait = remote.some((a) => a.status === 'pending');
+  if (wait && !poll) poll = setInterval(async () => { await loadRemote(); }, 2000);
+  if (!wait && poll) { clearInterval(poll); poll = null; }
+  paint();
+}
+
+// Asks the server for Google's consent link and opens it in the default browser; the server catches the redirect.
+async function connectGoogle(kind, name) {
+  notice = '';
+  try {
+    const res = await serverFetch('/accounts/google/start', { method: 'POST', body: JSON.stringify({ kind, name }) });
+    const j = await res.json();
+    if (!res.ok) throw new Error(j.error ?? 'could not start sign-in');
+    if (window.__TAURI_INTERNALS__) await (await import('@tauri-apps/api/core')).invoke('open_signin', { url: j.url });
+    else window.open(j.url, '_blank', 'noopener');
+  } catch (e) { notice = e.message; }
+  await loadRemote();
+}
 
 function form(p) {
   const kind = el('select', { className: 'av-select', ariaLabel: 'Account type' }, ...KINDS.map((k) => el('option', { value: k, textContent: k })));
   const email = el('input', { type: 'email', className: 'av-input', placeholder: 'Email or username (optional)', ariaLabel: 'Email or username' });
+  if (isRemote(p)) email.hidden = true; // Google tells us the address after sign-in
   const name = el('input', { type: 'text', className: 'av-input', placeholder: 'Name, e.g. University', ariaLabel: 'Account name' });
-  const ok = el('button', { type: 'button', className: 'av-btn', textContent: 'Add account' });
+  const ok = el('button', { type: 'button', className: 'av-btn', textContent: isRemote(p) ? 'Connect in browser' : 'Add account' });
   const no = el('button', { type: 'button', className: 'av-btn', textContent: 'Cancel' });
   ok.addEventListener('click', () => {
+    if (isRemote(p)) { adding = null; connectGoogle(kind.value, name.value.trim()); return; }
     accounts = [...accounts, { id: `${p.id}-${Date.now().toString(36)}`, provider: p.id, kind: kind.value, name: name.value.trim() || kind.value, email: email.value.trim(), added: Date.now() }];
     save(accounts); adding = null; paint();
   });
@@ -39,23 +68,26 @@ function form(p) {
 
 function account(a, p) {
   const rm = el('button', { type: 'button', className: 'av-btn danger', textContent: 'Remove', ariaLabel: `Remove ${a.name}` });
-  rm.addEventListener('click', () => { accounts = accounts.filter((x) => x.id !== a.id); save(accounts); paint(); });
+  rm.addEventListener('click', async () => {
+    if (isRemote(p)) { await serverFetch(`/accounts/google/${a.id}`, { method: 'DELETE' }).catch(() => {}); return loadRemote(); }
+    accounts = accounts.filter((x) => x.id !== a.id); save(accounts); paint();
+  });
   return el('div', { className: 'set-row' },
     el('span', {}, el('b', { textContent: a.name }), el('span', { className: 'acct-kind', textContent: a.kind }), a.email ? el('span', { className: 'does', textContent: ` ${a.email}` }) : ''),
-    el('span', { className: 'does', textContent: p.clientId ? 'Connected' : 'Waiting for sign-in setup' }), rm);
+    el('span', { className: 'does', textContent: isRemote(p) ? (a.status === 'error' && a.error ? a.error : STATUS[a.status] ?? '') : p.clientId ? 'Connected' : 'Waiting for sign-in setup' }), rm);
 }
 
 function paint() {
   if (currentPage() !== 'accounts') return;
   const cards = PROVIDERS.map((p) => {
-    const mine = accounts.filter((a) => a.provider === p.id);
+    const mine = isRemote(p) ? remote : accounts.filter((a) => a.provider === p.id);
     const add = el('button', { type: 'button', className: 'av-btn', textContent: mine.length ? 'Add another account' : 'Add account' });
     add.addEventListener('click', () => { adding = p.id; paint(); });
     return el('div', { className: 'set-card' },
       el('div', { className: 'acct-head' }, el('span', { className: 'acct-mark', textContent: p.name[0] }), el('div', {}, el('h2', { textContent: p.name }), el('p', { textContent: p.gives })), el('span', { className: 'grow' }), adding === p.id ? '' : add),
       ...mine.map((a) => account(a, p)), adding === p.id ? form(p) : '');
   });
-  root.replaceChildren(el('h1', { textContent: 'Accounts' }), el('p', { className: 'hint', textContent: 'Connect as many accounts as you need: personal, school or work. Sign-in is not set up yet, so accounts you add are kept on this device and connect once it is.' }), ...cards);
+  root.replaceChildren(el('h1', { textContent: 'Accounts' }), el('p', { className: 'hint', textContent: 'Connect as many accounts as you need: personal, school or work. Google connects through your browser: approve access there and it shows up here. The other services are not connected yet, so accounts you add for them are only kept on this device.' }), ...(notice ? [el('p', { className: 'hint', role: 'alert', textContent: notice })] : []), ...cards);
 }
 
-document.addEventListener('jarvis:page', paint);
+document.addEventListener('jarvis:page', () => { paint(); if (currentPage() === 'accounts') loadRemote(); });
