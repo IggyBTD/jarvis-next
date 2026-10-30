@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { ROOT } from '../server/core/config.js';
 
 const CFG = path.join(os.homedir(), '.lmstudio', '.internal', 'user-concrete-model-default-config');
-const FILES = { 'qwen/qwen3-coder-30b': 'qwen/qwen3-coder-30b.json', 'unsloth/qwen3.8-27b': 'unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q3_K_XL.gguf.json' };
+const FILES = { 'qwen/qwen3-coder-30b': 'qwen/qwen3-coder-30b.json', 'qwen3.8-27b': 'unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q3_K_XL.gguf.json', 'prism-ml/bonsai-27b': 'prism-ml/bonsai-27b.json' };
 const BACKUP = path.join(ROOT, 'docs', 'lmstudio-settings-backup-2026-10-25');
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i === -1 ? d : process.argv[i + 1]; };
 const model = arg('--model', 'qwen/qwen3-coder-30b');

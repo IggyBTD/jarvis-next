@@ -10,6 +10,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { ROOT } from '../server/core/config.js';
 import { isMain } from '../shared/util.js';
 import { AGENT_TASKS } from './bench-agent-tasks.js';
+import { JARVIS_TASKS } from './bench-jarvis-tasks.js';
 
 const UP = 'http://127.0.0.1:1234/v1';
 const PORT = 1236;
@@ -21,17 +22,19 @@ const BRIEF = 'Think briefly: check key assumptions, then act. Do not enumerate 
 export const VARIANTS = {
   coder: { ...C('qwen/qwen3-coder-30b', ['--kv', 'q8_0', '--cpuexp', '0.2917', '--batch', '1024']), body: CODER },
   'coder-fast': { ...C('qwen/qwen3-coder-30b', ['--kv', 'q8_0', '--cpuexp', '0.2', '--batch', '1024']), body: CODER },
-  '27b-none-nomtp': { ...C('unsloth/qwen3.8-27b', ['--kv', 'q8_0']), body: { ...Q27, reasoning_effort: 'none' } },
-  '27b-none': { ...C('unsloth/qwen3.8-27b', ['--kv', 'q8_0', '--mtp', '2']), body: { ...Q27, reasoning_effort: 'none' } },
-  '27b-low': { ...C('unsloth/qwen3.8-27b', ['--kv', 'q8_0']), body: { ...Q27, temperature: 0.6, reasoning_effort: 'low' } },
-  '27b-medium': { ...C('unsloth/qwen3.8-27b', ['--kv', 'q8_0']), body: { ...Q27, temperature: 0.6, reasoning_effort: 'medium' } },
-  '27b-low-brief': { ...C('unsloth/qwen3.8-27b', ['--kv', 'q8_0']), body: { ...Q27, temperature: 0.6, reasoning_effort: 'low' }, addendum: BRIEF },
+  '27b-none-nomtp': { ...C('qwen3.8-27b', ['--kv', 'q8_0']), body: { ...Q27, reasoning_effort: 'none' } },
+  '27b-none': { ...C('qwen3.8-27b', ['--kv', 'q8_0', '--mtp', '2']), body: { ...Q27, reasoning_effort: 'none' } },
+  '27b-low': { ...C('qwen3.8-27b', ['--kv', 'q8_0']), body: { ...Q27, temperature: 0.6, reasoning_effort: 'low' } },
+  '27b-medium': { ...C('qwen3.8-27b', ['--kv', 'q8_0']), body: { ...Q27, temperature: 0.6, reasoning_effort: 'medium' } },
+  '27b-low-brief': { ...C('qwen3.8-27b', ['--kv', 'q8_0']), body: { ...Q27, temperature: 0.6, reasoning_effort: 'low' }, addendum: BRIEF },
   // Thinking left on; LM Studio's own thinking budget (set in the model's default settings at load, bench-speed --budget) ends it after N tokens.
-  '27b-b1000': { ...C('unsloth/qwen3.8-27b', ['--kv', 'q8_0', '--mtp', '2', '--budget', '1000']), body: { ...Q27, temperature: 0.6 } },
-  '27b-b2000': { ...C('unsloth/qwen3.8-27b', ['--kv', 'q8_0', '--mtp', '2', '--budget', '2000']), body: { ...Q27, temperature: 0.6 } },
-  '27b-b4000': { ...C('unsloth/qwen3.8-27b', ['--kv', 'q8_0', '--mtp', '2', '--budget', '4000']), body: { ...Q27, temperature: 0.6 } },
+  '27b-b1000': { ...C('qwen3.8-27b', ['--kv', 'q8_0', '--mtp', '2', '--budget', '1000']), body: { ...Q27, temperature: 0.6 } },
+  '27b-b2000': { ...C('qwen3.8-27b', ['--kv', 'q8_0', '--mtp', '2', '--budget', '2000']), body: { ...Q27, temperature: 0.6 } },
+  '27b-b4000': { ...C('qwen3.8-27b', ['--kv', 'q8_0', '--mtp', '2', '--budget', '4000']), body: { ...Q27, temperature: 0.6 } },
+  // Bonsai (prism-ml, Q1_0 build of the same 27B arch) with the 27B's settings: sampling, reasoning off, KV q8_0. Bonsai has no MTP head, so no MTP.
+  'bonsai-none-nomtp': { ...C('prism-ml/bonsai-27b', ['--kv', 'q8_0']), body: { ...Q27, reasoning_effort: 'none' } },
 };
-for (const k of ['coder', 'coder-fast', '27b-none-nomtp', '27b-none']) VARIANTS[k].load.push('--budget', '0');
+for (const k of ['coder', 'coder-fast', '27b-none-nomtp', '27b-none', 'bonsai-none-nomtp']) VARIANTS[k].load.push('--budget', '0');
 
 for (const [k, v] of Object.entries(VARIANTS)) if (/^27b-(low|medium|budget)/.test(k)) v.load = [...v.load, '--mtp', '2']; // MTP doubles the 27B's speed (docs/bench-speed)
 let V = VARIANTS.coder;
@@ -142,7 +145,8 @@ export async function runTask(task, timeoutSec, ctx, keepDir = false) {
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i === -1 ? d : process.argv[i + 1]; };
 if (isMain(import.meta.url)) {
   const names = arg('--variants', 'coder,27b-none').split(',');
-  const taskIds = arg('--tasks', AGENT_TASKS.map((t) => t.id).join(',')).split(',');
+  const suite = arg('--suite', 'basic') === 'jarvis' ? JARVIS_TASKS : AGENT_TASKS;
+  const taskIds = arg('--tasks', suite.map((t) => t.id).join(',')).split(',');
   const reps = Number(arg('--reps', 2));
   const timeoutSec = Number(arg('--timeout', 480));
   const ctx = Number(arg('--ctx', 32768));
@@ -153,9 +157,18 @@ if (isMain(import.meta.url)) {
     console.log(`\n== ${name}: loading`);
     const ld = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'bench-speed.js'), '--model', V.model, '--ctx', String(ctx), ...V.load, '--load-only'], { encoding: 'utf8', timeout: 400_000 });
     console.log(ld.stdout.trim() || ld.stderr.trim());
+    // Never benchmark whatever happens to be loaded: the variant's model must be the one loaded, at the asked context.
+    let hit;
+    for (let tries = 0; tries < 12 && !hit; tries++) { // LM Studio can take a few seconds to report the model as loaded
+      const lmModels = await fetch(`${UP.replace('/v1', '')}/api/v0/models`).then((r) => r.json()).then((j) => j.data).catch(() => []);
+      hit = lmModels.find((m) => m.state === 'loaded' && (m.id === V.model || m.id.endsWith(V.model.split('/').pop())));
+      if (!hit) await new Promise((r) => setTimeout(r, 5000));
+    }
+    if (ld.status !== 0 || !hit) { console.log(`  ${name}: not loaded, skipped`); continue; }
+    console.log(`  loaded ${hit.id} ${hit.quantization} context ${hit.loaded_context_length}`);
     const runs = [];
     for (let r = 1; r <= reps; r++) for (const id of taskIds) {
-      const res = await runTask(AGENT_TASKS.find((t) => t.id === id), timeoutSec, ctx);
+      const res = await runTask(suite.find((t) => t.id === id), timeoutSec, ctx);
       runs.push(res);
       console.log(`  ${id} rep ${r}: ${res.passed}/${res.total} tests, ${res.sec} s, ${res.requests} requests, ${res.toolCalls} tool calls, ~${res.reasoningTokens} thinking tokens${res.forced ? `, ${res.forced} cut` : ''}${res.timedOut ? ', TIMED OUT' : ''}`);
     }
