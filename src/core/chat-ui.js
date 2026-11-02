@@ -348,6 +348,15 @@ async function sendViaServer(text) {
   });
 }
 
+// Leaving a chat that is still being answered (a new chat, another chat, Code) does not stop it: with the server on, the reply keeps being
+// written there, saved in that chat, and the chat list shows the chat as working. Returns false only when something here is busy and cannot let go.
+function detachRunning() {
+  if (!working) return true;
+  if (!serverTurn) return false;
+  serverTurn.end();
+  return true;
+}
+
 async function send() {
   const quiet = input.dataset.quiet === '1'; // a command the app typed (open a chat, new chat): not shown as the user's message
   delete input.dataset.quiet;
@@ -365,6 +374,7 @@ async function send() {
     btw((side[1] ?? '').trim());
     return;
   }
+  if (busy && serverTurn && /^\/(clear|new|resume)(\s|$)/i.test(text)) detachRunning();
   if (!text || busy) return;
   busy = true;
   following = true; // a new message always brings the reader back to the bottom
@@ -730,7 +740,7 @@ function renderHistory() {
 }
 
 async function resumeCommand(arg) {
-  if (working) return 'JARVIS is busy. Use /stop first.';
+  if (!detachRunning()) return 'JARVIS is busy. Use /stop first.';
   const q = arg.trim();
   if (!q) return sessionsCommand();
   if (!lastListing.length) lastListing = await listSessions();
@@ -761,6 +771,16 @@ onLink((e) => {
     session.name = link.conversation.title || session.name;
     renderHistory();
     announceName(false);
+  }
+  // A reply finished in the open chat, but this window was not waiting for it (it was started, then the chat was left and opened again):
+  // the server has saved it, so read it back.
+  if (e.type === 'chat.done' && !serverTurn && !working) {
+    loadSession(link.conversation.id).then((saved) => {
+      if (working || !saved.length || saved.length <= history.length) return;
+      history.length = 0;
+      history.push(...saved);
+      renderHistory();
+    }).catch(() => {});
   }
 });
 
@@ -832,7 +852,7 @@ document.addEventListener('jarvis:session-op', async (e) => {
       const meta = (await listSessions()).find((s) => s.id === id);
       toast(`Saved to ${await exportSession(id, toMarkdown(meta?.name ?? 'Chat', await loadSession(id)))}`);
     } else if (op === 'new') {
-      if (working) { toast('JARVIS is busy. Stop it first.'); return; }
+      if (!detachRunning()) { toast('JARVIS is busy. Stop it first.'); return; }
       await runCommand('/clear');
       session.project = rest.project;
       if (rest.mode) session.mode = rest.mode;
@@ -920,7 +940,7 @@ registerCommandHost({
     selectMode(name);
   },
   clear: () => {
-    if (working) return 'JARVIS is busy. Use /stop first.';
+    if (!detachRunning()) return 'JARVIS is busy. Use /stop first.';
     document.dispatchEvent(new CustomEvent('jarvis:cleared'));
     history.length = 0;
     turn = null;

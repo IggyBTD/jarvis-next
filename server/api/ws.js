@@ -37,7 +37,7 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
       type: 'state', target: targetState.get(), machines: Object.fromEntries(Object.entries(machines).map(([id, m]) => [id, { label: m.label, os: m.os, online: h.machines[id]?.online ?? false }])),
       health: h, pendingApprovals: gate.pending(), telemetry: telemetry?.snapshot() ?? {}, digest: digest?.latestMeta?.() ?? null,
       conversation: { id: convId, title: conv?.title ?? '', messages: conv ? conversations.recent(conv) : [], streaming: streams.has(convId) ? { text: streams.get(convId) } : null },
-      permissionMode: modes?.get() ?? 'auto', codeBackend: backend?.get() ?? 'local', agentTasks: agentTasks?.list?.() ?? [], reminders: reminders?.missedFor?.() ?? [], voice: voice ? { enabled: true } : { enabled: false },
+      running: orchestrator.busyIds?.() ?? [], permissionMode: modes?.get() ?? 'auto', codeBackend: backend?.get() ?? 'local', agentTasks: agentTasks?.list?.() ?? [], reminders: reminders?.missedFor?.() ?? [], voice: voice ? { enabled: true } : { enabled: false },
     };
   }
 

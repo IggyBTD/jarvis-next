@@ -7,7 +7,7 @@ import { setPage } from './whiteboard-mode.js';
 import { registerContext } from './native-chrome.js';
 import { listProjects, getProjectById, onProjects, createProject, updateProject, deleteProject } from './projects.js';
 import { icon } from '../icons/index.js';
-import { serverMode, getConvId } from './server-link.js';
+import { serverMode, getConvId, chatStates, onLink } from './server-link.js';
 
 const $ = (id) => document.getElementById(id);
 const list = $('chat-list');
@@ -88,11 +88,36 @@ function chatButton(s) {
   const project = s.project && getProjectById(s.project);
   if (project) b.append(Object.assign(document.createElement('span'), { className: 'ci-tag', textContent: project.name }));
   if (s.mode === 'code') b.insertAdjacentHTML('afterbegin', icon('code', { size: 14 }));
+  b.append(Object.assign(document.createElement('span'), { className: 'ci-state' })); // filled by syncStates
   b.title = s.name;
   b.addEventListener('click', () => openSession(s));
   b.addEventListener('dblclick', () => rename(b, s));
   return b;
 }
+
+// --- which chats are working ---------------------------------------------------------------------
+// A spinner on a chat the model is answering in, an amber dot where an approval waits, a dot on a chat that finished while another
+// was open. Set in place on the existing rows (no rebuild), so a click or drag in the list is not interrupted. A closed folder
+// carries the most urgent state of its chats.
+const STATE_TEXT = { running: 'Working', waiting: 'Needs your approval', unseen: 'New reply' };
+const URGENCY = ['waiting', 'running', 'unseen'];
+function setState(node, st, name) {
+  if (st) node.dataset.state = st; else delete node.dataset.state;
+  const mark = node.querySelector(':scope > .ci-state');
+  if (mark) mark.textContent = st ? STATE_TEXT[st] : '';
+  if (node.classList.contains('chat-item')) node.title = st ? `${name}: ${STATE_TEXT[st].toLowerCase()}` : name;
+}
+function syncStates() {
+  const states = serverMode() ? chatStates() : new Map();
+  const nameOf = new Map(sessions.map((s) => [s.id, s.name || 'Untitled']));
+  for (const b of list.querySelectorAll('.chat-item')) setState(b, states.get(b.dataset.id) ?? null, nameOf.get(b.dataset.id) ?? '');
+  for (const f of list.querySelectorAll('.folder-item')) {
+    const mine = sessions.filter((s) => s.project === f.dataset.id).map((s) => states.get(s.id)).filter(Boolean);
+    const st = openFolders.has(f.dataset.id) ? null : URGENCY.find((u) => mine.includes(u)) ?? null;
+    if (st) f.dataset.state = st; else delete f.dataset.state;
+  }
+}
+onLink((e) => { if (e.type === 'chat-states') syncStates(); });
 
 // --- folders ---------------------------------------------------------------------
 const OPEN_KEY = 'jarvis.folders.open';
@@ -143,6 +168,7 @@ function paint() {
   const shown = sessions.filter((s) => !q || (s.name ?? '').toLowerCase().includes(q));
   if (q) { // searching: one flat list across everything, folder or not
     list.replaceChildren(...(shown.length ? shown.slice(0, 60).map(row) : [Object.assign(document.createElement('div'), { className: 'chat-list-empty', textContent: 'No chat matches.' })]));
+    syncStates();
     return;
   }
   const nodes = [];
@@ -162,6 +188,7 @@ function paint() {
   nodes.push(recent);
   nodes.push(...(loose.length ? loose.map(row) : [Object.assign(document.createElement('div'), { className: 'chat-list-empty', textContent: sessions.length ? 'Every chat is in a folder.' : 'No saved chats yet.' })]));
   list.replaceChildren(...nodes);
+  syncStates();
 }
 
 // --- dragging a chat into a folder ---------------------------------------------------------------------

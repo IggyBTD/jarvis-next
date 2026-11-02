@@ -18,6 +18,7 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
     if (active.has(conv.id)) throw new BusyError();
     const ctl = new AbortController();
     active.set(conv.id, ctl);
+    bus.publish('chat.state', { convId: conv.id, running: true }); // the chat list shows which chats are working
     const { target } = targetState.bind();
     const emit = (type, payload = {}) => bus.publish(type, { convId: conv.id, target, ...payload });
     let streamed = '';
@@ -95,13 +96,14 @@ ${effortNote(effort)}` : ''}` }; // request only, never stored
       if (streamed) conversations.append(conv, { role: 'assistant', content: streamed, target, partial: true });
       emit('chat.error', { reason: aborted ? 'aborted' : e.message });
       return { ok: false, error: aborted ? 'aborted' : e.message };
-    } finally { active.delete(conv.id); }
+    } finally { active.delete(conv.id); bus.publish('chat.state', { convId: conv.id, running: false }); }
   }
 
   return {
     runTurn,
     abort(convId) { active.get(convId)?.abort(Object.assign(new Error('aborted'), { name: 'AbortError' })); return active.has(convId); },
     isBusy: (convId) => active.has(convId),
+    busyIds: () => [...active.keys()],
     abortAll() { for (const c of active.values()) c.abort(Object.assign(new Error('aborted'), { name: 'AbortError' })); },
   };
 }

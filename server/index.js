@@ -86,7 +86,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   const tasks = createAgentTasks({ router, bus, audit, conversations, dataDir: cfg.dataDir, taskTimeoutMs: cfg.policy.opencode.taskTimeoutMs, modes, backend });
   registerAgentTaskTool(router, tasks);
   registerBrowserTools(router, { notify: (m) => bus.publish(m.type, m) });
-  const bridge = createOpencodeBridge({ router, gate, audit, tasks, policyCfg: cfg.policy, machines, modes, log });
+  const bridge = createOpencodeBridge({ router, gate, audit, tasks, policyCfg: cfg.policy, machines, modes, log, trusted: (m) => [...(m === 'pc' ? [projectFolder(cfg.dataDir)] : []), ...(cfg.policy.opencode.trustedFolders?.[m] ?? [])].filter(Boolean) });
 
   const reminders = createReminders({ dataDir: cfg.dataDir, bus, clientCount, timezone: cfg.schedules.timezone });
   const jobRun = async (name) => {

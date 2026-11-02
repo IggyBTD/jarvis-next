@@ -43,7 +43,7 @@ export function parseClientMessage(raw) {
 
 // Server -> client types that every client receives from the bus. Anything not listed here stays inside the server.
 export const BROADCAST = new Set([
-  'chat.delta', 'chat.done', 'chat.error', 'chat.title', 'tool.call', 'tool.result',
+  'chat.delta', 'chat.done', 'chat.error', 'chat.title', 'chat.state', 'tool.call', 'tool.result',
   'gate.request', 'gate.resolved', 'gate.queued', 'target.changed', 'telemetry', 'agent.status',
   'digest.ready', 'digest.error', 'health', 'reminder.fire', 'auth.banner', 'chat.note', 'mode', 'backend',
 ]);

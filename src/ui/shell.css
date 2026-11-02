@@ -85,6 +85,22 @@ body.side-off .page-inner { padding-top: calc(var(--strip-h) + var(--s-5)); }
 .folder-item .ci-count { flex: none; font: 400 var(--fs-1)/var(--lh-xs) var(--mono); color: var(--text-3); }
 .folder-item:hover, .chat-item:hover { background: var(--surface-3); color: var(--text); }
 .chat-item.current { background: var(--surface-4); color: var(--text); }
+
+/* Which chats are working. The span's text (Working, Needs your approval, New reply) is for screen readers: it is pushed out of the
+   12 px box and clipped, and the box draws the mark. Only a chat that is running animates, and only while it runs: eight steps a
+   turn so the CPU-drawn window repaints a few times a second, not every frame. Reduced motion shows the ring still. */
+.chat-item .ci-state { position: relative; flex: none; width: 12px; height: 12px; overflow: hidden; white-space: nowrap; text-indent: 200%; }
+.chat-item:not([data-state]) .ci-state { display: none; }
+.chat-item .ci-state::before { content: ""; position: absolute; inset: 0; border-radius: 50%; }
+.chat-item[data-state="running"] .ci-state::before { border: 2px solid var(--accent-dim); border-top-color: var(--accent-mid); animation: ci-spin 800ms steps(8) infinite; }
+.chat-item[data-state="running"] { color: var(--text); }
+.chat-item[data-state="waiting"] .ci-state::before { inset: 2px; background: var(--warm); }
+.chat-item[data-state="unseen"] .ci-state::before { inset: 2px; background: var(--accent); }
+.folder-item[data-state]::after { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-mid); }
+.folder-item[data-state="waiting"]::after { background: var(--warm); }
+.folder-item[data-state="unseen"]::after { background: var(--accent); }
+@keyframes ci-spin { to { rotate: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .chat-item[data-state="running"] .ci-state::before { animation: none; } }
 .drag-ghost { position: fixed; left: 0; top: 0; z-index: 500; max-width: 240px; height: var(--h-md); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-sm); background: var(--surface-4); color: var(--text); font-size: var(--fs-3); line-height: var(--h-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; box-shadow: var(--shadow); }
 body.dragging-chat { cursor: grabbing; user-select: none; }
 .chat-list-empty { height: var(--h-md); padding: 0 var(--s-2); line-height: var(--h-md); color: var(--text-3); font-size: var(--fs-3); flex: none; }

@@ -19,7 +19,7 @@ export function createAgentTasks({ router, bus, audit, conversations, dataDir, t
   const finishing = new Set();
 
   const save = () => { try { writeJsonAtomic(file, tasks.slice(-100)); } catch (e) { console.error(`[agent-tasks] cannot save: ${e.message}`); } };
-  const view = (t) => ({ taskId: t.id, target: t.target, state: t.state, summary: t.summary ?? null, error: t.error ?? null, files: t.files ?? null, prompt: clip(t.prompt, 120), startedAt: t.startedAt ?? null, endedAt: t.endedAt ?? null });
+  const view = (t) => ({ taskId: t.id, convId: t.convId ?? null, target: t.target, state: t.state, summary: t.summary ?? null, error: t.error ?? null, files: t.files ?? null, prompt: clip(t.prompt, 120), startedAt: t.startedAt ?? null, endedAt: t.endedAt ?? null });
   const publish = (t) => bus.publish('agent.status', view(t));
   const byId = (id) => tasks.find((t) => t.id === id);
   save();

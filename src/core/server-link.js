@@ -4,6 +4,7 @@
 // Reconnects with exponential backoff and jitter, never blocks the interface, and shows a plain "offline" state.
 import { ingestTelemetry, useTelemetrySource } from './telemetry-view.js';
 import { getEffort } from './effort-ui.js';
+import { chatStates as chatStatesOf } from './chat-states.js';
 
 const KEY = 'jarvis.server';
 const CONV_KEY = 'jarvis.server.conv';
@@ -36,6 +37,7 @@ export const getConvId = () => convId;
 // Opens a saved chat: this window talks in it from now on.
 export function setConvId(id) {
   convId = id;
+  unseen.delete(id);
   try { localStorage.setItem(CONV_KEY, convId); } catch { /* storage blocked */ }
   state.conversation = { id: convId, title: '', messages: [], streaming: null };
 }
@@ -56,7 +58,12 @@ export function newConversation() {
 export const state = {
   status: 'off', target: 'pc', machines: {}, health: null, pending: [], telemetry: {}, digest: null, agentTasks: [], reminders: [],
   conversation: { id: convId, title: '', messages: [], streaming: null }, voice: { enabled: false }, audit: [], lastError: '', attempts: 0,
+  running: new Set(), // conversations the model is answering in right now (the server says when each starts and ends)
 };
+
+// What each chat in the list is doing (chat-states.js); `unseen` holds the chats that finished while another one was open.
+const unseen = new Set();
+export const chatStates = () => chatStatesOf({ running: state.running, agentTasks: state.agentTasks, pending: state.pending, unseen });
 
 const listeners = new Set();
 export const onLink = (cb) => { listeners.add(cb); return () => listeners.delete(cb); };
@@ -141,6 +148,8 @@ function handle(m) {
     case 'state':
       Object.assign(state, { target: m.target, machines: m.machines, health: m.health, pending: m.pendingApprovals ?? [], telemetry: m.telemetry ?? {}, digest: m.digest, agentTasks: m.agentTasks ?? [], reminders: m.reminders ?? [], voice: m.voice ?? { enabled: false }, permissionMode: m.permissionMode ?? state.permissionMode, codeBackend: m.codeBackend ?? state.codeBackend });
       state.conversation = { ...m.conversation, id: m.conversation?.id ?? convId };
+      state.running = new Set(m.running ?? []);
+      emit({ type: 'chat-states' });
       setStatus('online');
       ingestActive();
       emit({ type: 'state' });
@@ -157,14 +166,19 @@ function handle(m) {
       if (m.machine === state.target) ingestActive();
       emit({ type: 'telemetry', machine: m.machine });
       return;
-    case 'gate.request': state.pending = [...state.pending.filter((p) => p.id !== m.request.id), m.request]; emit({ type: 'gate.request', request: m.request }); return;
+    case 'chat.state':
+      if (m.running) state.running.add(m.convId); else state.running.delete(m.convId);
+      emit({ type: 'chat-states' });
+      return;
+    case 'gate.request': state.pending = [...state.pending.filter((p) => p.id !== m.request.id), m.request]; emit({ type: 'gate.request', request: m.request }); emit({ type: 'chat-states' }); return;
     case 'gate.queued': state.pending = [...state.pending.filter((p) => p.id !== m.request.id), m.request]; emit({ type: 'gate.queued', request: m.request }); return;
-    case 'gate.resolved': state.pending = state.pending.filter((p) => p.id !== m.id); emit({ type: 'gate.resolved', id: m.id, decision: m.decision }); return;
-    case 'agent.status': state.agentTasks = [...state.agentTasks.filter((t) => t.taskId !== m.taskId), m]; emit({ type: 'agent.status', task: m }); return;
+    case 'gate.resolved': state.pending = state.pending.filter((p) => p.id !== m.id); emit({ type: 'gate.resolved', id: m.id, decision: m.decision }); emit({ type: 'chat-states' }); return;
+    case 'agent.status': state.agentTasks = [...state.agentTasks.filter((t) => t.taskId !== m.taskId), m]; emit({ type: 'agent.status', task: m }); emit({ type: 'chat-states' }); return;
     case 'digest.ready': state.digest = { date: m.date, ...(state.digest ?? {}) }; emit({ type: 'digest.ready', date: m.date }); return;
     case 'chat.title': if (m.convId === convId) { state.conversation.title = m.title; emit({ type: 'title', title: m.title }); } return;
     case 'chat.delta': case 'chat.done': case 'chat.error': case 'tool.call': case 'tool.result':
       if (m.convId === convId) emit(m);
+      else if (m.type === 'chat.done') { unseen.add(m.convId); emit({ type: 'chat-states' }); } // finished in a chat that is not open
       return;
     case 'error': emit({ type: 'server-error', reason: m.reason }); return;
     default: emit(m);

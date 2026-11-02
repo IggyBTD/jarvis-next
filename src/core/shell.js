@@ -53,7 +53,12 @@ new MutationObserver((records) => records.forEach((r) => { if (r.target.matches?
 
 // --- pages ---------------------------------------------------------------------
 const pageButtons = [...document.querySelectorAll('[data-page]')].filter((b) => b.tagName === 'BUTTON' && PAGES.includes(b.dataset.page));
-pageButtons.forEach((b) => b.addEventListener('click', () => setPage(b.dataset.page)));
+// Code always opens a fresh chat; switching back to Chat keeps the chat that is open.
+pageButtons.forEach((b) => b.addEventListener('click', () => {
+  const toCode = b.dataset.page === 'code' && currentPage() !== 'code';
+  setPage(b.dataset.page);
+  if (toCode) run('/clear');
+}));
 $('nav-system').addEventListener('click', () => openWidget('system'));
 
 // The one conversation lives in the chat page (Chat and Code share it), or beside the browser on the Intel page.
