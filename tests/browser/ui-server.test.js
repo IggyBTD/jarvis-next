@@ -150,7 +150,7 @@ test('a reply streams in and carries the PC tag', async () => {
 test('a safe tool runs without a dialog and shows as a line in the conversation', async () => {
   rig.model.script({ toolCalls: [{ name: 'get_volume', arguments: {} }] }, { content: 'The volume is fine.' });
   await send('what is the volume');
-  await waitFor(async () => (await page.locator('#chat-output .chat-line.system').allTextContents()).some((t) => /get_volume.*PC.*done/.test(t)));
+  await waitFor(async () => (await page.locator('#chat-output .chat-line.steps').allTextContents()).some((t) => /get_volume.*PC.*done/.test(t)));
   assert.equal(await page.locator('#gate-dialog[open]').count(), 0);
 });
 
@@ -166,7 +166,7 @@ test('a risky tool opens the approval dialog: target, exact arguments, Deny focu
   await page.screenshot({ path: path.join(SHOTS, 'server-approval-dialog.png') });
   await page.keyboard.press('Escape');
   await page.waitForFunction(() => !document.getElementById('gate-dialog').open);
-  await waitFor(async () => (await page.locator('#chat-output .chat-line.system').allTextContents()).some((t) => /close_app.*not approved/.test(t)));
+  await waitFor(async () => (await page.locator('#chat-output .chat-line.steps').allTextContents()).some((t) => /close_app.*not approved/.test(t)));
   assert.equal(rig.pc.calls.filter((c) => c.name === 'close_app' && !c.dryRun).length, 0);
 });
 

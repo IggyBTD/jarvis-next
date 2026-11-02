@@ -110,7 +110,61 @@ function addLine(role, text, { files = [], meta = clock() } = {}) {
   return el;
 }
 
-const setText = (el, text) => { el.querySelector('.chat-text').textContent = text; };
+// A line that is still waiting has the orb beside its label; the label is the part that changes. Once the line is no longer
+// pending (an error replaced it) the orb goes with the text.
+const setText = (el, text) => {
+  const box = el.querySelector('.chat-text');
+  const label = el.classList.contains('pending') ? box.querySelector('.think-label') : null;
+  (label ?? box).textContent = text;
+};
+
+const orb = () => Object.assign(document.createElement('span'), { className: 'orb', innerHTML: '<i class="orb-ball"></i><i class="orb-ring"></i>' });
+function pendingLine() {
+  const el = addLine('assistant pending', '', { meta: '' });
+  el.querySelector('.chat-text').append(orb(), Object.assign(document.createElement('span'), { className: 'think-label', textContent: 'Thinking...' }));
+  return el;
+}
+
+// All tool calls of one stretch (until the model writes text again) share one quiet row: the running step while it works,
+// "Ran 3 steps" after, opening to the list. The tool lines used to be one box each, plus a "Thinking..." line between them.
+const stepName = (n) => { const s = String(n).replace(/_/g, ' '); return s[0].toUpperCase() + s.slice(1); };
+const STEP_STATE = { running: 'running', ok: 'done', failed: 'failed', queued: 'queued for approval', denied: 'not approved', stopped: 'stopped' };
+function stepsGroup() {
+  const el = addLine('steps live', '', { meta: '' });
+  el.querySelector('.chat-text').innerHTML = '<details class="steps-box"><summary class="steps-head"><span class="steps-lead"><span class="icon" data-icon="check" aria-hidden="true"></span></span>'
+    + '<span class="steps-label"></span><span class="steps-count"></span><span class="icon" data-icon="chevron-right" aria-hidden="true"></span></summary><ol class="steps-list"></ol></details>';
+  el.querySelector('.steps-lead').prepend(orb());
+  hydrateIcons(el);
+  const [label, count, list] = ['.steps-label', '.steps-count', '.steps-list'].map((s) => el.querySelector(s));
+  const rows = [];
+  const refresh = () => {
+    const running = rows.find((r) => r.state === 'running');
+    const bad = rows.filter((r) => r.state === 'failed' || r.state === 'denied').length;
+    el.classList.toggle('live', !!running);
+    el.classList.toggle('bad', !running && bad > 0);
+    label.textContent = running ? `${stepName(running.name)}...` : `Ran ${rows.length} ${rows.length === 1 ? 'step' : 'steps'}${bad ? `, ${bad} failed` : ''}`;
+    count.textContent = running && rows.length > 1 ? `${rows.length} steps` : '';
+  };
+  const add = (name, machine, state = 'running') => {
+    const li = document.createElement('li');
+    li.innerHTML = '<span class="step-name"></span><span class="step-on"></span><span class="step-state"></span>';
+    li.querySelector('.step-name').textContent = name;
+    li.querySelector('.step-on').textContent = machine ? `on ${machine}` : '';
+    const row = { name, state, li, set(s) { row.state = s; const st = li.querySelector('.step-state'); st.textContent = STEP_STATE[s]; st.className = `step-state ${s}`; refresh(); } };
+    rows.push(row);
+    list.append(li);
+    row.set(state);
+    return row;
+  };
+  return {
+    el,
+    add,
+    finish: (state) => rows.find((r) => r.state === 'running')?.set(state),
+    settle: () => rows.filter((r) => r.state === 'running').forEach((r) => r.set('stopped')), // the turn ended with a step still marked running
+  };
+}
+// What a saved tool message says about how the call went (the router writes "[PC] name finished:", "... failed:", "... was not run:").
+const resultState = (content) => { const s = String(content).slice(0, 300); return /needs approval and nobody/.test(s) ? 'queued' : /did not approve/.test(s) ? 'denied' : /Cancelled before/.test(s) ? 'stopped' : /\] \S+ finished:/.test(s) ? 'ok' : 'failed'; };
 
 // --- assistant blocks ----------------------------------------------------
 function artifactCard(p, done) {
@@ -280,10 +334,10 @@ async function sendViaServer(text) {
   const target = (link.machines[link.target]?.label ?? link.target).toUpperCase();
   addLine('user', text, { files: names, meta: `${clock()}  ${target}` });
   workspace.classList.add('has-output');
-  let pending = addLine('assistant pending', 'Thinking...', { meta: '' });
+  let pending = pendingLine();
   let latest = '';
   let afterTool = false;
-  let toolLine = null;
+  let steps = null; // the row that holds this stretch of tool calls
   let frame = 0;
   const paint = (final) => { if (latest) renderAssistant(pending, latest, { done: final }); };
   const stamp = (line, stats = null) => {
@@ -296,7 +350,7 @@ async function sendViaServer(text) {
   output.scrollTop = output.scrollHeight;
 
   await new Promise((finish) => {
-    const end = () => { cancelAnimationFrame(frame); off(); serverTurn = null; setThinking(false); busy = false; setWorking(false); document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')); finish(); };
+    const end = () => { cancelAnimationFrame(frame); steps?.settle(); off(); serverTurn = null; setThinking(false); busy = false; setWorking(false); document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')); finish(); };
     serverTurn = { end };
     const fail = (message, kind = 'error') => { pending.className = `chat-line ${kind}`; pending.querySelector('.thought')?.remove(); setText(pending, message); end(); };
     const off = onLink((e) => {
@@ -314,14 +368,15 @@ async function sendViaServer(text) {
           paint(false);
           break;
         case 'tool.call':
-          if (latest) { cancelAnimationFrame(frame); frame = 0; paint(true); stamp(pending); } else if (pending.classList.contains('pending')) pending.remove();
-          toolLine = addLine('system', `${e.name}  on ${(link.machines[e.target]?.label ?? e.target)}...`, { meta: '' });
+          if (latest) { cancelAnimationFrame(frame); frame = 0; paint(true); stamp(pending); steps = null; } else if (pending.classList.contains('pending')) pending.remove();
+          steps ??= stepsGroup();
+          steps.add(e.name, link.machines[e.target]?.label ?? e.target);
           follow(following);
           afterTool = true;
           break;
         case 'tool.result':
-          if (toolLine) setText(toolLine, `${toolLine.querySelector('.chat-text').textContent.replace(/...$/, '')}  ${e.ok ? 'done' : e.queued ? 'queued for approval' : e.denied ? 'not approved' : 'failed'}`);
-          pending = addLine('assistant pending', 'Thinking...', { meta: '' });
+          steps?.finish(e.ok ? 'ok' : e.queued ? 'queued' : e.denied ? 'denied' : 'failed');
+          pending = pendingLine();
           latest = '';
           afterTool = false;
           break;
@@ -419,7 +474,7 @@ async function send() {
   const userLine = addLine('user', text, { files: names });
   markUser(userLine, userMsg);
   workspace.classList.add('has-output');
-  let pending = addLine('assistant pending', 'Thinking...', { meta: '' });
+  let pending = pendingLine();
   // The line says what is really happening: a model is loaded or unloaded only when LM Studio is
   // doing that (llm-client phase events); every other wait before the first token is the model
   // reading the message, which is thinking.
@@ -539,7 +594,7 @@ async function send() {
         }
       }
       consistent = history.length;
-      pending = addLine('assistant pending', 'Thinking...', { meta: '' });
+      pending = pendingLine();
       mine.lines.push(pending);
       follow(stick);
     }
@@ -726,14 +781,19 @@ async function sessionsCommand() {
 function renderHistory() {
   output.replaceChildren();
   userLines.clear();
+  let steps = null; // calls and results between two pieces of text share one row
+  const rowOf = new Map(); // tool_call_id -> its row
   for (const m of history) {
     if (m.summary) { if (m.role === 'user') addLine('system', 'Earlier conversation summarised', { meta: '' }); continue; }
-    if (m.role === 'user') markUser(addLine('user', m.shown ?? messageText(m.content), { meta: '' }), m);
+    if (m.role === 'user') { steps = null; markUser(addLine('user', m.shown ?? messageText(m.content), { meta: '' }), m); }
     else if (m.role === 'assistant') {
       const text = messageText(m.content);
-      if (text) renderAssistant(addLine('assistant', '', { meta: '' }), text, { done: true, quiet: true });
-      if (m.tool_calls) addLine('system', `Action  ${m.tool_calls.map((c) => c.function.name).join(', ')}`, { meta: '' });
-    } else if (m.role === 'tool') addLine('system', `Result  ${String(m.content).split('\n')[0].slice(0, 140)}`, { meta: '' });
+      if (text) { steps = null; renderAssistant(addLine('assistant', '', { meta: '' }), text, { done: true, quiet: true }); }
+      if (m.tool_calls) {
+        steps ??= stepsGroup();
+        for (const c of m.tool_calls) rowOf.set(c.id, steps.add(c.function.name, link.machines[m.target]?.label ?? m.target, 'stopped'));
+      }
+    } else if (m.role === 'tool') rowOf.get(m.tool_call_id)?.set(resultState(m.content));
   }
   workspace.classList.toggle('has-output', history.length > 0);
   output.scrollTop = output.scrollHeight;

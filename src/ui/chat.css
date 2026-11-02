@@ -60,8 +60,46 @@
 @keyframes core-breathe { 0%, 100% { transform: scale(0.8); } 50% { transform: scale(1); } }
 @keyframes ring-out { 0% { transform: scale(0.55); opacity: 0.7; } 100% { transform: scale(1.35); opacity: 0; } }
 .chat-line.pending .chat-text { position: relative; display: inline-flex; align-items: center; gap: var(--s-3); height: var(--lh-md); color: var(--text-3); font: 400 var(--fs-4)/var(--lh-md) var(--sans); }
-.chat-line.pending .chat-text::before { content: ""; flex: none; width: var(--icon-md); height: var(--icon-md); background: var(--accent); -webkit-mask: var(--mask-spark) center / contain no-repeat; mask: var(--mask-spark) center / contain no-repeat; animation: think-twinkle 1.6s ease-in-out infinite; }
-@keyframes think-twinkle { 0%, 100% { opacity: 0.5; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.05); } }
+
+/* ---- the thinking orb: a lit sphere with a ring turning around it. The depth is real (preserve-3d): the far half of the ring
+   passes behind the sphere, the near half in front, and perspective makes the near half larger. Light comes from the top left.
+   It moves only while something is working (a pending reply, a running step) and stands still otherwise. ---------------- */
+.orb { position: relative; flex: none; width: var(--s-5); height: var(--s-5); perspective: var(--s-8); transform-style: preserve-3d; }
+.orb-ball { position: absolute; inset: var(--s-1); border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 26%, var(--glint) 0, color-mix(in srgb, var(--glint) 30%, transparent) 14%, transparent 34%),
+    radial-gradient(circle at 36% 32%, var(--accent) 0, var(--accent-mid) 46%, var(--accent-dim) 74%, color-mix(in srgb, var(--accent-dim) 55%, black) 100%);
+  box-shadow: inset -2px -2px 4px color-mix(in srgb, black 40%, transparent); /* optical: shaded underside */ }
+.orb-ring { position: absolute; inset: 0; border-radius: 50%; transform: rotateZ(-24deg) rotateX(72deg);
+  background: conic-gradient(from 0deg, transparent 0 38%, var(--accent-dim) 62%, var(--accent) 86%, var(--glint) 99.5%, transparent 99.5%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), black calc(100% - 1.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2px), black calc(100% - 1.5px)); }
+.chat-line.pending .orb-ball, .steps.live .orb-ball { box-shadow: inset -2px -2px 4px color-mix(in srgb, black 40%, transparent), 0 0 8px color-mix(in srgb, var(--accent) 45%, transparent); /* optical: glow only while it works */ }
+.chat-line.pending .orb-ring, .steps.live .orb-ring { animation: orb-turn 2.4s linear infinite; } /* linear: a constant turn, not a movement between two places */
+@keyframes orb-turn { from { transform: rotateZ(-24deg) rotateX(72deg) rotateZ(0deg); } to { transform: rotateZ(-24deg) rotateX(72deg) rotateZ(360deg); } }
+
+/* ---- the steps row: every tool call of one stretch lives in ONE quiet row (the current step while it runs, "Ran 3 steps" after), which opens to the list ---- */
+.chat-line.steps { align-self: stretch; content-visibility: visible; }
+.chat-line.steps .chat-text { white-space: normal; }
+.steps-box { color: var(--text-3); font: 400 var(--fs-4)/var(--lh-md) var(--sans); }
+.steps-head { display: flex; align-items: center; gap: var(--s-2); height: var(--lh-md); list-style: none; cursor: pointer; user-select: none; }
+.steps-head::-webkit-details-marker { display: none; }
+.steps-head:hover, .steps-head:focus-visible { color: var(--text-2); }
+.steps-lead { display: grid; place-items: center; flex: none; width: var(--icon-lg); height: var(--icon-lg); }
+.steps-lead .icon svg { width: var(--icon-sm); height: var(--icon-sm); }
+.steps:not(.live) .steps-lead .orb, .steps.live .steps-lead .icon { display: none; }
+.steps-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.steps.bad .steps-label { color: var(--danger); }
+.steps-count { flex: none; font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
+.steps-head > .icon { flex: none; transition: rotate var(--dur-fast) var(--ease-out); }
+.steps-box[open] > .steps-head > .icon { rotate: 90deg; }
+.steps-list { margin: var(--s-1) 0 var(--s-1) var(--s-2); padding: 0 0 0 var(--s-4); border-left: 1px solid var(--border-strong); list-style: none; }
+.steps-list li { display: flex; align-items: baseline; gap: var(--s-2); min-height: var(--lh-md); font: 400 var(--fs-3)/var(--lh-md) var(--mono); }
+.step-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
+.step-on, .step-state { color: var(--text-3); white-space: nowrap; }
+.step-state { margin-left: auto; font-size: var(--fs-2); }
+.step-state.failed, .step-state.denied { color: var(--danger); }
+.step-state.queued { color: var(--warm); }
+@media (prefers-reduced-motion: reduce) { .orb-ring { animation: none !important; } }
 
 /* ---- empty state: the greeting and the input card sit together in the middle of the pane, the way Claude's new chat does ------- */
 #chat-stack:not(:has(.chat-line)) { justify-content: center; padding-bottom: var(--s-6); overflow-y: auto; }

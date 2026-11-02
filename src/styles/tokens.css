@@ -27,6 +27,7 @@
   --accent-dim:  #1E6F9A;
   --accent-wash: rgba(56, 189, 248, 0.10);
   --on-accent:   #04121C;
+  --glint:       #EAF7FF;   /* the light hitting a lit surface (the thinking orb); the same in both themes */
 
   /* warm counterpoint: mic-active, warnings, the spike in a chart */
   --warm:   #F5A524;
