@@ -40,7 +40,7 @@ export function classifyCommand(command, cfg) {
   const c = String(command ?? '').trim();
   if (!c || c.length > cfg.maxCommandLength) return { class: 'ask', tier: 'T3', reason: c ? 'command is very long' : 'empty command' };
   if (cfg.destructive.some((g) => globToRe(g).test(c))) return { class: 'destructive', tier: 'T3', reason: 'matches a destructive pattern' };
-  const chained = /[;&|`<>\n\r]|\$\(|\$\{/.test(c);
+  const chained = /[;&|`<>(){}\n\r]/.test(c); // also parentheses and braces: PowerShell runs a command inside (...) and { ... }
   if (!chained && cfg.allowCommands.some((g) => globToRe(g).test(c))) return { class: 'allow', tier: 'T0', reason: 'read-only allowlist' };
   return { class: 'ask', tier: 'T2', reason: chained ? 'chained or substituted command' : 'not on the allowlist' };
 }

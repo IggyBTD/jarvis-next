@@ -55,7 +55,7 @@ export const SCHEMAS = {
     scheduled_allow: { type: 'object', additionalProperties: strs },
     approvalTimeoutMs: { type: 'integer', minimum: 1000 },
     pendingExpiryMs: { type: 'integer', minimum: 1000 },
-    opencode: obj({ allowCommands: strs, destructive: strs, maxCommandLength: { type: 'integer', minimum: 10 }, taskTimeoutMs: { type: 'integer', minimum: 1000 }, version: str }),
+    opencode: obj({ allowCommands: strs, destructive: strs, trustedFolders: { type: 'object', additionalProperties: strs }, maxCommandLength: { type: 'integer', minimum: 10 }, taskTimeoutMs: { type: 'integer', minimum: 1000 }, version: str }),
     browser: obj({ allowDomains: strs, denyDomains: strs, submitPatterns: strs }),
   }, ['modes', 'approvalTimeoutMs', 'pendingExpiryMs', 'opencode', 'browser']),
   'apps.json': { type: 'object', additionalProperties: obj({ win32: { type: 'string' }, darwin: { type: 'string' }, args: strs }, []) },

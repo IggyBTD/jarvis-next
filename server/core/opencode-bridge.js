@@ -15,21 +15,30 @@ const EDIT_KINDS = new Set(['edit', 'write', 'patch', 'multiedit']);
 export function modeAnswer(mode, { kind, cls, tier, armed }) {
   const isEdit = EDIT_KINDS.has(kind);
   const isShell = kind === 'bash' || kind === 'shell';
+  const isDir = kind === 'external_directory'; // T2 here means a folder the person trusts; anything else arrives as T3
   const safe = tier !== 'T3' && !armed;
-  if (mode === 'plan') return (isShell && cls?.class === 'allow') || kind === 'webfetch' ? 'once' : 'reject';
+  if (mode === 'plan') return (isShell && cls?.class === 'allow') || kind === 'webfetch' || (isDir && safe) ? 'once' : 'reject';
   if (mode === 'manual') return null;
-  if (mode === 'accept-edits') return isEdit && safe ? 'once' : null;
-  if (mode === 'auto') return safe && (isEdit || isShell || kind === 'webfetch') ? 'once' : null;
+  if (mode === 'accept-edits') return (isEdit || isDir) && safe ? 'once' : null;
+  if (mode === 'auto') return safe && (isEdit || isShell || isDir || kind === 'webfetch') ? 'once' : null;
   if (mode === 'bypass') return safe ? 'once' : null;
   return null;
 }
 
-export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, machines, modes, log = () => {}, reconnectDelayMs = 500 }) {
+// trusted(machine) -> folders the person has allowed the coding agent to use besides its workspace (the chosen project folder, policy.json trustedFolders)
+export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, machines, modes, trusted = () => [], log = () => {}, reconnectDelayMs = 500 }) {
   const state = new Map();     // machine -> { routes, inflight: Map<permissionId, AbortController>, seen: Set }
   const stop = new AbortController();
   const get = (m) => { if (!state.has(m)) state.set(m, { routes: null, inflight: new Map(), seen: new Set() }); return state.get(m); };
 
-  const outsideWorkspace = (paths, workspaceDir) => paths.some((p) => (/^([a-z]:[\\/]|[\\/]|~)/i.test(p)) && !String(p).toLowerCase().replace(/\\/g, '/').startsWith(String(workspaceDir ?? '').toLowerCase().replace(/\\/g, '/')));
+  // A path is outside when it is absolute and under none of the roots (the workspace and the folders the person trusts). A pattern may
+  // end in a wildcard (C:\proj\src\*), which names the folder itself.
+  const norm = (p) => String(p ?? '').replace(/\\/g, '/').replace(/\/?\*+$/, '').replace(/\/+$/, '').toLowerCase();
+  const under = (p, root) => { const r = norm(root); return !!r && (norm(p) === r || norm(p).startsWith(`${r}/`)); };
+  const outsideWorkspace = (paths, machine) => {
+    const roots = [machines[machine].workspaceDir, ...trusted(machine)].filter(Boolean);
+    return paths.some((p) => /^([a-z]:[\\/]|[\\/]|~)/i.test(p) && !roots.some((r) => under(p, r)));
+  };
 
   async function respond(machine, p, answer) {
     const s = get(machine);
@@ -70,15 +79,15 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, ma
       args = { paths: p.patterns.slice(0, 10), ...(p.metadata?.filepath ? { file: p.metadata.filepath } : {}) };
       const paths = [...p.patterns, p.metadata?.filepath].filter(Boolean);
       armed = paths.some(isArming);
-      tier = outsideWorkspace(paths, machines[machine].workspaceDir) ? 'T3' : 'T2';
+      tier = outsideWorkspace(paths, machine) ? 'T3' : 'T2';
       summary = `The coding agent wants to change ${p.patterns.slice(0, 3).join(', ') || 'a file'} on ${machines[machine].label}${tier === 'T3' ? ' (outside the workspace)' : ''}.`;
     } else if (p.kind === 'webfetch') {
       args = { url: p.patterns[0] ?? p.metadata?.url ?? '' };
       summary = `The coding agent wants to fetch ${clip(args.url, 200)} on ${machines[machine].label}.`;
     } else if (p.kind === 'external_directory') {
-      tier = 'T3';
+      tier = outsideWorkspace(p.patterns, machine) ? 'T3' : 'T2'; // a trusted folder is not "outside"
       args = { paths: p.patterns.slice(0, 10) };
-      summary = `The coding agent wants to use a folder outside the workspace on ${machines[machine].label}: ${p.patterns.slice(0, 3).join(', ')}`;
+      summary = `The coding agent wants to use a folder outside the workspace and your trusted folders on ${machines[machine].label}: ${p.patterns.slice(0, 3).join(', ')}`;
     } else {
       args = { patterns: p.patterns.slice(0, 10), title: p.title };
       summary = `The coding agent asks for permission "${p.kind}" on ${machines[machine].label}.`;

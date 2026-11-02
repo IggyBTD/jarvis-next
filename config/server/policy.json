@@ -10,8 +10,12 @@
   "opencode": {
     "version": "1.19.1",
     "taskTimeoutMs": 1800000,
-    "maxCommandLength": 400,
-    "allowCommands": ["git status*", "git diff*", "git log*", "git show*", "git branch", "git rev-parse*", "ls", "ls *", "dir", "dir *", "cat *", "head *", "tail *", "wc *", "pwd", "npm test", "npm run test", "node --version", "npm --version"],
+    "maxCommandLength": 1500,
+    "trustedFolders": {
+      "pc": ["C:\\Users\\bethe\\Jarvis-Next", "C:\\Users\\bethe\\AppData\\Local\\Temp"],
+      "mac": []
+    },
+    "allowCommands": ["git status*", "git diff*", "git log*", "git show*", "git branch", "git rev-parse*", "ls", "ls *", "dir", "dir *", "cat *", "head *", "tail *", "wc *", "pwd", "Get-ChildItem*", "Get-Content*", "Get-Item*", "Get-ItemProperty*", "Test-Path*", "Resolve-Path*", "Get-Location", "Select-String*", "Get-Date", "Get-Command*", "Get-Process*", "Get-Service*", "Get-Volume*", "Get-PSDrive*", "Get-ComputerInfo*", "Get-NetIPAddress*", "$PSVersionTable*", "npm test", "npm run test", "node --version", "npm --version"],
     "destructive": ["rm -rf*", "rm -fr*", "sudo*", "format *", "del /s*", "rd /s*", "rmdir /s*", "*| sh*", "*| bash*", "*|sh*", "*|bash*", "curl*|*", "wget*|*", "npm install -g*", "npm i -g*", "pip install*", "brew install*", "winget install*", "choco install*", "chmod -R*", "chown*", "mkfs*", "dd *", "shutdown*", "reboot*", "reg delete*", "Remove-Item*-Recurse*", "git push*", "git reset --hard*", "git clean*"]
   },
   "browser": {
