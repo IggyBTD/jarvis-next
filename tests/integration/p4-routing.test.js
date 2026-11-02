@@ -334,6 +334,22 @@ test('orchestrator: model iteration and tool-call limits, malformed calls, then 
   } finally { await r.close(); }
 });
 
+test('orchestrator: tool output of one message stays under the turn budget; later results become a short stub', async () => {
+  const r = await makeRig();
+  try {
+    r.model.script({ toolCalls: [{ name: 'get_volume', arguments: {} }] }, { content: 'ok' });
+    await r.orchestrator.runTurn({ convId: 'b1', text: 'volume' });
+    assert.match(r.conversations.get('b1').messages.find((m) => m.role === 'tool').content, /<untrusted/);
+
+    r.cfg.models.turnToolChars = 1;
+    r.model.script({ toolCalls: [{ name: 'get_volume', arguments: {} }] }, { content: 'ok' });
+    await r.orchestrator.runTurn({ convId: 'b2', text: 'volume' });
+    const tool = r.conversations.get('b2').messages.find((m) => m.role === 'tool').content;
+    assert.match(tool, /result was left out/);
+    assert.doesNotMatch(tool, /<untrusted/);
+  } finally { await r.close(); }
+});
+
 test('orchestrator: abort leaves no dangling tool call; busy conversations refuse a second message', async () => {
   const r = await makeRig();
   try {

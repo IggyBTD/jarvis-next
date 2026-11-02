@@ -9,6 +9,7 @@ export class BusyError extends Error { constructor() { super('This conversation 
 export function createOrchestrator({ llm, queue, router, prompts, conversations, targetState, bus, models, now = () => new Date() }) {
   const maxIterations = models.maxIterations ?? 8;
   const maxToolCalls = models.maxToolCalls ?? 12;
+  const turnToolChars = () => models.turnToolChars ?? 24_000;
   const active = new Map(); // convId -> AbortController
 
   const budgetFor = (system, tools) => models.contextLength - (models.maxOutputTokens ?? 4096) - estimateTokens({ content: system }) - Math.ceil(JSON.stringify(tools).length / 3.5) - 512;
@@ -33,6 +34,7 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
       const built = await prompts.build(target, { now: now() });
       const system = voiceMode ? `${built}\n\nThis reply will be spoken aloud: lead with the answer, use short plain sentences, no tables, lists, headings or symbols, and never read code or long numbers.` : built;
       let calls = 0;
+      let turnChars = 0;
       let malformed = 0;
       const turn = { requests: 0, completionTokens: 0, genSeconds: 0, promptTokens: null, ttftMs: null, startedAt: Date.now() }; // what this reply cost the model, shown under it
       let finalText = '';
@@ -76,6 +78,9 @@ ${effortNote(effort)}` : ''}` }; // request only, never stored
             const r = await router.invoke(c, { target, source, convId: conv.id, signal: ctl.signal, conversation: conv });
             emit('tool.result', { name: c.name, ok: r.ok, queued: !!r.queued, denied: !!r.denied });
             content = r.content;
+            // All tool output of one message together stays under a budget, so a long loop cannot grow the prompt without limit.
+            if (turnChars + content.length > turnToolChars()) content = `[${c.name}] The result was left out: this message already brought in ${turnChars} characters of tool output. Use fewer items or a narrower query, or answer from what you have.`;
+            turnChars += content.length;
           }
           conversations.append(conv, { role: 'tool', tool_call_id: c.id, name: c.name, content, target });
         }

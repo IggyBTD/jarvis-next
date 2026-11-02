@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeRig, lastAudit } from '../rig.js';
-import { registerGoogleTools, mailBody } from '../../server/core/google-tools.js';
+import { registerGoogleTools, mailBody, cleanBody } from '../../server/core/google-tools.js';
 import { AuthError } from '../../server/digest/google.js';
 
 const b64 = (s) => Buffer.from(s).toString('base64url');
@@ -69,6 +69,24 @@ test('gmail search returns sender, subject, unread flag and preview; read return
   assert.deepEqual(m.attachments, ['menu.pdf']);
   assert.ok(seen.every((x) => !/messages\/abc123.*(send|modify|trash)/.test(x.url)), 'only GETs of read endpoints');
   assert.equal(mailBody({ mimeType: 'text/html', body: { data: b64('<style>p{}</style><p>Hi&nbsp;<b>you</b> &amp; me</p>') } }), 'Hi you & me');
+});
+
+test('gmail read: ids read several mails in one call, bodies are cleaned and short unless full, one bad id does not hide the rest', async () => {
+  const long = `Hello Ann,\n${'Lots of words here. '.repeat(100)}\nSee https://example.com/a/very/long/tracking?x=1 now.\n\nOn Fri, Ann wrote:\n> old text\nUnsubscribe here`;
+  const mail = (text) => ({ snippet: 's', payload: { headers: [{ name: 'Subject', value: 'S' }], mimeType: 'text/plain', body: { data: b64(text) } } });
+  const { run } = setup((file, url) => {
+    if (url.includes('/messages/bad01')) return Object.assign(new Error('Google answered 404'), { status: 404 });
+    return mail(url.includes('/messages/long1') ? long : 'Short mail');
+  }, [ACCOUNTS[0]]);
+  const r = await run('google_gmail_read', { ids: ['long1', 'short', 'bad01'] });
+  assert.equal(r.items.length, 3);
+  assert.ok(r.items[0].body.length <= 1200 + 20, 'default body is short');
+  assert.ok(!/https?:|old text|Unsubscribe/.test(r.items[0].body));
+  assert.equal(r.items[1].body, 'Short mail');
+  assert.match(r.items[2].error, /not found|404/);
+  assert.ok((await run('google_gmail_read', { id: 'long1', full: true })).body.length > 1500);
+  await assert.rejects(run('google_gmail_read', {}), /Give an id/);
+  assert.equal(cleanBody('Hi\n> quoted\nthere https://x.io/y'), 'Hi\nthere [link]');
 });
 
 test('drive: search escapes the query; read exports Docs as text and Sheets as CSV and refuses binary files', async () => {

@@ -47,5 +47,7 @@
   "preemptInteractive": false,
   "keepThinkInHistory": false,
   "maxIterations": 8,
-  "maxToolCalls": 12
+  "maxToolCalls": 12,
+  "maxToolResultChars": 6000,
+  "turnToolChars": 24000
 }

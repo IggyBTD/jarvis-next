@@ -49,7 +49,7 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
       if (!c.enabled || !c.platforms.includes(os) || c.system) return null; // system actions are for the server's own use (tasks), never for the model
       if (c.internal) {
         const h = internal.get(name);
-        return h ? { ...h, kind: 'internal', tier: h.tier ?? c.tier, params: c.params, description: c.description, category: c.category } : null;
+        return h ? { ...h, kind: 'internal', tier: h.tier ?? c.tier, params: c.params, description: c.description, category: c.category, maxResultChars: c.maxResultChars } : null;
       }
       return { name, kind: 'agent', tier: c.tier, tierOf: name === 'run_user_script' ? scriptTier : null, params: c.params, description: c.description, category: c.category, timeoutMs: c.timeoutMs };
     }
@@ -161,7 +161,7 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
     const durationMs = now() - started;
     await audit.append({ ...base, action: name, args, tier, decision: how, outcome: ok ? 'ok' : `error: ${clip(error, 120)}`, durationMs });
     const label = tag(target);
-    const body = ok ? wrapUntrusted(`${name} result from ${label}`, JSON.stringify(data ?? null), { max: MAX_RESULT_CHARS }) : wrapUntrusted(`${name} error from ${label}`, error ?? 'failed', { max: 600 });
+    const body = ok ? wrapUntrusted(`${name} result from ${label}`, JSON.stringify(data ?? null), { max: def.maxResultChars ?? cfg.models?.maxToolResultChars ?? MAX_RESULT_CHARS }) : wrapUntrusted(`${name} error from ${label}`, error ?? 'failed', { max: 600 });
     return envelope(ok, target, name, `[${label}] ${name} ${ok ? 'finished' : 'failed'}:\n${body}`, { data: ok ? data : undefined, error: ok ? undefined : error, durationMs });
   }
 

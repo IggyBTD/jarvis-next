@@ -25,6 +25,18 @@ export function mailBody(payload) {
   walk(payload);
   return found.plain ?? (found.html ? stripHtml(found.html) : '');
 }
+// What a person needs to triage a mail: drops quoted replies, the footer and link addresses, which are most of the text in
+// replies and newsletters and cost the model prompt tokens for nothing.
+export function cleanBody(text) {
+  let t = String(text ?? '').replace(/\r/g, '').split('\n').filter((l) => !l.startsWith('>')).join('\n');
+  const cut = t.search(/^(On .{5,200} wrote:|-{2,} ?(Original Message|Forwarded message)|_{8,})/m);
+  if (cut > 0) t = t.slice(0, cut);
+  const foot = t.search(/^.*(unsubscribe|view (this email )?in (your )?browser|manage (your )?(email )?preferences).*$/im);
+  if (foot > 200) t = t.slice(0, foot);
+  return t.replace(/https?:\/\/\S+/g, '[link]').replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n\n').trim();
+}
+const BODY = 1200; // characters per mail or file by default: enough to triage; `full` gives more
+const BODY_FULL = 5000;
 const attachments = (payload) => { const out = []; const walk = (p) => { if (p?.filename) out.push(p.filename); (p?.parts ?? []).forEach(walk); }; walk(payload); return out; };
 
 export function registerGoogleTools(router, { accounts, clientFile, create = createGoogle, now = Date.now }) {
@@ -81,11 +93,18 @@ export function registerGoogleTools(router, { accounts, clientFile, create = cre
     }));
   }));
 
-  reg('google_gmail_read', ({ account, id }) => firstOf(account, async (g, a) => {
+  const readMail = (account, id, limit) => firstOf(account, async (g, a) => {
     const d = await g.api(g.endpoints.gmail, `/users/me/messages/${q(id)}?format=full`);
     const h = (n) => d.payload?.headers?.find((x) => x.name === n)?.value ?? '';
-    return { account: label(a), id, from: h('From'), to: h('To'), cc: h('Cc'), subject: h('Subject'), date: h('Date'), attachments: attachments(d.payload), body: clip(mailBody(d.payload) || d.snippet || '', 5000) };
-  }));
+    return { account: label(a), id, from: h('From'), to: h('To'), cc: h('Cc'), subject: h('Subject'), date: h('Date'), attachments: attachments(d.payload), body: clip(cleanBody(mailBody(d.payload)) || d.snippet || '', limit) };
+  });
+  // One id gives one mail; `ids` reads several in one call (one model round trip instead of one each). The room for all of
+  // them together stays under the router's cap for this tool.
+  reg('google_gmail_read', async ({ account, id, ids, full }) => {
+    if (!ids?.length) { if (!id) throw new Error('Give an id, or ids to read several mails at once.'); return readMail(account, id, full ? BODY_FULL : BODY); }
+    const limit = full ? Math.min(BODY_FULL, Math.floor(12_000 / ids.length)) : BODY;
+    return { items: await Promise.all(ids.map((i) => readMail(account, i, limit).catch((e) => ({ id: i, error: e.message })))) };
+  });
 
   reg('google_drive_search', ({ account, query, max = 10 }) => gather(account, async (g, a) => {
     const t = query.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -94,13 +113,13 @@ export function registerGoogleTools(router, { accounts, clientFile, create = cre
     return (j.files ?? []).map((f) => ({ account: label(a), id: f.id, name: f.name, type: f.mimeType.startsWith(DOC) ? f.mimeType.slice(DOC.length) : f.mimeType, modified: f.modifiedTime, owner: f.owners?.[0]?.displayName ?? '' }));
   }));
 
-  reg('google_drive_read', ({ account, id }) => firstOf(account, async (g, a) => {
+  reg('google_drive_read', ({ account, id, full }) => firstOf(account, async (g, a) => {
     const meta = await g.api(g.endpoints.drive, `/files/${q(id)}?supportsAllDrives=true&fields=${q('id,name,mimeType,size,modifiedTime')}`);
     const base = { account: label(a), id, name: meta.name, type: meta.mimeType, modified: meta.modifiedTime };
     const exportAs = meta.mimeType === `${DOC}spreadsheet` ? 'text/csv' : [`${DOC}document`, `${DOC}presentation`].includes(meta.mimeType) ? 'text/plain' : null;
     const plain = meta.mimeType.startsWith('text/') || meta.mimeType === 'application/json';
     if (!exportAs && !(plain && Number(meta.size ?? 0) <= 2_000_000)) return { ...base, note: 'This is not a text file (or it is very large), so only its details are available.' };
     const path = exportAs ? `/files/${q(id)}/export?mimeType=${q(exportAs)}` : `/files/${q(id)}?alt=media&supportsAllDrives=true`;
-    return { ...base, content: clip(await g.api(g.endpoints.drive, path, 'text'), 5000) };
+    return { ...base, content: clip(await g.api(g.endpoints.drive, path, 'text'), full ? BODY_FULL : BODY) };
   }));
 }

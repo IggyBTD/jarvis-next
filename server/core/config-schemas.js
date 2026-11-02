@@ -36,6 +36,7 @@ export const SCHEMAS = {
     requestTimeoutMs: { type: 'integer', minimum: 1000 }, maxOutputTokens: { type: 'integer', minimum: 16 },
     preemptInteractive: { type: 'boolean' }, keepThinkInHistory: { type: 'boolean' },
     maxIterations: { type: 'integer', minimum: 1, maximum: 30 }, maxToolCalls: { type: 'integer', minimum: 1, maximum: 60 },
+    maxToolResultChars: { type: 'integer', minimum: 500, maximum: 60000 }, turnToolChars: { type: 'integer', minimum: 2000, maximum: 200000 },
   }, ['baseUrl', 'modelId', 'contextLength', 'concurrency', 'thinking', 'thinkingMethod', 'requestTimeoutMs']),
   'actions.json': obj({
     maxToolsPerRequest: { type: 'integer', minimum: 1, maximum: 40 },
@@ -45,7 +46,7 @@ export const SCHEMAS = {
         name: { type: 'string', pattern: '^[a-z][a-z0-9_]{1,48}$' }, description: str, category: str, tier,
         platforms: { type: 'array', items: { enum: ['win32', 'darwin'] }, minItems: 1 },
         enabled: { type: 'boolean' }, params: { type: 'object' }, returns: { type: 'string' },
-        primary: { type: 'string' }, mvp: { type: 'boolean' }, internal: { type: 'boolean' }, system: { type: 'boolean' }, timeoutMs: { type: 'integer', minimum: 100 },
+        primary: { type: 'string' }, mvp: { type: 'boolean' }, internal: { type: 'boolean' }, system: { type: 'boolean' }, timeoutMs: { type: 'integer', minimum: 100 }, maxResultChars: { type: 'integer', minimum: 500, maximum: 60000 },
       }, ['name', 'description', 'category', 'tier', 'platforms', 'enabled', 'params']),
     },
   }, ['actions']),
