@@ -42,7 +42,7 @@ const ENERGY_TAU = 0.25;    // s: how long writing is remembered
 const LETTER = 0.022;       // energy per letter, tuned to real streaming (a local model writes 100 to 250 letters/s): 160/s is about three quarters open
 
 export function feedMesh(text, weight = 1) {
-  if (calm.matches || !text || !icons.size) return;
+  if (calm.matches || !text || ![...icons.values()].some((i) => !i.frozen)) return; // nothing is animating: nobody to show it to
   if (queue.length - head > 400) head = queue.length - 400; // a pasted wall of text: only the newest is shown
   for (let i = 0; i < text.length; i++) queue.push(weight < 1 ? -text.charCodeAt(i) : text.charCodeAt(i)); // negative = quieter (reasoning)
   start();
@@ -163,7 +163,7 @@ const sizes = new ResizeObserver((entries) => {
     icon.size = size;
     e.target.width = e.target.height = Math.round(size * dpr);
     icon.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (calm.matches) paintOnce(icon);
+    if (calm.matches || icon.frozen) paintOnce(icon);
   }
 });
 const seen = new IntersectionObserver((entries) => {
@@ -172,7 +172,7 @@ const seen = new IntersectionObserver((entries) => {
 });
 
 function paintOnce(icon) { readInk(performance.now()); draw(icon.ctx, icon.size, project(1), 1); }
-const live = () => { for (const [cv, icon] of icons) if (!cv.isConnected) { icons.delete(cv); sizes.unobserve(cv); seen.unobserve(cv); } return [...icons.values()].filter((i) => i.visible && i.size); };
+const live = () => { for (const [cv, icon] of icons) if (!cv.isConnected && !icon.keep) { icons.delete(cv); sizes.unobserve(cv); seen.unobserve(cv); } return [...icons.values()].filter((i) => i.visible && i.size && !i.frozen); };
 
 function frame(now) {
   raf = 0;
@@ -184,17 +184,18 @@ function frame(now) {
   readInk(now);
   step(dt, t);
   const pts = project(t);
-  for (const icon of on) draw(icon.ctx, icon.size, pts, t);
+  for (const icon of on) { draw(icon.ctx, icon.size, pts, t); if (icon.restAt && now > icon.restAt) icon.frozen = true; } // the last frame drawn stays as it is
   raf = requestAnimationFrame(frame);
 }
 function start() { if (!raf && !calm.matches && icons.size) raf = requestAnimationFrame(frame); }
 
-// A new icon. Give it the class "orb" for its size (CSS --orb-size); it removes itself from the loop when it leaves the page.
-export function meshIcon() {
+// A new icon. Give it the class "orb" for its size (CSS --orb-size); it removes itself from the loop when it leaves the page, unless
+// keep is set (an icon that is moved around the page and put back).
+export function meshIcon({ keep = false } = {}) {
   const canvas = document.createElement('canvas');
   canvas.className = 'orb';
   canvas.setAttribute('aria-hidden', 'true');
-  icons.set(canvas, { ctx: canvas.getContext('2d'), size: 0, visible: false });
+  icons.set(canvas, { ctx: canvas.getContext('2d'), size: 0, visible: false, keep, restAt: 0, frozen: false });
   sizes.observe(canvas);
   seen.observe(canvas);
   return canvas;
@@ -203,3 +204,18 @@ export function meshIcon() {
 calm.addEventListener('change', () => { if (calm.matches) { cancelAnimationFrame(raf); raf = 0; queue.length = 0; head = 0; for (const i of icons.values()) if (i.size) paintOnce(i); } else start(); });
 
 export const meshLevel = () => level; // how open the sphere is now (for tests)
+
+// Rest: on = the icon closes gently, then keeps its last picture and costs nothing (no loop). off = it moves again.
+export function restMesh(canvas, on) {
+  const icon = icons.get(canvas);
+  if (!icon) return;
+  icon.frozen = false;
+  icon.restAt = on ? performance.now() + 900 : 0;
+  if (on && (calm.matches || !icon.size)) { icon.frozen = true; if (icon.size) paintOnce(icon); return; }
+  start();
+}
+
+// A resting icon is a picture: redraw it when the theme changes.
+const repaintResting = () => { inkAt = -1e9; for (const i of icons.values()) if (i.frozen && i.size) paintOnce(i); };
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', repaintResting);
+new MutationObserver(repaintResting).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });

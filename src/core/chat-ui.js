@@ -4,7 +4,7 @@ import { hydrateIcons } from '../icons/index.js';
 import { chat, setMode, getMode, getPreset, onEvent } from './llm-client.js';
 import { hasImages, takeAsContent } from './attachments.js';
 import { pulse, setThinking } from './mesh-state.js';
-import { meshIcon, feedMesh, feedMeshTotal, resetMeshFeed } from './node-mesh.js';
+import { meshIcon, feedMesh, feedMeshTotal, resetMeshFeed, restMesh } from './node-mesh.js';
 import { renderBlocks, highlightCode } from './markdown.js';
 import { parseReply } from './tool-router.js';
 import { upsertArtifact } from './artifacts.js';
@@ -121,11 +121,31 @@ const setText = (el, text) => {
 
 // The loading icon is the node mesh from the old HUD (node-mesh.js). It opens and closes with the letters being written (feedMesh).
 const orb = () => meshIcon();
-const dropOrbs = () => output.querySelectorAll('.chat-line > .orb').forEach((o) => o.remove());
+// The stamp: ONE logo that rests under the newest reply. When you send a message it glides down into the new reply (and is that
+// reply's loading icon while it is written), then rests under it. Ease-in-out, 280 ms; no glide with reduced motion.
+let stamp = null;
+const calm = matchMedia('(prefers-reduced-motion: reduce)');
+function moveStamp(line, { rest = false } = {}) {
+  stamp ??= meshIcon({ keep: true });
+  const from = stamp.isConnected ? stamp.getBoundingClientRect() : null;
+  if (stamp.parentElement !== line) line.append(stamp);
+  restMesh(stamp, rest);
+  if (!from || calm.matches) return;
+  const to = stamp.getBoundingClientRect();
+  const dy = from.top - to.top, dx = from.left - to.left;
+  if (!dy && !dx) return;
+  const near = Math.abs(dy) < innerHeight * 1.5; // from far above: fade in at the new place instead of a long flight
+  stamp.animate(near ? [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }] : [{ opacity: 0 }, { opacity: 1 }], { duration: 280, easing: 'ease-in-out' });
+}
+// The turn is over: the stamp goes to the newest reply (nothing to show it under after an error with no reply at all).
+function settleStamp() {
+  const last = [...output.querySelectorAll('.chat-line.assistant')].at(-1);
+  if (last) moveStamp(last, { rest: true }); else stamp?.remove();
+}
 function pendingLine() {
   const el = addLine('assistant pending', '', { meta: '' });
   el.querySelector('.chat-text').append(Object.assign(document.createElement('span'), { className: 'think-label', textContent: 'Thinking...' }));
-  el.append(orb());
+  moveStamp(el);
   return el;
 }
 
@@ -354,7 +374,7 @@ async function sendViaServer(text) {
   output.scrollTop = output.scrollHeight;
 
   await new Promise((finish) => {
-    const end = () => { cancelAnimationFrame(frame); steps?.settle(); dropOrbs(); off(); serverTurn = null; setThinking(false); busy = false; setWorking(false); document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')); finish(); };
+    const end = () => { cancelAnimationFrame(frame); steps?.settle(); settleStamp(); off(); serverTurn = null; setThinking(false); busy = false; setWorking(false); document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')); finish(); };
     serverTurn = { end };
     const fail = (message, kind = 'error') => { pending.className = `chat-line ${kind}`; pending.querySelector('.thought')?.remove(); setText(pending, message); end(); };
     const off = onLink((e) => {
@@ -623,7 +643,7 @@ async function send() {
     setText(pending, stopped ? 'Stopped' : `Could not reach the model: ${e.message}`);
   } finally {
     offPhase();
-    dropOrbs();
+    settleStamp();
     if (!mine.taken) { setThinking(false); busy = false; setWorking(false); saveSoon(); }
   }
 }
@@ -806,6 +826,8 @@ function renderHistory() {
       }
     } else if (m.role === 'tool') rowOf.get(m.tool_call_id)?.set(resultState(m.content));
   }
+  const lastReply = [...output.querySelectorAll('.chat-line.assistant')].at(-1);
+  if (lastReply) moveStamp(lastReply, { rest: true }); // a saved chat: the stamp is already under its last reply
   workspace.classList.toggle('has-output', history.length > 0);
   output.scrollTop = output.scrollHeight;
 }
