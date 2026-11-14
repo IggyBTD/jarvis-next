@@ -4,6 +4,7 @@ import { hydrateIcons } from '../icons/index.js';
 import { chat, setMode, getMode, getPreset, onEvent } from './llm-client.js';
 import { hasImages, takeAsContent } from './attachments.js';
 import { pulse, setThinking } from './mesh-state.js';
+import { meshIcon, feedMesh, feedMeshTotal, resetMeshFeed } from './node-mesh.js';
 import { renderBlocks, highlightCode } from './markdown.js';
 import { parseReply } from './tool-router.js';
 import { upsertArtifact } from './artifacts.js';
@@ -118,25 +119,8 @@ const setText = (el, text) => {
   (label ?? box).textContent = text;
 };
 
-// The thinking orb: a colourless sphere with dots on its surface (spread evenly, the golden angle apart), no lines between them.
-// The CSS turns it while something is working; pulseOrb() gives it a small beat for each burst of letters written.
-const ORB_DOTS = 26;
-const ORB_HTML = `<span class="orb-halo"></span><span class="orb-world"><i class="orb-ball"></i><span class="orb-tilt"><span class="orb-spin">${Array.from({ length: ORB_DOTS }, (_, i) => {
-  const y = 1 - (2 * (i + 0.5)) / ORB_DOTS;
-  const lon = Math.atan2(Math.sin(i * 2.399963) * Math.sqrt(1 - y * y), Math.cos(i * 2.399963) * Math.sqrt(1 - y * y));
-  return `<i class="orb-dot" style="--lon:${(lon * 180 / Math.PI).toFixed(1)}deg;--lat:${(Math.asin(y) * 180 / Math.PI).toFixed(1)}deg"></i>`;
-}).join('')}</span></span></span>`;
-const orb = () => Object.assign(document.createElement('span'), { className: 'orb', innerHTML: ORB_HTML });
-const calm = matchMedia('(prefers-reduced-motion: reduce)');
-let lastBeat = 0;
-function pulseOrb(line) {
-  const o = line?.querySelector(':scope > .orb');
-  const now = performance.now();
-  if (!o || calm.matches || now - lastBeat < 110) return; // letters arrive many times a second; a beat each ~110 ms reads as one rhythm
-  lastBeat = now;
-  o.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.16)' }, { transform: 'scale(1)' }], { duration: 200, easing: 'ease-out' });
-  o.querySelector('.orb-halo').animate([{ opacity: 0.3 }, { opacity: 0.95 }, { opacity: 0.3 }], { duration: 200, easing: 'ease-out' });
-}
+// The loading icon is the node mesh from the old HUD (node-mesh.js). It opens and closes with the letters being written (feedMesh).
+const orb = () => meshIcon();
 const dropOrbs = () => output.querySelectorAll('.chat-line > .orb').forEach((o) => o.remove());
 function pendingLine() {
   const el = addLine('assistant pending', '', { meta: '' });
@@ -381,7 +365,7 @@ async function sendViaServer(text) {
           pending.className = 'chat-line assistant';
           latest += e.text;
           pulse();
-          pulseOrb(pending);
+          feedMesh(e.text);
           if (!frame) frame = requestAnimationFrame(() => { frame = 0; const stick = nearBottom(); paint(false); follow(stick); });
           break;
         case 'resume': // reconnected while the reply was being written: the server sends what it has so far
@@ -553,6 +537,7 @@ async function send() {
     let spoken = ''; // text of the rounds already finished, so speech sees one growing text
     for (let round = 0; ; round++) {
       latest = { content: '', reasoning: '' };
+      resetMeshFeed();
       thinkStart = null;
       if (round > 0 && shouldCompact(lastUsed, contextMax())) trimToolResults(history, 8); // long agent job: shorten old tool output
       const result = await chat(history, {
@@ -565,7 +550,9 @@ async function send() {
           setThinking(thinking);
           if (thinkStart === null) thinkStart = performance.now();
           if (thinking) speech?.thinking();
-          if (!thinking) { pulse(); pulseOrb(pending); speech?.push(spoken + visible); }
+          if (!thinking) { pulse(); speech?.push(spoken + visible); }
+          feedMeshTotal('content', visible ?? '');
+          feedMeshTotal('reasoning', reasoning ?? '', 0.5); // thought text is writing too, a little quieter
           if (thinking && !reasoning) setText(pending, 'Thinking...');
           latest = { content: visible, reasoning };
           if (!frame) frame = requestAnimationFrame(paintStreaming);

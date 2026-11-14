@@ -61,30 +61,14 @@
 @keyframes ring-out { 0% { transform: scale(0.55); opacity: 0.7; } 100% { transform: scale(1.35); opacity: 0; } }
 .chat-line.pending .chat-text { position: relative; display: inline-flex; align-items: center; gap: var(--s-3); height: var(--lh-md); color: var(--text-3); font: 400 var(--fs-4)/var(--lh-md) var(--sans); }
 
-/* ---- the thinking orb: a colourless sphere with neon dots on its surface, no lines between them, turning on a diagonal axis. The dots
-   are real points on a sphere (preserve-3d), so the ones on the far side are hidden by the body and the ones near the edge squash and
-   slide away. It turns while something is working and gives a small pulse for every burst of letters written. ---------------- */
-.orb { --orb-size: var(--s-6); --dot: calc(var(--orb-size) / 7); position: relative; flex: none; width: var(--orb-size); height: var(--orb-size); }
-.orb-halo { position: absolute; inset: calc(var(--orb-size) / -4); border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 38%, transparent) 0, transparent 68%); opacity: 0.3; }
-.orb-world { position: absolute; inset: 0; perspective: calc(var(--orb-size) * 3); transform-style: preserve-3d; }
-.orb-ball { position: absolute; inset: 0; border-radius: 50%;
-  background:
-    radial-gradient(circle at 30% 26%, var(--glint) 0, color-mix(in srgb, var(--glint) 25%, transparent) 16%, transparent 38%),
-    radial-gradient(circle at 36% 32%, color-mix(in srgb, var(--text-3) 80%, var(--glint)) 0, color-mix(in srgb, var(--text-3) 60%, black) 42%, color-mix(in srgb, var(--text-3) 24%, black) 100%);
-  box-shadow: inset calc(var(--orb-size) / -12) calc(var(--orb-size) / -12) calc(var(--orb-size) / 6) color-mix(in srgb, black 45%, transparent); }
-.orb-tilt, .orb-spin { position: absolute; inset: 0; transform-style: preserve-3d; }
-.orb-tilt { transform: rotateX(16deg) rotateZ(28deg); } /* the diagonal axis */
-.orb-spin { animation: orb-spin 3.2s linear infinite; } /* linear: a constant turn, not a movement between two places */
-.orb-dot { position: absolute; top: 50%; left: 50%; width: var(--dot); height: var(--dot); margin: calc(var(--dot) / -2) 0 0 calc(var(--dot) / -2); border-radius: 50%; background: var(--accent); backface-visibility: hidden;
-  box-shadow: 0 0 calc(var(--dot) * 2) var(--accent); transform: rotateY(var(--lon)) rotateX(var(--lat)) translateZ(calc(var(--orb-size) / 2)); }
-@keyframes orb-spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+/* ---- the loading icon: the node mesh (node-mesh.js) drawn into a canvas, sized by --orb-size. It opens with the letters being written. ---- */
+.orb { --orb-size: var(--s-6); display: block; flex: none; width: var(--orb-size); height: var(--orb-size); }
 /* the orb sits beside "Thinking...", and under the reply while it is being written (in the gap, so nothing moves when it goes) */
 .chat-line.pending { display: flex; align-items: center; gap: var(--s-3); }
 .chat-line.pending > .orb { order: -1; }
 .chat-line.pending .think-label { display: block; }
 .chat-line.assistant:not(.pending) > .orb { --orb-size: var(--s-5); position: absolute; top: 100%; left: 0; margin-top: var(--s-1); }
 .chat-line.assistant:not(.pending):has(> .orb) { content-visibility: visible; }
-@media (prefers-reduced-motion: reduce) { .orb-spin { animation: none !important; } }
 
 /* ---- the steps row: every tool call of one stretch lives in ONE quiet row (the current step while it runs, "Ran 3 steps" after), which opens to the list ---- */
 .chat-line.steps { align-self: stretch; content-visibility: visible; }
