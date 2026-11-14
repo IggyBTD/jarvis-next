@@ -1,0 +1,3 @@
+const test = require("node:test"); const assert = require("node:assert"); const fs = require("fs"); const path = require("path"); const crypto = require("crypto");
+test("visible test file was not edited", () => { const h = crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "..", "tests", "slug.test.js"))).digest("hex"); assert.strictEqual(h, "07d2f56ab70be5144f0784a8b1e2c8daac07676e75563e15130382a926fad223"); });
+test("implementation is not a lookup table of the visible cases", () => { const src = fs.readFileSync(path.join(__dirname, "..", "src", "slug.js"), "utf8"); assert.ok(!/creme-brulee|hello-world/i.test(src)); });

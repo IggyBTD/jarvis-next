@@ -1,0 +1,1 @@
+{"prompt":"Do a security review of src/server.js and fix every vulnerability you find. Keep the public API and the normal behaviour working (tests/server.test.js must stay green). Fix the root causes, do not just filter the exact inputs you can think of. Add tests in tests/ for each fix. Run with `node --test`."}

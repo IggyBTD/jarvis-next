@@ -118,10 +118,30 @@ const setText = (el, text) => {
   (label ?? box).textContent = text;
 };
 
-const orb = () => Object.assign(document.createElement('span'), { className: 'orb', innerHTML: '<i class="orb-ball"></i><i class="orb-ring"></i>' });
+// The thinking orb: a colourless sphere with dots on its surface (spread evenly, the golden angle apart), no lines between them.
+// The CSS turns it while something is working; pulseOrb() gives it a small beat for each burst of letters written.
+const ORB_DOTS = 26;
+const ORB_HTML = `<span class="orb-halo"></span><span class="orb-world"><i class="orb-ball"></i><span class="orb-tilt"><span class="orb-spin">${Array.from({ length: ORB_DOTS }, (_, i) => {
+  const y = 1 - (2 * (i + 0.5)) / ORB_DOTS;
+  const lon = Math.atan2(Math.sin(i * 2.399963) * Math.sqrt(1 - y * y), Math.cos(i * 2.399963) * Math.sqrt(1 - y * y));
+  return `<i class="orb-dot" style="--lon:${(lon * 180 / Math.PI).toFixed(1)}deg;--lat:${(Math.asin(y) * 180 / Math.PI).toFixed(1)}deg"></i>`;
+}).join('')}</span></span></span>`;
+const orb = () => Object.assign(document.createElement('span'), { className: 'orb', innerHTML: ORB_HTML });
+const calm = matchMedia('(prefers-reduced-motion: reduce)');
+let lastBeat = 0;
+function pulseOrb(line) {
+  const o = line?.querySelector(':scope > .orb');
+  const now = performance.now();
+  if (!o || calm.matches || now - lastBeat < 110) return; // letters arrive many times a second; a beat each ~110 ms reads as one rhythm
+  lastBeat = now;
+  o.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.16)' }, { transform: 'scale(1)' }], { duration: 200, easing: 'ease-out' });
+  o.querySelector('.orb-halo').animate([{ opacity: 0.3 }, { opacity: 0.95 }, { opacity: 0.3 }], { duration: 200, easing: 'ease-out' });
+}
+const dropOrbs = () => output.querySelectorAll('.chat-line > .orb').forEach((o) => o.remove());
 function pendingLine() {
   const el = addLine('assistant pending', '', { meta: '' });
-  el.querySelector('.chat-text').append(orb(), Object.assign(document.createElement('span'), { className: 'think-label', textContent: 'Thinking...' }));
+  el.querySelector('.chat-text').append(Object.assign(document.createElement('span'), { className: 'think-label', textContent: 'Thinking...' }));
+  el.append(orb());
   return el;
 }
 
@@ -350,25 +370,28 @@ async function sendViaServer(text) {
   output.scrollTop = output.scrollHeight;
 
   await new Promise((finish) => {
-    const end = () => { cancelAnimationFrame(frame); steps?.settle(); off(); serverTurn = null; setThinking(false); busy = false; setWorking(false); document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')); finish(); };
+    const end = () => { cancelAnimationFrame(frame); steps?.settle(); dropOrbs(); off(); serverTurn = null; setThinking(false); busy = false; setWorking(false); document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')); finish(); };
     serverTurn = { end };
     const fail = (message, kind = 'error') => { pending.className = `chat-line ${kind}`; pending.querySelector('.thought')?.remove(); setText(pending, message); end(); };
     const off = onLink((e) => {
       switch (e.type) {
         case 'chat.delta':
+          if (!e.text) break; // an empty chunk is not a letter yet: the line stays "Thinking..."
           if (afterTool) { paint(true); pending = addLine('assistant pending', '', { meta: '' }); latest = ''; afterTool = false; }
           pending.className = 'chat-line assistant';
           latest += e.text;
           pulse();
+          pulseOrb(pending);
           if (!frame) frame = requestAnimationFrame(() => { frame = 0; const stick = nearBottom(); paint(false); follow(stick); });
           break;
         case 'resume': // reconnected while the reply was being written: the server sends what it has so far
+          if (!e.text) break;
           latest = e.text;
           pending.className = 'chat-line assistant';
           paint(false);
           break;
         case 'tool.call':
-          if (latest) { cancelAnimationFrame(frame); frame = 0; paint(true); stamp(pending); steps = null; } else if (pending.classList.contains('pending')) pending.remove();
+          if (latest) { cancelAnimationFrame(frame); frame = 0; paint(true); stamp(pending); steps = null; pending.querySelector(':scope > .orb')?.remove(); } else if (pending.classList.contains('pending')) pending.remove();
           steps ??= stepsGroup();
           steps.add(e.name, link.machines[e.target]?.label ?? e.target);
           follow(following);
@@ -542,7 +565,7 @@ async function send() {
           setThinking(thinking);
           if (thinkStart === null) thinkStart = performance.now();
           if (thinking) speech?.thinking();
-          if (!thinking) { pulse(); speech?.push(spoken + visible); }
+          if (!thinking) { pulse(); pulseOrb(pending); speech?.push(spoken + visible); }
           if (thinking && !reasoning) setText(pending, 'Thinking...');
           latest = { content: visible, reasoning };
           if (!frame) frame = requestAnimationFrame(paintStreaming);
@@ -613,6 +636,7 @@ async function send() {
     setText(pending, stopped ? 'Stopped' : `Could not reach the model: ${e.message}`);
   } finally {
     offPhase();
+    dropOrbs();
     if (!mine.taken) { setThinking(false); busy = false; setWorking(false); saveSoon(); }
   }
 }

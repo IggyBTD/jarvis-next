@@ -20,7 +20,7 @@ const KEYWORDS = {
   mac: ['shortcut', 'applescript', 'spotlight', 'atajo', 'raccourci'],
   browser: ['web', 'website', 'browse', 'browser', 'google', 'search online', 'look up', 'http', 'https', 'page', 'navegador', 'sitio', 'página', 'busca en internet', 'navigateur', 'cherche sur internet'],
   scripts: ['script'],
-  google: ['gmail', 'email', 'mail', 'inbox', 'unread', 'calendar', 'event', 'meeting', 'appointment', 'agenda', 'upcoming', 'coming up', 'google drive', 'drive', 'google doc', 'google sheet', 'correo', 'calendario', 'reunión', 'reunion', 'cita', 'courriel', 'courrier', 'calendrier', 'réunion', 'rendez-vous'],
+  google: ['gmail', 'email', 'mail', 'inbox', 'unread', 'calendar', 'event', 'meeting', 'appointment', 'agenda', 'upcoming', 'coming up', 'google drive', 'drive', 'outlook', 'onedrive', 'microsoft', 'school', 'google doc', 'google sheet', 'correo', 'calendario', 'reunión', 'reunion', 'cita', 'courriel', 'courrier', 'calendrier', 'réunion', 'rendez-vous'],
 };
 const DEFAULT_ORDER = ['system', 'apps', 'audio', 'power', 'time', 'workspaces', 'performance', 'scripts'];
 

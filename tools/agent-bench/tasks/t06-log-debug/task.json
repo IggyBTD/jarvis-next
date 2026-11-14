@@ -1,0 +1,1 @@
+{"prompt":"Production crashed last night. The log is in crash.log. There is no failing test. Find the root cause, fix it in src/, and make sure the whole family of similar inputs works, not only the one in the log. README.md says what inputs are valid. Add tests in tests/. Run with `node --test`."}

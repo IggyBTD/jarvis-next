@@ -37,7 +37,7 @@ export function createHealth({ llm, queue, router, machines, contextLength = nul
 
 const readBody = (req) => new Promise((resolve, reject) => { const c = []; let n = 0; req.on('data', (d) => { n += d.length; if (n > 20_000) { reject(Object.assign(new Error('body too large'), { status: 413 })); req.destroy(); } else c.push(d); }); req.on('end', () => { try { resolve(c.length ? JSON.parse(Buffer.concat(c).toString('utf8')) : {}); } catch { reject(Object.assign(new Error('body must be JSON'), { status: 400 })); } }); req.on('error', reject); });
 
-export function createHttpHandler({ cfg, auth, llmProxy, models, environment, setProject, health, audit, conversations, digest, osint, browserView, bundle, latex, accounts, buildState, log = () => {} }) {
+export function createHttpHandler({ cfg, auth, llmProxy, models, environment, setProject, health, audit, conversations, digest, osint, browserView, bundle, latex, accounts, msAccounts, buildState, log = () => {} }) {
   const origins = cfg.machines.server.origins ?? [];
   return async function handle(req, res) {
     try {
@@ -90,10 +90,11 @@ export function createHttpHandler({ cfg, auth, llmProxy, models, environment, se
         return res.end(s.jpeg);
       }
       if (latex && p === '/api/latex' && req.method === 'POST') { try { return json(res, 200, await latex(String((await readBody(req)).text ?? '').slice(0, 500)), cors); } catch (e) { return json(res, e.status ?? 502, { error: 'the model could not be reached' }, cors); } }
-      if (accounts && p === '/api/accounts/google' && req.method === 'GET') return json(res, 200, { accounts: accounts.list() }, cors);
-      if (accounts && p === '/api/accounts/google/start' && req.method === 'POST') { try { return json(res, 200, await accounts.start(await readBody(req)), cors); } catch (e) { return json(res, e.status ?? 500, { error: e.message }, cors); } }
-      const acct = p.match(/^\/api\/accounts\/google\/([0-9a-f]{10})$/);
-      if (accounts && acct && req.method === 'DELETE') return json(res, 200, { removed: await accounts.remove(acct[1]) }, cors);
+      const prov = p.match(/^\/api\/accounts\/(google|microsoft)(\/start|\/([0-9a-f]{10}))?$/);
+      const acc = prov && (prov[1] === 'google' ? accounts : msAccounts);
+      if (acc && !prov[2] && req.method === 'GET') return json(res, 200, { accounts: acc.list() }, cors);
+      if (acc && prov[2] === '/start' && req.method === 'POST') { try { return json(res, 200, await acc.start(await readBody(req)), cors); } catch (e) { return json(res, e.status ?? 500, { error: e.message }, cors); } }
+      if (acc && prov[3] && req.method === 'DELETE') return json(res, 200, { removed: await acc.remove(prov[3]) }, cors);
       if (browserView && p === '/api/browser/do'&& req.method === 'POST') return json(res, 200, await browserView.act(await readBody(req)), cors);
       if (req.method === 'GET' && p === '/api/conversations') return json(res, 200, { conversations: conversations.list() }, cors);
       const one = p.match(/^\/api\/conversations\/([\w-]{1,64})$/);

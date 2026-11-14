@@ -61,21 +61,30 @@
 @keyframes ring-out { 0% { transform: scale(0.55); opacity: 0.7; } 100% { transform: scale(1.35); opacity: 0; } }
 .chat-line.pending .chat-text { position: relative; display: inline-flex; align-items: center; gap: var(--s-3); height: var(--lh-md); color: var(--text-3); font: 400 var(--fs-4)/var(--lh-md) var(--sans); }
 
-/* ---- the thinking orb: a lit sphere with a ring turning around it. The depth is real (preserve-3d): the far half of the ring
-   passes behind the sphere, the near half in front, and perspective makes the near half larger. Light comes from the top left.
-   It moves only while something is working (a pending reply, a running step) and stands still otherwise. ---------------- */
-.orb { position: relative; flex: none; width: var(--s-5); height: var(--s-5); perspective: var(--s-8); transform-style: preserve-3d; }
-.orb-ball { position: absolute; inset: var(--s-1); border-radius: 50%;
+/* ---- the thinking orb: a colourless sphere with neon dots on its surface, no lines between them, turning on a diagonal axis. The dots
+   are real points on a sphere (preserve-3d), so the ones on the far side are hidden by the body and the ones near the edge squash and
+   slide away. It turns while something is working and gives a small pulse for every burst of letters written. ---------------- */
+.orb { --orb-size: var(--s-6); --dot: calc(var(--orb-size) / 7); position: relative; flex: none; width: var(--orb-size); height: var(--orb-size); }
+.orb-halo { position: absolute; inset: calc(var(--orb-size) / -4); border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 38%, transparent) 0, transparent 68%); opacity: 0.3; }
+.orb-world { position: absolute; inset: 0; perspective: calc(var(--orb-size) * 3); transform-style: preserve-3d; }
+.orb-ball { position: absolute; inset: 0; border-radius: 50%;
   background:
-    radial-gradient(circle at 30% 26%, var(--glint) 0, color-mix(in srgb, var(--glint) 30%, transparent) 14%, transparent 34%),
-    radial-gradient(circle at 36% 32%, var(--accent) 0, var(--accent-mid) 46%, var(--accent-dim) 74%, color-mix(in srgb, var(--accent-dim) 55%, black) 100%);
-  box-shadow: inset -2px -2px 4px color-mix(in srgb, black 40%, transparent); /* optical: shaded underside */ }
-.orb-ring { position: absolute; inset: 0; border-radius: 50%; transform: rotateZ(-24deg) rotateX(72deg);
-  background: conic-gradient(from 0deg, transparent 0 38%, var(--accent-dim) 62%, var(--accent) 86%, var(--glint) 99.5%, transparent 99.5%);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), black calc(100% - 1.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2px), black calc(100% - 1.5px)); }
-.chat-line.pending .orb-ball, .steps.live .orb-ball { box-shadow: inset -2px -2px 4px color-mix(in srgb, black 40%, transparent), 0 0 8px color-mix(in srgb, var(--accent) 45%, transparent); /* optical: glow only while it works */ }
-.chat-line.pending .orb-ring, .steps.live .orb-ring { animation: orb-turn 2.4s linear infinite; } /* linear: a constant turn, not a movement between two places */
-@keyframes orb-turn { from { transform: rotateZ(-24deg) rotateX(72deg) rotateZ(0deg); } to { transform: rotateZ(-24deg) rotateX(72deg) rotateZ(360deg); } }
+    radial-gradient(circle at 30% 26%, var(--glint) 0, color-mix(in srgb, var(--glint) 25%, transparent) 16%, transparent 38%),
+    radial-gradient(circle at 36% 32%, color-mix(in srgb, var(--text-3) 80%, var(--glint)) 0, color-mix(in srgb, var(--text-3) 60%, black) 42%, color-mix(in srgb, var(--text-3) 24%, black) 100%);
+  box-shadow: inset calc(var(--orb-size) / -12) calc(var(--orb-size) / -12) calc(var(--orb-size) / 6) color-mix(in srgb, black 45%, transparent); }
+.orb-tilt, .orb-spin { position: absolute; inset: 0; transform-style: preserve-3d; }
+.orb-tilt { transform: rotateX(16deg) rotateZ(28deg); } /* the diagonal axis */
+.orb-spin { animation: orb-spin 3.2s linear infinite; } /* linear: a constant turn, not a movement between two places */
+.orb-dot { position: absolute; top: 50%; left: 50%; width: var(--dot); height: var(--dot); margin: calc(var(--dot) / -2) 0 0 calc(var(--dot) / -2); border-radius: 50%; background: var(--accent); backface-visibility: hidden;
+  box-shadow: 0 0 calc(var(--dot) * 2) var(--accent); transform: rotateY(var(--lon)) rotateX(var(--lat)) translateZ(calc(var(--orb-size) / 2)); }
+@keyframes orb-spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+/* the orb sits beside "Thinking...", and under the reply while it is being written (in the gap, so nothing moves when it goes) */
+.chat-line.pending { display: flex; align-items: center; gap: var(--s-3); }
+.chat-line.pending > .orb { order: -1; }
+.chat-line.pending .think-label { display: block; }
+.chat-line.assistant:not(.pending) > .orb { --orb-size: var(--s-5); position: absolute; top: 100%; left: 0; margin-top: var(--s-1); }
+.chat-line.assistant:not(.pending):has(> .orb) { content-visibility: visible; }
+@media (prefers-reduced-motion: reduce) { .orb-spin { animation: none !important; } }
 
 /* ---- the steps row: every tool call of one stretch lives in ONE quiet row (the current step while it runs, "Ran 3 steps" after), which opens to the list ---- */
 .chat-line.steps { align-self: stretch; content-visibility: visible; }
@@ -86,6 +95,7 @@
 .steps-head:hover, .steps-head:focus-visible { color: var(--text-2); }
 .steps-lead { display: grid; place-items: center; flex: none; width: var(--icon-lg); height: var(--icon-lg); }
 .steps-lead .icon svg { width: var(--icon-sm); height: var(--icon-sm); }
+.steps-lead .orb { --orb-size: var(--s-5); }
 .steps:not(.live) .steps-lead .orb, .steps.live .steps-lead .icon { display: none; }
 .steps-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .steps.bad .steps-label { color: var(--danger); }
@@ -99,7 +109,6 @@
 .step-state { margin-left: auto; font-size: var(--fs-2); }
 .step-state.failed, .step-state.denied { color: var(--danger); }
 .step-state.queued { color: var(--warm); }
-@media (prefers-reduced-motion: reduce) { .orb-ring { animation: none !important; } }
 
 /* ---- empty state: the greeting and the input card sit together in the middle of the pane, the way Claude's new chat does ------- */
 #chat-stack:not(:has(.chat-line)) { justify-content: center; padding-bottom: var(--s-6); overflow-y: auto; }

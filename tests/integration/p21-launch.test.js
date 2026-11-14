@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { launch } from '../../scripts/launch-app.js';
+import { launch, appId } from '../../scripts/launch-app.js';
 import { packIco } from '../../scripts/make-icon.js';
 
 test('launch: starts the agent and server only when they are down, waits for the server, opens the app window with the profile and the token fragment', async () => {
@@ -9,18 +9,25 @@ test('launch: starts the agent and server only when they are down, waits for the
   let opened;
   const probe = async (_h, port) => up.has(port);
   const start = (script) => { started.push(script); up.add(script.startsWith('server') ? 7410 : 7421); };
-  await launch({ platform: 'win32', probe, start, exists: (f) => /msedge/.test(f), open: (exe, args) => { opened = { exe, args }; }, wait: async () => {} });
+  await launch({ refresh: async () => {}, platform: 'win32', probe, start, exists: (f) => /msedge/.test(f), open: (exe, args) => { opened = { exe, args }; }, wait: async () => {} });
   assert.deepEqual(started, ['agent/index.js', 'server/index.js']);
   assert.match(opened.exe, /msedge/);
   assert.match(opened.args[0], /^--app=http:\/\/127\.0\.0\.1:7410\/#token=\w{20,}/);
   assert.ok(opened.args.some((a) => /data[\\/]app-profile$/.test(a)));
 
   started.length = 0;
-  await launch({ platform: 'win32', probe, start, exists: () => true, open: () => {}, wait: async () => {} });
+  await launch({ refresh: async () => {}, platform: 'win32', probe, start, exists: () => true, open: () => {}, wait: async () => {} });
   assert.deepEqual(started, []); // already running: only a window is opened
 
-  await assert.rejects(launch({ platform: 'win32', probe: async () => false, start: () => {}, exists: () => true, open: () => {}, wait: async () => {} }), /did not start/);
-  await assert.rejects(launch({ platform: 'win32', probe: async () => true, exists: () => false, open: () => {} }), /Edge or Chrome/);
+  await assert.rejects(launch({ refresh: async () => {}, platform: 'win32', probe: async () => false, start: () => {}, exists: () => true, open: () => {}, wait: async () => {} }), /did not start/);
+  await assert.rejects(launch({ refresh: async () => {}, platform: 'win32', probe: async () => true, exists: () => false, open: () => {} }), /Edge or Chrome/);
+});
+
+test('launch: --install opens a normal window at the address; the app id is 32 letters a to p', async () => {
+  let opened;
+  await launch({ refresh: async () => {}, install: true, platform: 'win32', probe: async () => true, exists: () => true, open: (exe, args) => { opened = args; } });
+  assert.match(opened[0], /^http:\/\/127\.0\.0\.1:7410\/#token=/);
+  assert.match(appId('http://127.0.0.1:7410/'), /^[a-p]{32}$/);
 });
 
 test('the .ico packs each PNG with its size and offset', () => {

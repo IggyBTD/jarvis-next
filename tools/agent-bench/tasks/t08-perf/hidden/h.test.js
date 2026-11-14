@@ -1,0 +1,12 @@
+const test = require("node:test"); const assert = require("node:assert"); const r = require("../src/report");
+let s = 12345; const rnd = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+const N = 200000;
+const nums = Array.from({ length: N }, () => Math.floor(rnd() * 60000));
+const items = Array.from({ length: N }, () => ({ k: "key" + Math.floor(rnd() * 40000) }));
+const time = (f) => { const t = Date.now(); const v = f(); return [v, Date.now() - t]; };
+test("uniqueSorted fast and equal", { timeout: 60000 }, () => { const [v, ms] = time(() => r.uniqueSorted(nums)); assert.deepStrictEqual(v, [...new Set(nums)].sort((a, b) => a - b)); assert.ok(ms < 500, ms + "ms"); });
+test("groupCounts fast and equal", { timeout: 60000 }, () => { const [v, ms] = time(() => r.groupCounts(items, "k")); const m = new Map(); for (const it of items) m.set(it.k, (m.get(it.k) || 0) + 1); assert.deepStrictEqual(v, [...m].map(([key, count]) => ({ key, count }))); assert.ok(ms < 500, ms + "ms"); });
+test("topK fast and equal", { timeout: 60000 }, () => { const [v, ms] = time(() => r.topK(nums, 20000)); assert.deepStrictEqual(v, nums.slice().sort((a, b) => b - a).slice(0, 20000)); assert.ok(ms < 500, ms + "ms"); });
+test("topK edges", () => { assert.deepStrictEqual(r.topK([], 3), []); assert.deepStrictEqual(r.topK([1, 2], 5), [2, 1]); assert.deepStrictEqual(r.topK([1, 2], 0), []); });
+test("input not mutated", () => { const a = [3, 1, 2]; r.topK(a, 2); r.uniqueSorted(a); assert.deepStrictEqual(a, [3, 1, 2]); });
+test("uniqueSorted negatives and floats", () => assert.deepStrictEqual(r.uniqueSorted([2.5, -1, 2.5, 0, -1]), [-1, 0, 2.5]));

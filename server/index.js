@@ -34,6 +34,8 @@ import { createTelemetry, createLhmProvider, createMacProvider, createPcProvider
 import { summarize } from './telemetry/summary.js';
 import { createGoogle } from './digest/google.js';
 import { createGoogleAccounts } from './accounts/google-accounts.js';
+import { createMicrosoftAccounts } from './accounts/microsoft-accounts.js';
+import { registerMicrosoftTools } from './core/microsoft-tools.js';
 import { createOpensky } from './osint/opensky.js';
 import { createDigest } from './digest/pipeline.js';
 import { createVoice } from './voice/session.js';
@@ -156,6 +158,9 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   };
   const accounts = createGoogleAccounts({ dataDir: cfg.dataDir, clientFile: resolveData(cfg, cfg.digest.google.clientFile) });
   registerGoogleTools(router, { accounts, clientFile: resolveData(cfg, cfg.digest.google.clientFile) });
+  const msClientFile = path.join(cfg.dataDir, 'tokens', 'microsoft-client.json');
+  const msAccounts = createMicrosoftAccounts({ dataDir: cfg.dataDir, clientFile: msClientFile });
+  registerMicrosoftTools(router, { accounts: msAccounts, clientFile: msClientFile });
   const osint = createOpensky({ dataDir: cfg.dataDir, watchFile: path.join(cfg.root, 'config', 'osint-watch.json') });
   server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, environment: async () => {
     const machine = targetState.get();
@@ -184,7 +189,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
       await health({ fresh: true }).catch(() => {}); // refreshes the cached health, so the next push to the app names the new model
       return r;
     },
-  }, health, audit, conversations, digest, osint, accounts, browserView, bundle, latex, buildState: () => wsApi.buildState(), log }));
+  }, health, audit, conversations, digest, osint, accounts, msAccounts, browserView, bundle, latex, buildState: () => wsApi.buildState(), log }));
 
   // The same handlers also answer on loopback, so this PC's own app works whatever the network address does (Tailscale down, a new LAN IP).
   const loopback = http.createServer();
@@ -195,6 +200,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
     async start({ port = cfg.machines.server.port, host } = {}) {
       const bind = host ? { host, reason: 'given' } : resolveBind(cfg.machines.server.bind);
       await new Promise((ok, no) => { server.once('error', no); server.listen(port, bind.host, ok); });
+      fs.writeFileSync(path.join(cfg.dataDir, 'server.pid'), String(process.pid)); // scripts/launch-app.js restarts a server older than the code
       const a0 = server.address();
       if (!['127.0.0.1', '0.0.0.0', '::', '::1'].includes(bind.host)) await new Promise((ok) => { loopback.once('error', (e) => { log(`not also listening on 127.0.0.1: ${e.message}`); ok(); }); loopback.listen(a0.port, '127.0.0.1', ok); });
       bridge.start(); telemetry.start(); scheduler.start();

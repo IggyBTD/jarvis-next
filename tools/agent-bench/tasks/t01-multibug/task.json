@@ -1,0 +1,1 @@
+{"prompt":"Checkout totals are wrong in several ways. tests/pricing.test.js is failing, but that is only one symptom. Read README.md for the rules, find and fix every bug in src/ so the code follows the rules. Do not edit the tests. Run the tests with `node --test`."}
