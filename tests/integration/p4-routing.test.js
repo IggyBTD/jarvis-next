@@ -449,3 +449,18 @@ test('orchestrator resume: the model answers from the task note, and no user mes
     assert.deepEqual([last.role, /all green/.test(last.content)], ['user', true]); // the note reaches the model as the newest message
   } finally { await r.close(); }
 });
+
+test('orchestrator: the tool.result event carries a plain summary, a preview and the duration for the steps row', async () => {
+  const r = await makeRig();
+  try {
+    r.model.script({ toolCalls: [{ name: 'get_volume', arguments: {} }] }, { content: 'ok' });
+    await r.orchestrator.runTurn({ convId: 'sr', text: 'volume?' });
+    const call = r.events.find((e) => e.convId === 'sr' && e.type === 'tool.call');
+    const res = r.events.find((e) => e.convId === 'sr' && e.type === 'tool.result');
+    assert.equal(call.name, 'get_volume');
+    assert.equal(typeof res.summary, 'string');
+    assert.ok(res.summary.length > 0 && res.summary.length <= 140);
+    assert.ok('ms' in res && 'detail' in res);
+    assert.equal(res.ok, true);
+  } finally { await r.close(); }
+});

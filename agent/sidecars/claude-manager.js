@@ -34,11 +34,12 @@ export function createClaudeManager({ workspaceDir, policy = {}, env = process.e
     let done = false;
     let errTail = '';
     const finish = (e) => { if (done) return; done = true; runs.delete(runId); emit({ type: 'claude.done', runId, ...e }); };
+    const pick = (i) => Object.fromEntries(['command', 'description', 'file_path', 'path', 'pattern', 'url', 'query'].filter((k) => typeof i?.[k] === 'string').map((k) => [k, i[k].slice(0, 300)]));
     const line = (l) => {
       let m; try { m = JSON.parse(l); } catch { return; }
       if (m.type === 'assistant') for (const part of m.message?.content ?? []) {
         if (part.type === 'text' && part.text) emit({ type: 'claude.text', runId, text: part.text });
-        else if (part.type === 'tool_use') emit({ type: 'claude.tool', runId, name: part.name });
+        else if (part.type === 'tool_use') emit({ type: 'claude.tool', runId, name: part.name, input: pick(part.input) }); // a few short fields, to say what it is doing; never file contents
       } else if (m.type === 'result') finish({ ok: !m.is_error, result: String(m.result ?? ''), denied: (m.permission_denials ?? []).length, sessionId: m.session_id, costUsd: m.total_cost_usd ?? null });
     };
     child.stdout.on('data', (d) => { buf += d; let i; while ((i = buf.indexOf('\n')) >= 0) { line(buf.slice(0, i)); buf = buf.slice(i + 1); } });

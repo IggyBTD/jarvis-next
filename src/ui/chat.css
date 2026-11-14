@@ -87,12 +87,34 @@
 .steps-head > .icon { flex: none; transition: rotate var(--dur-fast) var(--ease-out); }
 .steps-box[open] > .steps-head > .icon { rotate: 90deg; }
 .steps-list { margin: var(--s-1) 0 var(--s-1) var(--s-2); padding: 0 0 0 var(--s-4); border-left: 1px solid var(--border-strong); list-style: none; }
-.steps-list li { display: flex; align-items: baseline; gap: var(--s-2); min-height: var(--lh-md); font: 400 var(--fs-3)/var(--lh-md) var(--mono); }
-.step-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
-.step-on, .step-state { color: var(--text-3); white-space: nowrap; }
-.step-state { margin-left: auto; font-size: var(--fs-2); }
-.step-state.failed, .step-state.denied { color: var(--danger); }
-.step-state.queued { color: var(--warm); }
+.steps-list > li { padding: var(--s-1) 0; }
+/* one step = a sentence ("Searched Gmail (school) for "invoice""), where it ran and how long it took, what came back, and (opened) the request and a preview of the answer */
+.step-line { display: flex; align-items: baseline; gap: var(--s-2); list-style: none; cursor: pointer; color: var(--text-2); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
+.step-line::-webkit-details-marker { display: none; }
+.step.plain > .step-line { cursor: default; }
+.step-line:hover, .step-line:focus-visible { color: var(--text); }
+.step-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.step-meta { flex: none; color: var(--text-3); white-space: nowrap; font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
+.step-dot { flex: none; align-self: center; width: var(--s-2); height: var(--s-2); border-radius: 50%; background: var(--text-3); }
+li[data-state="running"] > .step > .step-line .step-dot { background: var(--accent); }
+li[data-state="failed"] > .step > .step-line .step-dot, li[data-state="denied"] > .step > .step-line .step-dot { background: var(--danger); }
+li[data-state="queued"] > .step > .step-line .step-dot { background: var(--warm); }
+li[data-state="failed"] > .step > .step-line .step-meta, li[data-state="denied"] > .step > .step-line .step-meta { color: var(--danger); }
+li[data-state="queued"] > .step > .step-line .step-meta { color: var(--warm); }
+.step-result { margin: 0 0 0 var(--s-4); color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--sans); overflow-wrap: anywhere; }
+.step-result:empty { display: none; }
+.step-body { display: grid; gap: var(--s-2); margin: var(--s-1) 0 var(--s-1) var(--s-4); }
+.step-body pre { margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); background: var(--surface-1); color: var(--text-2); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: calc(var(--s-8) * 3); overflow: auto; }
+.step-body pre:empty { display: none; }
+.step.plain > .step-body { display: none; }
+/* what the coding agent did inside a task: one quiet line per command or file */
+.step-sub { margin: var(--s-1) 0 0 var(--s-4); padding: 0 0 0 var(--s-3); border-left: 1px solid var(--border); list-style: none; }
+.step-sub:empty { display: none; }
+.step-sub li { display: flex; align-items: baseline; gap: var(--s-2); color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
+.step-sub .step-dot { width: var(--s-1); height: var(--s-1); }
+.step-sub li[data-state="running"] .step-dot { background: var(--accent); }
+.step-sub li[data-state="failed"] .step-dot { background: var(--danger); }
+.sub-text { min-width: 0; overflow-wrap: anywhere; }
 
 /* ---- empty state: the greeting and the input card sit together in the middle of the pane, the way Claude's new chat does ------- */
 #chat-stack:not(:has(.chat-line)) { justify-content: center; padding-bottom: var(--s-6); overflow-y: auto; }

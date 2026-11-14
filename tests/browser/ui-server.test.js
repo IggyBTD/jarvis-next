@@ -150,8 +150,29 @@ test('a reply streams in and carries the PC tag', async () => {
 test('a safe tool runs without a dialog and shows as a line in the conversation', async () => {
   rig.model.script({ toolCalls: [{ name: 'get_volume', arguments: {} }] }, { content: 'The volume is fine.' });
   await send('what is the volume');
-  await waitFor(async () => (await page.locator('#chat-output .chat-line.steps').allTextContents()).some((t) => /get_volume.*PC.*done/.test(t)));
+  await waitFor(async () => (await page.locator('#chat-output .chat-line.steps').allTextContents()).some((t) => /Read volume[\s\S]*on PC/.test(t)));
   assert.equal(await page.locator('#gate-dialog[open]').count(), 0);
+});
+
+test('several steps in a row: every step reads as a sentence with where it ran, how long, and what came back; it folds to one line when the turn ends', async () => {
+  rig.model.script({ toolCalls: [{ name: 'get_volume', arguments: {} }, { name: 'open_app', arguments: { app: 'notes' } }, { name: 'list_running_apps', arguments: {} }] }, { content: 'Done: the volume is fine and Notes is open.' });
+  await send('check the volume, open notes and list what is running');
+  const steps = page.locator('#chat-output .chat-line.steps').last();
+  await waitFor(async () => /3 steps/.test(await steps.locator('.steps-count').textContent()));
+  await waitFor(async () => (await page.locator('#chat-output .chat-line.assistant').last().textContent()).includes('Notes is open'));
+  const text = await steps.textContent();
+  assert.match(text, /Read volume/);
+  assert.match(text, /Opened notes/);
+  assert.match(text, /on PC/);
+  assert.match(await steps.locator('.steps-label').textContent(), /Read volume, Opened notes and 1 more/);
+  assert.equal(await steps.locator('details.steps-box').evaluate((d) => d.open), false); // folded: the turn is over
+  await steps.locator('.steps-head').click();
+  assert.equal(await steps.locator('li').count(), 3);
+  assert.ok((await steps.locator('.step-result').allTextContents()).every((r) => r.length > 0), 'every step says what came back');
+  await steps.locator('details.step:not(.plain) .step-line').first().click();
+  await steps.scrollIntoViewIfNeeded();
+  const box = await steps.boundingBox();
+  await page.screenshot({ path: path.join(SHOTS, 'server-steps.png'), clip: { x: Math.max(0, box.x - 24), y: Math.max(0, box.y - 24), width: 760, height: box.height + 48 } });
 });
 
 test('a risky tool opens the approval dialog: target, exact arguments, Deny focused, Esc denies', async () => {
@@ -166,7 +187,7 @@ test('a risky tool opens the approval dialog: target, exact arguments, Deny focu
   await page.screenshot({ path: path.join(SHOTS, 'server-approval-dialog.png') });
   await page.keyboard.press('Escape');
   await page.waitForFunction(() => !document.getElementById('gate-dialog').open);
-  await waitFor(async () => (await page.locator('#chat-output .chat-line.steps').allTextContents()).some((t) => /close_app.*not approved/.test(t)));
+  await waitFor(async () => (await page.locator('#chat-output .chat-line.steps').allTextContents()).some((t) => /Closing notes \(not approved\)/.test(t)));
   assert.equal(rig.pc.calls.filter((c) => c.name === 'close_app' && !c.dryRun).length, 0);
 });
 

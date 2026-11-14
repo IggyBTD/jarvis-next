@@ -4,6 +4,7 @@ import { hydrateIcons } from '../icons/index.js';
 import { chat, setMode, getMode, getPreset, onEvent } from './llm-client.js';
 import { hasImages, takeAsContent } from './attachments.js';
 import { pulse, setThinking } from './mesh-state.js';
+import { describeCall, summarizeSaved } from '../../shared/steps.js';
 import { meshIcon, feedMesh, feedMeshTotal, resetMeshFeed, restMesh } from './node-mesh.js';
 import { renderBlocks, highlightCode } from './markdown.js';
 import { parseReply } from './tool-router.js';
@@ -123,58 +124,96 @@ const setText = (el, text) => {
 const orb = () => meshIcon();
 // The stamp: ONE logo that rests under the newest reply. When you send a message it glides down into the new reply (and is that
 // reply's loading icon while it is written), then rests under it. Ease-in-out, 280 ms; no glide with reduced motion.
-let stamp = null;
+let logo = null;
 const calm = matchMedia('(prefers-reduced-motion: reduce)');
-function moveStamp(line, { rest = false } = {}) {
-  stamp ??= meshIcon({ keep: true });
-  const from = stamp.isConnected ? stamp.getBoundingClientRect() : null;
-  if (stamp.parentElement !== line) line.append(stamp);
-  restMesh(stamp, rest);
+function moveLogo(line, { rest = false } = {}) {
+  logo ??= meshIcon({ keep: true });
+  const from = logo.isConnected ? logo.getBoundingClientRect() : null;
+  if (logo.parentElement !== line) line.append(logo);
+  restMesh(logo, rest);
   if (!from || calm.matches) return;
-  const to = stamp.getBoundingClientRect();
+  const to = logo.getBoundingClientRect();
   const dy = from.top - to.top, dx = from.left - to.left;
   if (!dy && !dx) return;
   const near = Math.abs(dy) < innerHeight * 1.5; // from far above: fade in at the new place instead of a long flight
-  stamp.animate(near ? [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }] : [{ opacity: 0 }, { opacity: 1 }], { duration: 280, easing: 'ease-in-out' });
+  logo.animate(near ? [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }] : [{ opacity: 0 }, { opacity: 1 }], { duration: 280, easing: 'ease-in-out' });
 }
-// The turn is over: the stamp goes to the newest reply (nothing to show it under after an error with no reply at all).
-function settleStamp() {
+// The turn is over: the logo goes to the newest reply (nothing to show it under after an error with no reply at all).
+function settleLogo() {
   const last = [...output.querySelectorAll('.chat-line.assistant')].at(-1);
-  if (last) moveStamp(last, { rest: true }); else stamp?.remove();
+  if (last) moveLogo(last, { rest: true }); else logo?.remove();
 }
 function pendingLine() {
   const el = addLine('assistant pending', '', { meta: '' });
   el.querySelector('.chat-text').append(Object.assign(document.createElement('span'), { className: 'think-label', textContent: 'Thinking...' }));
-  moveStamp(el);
+  moveLogo(el);
   return el;
 }
 
 // All tool calls of one stretch (until the model writes text again) share one quiet row: the running step while it works,
 // "Ran 3 steps" after, opening to the list. The tool lines used to be one box each, plus a "Thinking..." line between them.
-const stepName = (n) => { const s = String(n).replace(/_/g, ' '); return s[0].toUpperCase() + s.slice(1); };
-const STEP_STATE = { running: 'running', ok: 'done', failed: 'failed', queued: 'queued for approval', denied: 'not approved', stopped: 'stopped' };
+const parseArgs = (a) => { try { return typeof a === 'string' ? JSON.parse(a || '{}') : a; } catch { return {}; } };
+const STEP_STATE = { running: '', ok: '', failed: 'failed', queued: 'waiting for your approval', denied: 'not approved', stopped: 'stopped' };
+const secs = (ms) => (ms == null ? '' : ms < 950 ? `${Math.max(1, Math.round(ms))} ms` : `${(ms / 1000).toFixed(ms < 9500 ? 1 : 0)} s`);
+const shorten = (t, n = 46) => (t.length > n ? `${t.slice(0, n - 1)}…` : t);
+const agentRows = new Map(); // coding-agent task id -> its row, so what the agent does later still lands under that step
 function stepsGroup() {
   const el = addLine('steps live', '', { meta: '' });
   el.querySelector('.chat-text').innerHTML = '<details class="steps-box"><summary class="steps-head"><span class="steps-lead"><span class="icon" data-icon="check" aria-hidden="true"></span></span>'
     + '<span class="steps-label"></span><span class="steps-count"></span><span class="icon" data-icon="chevron-right" aria-hidden="true"></span></summary><ol class="steps-list"></ol></details>';
   el.querySelector('.steps-lead').prepend(orb());
   hydrateIcons(el);
+  const box = el.querySelector('.steps-box');
   const [label, count, list] = ['.steps-label', '.steps-count', '.steps-list'].map((s) => el.querySelector(s));
   const rows = [];
+  let touched = false; // the user opened or closed it themselves: leave it alone
+  box.open = true; // while it works, every step is on show; it folds to one line when the turn ends
+  el.querySelector('.steps-head').addEventListener('click', () => { touched = true; });
   const refresh = () => {
     const running = rows.find((r) => r.state === 'running');
     const bad = rows.filter((r) => r.state === 'failed' || r.state === 'denied').length;
     el.classList.toggle('live', !!running);
     el.classList.toggle('bad', !running && bad > 0);
-    label.textContent = running ? `${stepName(running.name)}...` : `Ran ${rows.length} ${rows.length === 1 ? 'step' : 'steps'}${bad ? `, ${bad} failed` : ''}`;
-    count.textContent = running && rows.length > 1 ? `${rows.length} steps` : '';
+    const text = rows.map((r) => (r.state === 'ok' ? r.did : r.state === 'running' ? r.doing : `${r.doing} (${STEP_STATE[r.state]})`));
+    label.textContent = running ? `${running.doing}...` : rows.length === 1 ? text[0] : `${shorten(text[0])}${rows.length > 1 ? `, ${shorten(text[1])}` : ''}${rows.length > 2 ? ` and ${rows.length - 2} more` : ''}`;
+    count.textContent = rows.length > 1 ? (running ? `step ${rows.indexOf(running) + 1} of ${rows.length}` : `${rows.length} steps${bad ? `, ${bad} failed` : ''}`) : '';
   };
-  const add = (name, machine, state = 'running') => {
+  const add = (name, machine, state = 'running', args = {}) => {
+    const { doing, did } = describeCall(name, args);
     const li = document.createElement('li');
-    li.innerHTML = '<span class="step-name"></span><span class="step-on"></span><span class="step-state"></span>';
-    li.querySelector('.step-name').textContent = name;
-    li.querySelector('.step-on').textContent = machine ? `on ${machine}` : '';
-    const row = { name, state, li, set(s) { row.state = s; const st = li.querySelector('.step-state'); st.textContent = STEP_STATE[s]; st.className = `step-state ${s}`; refresh(); } };
+    li.innerHTML = '<details class="step"><summary class="step-line"><span class="step-dot"></span><span class="step-name"></span><span class="step-meta"></span></summary>'
+      + '<div class="step-body"><pre class="step-args"></pre><pre class="step-detail"></pre></div></details><div class="step-result"></div><ol class="step-sub"></ol>';
+    const q = (s) => li.querySelector(s);
+    q('.step-name').textContent = doing;
+    let argText = '';
+    try { argText = Object.keys(args ?? {}).length ? JSON.stringify(args, null, 1).slice(0, 700) : ''; } catch { /* arguments that cannot be shown */ }
+    q('.step-args').textContent = argText ? `Request\n${argText}` : '';
+    const subs = new Map();
+    const row = {
+      name, state, li, doing, did, ms: null,
+      set(s, r = {}) {
+        row.state = s;
+        li.dataset.state = s;
+        if (r.ms != null) row.ms = r.ms;
+        row.did = did;
+        q('.step-name').textContent = s === 'ok' ? did : doing;
+        q('.step-meta').textContent = [machine ? `on ${machine}` : '', STEP_STATE[s], secs(row.ms)].filter(Boolean).join(' · ');
+        if (r.summary !== undefined) q('.step-result').textContent = r.summary;
+        if (r.detail) q('.step-detail').textContent = `Result\n${r.detail}`;
+        q('details.step').classList.toggle('plain', !argText && !r.detail);
+        refresh();
+      },
+      // something the coding agent did inside this step: a command, a file read or edited
+      sub({ id, text, status = 'running', output }) {
+        let item = subs.get(id);
+        if (!item) { item = document.createElement('li'); item.innerHTML = '<span class="step-dot"></span><span class="sub-text"></span>'; subs.set(id, item); q('.step-sub').append(item); }
+        item.dataset.state = status === 'done' ? 'ok' : status;
+        item.querySelector('.sub-text').textContent = output && status === 'failed' ? `${text}: ${output}` : text;
+        if (output) item.title = output;
+        li.dataset.agent = 'on';
+      },
+      endSubs() { for (const item of subs.values()) if (item.dataset.state === 'running') item.dataset.state = 'ok'; },
+    };
     rows.push(row);
     list.append(li);
     row.set(state);
@@ -183,10 +222,28 @@ function stepsGroup() {
   return {
     el,
     add,
-    finish: (state) => rows.find((r) => r.state === 'running')?.set(state),
-    settle: () => rows.filter((r) => r.state === 'running').forEach((r) => r.set('stopped')), // the turn ended with a step still marked running
+    finish(state, r) {
+      const row = rows.find((x) => x.state === 'running');
+      row?.set(state, r);
+      if (row && r?.taskId) agentRows.set(r.taskId, row);
+    },
+    settle() { // the turn ended: anything still marked running was stopped; the list folds to its one line
+      rows.filter((r) => r.state === 'running').forEach((r) => r.set('stopped'));
+      if (!touched) box.open = false;
+    },
   };
 }
+// What the coding agent does inside a task shows under that task's step, even after the turn that started it has ended.
+onLink((e) => {
+  if (e.type === 'agent.step') agentRows.get(e.taskId)?.sub(e);
+  else if (e.type === 'agent.status' && ['done', 'failed', 'aborted', 'timeout'].includes(e.task?.state)) {
+    const row = agentRows.get(e.task.taskId);
+    if (!row) return;
+    row.endSubs();
+    row.li.querySelector('.step-result').textContent = e.task.state === 'done' ? `Finished${e.task.summary ? `: ${e.task.summary.replace(/\s+/g, ' ').slice(0, 160)}` : ''}` : `Task ${e.task.state}${e.task.error ? `: ${e.task.error}` : ''}`;
+    agentRows.delete(e.task.taskId);
+  }
+});
 // What a saved tool message says about how the call went (the router writes "[PC] name finished:", "... failed:", "... was not run:").
 const resultState = (content) => { const s = String(content).slice(0, 300); return /needs approval and nobody/.test(s) ? 'queued' : /did not approve/.test(s) ? 'denied' : /Cancelled before/.test(s) ? 'stopped' : /\] \S+ finished:/.test(s) ? 'ok' : 'failed'; };
 
@@ -374,7 +431,7 @@ async function sendViaServer(text) {
   output.scrollTop = output.scrollHeight;
 
   await new Promise((finish) => {
-    const end = () => { cancelAnimationFrame(frame); steps?.settle(); settleStamp(); off(); serverTurn = null; setThinking(false); busy = false; setWorking(false); document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')); finish(); };
+    const end = () => { cancelAnimationFrame(frame); steps?.settle(); settleLogo(); off(); serverTurn = null; setThinking(false); busy = false; setWorking(false); document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')); finish(); };
     serverTurn = { end };
     const fail = (message, kind = 'error') => { pending.className = `chat-line ${kind}`; pending.querySelector('.thought')?.remove(); setText(pending, message); end(); };
     const off = onLink((e) => {
@@ -397,12 +454,12 @@ async function sendViaServer(text) {
         case 'tool.call':
           if (latest) { cancelAnimationFrame(frame); frame = 0; paint(true); stamp(pending); steps = null; pending.querySelector(':scope > .orb')?.remove(); } else if (pending.classList.contains('pending')) pending.remove();
           steps ??= stepsGroup();
-          steps.add(e.name, link.machines[e.target]?.label ?? e.target);
+          steps.add(e.name, link.machines[e.target]?.label ?? e.target, 'running', e.args);
           follow(following);
           afterTool = true;
           break;
         case 'tool.result':
-          steps?.finish(e.ok ? 'ok' : e.queued ? 'queued' : e.denied ? 'denied' : 'failed');
+          steps?.finish(e.ok ? 'ok' : e.queued ? 'queued' : e.denied ? 'denied' : 'failed', { summary: e.summary, detail: e.detail, ms: e.ms, taskId: e.taskId });
           pending = pendingLine();
           latest = '';
           afterTool = false;
@@ -643,7 +700,7 @@ async function send() {
     setText(pending, stopped ? 'Stopped' : `Could not reach the model: ${e.message}`);
   } finally {
     offPhase();
-    settleStamp();
+    settleLogo();
     if (!mine.taken) { setThinking(false); busy = false; setWorking(false); saveSoon(); }
   }
 }
@@ -822,12 +879,12 @@ function renderHistory() {
       if (text) { steps = null; renderAssistant(addLine('assistant', '', { meta: '' }), text, { done: true, quiet: true }); }
       if (m.tool_calls) {
         steps ??= stepsGroup();
-        for (const c of m.tool_calls) rowOf.set(c.id, steps.add(c.function.name, link.machines[m.target]?.label ?? m.target, 'stopped'));
+        for (const c of m.tool_calls) rowOf.set(c.id, steps.add(c.function.name, link.machines[m.target]?.label ?? m.target, 'stopped', parseArgs(c.function.arguments)));
       }
-    } else if (m.role === 'tool') rowOf.get(m.tool_call_id)?.set(resultState(m.content));
+    } else if (m.role === 'tool') rowOf.get(m.tool_call_id)?.set(resultState(m.content), summarizeSaved(m.name, m.content));
   }
   const lastReply = [...output.querySelectorAll('.chat-line.assistant')].at(-1);
-  if (lastReply) moveStamp(lastReply, { rest: true }); // a saved chat: the stamp is already under its last reply
+  if (lastReply) moveLogo(lastReply, { rest: true }); // a saved chat: the stamp is already under its last reply
   workspace.classList.toggle('has-output', history.length > 0);
   output.scrollTop = output.scrollHeight;
 }

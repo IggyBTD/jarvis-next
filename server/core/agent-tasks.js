@@ -4,6 +4,7 @@
 // Reaches the agents only through router.capabilities() (allowlisted proxy routes plus system actions).
 import path from 'node:path';
 import { readJson, writeJsonAtomic, newId, clip, wrapUntrusted } from '../../shared/util.js';
+import { describeAgentTool, clipText } from '../../shared/steps.js';
 import { discoverRoutes } from '../../shared/opencode-routes.js';
 import { PLAN_NOTE } from '../../shared/permission-modes.js';
 
@@ -21,6 +22,9 @@ export function createAgentTasks({ router, bus, audit, conversations, dataDir, t
   const save = () => { try { writeJsonAtomic(file, tasks.slice(-100)); } catch (e) { console.error(`[agent-tasks] cannot save: ${e.message}`); } };
   const view = (t) => ({ taskId: t.id, convId: t.convId ?? null, target: t.target, state: t.state, summary: t.summary ?? null, error: t.error ?? null, files: t.files ?? null, prompt: clip(t.prompt, 120), startedAt: t.startedAt ?? null, endedAt: t.endedAt ?? null });
   const publish = (t) => bus.publish('agent.status', view(t));
+  let seq = 0;
+  // One thing the coding agent did inside a task (a command, a file read or edited); the chat shows these under the task's step.
+  const step = (t, s) => bus.publish('agent.step', { taskId: t.id, convId: t.convId ?? null, target: t.target, ...s });
   const byId = (id) => tasks.find((t) => t.id === id);
   save();
 
@@ -140,6 +144,7 @@ export function createAgentTasks({ router, bus, audit, conversations, dataDir, t
       const t = tasks.find((x) => x.target === machine && x.id === ev.runId && x.state === 'running');
       if (!t) return;
       if (ev.type === 'claude.text') lastText.set(t.id, ev.text);
+      else if (ev.type === 'claude.tool') step(t, { id: `${t.id}-${++seq}`, text: describeAgentTool(ev.name, ev.input), status: 'running' });
       else if (ev.type === 'claude.done') {
         if (ev.result) lastText.set(t.id, ev.result);
         if (ev.ok && ev.denied) lastText.set(t.id, `${lastText.get(t.id) ?? ''}\n\n(${ev.denied} action${ev.denied === 1 ? ' was' : 's were'} refused by the permission mode and not run.)`);
@@ -151,7 +156,10 @@ export function createAgentTasks({ router, bus, audit, conversations, dataDir, t
       const sid = props.sessionID ?? props.part?.sessionID ?? props.info?.sessionID;
       const t = tasks.find((x) => x.target === machine && x.sessionID === sid && x.state === 'running');
       if (!t) return;
-      if (ev.type === 'message.part.updated' && props.part?.type === 'text' && props.part.text) lastText.set(t.id, props.part.text);
+      if (ev.type === 'message.part.updated' && props.part?.type === 'tool') {
+        const p = props.part, st = p.state ?? {};
+        step(t, { id: p.callID ?? p.id, text: describeAgentTool(p.tool, st.input), status: st.status === 'completed' ? 'done' : st.status === 'error' ? 'failed' : 'running', output: clipText(st.status === 'error' ? st.error : st.output, 240) });
+      } else if (ev.type === 'message.part.updated' && props.part?.type === 'text' && props.part.text) lastText.set(t.id, props.part.text);
       else if (ev.type === 'session.idle') finish(t, 'done');
       else if (ev.type === 'session.error') finish(t, 'failed', { error: clip(props.error?.message ?? props.error?.data?.message ?? 'OpenCode reported an error', 300) });
     },

@@ -290,3 +290,22 @@ test('llm proxy end to end for OpenCode: its provider config points at the proxy
   assert.equal(c.model.split('/')[1], 'local');
   assert.ok(createLlmClient); // the proxy itself is covered in p2-model.test.js
 });
+
+test('agent tasks: what the coding agent does inside a task (commands, files) is published as steps under that task', async () => {
+  const s = await makeAgentStack({ taskTimeoutMs: 5000 });
+  try {
+    const conv = s.conversations.ensure('conv-steps');
+    const r = await s.router.invoke({ name: 'agent_task', args: { prompt: 'run the tests' } }, { target: 'pc', source: 'user', convId: conv.id });
+    await waitFor(() => s.fake.rec.prompts.length === 1);
+    const t = s.tasks.get(r.data.taskId);
+    const tool = (callID, name, state) => s.tasks.onEvent('pc', { type: 'message.part.updated', properties: { part: { type: 'tool', sessionID: t.sessionID, callID, tool: name, state } } });
+    tool('c1', 'bash', { status: 'running', input: { command: 'npm test' } });
+    tool('c1', 'bash', { status: 'completed', input: { command: 'npm test' }, output: 'all green' });
+    tool('c2', 'read', { status: 'error', input: { filePath: 'src/a.js' }, error: 'no such file' });
+    const steps = s.events.filter((e) => e.type === 'agent.step');
+    assert.deepEqual(steps.map((e) => [e.id, e.text, e.status]), [['c1', 'Ran a command: npm test', 'running'], ['c1', 'Ran a command: npm test', 'done'], ['c2', 'Read src/a.js', 'failed']]);
+    assert.equal(steps[0].taskId, t.id);
+    assert.equal(steps[0].convId, 'conv-steps');
+    assert.equal(steps[2].output, 'no such file');
+  } finally { await s.close(); }
+});
