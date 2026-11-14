@@ -46,8 +46,8 @@
   "maxOutputTokens": 4096,
   "preemptInteractive": false,
   "keepThinkInHistory": false,
-  "maxIterations": 8,
-  "maxToolCalls": 12,
+  "maxIterations": 100,
+  "maxToolCalls": 200,
   "maxToolResultChars": 6000,
   "turnToolChars": 24000
 }

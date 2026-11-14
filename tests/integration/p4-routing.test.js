@@ -312,7 +312,9 @@ test('orchestrator: a switch mid-turn does not redirect; the next turn gets the 
 test('orchestrator: model iteration and tool-call limits, malformed calls, then a graceful end', async () => {
   const r = await makeRig();
   try {
-    r.model.setDefault((body) => (body.tools ? { toolCalls: [{ name: 'get_volume', arguments: {} }] } : { content: 'wrapped up' }));
+    r.cfg.models.maxIterations = 8; r.cfg.models.maxToolCalls = 12; // the shipped numbers are a high runaway guard; this test pins small ones
+    let n = 0; // different arguments each time, so the repeat guard stays out of it
+    r.model.setDefault((body) => (body.tools ? { toolCalls: [{ name: 'set_volume', arguments: { level: n++ % 100 } }] } : { content: 'wrapped up' }));
     const out = await r.orchestrator.runTurn({ convId: 'c3', text: 'loop forever' });
     assert.match(out.text, /stopped after 8 steps/);
     assert.equal(r.model.requests.length, 8);
@@ -320,12 +322,19 @@ test('orchestrator: model iteration and tool-call limits, malformed calls, then 
 
     r.model.requests.length = 0;
     r.pc.calls.length = 0;
-    r.model.setDefault((body) => (body.tools ? { toolCalls: Array.from({ length: 5 }, () => ({ name: 'get_volume', arguments: {} })) } : { content: 'wrapped up' }));
+    r.model.setDefault((body) => (body.tools ? { toolCalls: Array.from({ length: 5 }, () => ({ name: 'set_volume', arguments: { level: n++ % 100 } })) } : { content: 'wrapped up' }));
     const out2 = await r.orchestrator.runTurn({ convId: 'c4', text: 'many calls' });
     assert.equal(out2.text, 'wrapped up');
     assert.equal(r.pc.calls.length, 12); // capped
     assert.equal(r.model.requests.at(-1).body.tools, undefined); // the last call had no tools
     assert.ok(r.conversations.get('c4').messages.filter((m) => m.role === 'tool').every((m) => m.tool_call_id));
+
+    r.model.requests.length = 0;
+    r.pc.calls.length = 0;
+    r.model.setDefault((body) => (body.tools ? { toolCalls: [{ name: 'get_volume', arguments: {} }] } : { content: 'wrapped up' }));
+    await r.orchestrator.runTurn({ convId: 'c6', text: 'same call over and over' });
+    assert.equal(r.pc.calls.length, 2); // the third identical call is refused as a loop, not run
+    assert.ok(r.conversations.get('c6').messages.some((m) => m.role === 'tool' && /exact get_volume call/.test(m.content)));
 
     r.model.setDefault(() => ({ toolCalls: [{ name: 'set_volume', arguments: '{"level": ' }] }));
     const bad = await r.orchestrator.runTurn({ convId: 'c5', text: 'bad json' });
@@ -406,5 +415,37 @@ test('chat.state: running when a turn starts, not running when it ends, listed w
     assert.deepEqual(r.orchestrator.busyIds(), []);
     await r.orchestrator.runTurn({ convId: 'a2', text: 'again' });
     assert.deepEqual(seen, ['a1:true', 'a1:false', 'a2:true', 'a2:false']);
+  } finally { await r.close(); }
+});
+
+test('report back: a finished background task makes the model answer once the chat is free, and not when the user already moved on', async () => {
+  const { reportBack } = await import('../../server/core/orchestrator.js');
+  const note = 'Agent task t-1 on pc done.';
+  const mk = (messages, busyFor = 0) => { let busy = busyFor; const runs = []; return { runs, conversations: { get: () => ({ messages }) }, orchestrator: { isBusy: () => busy-- > 0, runTurn: async (o) => { runs.push(o); } } }; };
+  const wait = async () => {};
+  let s = mk([{ role: 'assistant', content: "I'll report back" }, { role: 'system', content: note }]);
+  assert.equal(await reportBack({ ...s, convId: 'c', note, wait }), true);
+  assert.deepEqual(s.runs, [{ convId: 'c', source: 'agent', resume: true }]);
+  s = mk([{ role: 'system', content: note }], 3); // still busy for three checks, then free
+  assert.equal(await reportBack({ ...s, convId: 'c', note, wait }), true);
+  s = mk([{ role: 'system', content: note }, { role: 'assistant', content: 'It is done.' }]); // the user already asked and got the answer
+  assert.equal(await reportBack({ ...s, convId: 'c', note, wait }), false);
+  assert.deepEqual(s.runs, []);
+});
+
+test('orchestrator resume: the model answers from the task note, and no user message is added', async () => {
+  const r = await makeRig();
+  try {
+    r.model.script({ content: "Started. I'll report back." });
+    await r.orchestrator.runTurn({ convId: 'rb', text: 'run the long task' });
+    const conv = r.conversations.get('rb');
+    r.conversations.append(conv, { role: 'system', content: 'Agent task t-9 on pc done.\nsummary: all green', target: 'pc' });
+    const users = conv.messages.filter((m) => m.role === 'user').length;
+    r.model.script({ content: 'The task finished: all green.' });
+    const out = await r.orchestrator.runTurn({ convId: 'rb', source: 'agent', resume: true });
+    assert.equal(out.text, 'The task finished: all green.');
+    assert.equal(conv.messages.filter((m) => m.role === 'user').length, users);
+    const last = r.model.requests.at(-1).body.messages.at(-1);
+    assert.deepEqual([last.role, /all green/.test(last.content)], ['user', true]); // the note reaches the model as the newest message
   } finally { await r.close(); }
 });

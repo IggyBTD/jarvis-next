@@ -35,7 +35,7 @@ export const SCHEMAS = {
     profiles: { type: 'object', additionalProperties: obj({ thinkingMethod: thinkingMethodSchema, thinking: thinkingSchema, sampling: samplingSchema, contextLength: { type: 'integer', minimum: 2048 } }, []) },
     requestTimeoutMs: { type: 'integer', minimum: 1000 }, maxOutputTokens: { type: 'integer', minimum: 16 },
     preemptInteractive: { type: 'boolean' }, keepThinkInHistory: { type: 'boolean' },
-    maxIterations: { type: 'integer', minimum: 1, maximum: 30 }, maxToolCalls: { type: 'integer', minimum: 1, maximum: 60 },
+    maxIterations: { type: 'integer', minimum: 1, maximum: 500 }, maxToolCalls: { type: 'integer', minimum: 1, maximum: 1000 },
     maxToolResultChars: { type: 'integer', minimum: 500, maximum: 60000 }, turnToolChars: { type: 'integer', minimum: 2000, maximum: 200000 },
   }, ['baseUrl', 'modelId', 'contextLength', 'concurrency', 'thinking', 'thinkingMethod', 'requestTimeoutMs']),
   'actions.json': obj({

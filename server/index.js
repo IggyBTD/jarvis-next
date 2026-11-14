@@ -20,7 +20,7 @@ import { createPromptBuilder } from './core/prompt-builder.js';
 import { createLlmClient } from './core/llm-client.js';
 import { createQueue } from './core/llm-queue.js';
 import { createLlmProxy } from './core/llm-proxy.js';
-import { createOrchestrator } from './core/orchestrator.js';
+import { createOrchestrator, reportBack } from './core/orchestrator.js';
 import { createAgentTasks, registerAgentTaskTool } from './core/agent-tasks.js';
 import { createOpencodeBridge } from './core/opencode-bridge.js';
 import { createPermissionMode } from './core/permission-mode.js';
@@ -85,7 +85,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
 
   const modes = createPermissionMode({ dataDir: cfg.dataDir, bus });
   const backend = createCodeBackend({ dataDir: cfg.dataDir, bus });
-  const tasks = createAgentTasks({ router, bus, audit, conversations, dataDir: cfg.dataDir, taskTimeoutMs: cfg.policy.opencode.taskTimeoutMs, modes, backend });
+  const tasks = createAgentTasks({ router, bus, audit, conversations, dataDir: cfg.dataDir, taskTimeoutMs: cfg.policy.opencode.taskTimeoutMs, modes, backend, onNote: (convId, note) => { reportBack({ orchestrator, conversations, convId, note }).catch((e) => log(`report back failed: ${e.message}`)); } });
   registerAgentTaskTool(router, tasks);
   registerBrowserTools(router, { notify: (m) => bus.publish(m.type, m) });
   const bridge = createOpencodeBridge({ router, gate, audit, tasks, policyCfg: cfg.policy, machines, modes, log, trusted: (m) => [...(m === 'pc' ? [projectFolder(cfg.dataDir)] : []), ...(cfg.policy.opencode.trustedFolders?.[m] ?? [])].filter(Boolean) });

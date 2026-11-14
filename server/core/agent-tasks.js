@@ -10,7 +10,7 @@ import { PLAN_NOTE } from '../../shared/permission-modes.js';
 const ACTIVE = new Set(['queued', 'running']);
 const WORKSPACE_RE = /^(?!.*\.\.)[\w .-]+(\/[\w .-]+)*$/;
 
-export function createAgentTasks({ router, bus, audit, conversations, dataDir, taskTimeoutMs, modes, backend, now = () => new Date(), setTimer = setTimeout }) {
+export function createAgentTasks({ router, bus, audit, conversations, dataDir, taskTimeoutMs, modes, backend, onNote = null, now = () => new Date(), setTimer = setTimeout }) {
   const file = path.join(dataDir, 'agent-tasks.json');
   let tasks = readJson(file, []).map((t) => (ACTIVE.has(t.state) ? { ...t, state: 'failed', error: 'the server restarted while this task was running', endedAt: now().toISOString() } : t));
   const timers = new Map();   // task id -> timeout handle
@@ -62,6 +62,7 @@ export function createAgentTasks({ router, bus, audit, conversations, dataDir, t
       const note = `Agent task ${t.id} on ${t.target} ${state}.${t.summary ? `\n${wrapUntrusted('agent summary', t.summary, { max: 1500 })}` : ''}${t.files?.length ? `\nChanged files: ${t.files.slice(0, 20).map((f) => `${f.status} ${f.path}`).join(', ')}` : ''}${error ? `\nReason: ${error}` : ''}`;
       conversations.append(conv, { role: 'system', content: note, target: t.target });
       bus.publish('chat.note', { convId: t.convId, target: t.target, text: `Agent task ${state}${t.summary ? `: ${clip(t.summary, 200)}` : error ? `: ${error}` : ''}` });
+      onNote?.(t.convId, note); // lets the model report back, instead of waiting for the user to ask
     }
     next(t.target);
   }
