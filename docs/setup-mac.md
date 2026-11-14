@@ -15,3 +15,11 @@ Mac action checklist (try each once for real, then enable its category): open_ap
 Away from home: see `docs/remote.md` (Tailscale on both machines, then use the away link from `node scripts/client-link.js`).
 
 The UI token is stored in the app's local storage; moving it to the macOS keychain needs a Tauri plugin and is a known item.
+
+## Open JARVIS on the Mac (the easy way)
+
+1. On the PC: `node scripts/make-mac-bundle.js --with-tokens` makes `dist-mac/jarvis-mac-with-tokens.zip` (it contains `ui.token` and `mac.token`: AirDrop or USB only, delete it afterwards). Without the flag the zip has no tokens and you copy `ui.token` into `data/tokens/` yourself.
+2. On the Mac: unzip to `~/jarvis`, `npm install` once (Node 22+: `brew install node`), then double-click `JARVIS.app` (drag it to the Dock; the first open needs right-click > Open).
+3. It checks the PC's server. If the PC is on but the server is not running, it rings `scripts/pc-starter.js` on the PC (port 7411, starts at the PC's logon from the Startup folder), waits, then opens the window. If `data/wake.json` exists (see `WHAT_YOU_DO.md`), it can wake a sleeping PC too.
+4. PC, once, in an admin PowerShell: `New-NetFirewallRule -DisplayName "JARVIS starter" -Direction Inbound -Protocol TCP -LocalPort 7411 -RemoteAddress 100.64.0.0/10 -Action Allow` (Tailscale only, like the server rule). `node scripts/install.js --os win32` lists it too.
+5. Failures show a dialog and are logged in `data/logs/open-mac.log`.

@@ -47,7 +47,7 @@ export async function freshen({ probe = reachable, port = 7410 } = {}) {
   }
 }
 
-function background(script, args, logFile) {
+export function background(script, args, logFile) {
   fs.mkdirSync(path.dirname(logFile), { recursive: true });
   const out = fs.openSync(logFile, 'a');
   spawn(process.execPath, [path.join(ROOT, script), ...args], { cwd: ROOT, detached: true, stdio: ['ignore', out, out], windowsHide: true }).unref();

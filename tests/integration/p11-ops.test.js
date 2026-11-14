@@ -16,7 +16,8 @@ test('install plans: logon tasks and launch agents, firewall commands printed an
   try {
     const win = plan('win32', { cfg: t.cfg, root: 'C:\\Jarvis & Co', node: 'C:\\node.exe' });
     const tasks = win.filter((s) => s.write);
-    assert.equal(tasks.length, 2);
+    assert.equal(tasks.length, 3);
+    assert.match(tasks[2].write.content, /pc-starter.js/);
     assert.match(tasks[0].write.content, /<LogonTrigger>/);
     assert.match(tasks[0].write.content, /Jarvis &amp; Co/); // paths are escaped, not injected
     assert.match(tasks[1].write.content, /--machine pc/);
