@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { writeJsonAtomic, readJson, newId } from '../../shared/util.js';
+import { stateOf, cleanState } from './taint.js';
 
 export const estimateTokens = (m) => Math.ceil((typeof m.content === 'string' ? m.content.length : JSON.stringify(m.content ?? '').length) / 3.5) + (m.tool_calls ? Math.ceil(JSON.stringify(m.tool_calls).length / 3.5) : 0) + 8;
 const ID_RE = /^[\w-]{1,64}$/;
@@ -19,6 +20,7 @@ export function createConversations({ dir, now = () => new Date() }) {
     const c = readJson(file(id));
     if (!c) return null;
     c.unlocked = new Set(c.unlocked ?? []);
+    c.taint = stateOf(c); // a chat saved before the tainted-chat rule gets its state from its history (taint.js)
     cache.set(id, c);
     return c;
   }
@@ -28,7 +30,7 @@ export function createConversations({ dir, now = () => new Date() }) {
   }
   function create(id = newId('c-')) {
     if (!ID_RE.test(id)) throw new Error('bad conversation id');
-    const c = { id, title: '', createdAt: now().toISOString(), updatedAt: now().toISOString(), lastTarget: null, messages: [], unlocked: new Set() };
+    const c = { id, title: '', createdAt: now().toISOString(), updatedAt: now().toISOString(), lastTarget: null, messages: [], unlocked: new Set(), taint: cleanState() };
     cache.set(id, c);
     save(c);
     return c;

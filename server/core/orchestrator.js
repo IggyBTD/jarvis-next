@@ -4,6 +4,7 @@
 import { fit, estimateTokens } from './conversations.js';
 import { effortNote, DEFAULT_EFFORT } from '../../shared/effort.js';
 import { summarizeResult } from '../../shared/steps.js';
+import { isTainted, markTainted, stateOf, taintOf } from './taint.js';
 
 // The same tool with the same arguments three times in one message is a loop, not progress.
 const key = (c) => `${c.name}\u0000${JSON.stringify(c.args)}`;
@@ -61,7 +62,6 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
       const maxIterations = models.maxIterations ?? 100; // only a runaway guard: a task runs until the model is done (or the user presses stop)
       const maxToolCalls = models.maxToolCalls ?? 200;
       const seen = new Map(); // exact repeats of one call in this message
-      let tainted = false;    // set once a tool result (outside content: mail, web, files, tasks) is in this turn; policy then asks for some tools
 
       for (let iteration = 1; ; iteration++) {
         if (iteration > maxIterations) { finalText = `I stopped after ${maxIterations} steps without finishing. Tell me how to continue.`; break; }
@@ -98,8 +98,11 @@ ${effortNote(effort)}` : ''}` }; // request only, never stored
           else {
             calls += 1;
             emit('tool.call', { name: c.name, args: c.args });
-            const r = await router.invoke(c, { target, source, convId: conv.id, signal: ctl.signal, conversation: conv, tainted });
-            if (c.name !== 'list_action_categories') tainted = true;
+            // the chat's taint is read fresh for every call (a mail read earlier in this same batch counts), and set by any result that
+            // carries someone else's text (server/core/taint.js); it is saved with the chat and lasts as long as the chat
+            const r = await router.invoke(c, { target, source, convId: conv.id, signal: ctl.signal, conversation: conv, tainted: isTainted(stateOf(conv)) });
+            const why = taintOf(c.name, r);
+            if (why) conv.taint = markTainted(stateOf(conv), why, now().toISOString());
             const shown = r.ok ? summarizeResult(c.name, r.data, null) : summarizeResult(c.name, null, r.error ?? (r.queued ? 'waiting for your approval' : r.denied ? 'you did not approve this' : 'did not run')); // what the steps row shows; never sent to the model
             emit('tool.result', { name: c.name, ok: r.ok, queued: !!r.queued, denied: !!r.denied, ms: r.durationMs ?? null, summary: shown.summary, detail: shown.detail, taskId: c.name === 'agent_task' ? r.data?.taskId ?? null : null });
             content = r.content;

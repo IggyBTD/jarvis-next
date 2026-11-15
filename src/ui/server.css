@@ -25,7 +25,7 @@
 .gate-head h2 { flex: 1; font: 600 var(--fs-5)/var(--lh-md) var(--sans); }
 .target-pill { height: var(--lh-md); padding: 0 var(--s-3); border-radius: var(--r-pill); background: var(--accent); color: var(--on-accent); font: 600 var(--fs-3)/var(--lh-md) var(--mono); letter-spacing: 0.04em; text-transform: uppercase; }
 .gate-count { color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
-.gate-summary { margin-bottom: var(--s-3); color: var(--text-2); font-size: var(--fs-4); line-height: var(--lh-sm); }
+.gate-summary { margin-bottom: var(--s-3); color: var(--text-2); font-size: var(--fs-4); line-height: var(--lh-sm); white-space: pre-wrap; overflow-wrap: anywhere; } /* the whole request, line breaks kept (a tainted chat shows every argument) */
 .gate-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-3); margin-bottom: var(--s-3); }
 .gate-meta dt { color: var(--text-3); font: 600 var(--fs-1)/var(--lh-xs) var(--sans); text-transform: uppercase; letter-spacing: 0.04em; }
 .gate-meta dd { font-size: var(--fs-3); line-height: var(--lh-sm); overflow-wrap: anywhere; }

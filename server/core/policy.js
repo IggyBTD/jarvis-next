@@ -7,9 +7,6 @@ import { readOnly, pathsOf, resolveLexical, within } from '../../shared/command-
 const TIERS = ['T0', 'T1', 'T2', 'T3'];
 const EDIT_KINDS = new Set(['edit', 'write', 'patch', 'multiedit']);
 
-// Tools that ask, whatever their tier, once the turn has taken in untrusted content (a tool result: mail, web, files, task notes).
-const ASK_WHEN_TAINTED = new Set(['agent_task']);
-
 // What a permission mode answers for the coding agent without asking: 'once', 'reject', or null (ask the person). T3 (outside the
 // workspace, destructive, interpreters, files that arm later commands) is never answered 'once'. Only commands on the read-only
 // allowlist (cls.class 'allow') run by themselves in Auto; every other command asks. Manual asks for everything. Plan runs nothing by
@@ -33,13 +30,17 @@ export function createPolicy(cfg) {
   const override = (name) => (Object.hasOwn(cfg.actions ?? {}, name) ? cfg.actions[name] : null);
   const allowedScheduled = (job, name) => Object.hasOwn(cfg.scheduled_allow ?? {}, job) && cfg.scheduled_allow[job].includes(name);
 
-  // { name, tier, source: 'user'|'voice'|'scheduled'|'agent', job?, tainted?, permission? } -> { mode, queueable, reason }
+  // { name, tier, source: 'user'|'voice'|'scheduled'|'agent', job?, taintAsk?, permission? } -> { mode, queueable, reason }
+  // taintAsk: set (server/core/taint.js askWhenTainted) when the chat has read outside content and this call can carry data out,
+  //   store text for later or start something. It turns auto into ask whatever the tier or a policy.json override says, and is a
+  //   deny for a scheduled source (nobody is there to answer). Only a policy.json deny is stronger.
   // permission: { mode, kind, cls, armed } for a request from the coding agent (the permission bridge).
-  function decide({ name, tier, source = 'user', job = null, tainted = false, permission = null }) {
+  function decide({ name, tier, source = 'user', job = null, taintAsk = null, permission = null }) {
     const t = TIERS.includes(tier) ? tier : 'T3';
     const forced = override(name);
     if (forced === 'deny') return { mode: 'deny', queueable: false, reason: 'denied by policy.json' };
 
+    if (taintAsk && source === 'scheduled') return { mode: 'deny', queueable: false, reason: 'the chat has read outside content and nobody is there to approve' };
     if (source === 'scheduled') {
       if (t === 'T3') return { mode: 'deny', queueable: true, reason: 'T3 never runs unattended' };
       if (t === 'T2') {
@@ -59,7 +60,7 @@ export function createPolicy(cfg) {
 
     let mode = forced ?? modes.chat[t];
     let reason = forced ? 'policy.json action override' : `${t} default`;
-    if (mode === 'auto' && tainted && ASK_WHEN_TAINTED.has(name)) { mode = 'ask'; reason = 'this turn has read untrusted content'; }
+    if (mode === 'auto' && taintAsk) { mode = 'ask'; reason = String(taintAsk.reason ?? 'the chat has read outside content'); }
     if (t === 'T3' && mode === 'auto') mode = 'ask';
     return { mode, queueable: false, reason };
   }

@@ -7,6 +7,7 @@ import { readJson, writeJsonAtomic, newId, clip, wrapUntrusted } from '../../sha
 import { describeAgentTool, clipText } from '../../shared/steps.js';
 import { discoverRoutes } from '../../shared/opencode-routes.js';
 import { PLAN_NOTE } from '../../shared/permission-modes.js';
+import { markTainted, stateOf } from './taint.js';
 
 const ACTIVE = new Set(['queued', 'running']);
 const WORKSPACE_RE = /^(?!.*\.\.)[\w .-]+(\/[\w .-]+)*$/;
@@ -56,6 +57,8 @@ export function createAgentTasks({ router, bus, audit, conversations, dataDir, t
     publish(t);
     audit.append({ component: 'agent-tasks', target: t.target, source: 'agent', action: 'agent_task', args: { taskId: t.id, state }, tier: 'T1', decision: 'auto', outcome: state, reason: error ?? undefined, taskId: t.id }).catch(() => {});
     const conv = t.convId ? conversations?.get(t.convId) : null;
+    // what the coding agent reports is someone else's text (the repository, the tools it ran): the chat is tainted from here on
+    if (conv) conv.taint = markTainted(stateOf(conv), 'agent task note', t.endedAt);
     if (conv && t.direct) {
       // a Code-page message answered by Claude Code: its result is the assistant's reply
       const text = state === 'done' ? (t.summary ?? '(no reply)') : `Claude Code ${state === 'aborted' ? 'was stopped' : 'did not finish'}${error ? `: ${error}` : ''}`;

@@ -6,6 +6,7 @@ import { validate } from '../../shared/schema.js';
 import { wrapUntrusted, clip } from '../../shared/util.js';
 import { createAgentClient, AgentUnreachable } from './agent-client.js';
 import { selectTools, allCategories, categoryScores } from './tool-select.js';
+import { askWhenTainted } from './taint.js';
 
 const NAME_RE = /^[a-z][a-z0-9_]{1,48}$/;
 const FORBIDDEN_KEYS = /^(target|targets|host|hostname|machine|machineid|computer|device_target)$/i;
@@ -114,8 +115,11 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
     if (bad.length) return refuse(`bad arguments: ${bad.join('; ')}`, 'invalid');
 
     tier = def.tierOf ? def.tierOf(args) : def.tier;
-    const verdict = policy.decide({ name: call.name, tier, source, job: ctx.job, tainted: !!ctx.tainted });
-    const summary = `${call.name} on ${tag(target)}${Object.keys(args).length ? ` (${brief(args)})` : ''}`;
+    // A chat that has read outside content (ctx.tainted, server/core/taint.js) asks before calls that can carry data out, and the card
+    // then shows the arguments whole (brief() clips them, which would hide the data being sent).
+    const taintAsk = ctx.tainted ? askWhenTainted(call.name, args, { allowDomains: cfg.policy?.browser?.allowDomains ?? [] }) : null;
+    const verdict = policy.decide({ name: call.name, tier, source, job: ctx.job, taintAsk });
+    const summary = taintAsk ? `${call.name} on ${tag(target)}. ${taintAsk.reason}\n${taintAsk.show}` : `${call.name} on ${tag(target)}${Object.keys(args).length ? ` (${brief(args)})` : ''}`;
 
     let how = 'auto';
     if (verdict.mode === 'deny' && !verdict.queueable) return refuse(verdict.reason, 'deny');
