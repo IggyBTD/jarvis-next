@@ -189,8 +189,9 @@ export function createOpencodeManager({
   }
 
   // Forwards one allowlisted request to the local server with its basic-auth password added; the caller's own
-  // credentials never reach it. Streams both ways (the event stream and long prompts).
-  function proxy(req, res, sub) {
+  // credentials never reach it. Streams both ways (the event stream and long prompts). body: already read and checked by the agent
+  // (a permission answer), sent instead of the request stream.
+  function proxy(req, res, sub, body) {
     if (!st.running) { res.writeHead(503, { 'content-type': 'application/json' }); return res.end('{"error":"OpenCode is not running on this machine"}'); }
     if (!['GET', 'POST', 'DELETE'].includes(req.method)) { res.writeHead(405); return res.end(); }
     const up = http.request(`${base}${sub}`, { method: req.method, headers: { authorization: auth(), 'content-type': req.headers['content-type'] ?? 'application/json', accept: req.headers.accept ?? '*/*' } }, (r) => {
@@ -199,7 +200,7 @@ export function createOpencodeManager({
     });
     up.on('error', () => { if (!res.headersSent) { res.writeHead(502, { 'content-type': 'application/json' }); res.end('{"error":"OpenCode did not answer"}'); } else res.destroy(); });
     res.on('close', () => up.destroy());
-    req.pipe(up);
+    if (body !== undefined) up.end(JSON.stringify(body)); else req.pipe(up);
     return undefined;
   }
 

@@ -201,6 +201,53 @@ test('F1-3: the Claude Code backend may not read or edit the JARVIS folder in an
   }
 });
 
+// ---- F4-1 -----------------------------------------------------------------------------------------------------------------------
+
+test('F4-1: the agent forwards only the server\'s own routes and methods; no encodings, no other permission answers', async () => {
+  const { createAgent } = await import('../../agent/index.js');
+  const { createRegistry } = await import('../../agent/registry/mod.js');
+  const { generateTokens, loadTokens } = await import('../../server/core/auth.js');
+  const { request } = await import('../helpers.js');
+  const { EventEmitter } = await import('node:events');
+  const t = testConfig();
+  generateTokens(t.cfg);
+  const tokens = loadTokens(t.cfg);
+  const seen = [];
+  const opencode = { events: new EventEmitter(), status: () => ({ running: true }), proxy: (req, res, sub, body) => { seen.push(`${req.method} ${sub}${body ? ` ${JSON.stringify(body)}` : ''}`); res.end('proxied'); } };
+  const agent = createAgent({ cfg: t.cfg, machineId: 'pc', registry: createRegistry({ cfg: t.cfg, machineId: 'pc' }), tokens, sidecars: { opencode } });
+  const addr = await agent.listen(0, '127.0.0.1');
+  const url = `http://127.0.0.1:${addr.port}`;
+  const headers = { authorization: `Bearer ${tokens.machines.pc[0]}`, 'content-type': 'application/json' };
+  const send = (method, p, body) => request(`${url}${p}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  try {
+    for (const [method, p, body] of [
+      ['GET', '/opencode/pty'], ['POST', '/opencode/pty', {}], ['POST', '/opencode/session/abc%2573hell', {}], ['POST', '/opencode/session/abc%73hell', {}],
+      ['POST', '/opencode/permission/p1/reply', { reply: 'always' }], ['POST', '/opencode/session/s1/permissions/p1', { response: 'always' }],
+      ['POST', '/opencode/permission/p1/reply', { reply: 'once', extra: 1 }], ['DELETE', '/opencode/session/s1'], ['GET', '/opencode/session/s1/message?x=1'],
+      ['GET', '/opencode/event'], ['GET', '/opencode/config'], ['POST', '/opencode/session/s1/%2e%2e/shell', {}],
+    ]) assert.equal((await send(method, p, body)).status, 403, `${method} ${p} ${JSON.stringify(body ?? '')}`);
+    // dot segments sent raw (a URL parser would resolve them before sending)
+    const { checkPath } = await import('../../shared/proxy-routes.js');
+    for (const raw of ['/x/../session', '/session/./x', '/session/%2e%2e/x']) assert.throws(() => checkPath(raw), undefined, raw);
+    assert.deepEqual(seen, []);
+    assert.equal((await send('POST', '/opencode/session', { title: 'x' })).text, 'proxied');
+    assert.equal((await send('POST', '/opencode/permission/p1/reply', { reply: 'once' })).text, 'proxied');
+    assert.equal((await send('POST', '/opencode/session/s1/permissions/p1', { response: 'reject' })).text, 'proxied');
+    assert.deepEqual(seen, ['POST /session', 'POST /permission/p1/reply {"reply":"once"}', 'POST /session/s1/permissions/p1 {"response":"reject"}']);
+  } finally { await agent.close(); t.cleanup(); }
+});
+
+test('F4-1: the server refuses to send a permission answer other than once or reject, or any encoded path', async () => {
+  const { createAgentClient } = await import('../../server/core/agent-client.js');
+  const sent = [];
+  const client = createAgentClient({ machines: { pc: { label: 'PC', host: '127.0.0.1', agentPort: 1 } }, tokens: () => 'x', fetchImpl: async (u) => { sent.push(u); return new Response('{}'); } });
+  await assert.rejects(client.opencode('pc', 'POST', '/permission/p1/reply', { reply: 'always' }), /once or reject/);
+  await assert.rejects(client.opencode('pc', 'POST', '/session/a%73hell', {}));
+  await assert.rejects(client.opencode('pc', 'DELETE', '/session/s1'), /allowlist/);
+  await client.opencode('pc', 'POST', '/permission/p1/reply', { reply: 'once' });
+  assert.equal(sent.length, 1);
+});
+
 // ---- F4-2 -----------------------------------------------------------------------------------------------------------------------
 
 // A real agent registry on a temp folder: a workspace with a junction (a directory link on POSIX) that leads into a "JARVIS" folder.

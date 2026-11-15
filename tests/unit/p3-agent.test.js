@@ -312,8 +312,11 @@ test('agent HTTP: auth, caller allowlist, origin, other machine token, shell rou
       assert.ok([403, 404].includes(res.status), bad);
     }
     assert.deepEqual(opencodeSeen, []);
-    assert.equal((await request(`${url}/opencode/session`, { headers: auth })).text, 'proxied');
-    assert.equal((await request(`${url}/browser/x`, { headers: auth })).status, 503);
+    // only the server's own routes, each with its method, are forwarded (F4-1)
+    assert.equal((await request(`${url}/opencode/session`, { method: 'POST', headers: auth, body: '{}' })).text, 'proxied');
+    assert.equal((await request(`${url}/opencode/session`, { headers: auth })).status, 403);
+    assert.equal((await request(`${url}/browser/state`, { headers: auth })).status, 503);
+    assert.equal((await request(`${url}/browser/x`, { headers: auth })).status, 403);
 
     // SSE: sidecar events reach /events
     const got = [];

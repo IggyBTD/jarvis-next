@@ -4,33 +4,24 @@
 // the /session/:id/shell route.
 import { SseParser } from './llm-client.js';
 import { sleep } from '../../shared/util.js';
+import { checkPath, checkProxy, isReplyRoute, replyBodyOk } from '../../shared/proxy-routes.js';
 
 export class AgentUnreachable extends Error {
   constructor(machine, label, cause) { super(`${label} is not reachable (${cause}). Nothing was run, and no other computer was tried.`); this.name = 'AgentUnreachable'; this.machine = machine; }
 }
 
-const OPENCODE_ROUTES = [
-  /^\/doc$/, /^\/global\/health$/, /^\/global\/event$/, /^\/event$/, /^\/path$/, /^\/config$/, /^\/project(\/current)?$/,
-  /^\/session$/, /^\/session\/[\w.-]+$/, /^\/session\/[\w.-]+\/(message|prompt_async|abort|diff|children)$/,
-  /^\/session\/[\w.-]+\/permissions\/[\w.-]+$/, /^\/permission$/, /^\/permission\/[\w.-]+(\/reply)?$/,
-];
-const CLAUDE_ROUTES = [/^\/(status|run|abort)$/];
-const BROWSER_ROUTES = [/^\/(health|navigate|click|type|press|read|screenshot|back|close|resume|confirm|state)$/, /^\/view_(navigate|click|type|press|scroll|back|forward|reload)$/];
-const SHELL = /(^|\/)shell(\/|$)/i;
-
-// Returns the cleaned path or throws. No query strings: the agent sets the workspace itself.
+// Returns the cleaned path or throws: shared/proxy-routes.js checks (no encodings, queries, dot segments or the shell route) plus
+// a list of path patterns. The sidecar calls below use the shared route and method list, which the agent enforces as well.
 export function safeProxyPath(sub, routes) {
-  const raw = String(sub ?? '');
-  if (!raw.startsWith('/') || raw.length > 300) throw new Error('bad proxy path');
-  // eslint-disable-next-line no-control-regex
-  if (/[\u0000-\u001f\u007f\\?#]/.test(raw)) throw new Error('bad proxy path');
-  if (/%(2f|5c|2e|00|3f|23)/i.test(raw)) throw new Error('encoded separators are not allowed in proxy paths');
-  if (raw.includes('//')) throw new Error('bad proxy path');
-  if (raw.split('/').some((s) => s === '.' || s === '..')) throw new Error('dot segments are not allowed in proxy paths');
-  if (SHELL.test(raw)) throw new Error('the shell route is never used');
+  const raw = checkPath(sub);
   if (!routes.some((re) => re.test(raw))) throw new Error('that route is not on the allowlist');
   return raw;
 }
+const toSidecar = (sidecar, method, sub, body) => {
+  const p = checkProxy(sidecar, method, sub);
+  if (isReplyRoute(sidecar, p) && !replyBodyOk(body)) throw new Error('a permission answer may only be once or reject');
+  return `/${sidecar}${p}`;
+};
 
 export function createAgentClient({ machines, tokens, fetchImpl = fetch, sleepFn = sleep }) {
   const base = (id) => {
@@ -65,19 +56,9 @@ export function createAgentClient({ machines, tokens, fetchImpl = fetch, sleepFn
       if (r.status === 200 && r.json) return r.json;
       return { ok: false, error: r.json?.error ?? `agent answered ${r.status}`, durationMs: 0 };
     },
-    async opencode(id, method, sub, body, o = {}) {
-      const p = safeProxyPath(sub, OPENCODE_ROUTES);
-      const r = await req(id, method, `/opencode${p}`, { body, ...o });
-      return r;
-    },
-    async claude(id, method, sub, body, o = {}) {
-      const p = safeProxyPath(sub, CLAUDE_ROUTES);
-      return req(id, method, `/claude${p}`, { body, ...o });
-    },
-    async browser(id, method, sub, body, o = {}) {
-      const p = safeProxyPath(sub, BROWSER_ROUTES);
-      return req(id, method, `/browser${p}`, { body, timeoutMs: 60_000, ...o });
-    },
+    async opencode(id, method, sub, body, o = {}) { return req(id, method, toSidecar('opencode', method, sub, body), { body, ...o }); },
+    async claude(id, method, sub, body, o = {}) { return req(id, method, toSidecar('claude', method, sub, body), { body, ...o }); },
+    async browser(id, method, sub, body, o = {}) { return req(id, method, toSidecar('browser', method, sub, body), { body, timeoutMs: 60_000, ...o }); },
     // Agent event stream (OpenCode permission requests, task events). Reconnects with backoff until the signal aborts.
     async events(id, onEvent, { signal, onState = () => {} } = {}) {
       let delay = 500;

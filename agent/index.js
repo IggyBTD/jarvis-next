@@ -11,9 +11,9 @@ import { createRegistry } from './registry/mod.js';
 import { getInfo } from './info.js';
 import { ipAllowed, isLoopback, resolveBind } from '../shared/net.js';
 import { installProcessGuards, isMain } from '../shared/util.js';
+import { checkProxy, isReplyRoute, replyBodyOk } from '../shared/proxy-routes.js';
 
 const MAX_BODY = 1024 * 1024;
-const SHELL_ROUTE = /(^|\/)session\/[^/]+\/shell(\/|$)/i;
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
@@ -73,13 +73,20 @@ export function createAgent({ cfg, machineId, registry, sidecars = {}, tokens, l
         res.on('close', () => { clearInterval(beat); sseClients.delete(res); });
         return undefined;
       }
-      const side = p.match(/^\/(opencode|browser|claude)(\/.*)?$/);
+      // Sidecars: the raw address (never decoded) must be one of the server's own routes with its method (shared/proxy-routes.js), and
+      // a permission answer may only be once or reject.
+      const side = String(req.url ?? '').match(/^\/(opencode|browser|claude)(\/[^]*)?$/);
       if (side) {
-        const sub = decodeURIComponent(side[2] ?? '/');
-        if (SHELL_ROUTE.test(sub) || SHELL_ROUTE.test(side[2] ?? '')) return send(res, 403, { error: 'this route is never proxied' });
+        let sub;
+        try { sub = checkProxy(side[1], req.method, side[2] ?? '/'); } catch (e) { return send(res, 403, { error: e.message }); }
         const sc = sidecars[side[1]];
         if (!sc?.proxy) return send(res, 503, { error: `${side[1]} is not running on this machine` });
-        return sc.proxy(req, res, sub + url.search);
+        if (isReplyRoute(side[1], sub)) {
+          const body = await readJson(req);
+          if (!replyBodyOk(body)) return send(res, 403, { error: 'a permission answer may only be once or reject' });
+          return sc.proxy(req, res, sub, body);
+        }
+        return sc.proxy(req, res, sub);
       }
       return send(res, 404, { error: 'not found' });
     } catch (e) {
