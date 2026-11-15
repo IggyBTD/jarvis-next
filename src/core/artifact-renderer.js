@@ -95,12 +95,11 @@ function wrap(body, { head = '', scripts = '', policy }) {
   return `<!doctype html><html><head><meta charset="utf-8">${cspMeta(policy)}<style>${baseCss()}</style>${GUARD_TAG}${head}</head><body>${body}${scripts}</body></html>`;
 }
 
-// A full HTML document: inject the CSP as the very first thing in <head>.
+// A full HTML document: the CSP goes at offset 0, before anything the document says. The HTML parser puts a leading <meta> into the
+// head it creates itself, so no <head> in a comment, in a script string or after earlier content can come before the policy. The
+// document's own <html> and <head> tags that follow are merged into those (the browser ignores the repeats).
 function htmlDocument(source) {
-  const base = `${cspMeta(CSP_SCRIPTS)}<style>${baseCss()}</style>${GUARD_TAG}`;
-  if (/<head[\s>]/i.test(source)) return source.replace(/<head([^>]*)>/i, `<head$1><meta charset="utf-8">${base}`);
-  if (/<html[\s>]/i.test(source)) return source.replace(/<html([^>]*)>/i, `<html$1><head><meta charset="utf-8">${base}</head>`);
-  return `<!doctype html><html><head><meta charset="utf-8">${base}</head><body>${source}</body></html>`;
+  return `<!doctype html><meta charset="utf-8">${cspMeta(CSP_SCRIPTS)}<style>${baseCss()}</style>${GUARD_TAG}${source}`;
 }
 
 const mermaidTheme = () => {

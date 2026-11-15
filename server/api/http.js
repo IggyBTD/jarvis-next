@@ -6,6 +6,19 @@ import { ipAllowed } from '../../shared/net.js';
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ico': 'image/x-icon', '.wasm': 'application/wasm', '.map': 'application/json' };
 
+// The policy for pages the server serves. Nothing may load from another host by itself: images, media and fonts come from the server,
+// data: or blob:, and connections go to the server only (plus the ship feed the globe reads). Scripts and styles may be inline because
+// artifact frames are srcdoc documents, which inherit this policy, and they draw charts with inline scripts under their own stricter
+// policy (artifact-renderer.js). host: the Host header, used only when it is a plain host[:port].
+export function pageCsp(host) {
+  const h = /^(?:[a-z0-9.-]+|\[[0-9a-f:.]+\])(?::\d{1,5})?$/i.test(String(host ?? '')) ? host : null;
+  return [
+    "default-src 'self'", "script-src 'self' 'unsafe-inline'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob:", "media-src 'self' data: blob:",
+    "font-src 'self' data:", `connect-src 'self'${h ? ` ws://${h} wss://${h}` : ''} wss://stream.aisstream.io`, "frame-src 'self' blob: data:", "worker-src 'self' blob:",
+    "object-src 'none'", "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'",
+  ].join('; ');
+}
+
 // The built app (dist/) is served to browsers, so a Mac needs nothing installed: open the server's address. It holds no secrets
 // (the token is typed in or passed in the #fragment, which a browser never sends); every data route below still needs a token.
 function serveStatic(req, res, root, pathname) {
@@ -16,7 +29,7 @@ function serveStatic(req, res, root, pathname) {
   if (!file.startsWith(root + path.sep) && file !== root) { res.writeHead(400); return res.end(); }
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(root, 'index.html');
   if (!fs.existsSync(file)) { res.writeHead(503, { 'content-type': 'text/plain' }); return res.end('The app is not built yet: run npm run build on the PC.'); }
-  res.writeHead(200, { 'content-type': TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream', 'cache-control': file.endsWith('index.html') ? 'no-cache' : 'public, max-age=3600', 'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY', 'referrer-policy': 'no-referrer', 'permissions-policy': 'microphone=(self), camera=(), geolocation=()' });
+  res.writeHead(200, { 'content-type': TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream', 'cache-control': file.endsWith('index.html') ? 'no-cache' : 'public, max-age=3600', 'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY', 'referrer-policy': 'no-referrer', 'permissions-policy': 'microphone=(self), camera=(), geolocation=()', ...(file.endsWith('.html') ? { 'content-security-policy': pageCsp(req.headers.host) } : {}) });
   return req.method === 'HEAD' ? res.end() : fs.createReadStream(file).pipe(res);
 }
 
