@@ -1,5 +1,6 @@
 STATUS: IN PROGRESS, stage B (stage A done)
 
+
 # Security fix run: progress
 
 Run doc: docs/security/fix-run.md. Branch ui-extras. Resume job (CronCreate, session-only): 883971bf, every 30 min at :13 and :43.
@@ -18,7 +19,7 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F4-2 | A | DONE | a1a6da3 | system action resolve_paths on the agent (links, junctions, short names, trailing dots); bridge checks edits, folders and command words against real paths; no answer is outside |
 | F4-1 | A | DONE | c02fc71 | shared route and method allowlist (shared/proxy-routes.js) enforced by server and agent on the raw address; no % at all; permission answers only once or reject; opencode-manager takes the checked body. %2573hell reaching OpenCode was not run against real OpenCode (it is refused before forwarding now) |
 | F2-1 | B | DONE | 40feb5a | markdown sanitiser keeps only data:/blob: sources; CSP on server pages and in Tauri; artifact CSP at offset 0; browser tests sec-exfil and sec-csp-pages. Tauri window itself unverified |
-| F2-2 | B | TODO | | |
+| F2-2 | B | DONE | 21cce54, 3bbd58c | tainted-chat rule (server/core/taint.js, Fable) wired into orchestrator, router, policy, conversations and task notes; navigate after outside content asks with the full address, in every later turn of that chat |
 | F2-4 | B | TODO | | |
 | F2-5 | B | TODO | | |
 | F2-3 | B | TODO | | |
@@ -65,7 +66,7 @@ Stage A (coding agent), commits 23436e3 to c02fc71, tests 192 -> 210, all green,
 - The coding agent can no longer use the JARVIS folder (C:\Users\bethe\Jarvis-Next) or the user Temp folder without asking: reads, edits and commands there are T3 and ask in every mode (Plan refuses them), even if you pick that folder as the project folder. The Claude Code backend is denied them outright. Work on JARVIS itself with Claude Code.
 - npm test is no longer on the read-only list: it asks in Auto.
 - Mac: until the Mac agent is updated (node scripts/update.js) it has no resolve_paths action, so its coding agent asks for every edit and command that names a path. Update the Mac once and it is back to normal.
-- A chat turn that has already read something (mail, a web page, a file, any tool result) asks before starting a coding task.
+- A chat that has read anything from outside (mail, Drive, a web page, a file, a task result) stays marked for the rest of that chat: opening an address, clicking or typing in the browser, starting a coding task, saving a note, writing a file, running a script, and any other call that carries text then ask, with the whole request on the card. Start a new chat to get back to the old behaviour. Old chats that used such tools count as marked.
 
 ## Decisions made without asking
 
