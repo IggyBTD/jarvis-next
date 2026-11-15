@@ -17,7 +17,7 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F1-3 | A | DONE | 40f98ad | JARVIS folder and Temp untrusted; root and data folder T3 and armed in every mode (edits, folders, reads, commands); agent reports its own folders in /info; Claude deny rules; arming list extended; non-http webfetch T3 |
 | F4-2 | A | DONE | a1a6da3 | system action resolve_paths on the agent (links, junctions, short names, trailing dots); bridge checks edits, folders and command words against real paths; no answer is outside |
 | F4-1 | A | DONE | c02fc71 | shared route and method allowlist (shared/proxy-routes.js) enforced by server and agent on the raw address; no % at all; permission answers only once or reject; opencode-manager takes the checked body. %2573hell reaching OpenCode was not run against real OpenCode (it is refused before forwarding now) |
-| F2-1 | B | TODO | | |
+| F2-1 | B | DONE | 40feb5a | markdown sanitiser keeps only data:/blob: sources; CSP on server pages and in Tauri; artifact CSP at offset 0; browser tests sec-exfil and sec-csp-pages. Tauri window itself unverified |
 | F2-2 | B | TODO | | |
 | F2-4 | B | TODO | | |
 | F2-5 | B | TODO | | |
@@ -48,6 +48,8 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 Stage A (coding agent), commits 23436e3 to c02fc71, tests 192 -> 210, all green, chokepoint check green. The permission bridge now goes through policy.decide; Auto runs only a parsed read-only allowlist whose paths must resolve inside the workspace (lexically on the server and for real on the machine); Manual asks for everything and Plan runs nothing by itself; interpreters, installs, variables and outside paths are T3; the JARVIS folder and data folder are T3 and armed in every mode; the agent forwards only the server's own sidecar routes. Closes CH-1 (agent_task after untrusted content asks; any non-allowlisted command asks), CH-2 (token files are under the protected data folder; reads, folder requests and commands that reach them are T3 in every mode), CH-3 (dist/** is armed and the JARVIS folder is protected) and CH-5 (git --output is not allowlisted; Manual and Plan never auto-run). The tainted flag for agent_task is temporary until stage B.
 
 ## Unverified (runtime checks that settle them)
+
+- F2-1: the Tauri window under its new CSP (not runnable here). Check: npm run tauri dev, open a chat with a reply containing an image from a local listener (python -m http.server on another port) and confirm no request arrives; open a chart artifact and confirm it draws (inline scripts in srcdoc frames depend on dangerousDisableAssetCspModification). Then the same with npm run tauri build.
 
 - F1-3: whether OpenCode 1.19.1 asks (external_directory) before its read tool opens a file outside the workspace, and before a PowerShell path argument outside it. If read defaults to allow everywhere, reads of the JARVIS folder by the read tool would not reach the bridge. Check: GET /doc and scripts/opencode-verify.js with a read of a file outside the workspace.
 - F1-3: the Claude Code rule form for absolute Windows paths (//c/Users/...). Check: claude -p in the workspace with the JARVIS mode flags, ask it to read data/tokens/ui.token by absolute path, expect a permission denial in the result.
