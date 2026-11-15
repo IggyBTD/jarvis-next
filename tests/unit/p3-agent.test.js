@@ -33,7 +33,7 @@ function rig({ edit = () => {}, platform = 'win32', mock = null } = {}) {
   return { ...t, root, registry, calls, cleanup() { t.cleanup(); rmDir(root); } };
 }
 
-const SAMPLE = (root) => ({ app: 'notes', url: 'https://example.com', path: root, from: path.join(root, 'a.txt'), to: path.join(root, 'b.txt'), name: 'dev', workspace: 'dev', command: 'jarvis', level: 40, minutes: 5, count: 5, pid: 4242, port: 3000, host: 'example.com', mac: 'aa:bb:cc:dd:ee:ff', enabled: true, plan: 'balanced', priority: 'high', device: 'speakers', pattern: '*.txt', query: 'hello', text: 'hi', title: 'T', launch: 'steam', dryRun: true, apply: false, args: '{}' });
+const SAMPLE = (root) => ({ app: 'notes', url: 'https://example.com', path: root, from: path.join(root, 'a.txt'), to: path.join(root, 'b.txt'), name: 'dev', workspace: 'dev', command: 'jarvis', level: 40, minutes: 5, count: 5, pid: 4242, port: 3000, host: 'example.com', mac: 'aa:bb:cc:dd:ee:ff', enabled: true, plan: 'balanced', priority: 'high', device: 'speakers', pattern: '*.txt', query: 'hello', text: 'hi', title: 'T', launch: 'steam', dryRun: true, apply: false, args: '{}', content: 'text', append: false, overwrite: false });
 const sampleArgs = (c, root) => Object.fromEntries(Object.keys(c.params.properties).map((k) => [k, c.params.properties[k].enum ? c.params.properties[k].enum[0] : SAMPLE(root)[k]]));
 
 test('contract: every implementation is in actions.json; gaps per OS are exactly the documented ones', () => {
@@ -331,4 +331,31 @@ test('agent HTTP: auth, caller allowlist, origin, other machine token, shell rou
   const a2 = createAgent({ cfg: r2.cfg, machineId: 'pc', registry: r2.registry, tokens: t2 });
   const ad = await a2.listen(0, '127.0.0.1');
   try { assert.equal((await request(`http://127.0.0.1:${ad.port}/health`, { headers: { authorization: `Bearer ${t2.machines.pc[0]}` } })).status, 403); } finally { await a2.close(); r2.cleanup(); }
+});
+
+test('write_file: saves text inside the roots; never overwrites unless asked; append adds; a folder, an outside path and a non-text value are refused', async () => {
+  const r = rig();
+  const outside = tmpDir('outside-w');
+  try {
+    const ex = (a) => r.registry.execute('write_file', { args: a });
+    const file = path.join(r.root, 'essay.md');
+    const made = await ex({ path: file, content: '# Title\n' });
+    assert.equal(made.ok, true);
+    assert.equal(made.data.characters, 8);
+    assert.equal(fs.readFileSync(file, 'utf8'), '# Title\n');
+    const again = await ex({ path: file, content: 'x' });
+    assert.equal(again.ok, false); // never overwrites by default
+    assert.match(again.error, /already exists/);
+    assert.equal(fs.readFileSync(file, 'utf8'), '# Title\n');
+    assert.equal((await ex({ path: file, content: 'More text.\n', append: true })).ok, true);
+    assert.equal(fs.readFileSync(file, 'utf8'), '# Title\nMore text.\n');
+    assert.equal((await ex({ path: file, content: 'new', overwrite: true })).ok, true);
+    assert.equal(fs.readFileSync(file, 'utf8'), 'new');
+    assert.equal((await ex({ path: 'notes/relative.md', content: 'in the workspace' })).ok, true); // a relative path goes in the workspace folder
+    assert.equal(fs.readFileSync(path.join(r.root, 'ws', 'notes', 'relative.md'), 'utf8'), 'in the workspace');
+    assert.equal((await ex({ path: r.root, content: 'x', overwrite: true })).ok, false); // a folder
+    assert.equal((await ex({ path: path.join(outside, 'x.md'), content: 'x' })).ok, false); // outside the roots
+    assert.equal(fs.existsSync(path.join(outside, 'x.md')), false);
+    assert.equal((await ex({ path: file, content: 42 })).ok, false); // not text
+  } finally { rmDir(outside); r.cleanup(); }
 });

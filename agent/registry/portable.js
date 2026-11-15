@@ -139,6 +139,17 @@ export const portable = {
     fs.copyFileSync(src, dst, fs.constants.COPYFILE_EXCL);
     return { copied: dst };
   } }),
+  // Saves text the model wrote. Nothing is overwritten unless asked: a new file, append to one, or overwrite it on purpose.
+  write_file: action({ describe: (a) => ({ would: `${a.append ? 'append to' : a.overwrite ? 'overwrite' : 'create'} ${a.path} (${String(a.content ?? '').length} characters)` }), async run({ path: target, content, append = false, overwrite = false }, ctx) {
+    if (typeof content !== 'string') throw new Error('content must be text');
+    const dst = safePath(target, ctx);
+    const there = stat(dst);
+    if (there && !there.isFile()) throw new Error('that path is a folder');
+    if (there && !append && !overwrite) throw new Error('the file already exists; nothing was overwritten (set append to add to it, or overwrite to replace it)');
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    if (append) fs.appendFileSync(dst, content, 'utf8'); else fs.writeFileSync(dst, content, 'utf8');
+    return { wrote: dst, characters: content.length, appended: !!append, size: stat(dst).size };
+  } }),
   move_file: action({ describe: (a) => ({ would: `move ${a.from} to ${a.to}` }), async run({ from, to }, ctx) {
     const src = safePath(from, ctx);
     const dst = safePath(to, ctx);

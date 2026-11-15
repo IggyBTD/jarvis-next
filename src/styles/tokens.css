@@ -53,6 +53,7 @@
   --h-sm: 28px;
   --h-md: 32px;
   --h-lg: 40px;
+  --tap: 44px;               /* the smallest thing a finger is asked to hit (the phone UI, docs/mobile.md) */
 
   /* structure */
   --strip-h: 40px;           /* title strip across both panes */
@@ -87,6 +88,7 @@
   /* motion */
   --dur-fast: 150ms; --dur: 200ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1); /* the iOS sheet curve: sheets on the phone */
 
   --bar: var(--accent-mid);
 }

@@ -464,3 +464,17 @@ test('orchestrator: the tool.result event carries a plain summary, a preview and
     assert.equal(res.ok, true);
   } finally { await r.close(); }
 });
+
+test('the prompt says there is one model and no subagents, and agent_task is a command runner, not a place to write text', async () => {
+  const fs = await import('node:fs');
+  const base = fs.readFileSync(new URL('../../config/server/prompts/base.md', import.meta.url), 'utf8');
+  assert.match(base, /You are the only model\. There are no subagents/);
+  assert.match(base, /Write essays[\s\S]*yourself/);
+  assert.match(base, /`agent_task` is not a subagent/);
+  assert.match(base, /call `write_file` yourself/); // saving text to a file is write_file, never a task for the coding agent
+  assert.match(base, /Never send text to `agent_task`/);
+  const { createAgentTasks } = await import('../../server/core/agent-tasks.js');
+  assert.ok(createAgentTasks); // the tool description lives next to it
+  const src = fs.readFileSync(new URL('../../server/core/agent-tasks.js', import.meta.url), 'utf8');
+  assert.match(src, /not a subagent and not another model: never use it to write text, essays or answers/);
+});

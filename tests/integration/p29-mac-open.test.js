@@ -60,7 +60,7 @@ test('Mac zip: has the double-click app with executable bits and open-mac.js; to
   const out = tmpDir('macopen');
   try {
     const b = await buildMacBundle({ outDir: out });
-    for (const f of ['JARVIS.app/Contents/Info.plist', 'JARVIS.app/Contents/MacOS/JARVIS', 'scripts/open-mac.js']) assert.ok(b.files.includes(f), f);
+    for (const f of ['JARVIS.app/Contents/Info.plist', 'JARVIS.app/Contents/MacOS/JARVIS', 'JARVIS.app/Contents/Resources/AppIcon.icns', 'scripts/open-mac.js']) assert.ok(b.files.includes(f), f);
     assert.ok(!b.files.some((f) => /\.token$/.test(f)));
     const fs = await import('node:fs');
     const zip = fs.readFileSync(b.zip);
@@ -79,4 +79,58 @@ test('Mac self-update: applies the bundle the PC serves, and never throws when t
   assert.deepEqual(ok, { written: ['a'] }); assert.deepEqual(applied, [3]);
   assert.equal(await selfUpdate({ base: 'http://x', token: 't', fetchImpl: async () => ({ ok: false }) }), null);
   assert.equal(await selfUpdate({ base: 'http://x', token: 't', fetchImpl: async () => { throw new Error('down'); } }), null);
+});
+
+test('logo: the icon is the node mesh (30 nodes from the shared geometry), and the Mac .icns holds the PNG sizes it declares', async () => {
+  const { meshSvg, packIcns, iconSvg } = await import('../../scripts/make-icon.js');
+  const { MESH_N } = await import('../../src/core/mesh-geometry.js');
+  const svg = meshSvg();
+  assert.equal((svg.match(/<circle/g) ?? []).length - 1, MESH_N * 2); // a halo and a core per node, plus the soft ground glow
+  assert.ok((svg.match(/<line/g) ?? []).length > MESH_N); // linked, not loose dots
+  assert.match(svg, /^<svg[\s\S]*<\/svg>\s*$/);
+  assert.equal(iconSvg(), svg);
+  assert.ok(iconSvg({ old: true }).includes('stroke-dasharray')); // the old JARVIS keeps its own reactor icon
+  const png = Buffer.from('89504e470d0a1a0a', 'hex');
+  const icns = packIcns([{ size: 128, png }, { size: 256, png }, { size: 512, png }, { size: 64, png }]); // 64 has no icns type: left out
+  assert.equal(icns.subarray(0, 4).toString(), 'icns');
+  assert.equal(icns.readUInt32BE(4), icns.length);
+  assert.equal(icns.length, 8 + 3 * (8 + png.length));
+});
+
+test('phone launcher: the starter serves the home-screen page and its icon without a key, and still refuses everything else', async () => {
+  const { links } = await import('../../scripts/client-link.js');
+  const handler = createStarter({ token: 'secret-token', allowed: ['100.64.0.0/10'], ports: { server: 7410, agent: 7421 }, probe: async () => false, start: () => {}, refresh: async () => {} });
+  const srv = http.createServer(handler);
+  await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
+  const get = (p) => new Promise((ok, no) => http.get({ port: srv.address().port, host: '127.0.0.1', path: p }, (res) => { const b = []; res.on('data', (d) => b.push(d)); res.on('end', () => ok({ status: res.statusCode, type: res.headers['content-type'], body: Buffer.concat(b) })); }).on('error', no));
+  try {
+    const page = await get('/');
+    assert.equal(page.status, 200);
+    assert.match(page.type, /text\/html/);
+    const html = page.body.toString('utf8');
+    assert.match(html, /const SERVER_PORT = 7410;/);
+    assert.match(html, /apple-touch-icon/);
+    assert.match(html, /\/mobile\.html#token=/, 'it moves on to the phone app with the key from the address');
+    assert.ok(!html.includes('secret-token'), 'the page holds no key');
+    const icon = await get('/apple-touch-icon.png');
+    assert.equal(icon.status, 200);
+    assert.equal(icon.body.subarray(1, 4).toString(), 'PNG');
+    assert.equal((await get('/health')).status, 401, 'everything else still needs the key');
+  } finally { srv.close(); }
+  const l = links({ host: '192.168.1.5', port: 7410, token: 'T', tsName: 'pc.tail.ts.net' });
+  assert.ok(l.some((x) => x.url === 'http://pc.tail.ts.net:7411/#token=T' && /iPhone/.test(x.label)), 'client-link prints the iPhone link (through the starter)');
+});
+
+test('the phone app is a second page of the same build, with a home-screen manifest and icon', async () => {
+  const fs = await import('node:fs');
+  const html = fs.readFileSync(new URL('../../mobile.html', import.meta.url), 'utf8');
+  assert.match(html, /viewport-fit=cover/);
+  const viewport = html.match(/<meta name="viewport" content="([^"]*)"/)[1];
+  assert.doesNotMatch(viewport, /user-scalable|maximum-scale/, 'pinch zoom stays available');
+  assert.match(html, /<textarea id="m-input"[^>]*autocapitalize="sentences"/);
+  const manifest = JSON.parse(fs.readFileSync(new URL('../../public/manifest-mobile.webmanifest', import.meta.url), 'utf8'));
+  assert.deepEqual([manifest.start_url, manifest.display, manifest.orientation], ['/mobile.html', 'standalone', 'portrait']);
+  const icon = fs.readFileSync(new URL('../../public/apple-touch-icon.png', import.meta.url));
+  assert.equal(icon.readUInt32BE(16), 180); // width and height of the PNG
+  assert.equal(icon.readUInt32BE(20), 180);
 });

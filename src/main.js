@@ -10,8 +10,10 @@ import '@fontsource/ibm-plex-serif/latin-600.css';
 import '@fontsource/jetbrains-mono/latin-400.css';
 import '@fontsource/jetbrains-mono/latin-500.css';
 import { initTelemetry } from './core/telemetry-view.js';
+import { mountLogos } from './core/node-mesh.js';
 
 initTelemetry();
+mountLogos();
 import './core/chat-ui.js';
 import './core/model-panel.js';
 import './core/dock-ui.js';

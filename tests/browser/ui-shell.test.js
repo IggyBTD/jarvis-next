@@ -44,6 +44,55 @@ async function dragTo(from, to) {
 }
 const send = async (text) => { await page.waitForSelector('#dock-stop', { state: 'hidden' }); await page.fill('#hud-chat-input', text); await page.keyboard.press('Enter'); };
 
+test('the empty chat page: the big mesh is the centrepiece and the group stays centred; it reacts to typing, a click and a drag, and then rests without a loop', async () => {
+  const g = await page.evaluate(() => {
+    const h = document.querySelector('canvas.hero').getBoundingClientRect();
+    const c = document.getElementById('composer-dock').getBoundingClientRect();
+    const pane = document.getElementById('chat-stack').getBoundingClientRect();
+    return { size: h.width, mid: (h.top + c.bottom) / 2, paneMid: (pane.top + pane.bottom) / 2, cx: h.left + h.width / 2, paneCx: pane.left + pane.width / 2 };
+  });
+  assert.ok(g.size >= 150, `the mesh is big (${g.size})`);
+  assert.ok(Math.abs(g.mid - g.paneMid) < 90, `mesh, greeting and card are centred together (${Math.round(g.mid)} vs ${Math.round(g.paneMid)})`);
+  assert.ok(Math.abs(g.cx - g.paneCx) < 4, 'the mesh is on the centre line');
+  await page.evaluate(() => {
+    const cv = document.querySelector('canvas.hero');
+    window.__sig = () => { const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; let s = 0; for (let k = 3; k < d.length; k += 4) s += d[k] * (((k >> 2) % 251) + 1); return s; };
+    window.__frames = 0;
+    const raf = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = (f) => { window.__frames++; return raf(f); };
+  });
+  const sig = () => page.evaluate(() => window.__sig());
+  const settle = async () => { let last = await sig(); for (let k = 0; k < 40; k++) { await page.waitForTimeout(250); const now = await sig(); if (now === last) { await page.waitForTimeout(250); if ((await sig()) === now) return now; } last = now; } throw new Error('the mesh never came to rest'); };
+  await settle();
+  await page.evaluate(() => { window.__frames = 0; });
+  await page.waitForTimeout(1000);
+  assert.ok((await page.evaluate(() => window.__frames)) < 20, 'resting: no animation loop');
+  // typing: the letters move it, and it rests again after
+  const still = await sig();
+  await page.click('#hud-chat-input');
+  await page.evaluate(() => { window.__frames = 0; });
+  await page.keyboard.type('hello there, how are you today', { delay: 35 });
+  assert.notEqual(await sig(), still, 'typing changed the picture');
+  assert.ok((await page.evaluate(() => window.__frames)) > 15, 'it ran while typing');
+  await settle();
+  // a click makes it jump; a drag turns it
+  const box = await page.locator('canvas.hero').boundingBox();
+  const base = await sig();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.waitForTimeout(150);
+  assert.notEqual(await sig(), base, 'a click changed the picture');
+  await settle();
+  const before = await sig();
+  await page.mouse.move(box.x + 40, box.y + box.height / 2);
+  await page.mouse.down();
+  for (let k = 1; k <= 10; k++) await page.mouse.move(box.x + 40 + k * 9, box.y + box.height / 2);
+  await page.mouse.up();
+  await page.waitForTimeout(200);
+  assert.notEqual(await sig(), before, 'a drag turned it');
+  await settle();
+  await page.fill('#hud-chat-input', ''); // the next test starts from an empty box
+});
+
 test('a new chat shows the greeting and the input card together, in the middle; after a message the card is at the bottom', async () => {
   const empty = await page.evaluate(() => { const g = document.getElementById('chat-empty').getBoundingClientRect(); const c = document.getElementById('composer-dock').getBoundingClientRect(); return { greetingAbove: g.bottom <= c.top, cardMid: c.top > 150 && c.bottom < innerHeight - 150 }; });
   assert.deepEqual(empty, { greetingAbove: true, cardMid: true });

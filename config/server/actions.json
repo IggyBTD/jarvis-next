@@ -1750,6 +1750,42 @@
       "returns": "object"
     },
     {
+      "name": "write_file",
+      "description": "Save text to a file inside the allowed roots (a relative path goes in the workspace). Nothing is overwritten unless overwrite is true; append adds to the end: save a long text in parts of up to about 10000 characters, the first without append and the rest with append true. You write the text yourself; this only stores it.",
+      "category": "files",
+      "tier": "T2",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 12000
+          },
+          "append": {
+            "type": "boolean"
+          },
+          "overwrite": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object"
+    },
+    {
       "name": "move_file",
       "description": "Move a file inside the allowed roots.",
       "category": "files",

@@ -11,7 +11,7 @@ const KEYWORDS = {
   performance: ['game', 'gaming', 'fps', 'process', 'kill', 'priority', 'startup', 'temp files', 'recycle bin', 'trash', 'juego', 'jugar', 'proceso', 'rendimiento', 'papelera', 'jeu', 'jouer', 'processus', 'corbeille'],
   system: ['cpu', 'gpu', 'ram', 'memory', 'disk', 'storage', 'temperature', 'uptime', 'system', 'specs', 'hardware', 'load', 'vram', 'memoria', 'disco', 'sistema', 'temperatura', 'mémoire', 'disque', 'système', 'température', 'carga'],
   network: ['wifi', 'wi-fi', 'network', 'internet', 'ping', 'ip address', 'dns', 'port', 'tailscale', 'wake on lan', 'red', 'conexión', 'réseau', 'connexion', 'adresse ip'],
-  files: ['file', 'folder', 'directory', 'copy', 'move', 'delete', 'zip', 'download', 'downloads', 'duplicate', 'archivo', 'carpeta', 'fichero', 'copiar', 'mover', 'borrar', 'descargas', 'fichier', 'dossier', 'copier', 'déplacer', 'supprimer', 'téléchargements'],
+  files: ['file', 'save it', 'save this', 'save as', 'saved as', '.md', '.txt', 'folder', 'directory', 'copy', 'move', 'delete', 'zip', 'download', 'downloads', 'duplicate', 'archivo', 'carpeta', 'fichero', 'copiar', 'mover', 'borrar', 'descargas', 'fichier', 'dossier', 'copier', 'déplacer', 'supprimer', 'téléchargements'],
   clipboard: ['clipboard', 'screenshot', 'notification', 'notify', 'portapapeles', 'captura', 'notificación', 'presse-papiers', 'capture d\'écran'],
   memory: ['remember', 'forget', 'memorize', 'memorise', 'note that', 'keep in mind', 'recuerda', 'recuérdalo', 'olvida', 'souviens', 'oublie', 'retiens'],
   time: ['timer', 'remind', 'reminder', 'alarm', 'schedule', 'minutes', 'in an hour', 'temporizador', 'recordatorio', 'recuérdame', 'recuerdame', 'avísame', 'rappel', 'rappelle', 'minuteur'],

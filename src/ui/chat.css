@@ -49,14 +49,7 @@
 .thought[open] summary::before { rotate: 90deg; }
 .thought-body { margin-top: var(--s-2); padding: var(--s-2) var(--s-4); background: var(--surface-1); border-radius: var(--r-md); white-space: pre-wrap; }
 
-/* ---- the mark: a core with a ring. Still = the brand. Breathing and rippling = working. -------------- */
-.mark { position: relative; display: inline-block; flex: none; width: var(--icon-md); height: var(--icon-md); }
-.mark::before { content: ""; position: absolute; inset: 5px; /* optical: core of 8 in a ring of 18 */ border-radius: 50%; background: var(--accent); }
-.mark::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid var(--accent); /* optical: 1.5px ring */ opacity: 0.35; }
-.mark-lg { width: var(--s-6); height: var(--s-6); margin-bottom: var(--s-4); }
-.mark-lg::before { inset: 9px; /* optical: core of 14 in a ring of 32 */ }
-.mark.live::before { animation: core-breathe 1.6s ease-in-out infinite; }
-.mark.live::after { animation: ring-out 1.6s ease-out infinite; }
+/* ---- the logo: the node mesh as a still picture (node-mesh.js mountLogos); the same mesh moves as the loading icon and rests under the newest reply ---- */
 @keyframes core-breathe { 0%, 100% { transform: scale(0.8); } 50% { transform: scale(1); } }
 @keyframes ring-out { 0% { transform: scale(0.55); opacity: 0.7; } 100% { transform: scale(1.35); opacity: 0; } }
 .chat-line.pending .chat-text { position: relative; display: inline-flex; align-items: center; gap: var(--s-3); height: var(--lh-md); color: var(--text-3); font: 400 var(--fs-4)/var(--lh-md) var(--sans); }
@@ -80,40 +73,37 @@
 .steps-lead { display: grid; place-items: center; flex: none; width: var(--icon-lg); height: var(--icon-lg); }
 .steps-lead .icon svg { width: var(--icon-sm); height: var(--icon-sm); }
 .steps-lead .orb { --orb-size: var(--s-5); }
-.steps:not(.live) .steps-lead .orb, .steps.live .steps-lead .icon { display: none; }
+.steps-lead .icon { display: none; } /* no check mark: the header is plain text, and the logo shows only while a step runs */
+.steps:not(.live) .steps-lead { display: none; }
 .steps-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .steps.bad .steps-label { color: var(--danger); }
 .steps-count { flex: none; font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
 .steps-head > .icon { flex: none; transition: rotate var(--dur-fast) var(--ease-out); }
 .steps-box[open] > .steps-head > .icon { rotate: 90deg; }
-.steps-list { margin: var(--s-1) 0 var(--s-1) var(--s-2); padding: 0 0 0 var(--s-4); border-left: 1px solid var(--border-strong); list-style: none; }
-.steps-list > li { padding: var(--s-1) 0; }
-/* one step = a sentence ("Searched Gmail (school) for "invoice""), where it ran and how long it took, what came back, and (opened) the request and a preview of the answer */
-.step-line { display: flex; align-items: baseline; gap: var(--s-2); list-style: none; cursor: pointer; color: var(--text-2); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
+.steps-list { margin: var(--s-1) 0 var(--s-1) var(--s-2); padding: 0 0 0 var(--s-4); border-left: 1px solid var(--border); list-style: none; }
+/* the header is the whole story ("Searched your email, read 2 emails"); opened, each step is one short quiet line, and its details (where, how long, request, answer) open under it */
+.step-line { display: flex; align-items: baseline; gap: var(--s-2); list-style: none; cursor: pointer; color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
 .step-line::-webkit-details-marker { display: none; }
 .step.plain > .step-line { cursor: default; }
-.step-line:hover, .step-line:focus-visible { color: var(--text); }
-.step-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.step-meta { flex: none; color: var(--text-3); white-space: nowrap; font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
-.step-dot { flex: none; align-self: center; width: var(--s-2); height: var(--s-2); border-radius: 50%; background: var(--text-3); }
-li[data-state="running"] > .step > .step-line .step-dot { background: var(--accent); }
-li[data-state="failed"] > .step > .step-line .step-dot, li[data-state="denied"] > .step > .step-line .step-dot { background: var(--danger); }
-li[data-state="queued"] > .step > .step-line .step-dot { background: var(--warm); }
-li[data-state="failed"] > .step > .step-line .step-meta, li[data-state="denied"] > .step > .step-line .step-meta { color: var(--danger); }
-li[data-state="queued"] > .step > .step-line .step-meta { color: var(--warm); }
-.step-result { margin: 0 0 0 var(--s-4); color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--sans); overflow-wrap: anywhere; }
-.step-result:empty { display: none; }
-.step-body { display: grid; gap: var(--s-2); margin: var(--s-1) 0 var(--s-1) var(--s-4); }
+.step-line:hover, .step-line:focus-visible { color: var(--text-2); }
+.step-name { min-width: 0; overflow-wrap: anywhere; }
+.step-flag { flex: none; color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--sans); }
+.step-flag:empty { display: none; }
+li[data-state="running"] > .step > .step-line { color: var(--accent); }
+li[data-state="failed"] > .step > .step-line, li[data-state="denied"] > .step > .step-line, li[data-state="failed"] .step-flag, li[data-state="denied"] .step-flag { color: var(--danger); }
+li[data-state="queued"] > .step > .step-line, li[data-state="queued"] .step-flag { color: var(--warm); }
+.step-body { display: grid; gap: var(--s-2); margin: var(--s-1) 0 var(--s-2) var(--s-3); }
+.step-facts { color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--sans); overflow-wrap: anywhere; }
+.step-facts:empty { display: none; }
 .step-body pre { margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); background: var(--surface-1); color: var(--text-2); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: calc(var(--s-8) * 3); overflow: auto; }
 .step-body pre:empty { display: none; }
 .step.plain > .step-body { display: none; }
-/* what the coding agent did inside a task: one quiet line per command or file */
-.step-sub { margin: var(--s-1) 0 0 var(--s-4); padding: 0 0 0 var(--s-3); border-left: 1px solid var(--border); list-style: none; }
+/* what the coding agent did inside a task: plain lines under its step */
+.step-sub { margin: 0 0 var(--s-1) var(--s-3); padding: 0; list-style: none; }
 .step-sub:empty { display: none; }
-.step-sub li { display: flex; align-items: baseline; gap: var(--s-2); color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
-.step-sub .step-dot { width: var(--s-1); height: var(--s-1); }
-.step-sub li[data-state="running"] .step-dot { background: var(--accent); }
-.step-sub li[data-state="failed"] .step-dot { background: var(--danger); }
+.step-sub li { color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
+.step-sub li[data-state="running"] { color: var(--accent); }
+.step-sub li[data-state="failed"] { color: var(--danger); }
 .sub-text { min-width: 0; overflow-wrap: anywhere; }
 
 /* ---- empty state: the greeting and the input card sit together in the middle of the pane, the way Claude's new chat does ------- */
@@ -121,7 +111,8 @@ li[data-state="queued"] > .step > .step-line .step-meta { color: var(--warm); }
 #chat-stack:not(:has(.chat-line)) #chat-output { display: none; }
 #chat-stack:has(.chat-line) #chat-empty, #chat-stack:has(.chat-line) > .machine { display: none; }
 #chat-empty { flex: none; width: min(var(--measure), calc(100% - 2 * var(--chat-gutter))); margin: 0 auto var(--s-5); text-align: center; }
-#chat-empty .mark-lg { display: block; margin: 0 auto var(--s-4); }
+#chat-empty .logo { --orb-size: clamp(var(--s-7), 24vh, calc(var(--s-8) * 3)); margin: 0 auto var(--s-4); cursor: grab; touch-action: none; } /* the centrepiece: 192 px on a tall window, smaller on a short one, so the greeting and the card stay centred together */
+#chat-empty .logo:active { cursor: grabbing; }
 #chat-empty h2 { font: 400 var(--fs-6)/var(--lh-lg) var(--serif); color: var(--text); }
 #chat-empty h2 b { font-weight: 600; color: var(--accent); }
 #chat-empty p { margin-top: var(--s-2); color: var(--text-2); font-size: var(--fs-5); line-height: var(--lh-md); }

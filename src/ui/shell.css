@@ -21,8 +21,7 @@ body.side-off #sidebar { visibility: hidden; }
 
 .side-top { height: var(--strip-h); flex: none; display: flex; align-items: center; gap: var(--s-2); padding: 0 var(--s-2); user-select: none; }
 .brand { display: inline-flex; align-items: center; gap: var(--s-2); margin-right: auto; font: 700 var(--fs-5)/var(--lh-md) var(--sans); letter-spacing: 0.04em; pointer-events: none; }
-.brand .mark { margin-right: 0; width: var(--s-5); height: var(--s-5); }
-.brand .mark::before { inset: 8px; /* optical: core of 8 in a ring of 24 */ }
+.brand .logo { --orb-size: var(--s-5); }
 
 /* chat / code / intel: a 82 by 28 track: 2 frame, three segments of 26 by 24, a thumb slides to the one in use */
 .mode-switch { position: relative; display: inline-grid; grid-template-columns: repeat(3, 26px); /* optical: segments of 26 by 24 */ height: var(--h-sm); padding: 2px; /* optical: 2px frame */ background: var(--surface-4); border-radius: var(--r-md); flex: none; }

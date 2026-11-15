@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { describeCall, describeAgentTool, summarizeResult, summarizeSaved } from '../../shared/steps.js';
+import { summarizeKinds, describeCall, describeAgentTool, summarizeResult, summarizeSaved } from '../../shared/steps.js';
 
 test('describeCall: a sentence while it runs and another once done, from the arguments', () => {
   assert.deepEqual(describeCall('google_gmail_search', { account: 'school', query: 'invoice' }), { doing: 'Searching Gmail (school) for "invoice"', did: 'Searched Gmail (school) for "invoice"' });
@@ -46,4 +46,11 @@ test('summarizeSaved: a saved tool message gives the same summary after a chat i
   const bad = '[PC] open_app failed:\n<untrusted source="y">\nno such app\n</untrusted>';
   assert.equal(summarizeSaved('open_app', bad).summary, 'no such app');
   assert.doesNotThrow(() => summarizeSaved('x', undefined));
+});
+
+test('summarizeKinds: one line for a stretch of steps, worded with counts like Claude does', () => {
+  assert.equal(summarizeKinds([{ name: 'google_gmail_search' }, { name: 'google_gmail_read', args: { ids: ['a', 'b'] } }, { name: 'get_volume' }, { name: 'list_running_apps' }]), 'Searched your email, read 2 emails and checked your computer');
+  assert.equal(summarizeKinds([{ name: 'read_file' }, { name: 'read_file' }, { name: 'read_file' }]), 'Read 3 files');
+  assert.equal(summarizeKinds([{ name: 'agent_task' }, { name: 'frobnicate' }, { name: 'frobnicate', failed: true }]), 'Started the coding agent and used 2 tools, 1 failed');
+  assert.equal(summarizeKinds([]), '');
 });

@@ -19,6 +19,8 @@ export async function tailscaleName(run = runProgram) {
 
 export function links({ host, port, token, tsName }) {
   const out = [{ label: 'At home (same network)', url: `http://${host}:${port}/#token=${token}` }];
+  // the iPhone app (docs/mobile.md): through the starter on port + 1, so the home-screen icon also starts the server when it is off
+  out.push({ label: 'iPhone: open this in Safari, then Share > Add to Home Screen' + (tsName ? ' (over Tailscale, works anywhere)' : ''), url: `http://${tsName ?? host}:${port + 1}/#token=${token}` });
   if (tsName) {
     out.push({ label: 'Anywhere, over Tailscale (HTTPS, microphone works). First run on the PC: tailscale serve --bg ' + port, url: `https://${tsName}/#token=${token}` });
     out.push({ label: 'Anywhere, over Tailscale (plain HTTP, no microphone)', url: `http://${tsName}:${port}/#token=${token}` });

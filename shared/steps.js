@@ -146,3 +146,42 @@ export function summarizeSaved(name, content) {
   if (!ok) return { summary: clipText(inner, 140), detail: clipText(inner, 500) };
   try { return summarizeResult(name, JSON.parse(inner)); } catch { return { summary: clipText(inner, 120) || 'Done', detail: clipText(inner, 500) }; }
 }
+
+// ---- the one-line summary of a stretch of steps, worded the way Claude's own transcript does it ("Ran 2 commands, read a file") -------
+// Each tool belongs to a group; a group says what was done, with a count when it matters. Order is the order they first happened.
+const READONLY = /^(get|list|check|battery|cpu|memory|disk|gpu|temperatures|uptime|installed|pending|network|wifi|public|open_ports|tailscale|defender|port_in_use)/;
+const GROUPS = [
+  [/^browser_/, 'web', (n) => 'browsed the web'],
+  [/^(google_gmail_search|microsoft_mail_search)$/, 'mailsearch', () => 'searched your email'],
+  [/^(google_gmail_read|microsoft_mail_read)$/, 'mailread', (n) => (n === 1 ? 'read an email' : `read ${n} emails`)],
+  [/^(google|microsoft)_calendar/, 'calendar', () => 'checked your calendar'],
+  [/^(google_drive|microsoft_onedrive)/, 'drive', () => 'searched your files'],
+  [/^read_file$/, 'fileread', (n) => (n === 1 ? 'read a file' : `read ${n} files`)],
+  [/^(list_dir|search_files|file_info|find_duplicates)$/, 'filelook', () => 'looked through your files'],
+  [/^(copy_file|move_file|trash_file|zip_folder)$/, 'filechange', (n) => (n === 1 ? 'changed a file' : `changed ${n} files`)],
+  [/^agent_task$/, 'agent', () => 'started the coding agent'],
+  [/^(open_app|focus_app|close_app|open_url|open_file|open_folder)$/, 'app', (n) => (n === 1 ? 'opened an app or page' : `opened ${n} apps or pages`)],
+  [/^(set_|toggle_|mute|unmute|keep_awake|lock_screen)/, 'setting', (n) => (n === 1 ? 'changed a setting' : `changed ${n} settings`)],
+  [/^(remember|forget|list_memories)$/, 'memory', () => 'used your memory'],
+  [/^(git_|spotlight_search|run_user_script|run_shortcut)/, 'command', (n) => (n === 1 ? 'ran a command' : `ran ${n} commands`)],
+];
+const groupOf = (name) => {
+  const hit = GROUPS.find(([re]) => re.test(name));
+  if (hit) return hit;
+  return READONLY.test(name) ? [null, 'check', () => 'checked your computer'] : [null, 'tool', (n) => (n === 1 ? 'used a tool' : `used ${n} tools`)];
+};
+// rows: [{ name, args, failed }] -> "Searched your email, read 2 emails and checked your computer"
+export function summarizeKinds(rows) {
+  const order = [];
+  const seen = new Map();
+  for (const r of rows) {
+    const [, key, phrase] = groupOf(r.name);
+    const n = key === 'mailread' ? Math.max(1, r.args?.ids?.length ?? 1) : 1;
+    if (!seen.has(key)) { seen.set(key, { phrase, n: 0 }); order.push(key); }
+    seen.get(key).n += n;
+  }
+  const parts = order.map((k) => seen.get(k).phrase(seen.get(k).n));
+  const failed = rows.filter((r) => r.failed).length;
+  const text = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0] ?? '';
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}${failed ? `, ${failed} failed` : ''}`;
+}

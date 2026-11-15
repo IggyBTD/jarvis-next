@@ -4,7 +4,7 @@ import { hydrateIcons } from '../icons/index.js';
 import { chat, setMode, getMode, getPreset, onEvent } from './llm-client.js';
 import { hasImages, takeAsContent } from './attachments.js';
 import { pulse, setThinking } from './mesh-state.js';
-import { describeCall, summarizeSaved } from '../../shared/steps.js';
+import { describeCall, summarizeSaved, summarizeKinds } from '../../shared/steps.js';
 import { meshIcon, feedMesh, feedMeshTotal, resetMeshFeed, restMesh } from './node-mesh.js';
 import { renderBlocks, highlightCode } from './markdown.js';
 import { parseReply } from './tool-router.js';
@@ -174,15 +174,15 @@ function stepsGroup() {
     const bad = rows.filter((r) => r.state === 'failed' || r.state === 'denied').length;
     el.classList.toggle('live', !!running);
     el.classList.toggle('bad', !running && bad > 0);
-    const text = rows.map((r) => (r.state === 'ok' ? r.did : r.state === 'running' ? r.doing : `${r.doing} (${STEP_STATE[r.state]})`));
-    label.textContent = running ? `${running.doing}...` : rows.length === 1 ? text[0] : `${shorten(text[0])}${rows.length > 1 ? `, ${shorten(text[1])}` : ''}${rows.length > 2 ? ` and ${rows.length - 2} more` : ''}`;
-    count.textContent = rows.length > 1 ? (running ? `step ${rows.indexOf(running) + 1} of ${rows.length}` : `${rows.length} steps${bad ? `, ${bad} failed` : ''}`) : '';
+    const only = rows[0];
+    label.textContent = running ? `${running.doing}...` : rows.length === 1 ? (only.state === 'ok' ? only.did : `${only.doing} (${STEP_STATE[only.state]})`) : summarizeKinds(rows.map((r) => ({ name: r.name, args: r.args, failed: r.state !== 'ok' })));
+    count.textContent = '';
   };
   const add = (name, machine, state = 'running', args = {}) => {
     const { doing, did } = describeCall(name, args);
     const li = document.createElement('li');
-    li.innerHTML = '<details class="step"><summary class="step-line"><span class="step-dot"></span><span class="step-name"></span><span class="step-meta"></span></summary>'
-      + '<div class="step-body"><pre class="step-args"></pre><pre class="step-detail"></pre></div></details><div class="step-result"></div><ol class="step-sub"></ol>';
+    li.innerHTML = '<details class="step"><summary class="step-line"><span class="step-name"></span><span class="step-flag"></span></summary>'
+      + '<div class="step-body"><div class="step-facts"></div><pre class="step-args"></pre><pre class="step-detail"></pre></div></details><ol class="step-sub"></ol>';
     const q = (s) => li.querySelector(s);
     q('.step-name').textContent = doing;
     let argText = '';
@@ -190,23 +190,26 @@ function stepsGroup() {
     q('.step-args').textContent = argText ? `Request\n${argText}` : '';
     const subs = new Map();
     const row = {
-      name, state, li, doing, did, ms: null,
+      name, args, state, li, doing, did, ms: null, summary: '', note: '',
       set(s, r = {}) {
         row.state = s;
         li.dataset.state = s;
         if (r.ms != null) row.ms = r.ms;
         row.did = did;
         q('.step-name').textContent = s === 'ok' ? did : doing;
-        q('.step-meta').textContent = [machine ? `on ${machine}` : '', STEP_STATE[s], secs(row.ms)].filter(Boolean).join(' · ');
-        if (r.summary !== undefined) q('.step-result').textContent = r.summary;
+        q('.step-flag').textContent = STEP_STATE[s];
+        if (r.summary !== undefined) row.summary = r.summary;
+        row.facts();
         if (r.detail) q('.step-detail').textContent = `Result\n${r.detail}`;
-        q('details.step').classList.toggle('plain', !argText && !r.detail);
+        q('details.step').classList.toggle('plain', !argText && !r.detail && !q('.step-facts').textContent);
         refresh();
       },
+      // "on PC · 1.2 s · 5 messages", shown when the step is opened
+      facts() { q('.step-facts').textContent = [machine ? `on ${machine}` : '', secs(row.ms), row.summary, row.note].filter(Boolean).join(' · '); },
       // something the coding agent did inside this step: a command, a file read or edited
       sub({ id, text, status = 'running', output }) {
         let item = subs.get(id);
-        if (!item) { item = document.createElement('li'); item.innerHTML = '<span class="step-dot"></span><span class="sub-text"></span>'; subs.set(id, item); q('.step-sub').append(item); }
+        if (!item) { item = document.createElement('li'); item.innerHTML = '<span class="sub-text"></span>'; subs.set(id, item); q('.step-sub').append(item); }
         item.dataset.state = status === 'done' ? 'ok' : status;
         item.querySelector('.sub-text').textContent = output && status === 'failed' ? `${text}: ${output}` : text;
         if (output) item.title = output;
@@ -240,7 +243,9 @@ onLink((e) => {
     const row = agentRows.get(e.task.taskId);
     if (!row) return;
     row.endSubs();
-    row.li.querySelector('.step-result').textContent = e.task.state === 'done' ? `Finished${e.task.summary ? `: ${e.task.summary.replace(/\s+/g, ' ').slice(0, 160)}` : ''}` : `Task ${e.task.state}${e.task.error ? `: ${e.task.error}` : ''}`;
+    row.note = e.task.state === 'done' ? `Finished${e.task.summary ? `: ${e.task.summary.replace(/\s+/g, ' ').slice(0, 160)}` : ''}` : `Task ${e.task.state}${e.task.error ? `: ${e.task.error}` : ''}`;
+    row.facts();
+    row.li.querySelector('details.step').classList.remove('plain');
     agentRows.delete(e.task.taskId);
   }
 });

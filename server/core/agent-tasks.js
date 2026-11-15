@@ -172,7 +172,7 @@ export function createAgentTasks({ router, bus, audit, conversations, dataDir, t
 export function registerAgentTaskTool(router, tasks) {
   router.register({
     name: 'agent_task', category: 'agent', tier: 'T1', alwaysOn: true,
-    description: 'Hand a coding or multi-step task to the coding agent (OpenCode) on the active computer. It works in the workspace folder and asks the user before anything risky. Returns a task id at once; the summary is added to the conversation when it finishes.',
+    description: 'Run work that needs a terminal or real files on the active computer, in the workspace folder: builds, tests, scripts, installs, downloads, git, or writing code into project files. It is a command runner, not a subagent and not another model: never use it to write text, essays or answers, to save text to a file (use write_file), to research, or to think for you; do that yourself. It asks the user before anything risky. Returns a task id at once; the result is added to the conversation when it finishes.',
     params: { type: 'object', properties: { prompt: { type: 'string', minLength: 1, maxLength: 8000 }, workspace: { type: 'string', maxLength: 120 } }, required: ['prompt'], additionalProperties: false },
     handler: (args, ctx) => tasks.start(args, ctx),
   });

@@ -57,7 +57,7 @@ const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e
 const APP = {
   'JARVIS.app/Contents/Info.plist': `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0"><dict><key>CFBundleName</key><string>JARVIS</string><key>CFBundleDisplayName</key><string>JARVIS</string><key>CFBundleIdentifier</key><string>com.jarvis.launcher</string><key>CFBundleExecutable</key><string>JARVIS</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleVersion</key><string>1</string><key>LSUIElement</key><true/></dict></plist>
+<plist version="1.0"><dict><key>CFBundleName</key><string>JARVIS</string><key>CFBundleDisplayName</key><string>JARVIS</string><key>CFBundleIdentifier</key><string>com.jarvis.launcher</string><key>CFBundleExecutable</key><string>JARVIS</string><key>CFBundleIconFile</key><string>AppIcon</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleVersion</key><string>1</string><key>LSUIElement</key><true/></dict></plist>
 `,
   'JARVIS.app/Contents/MacOS/JARVIS': `#!/bin/bash
 cd "$(dirname "$0")/../../.." || exit 1
@@ -76,6 +76,8 @@ export async function buildMacBundle({ root = ROOT, outDir = path.join(root, 'di
   fs.rmSync(stage, { recursive: true, force: true });
   for (const rel of [...files].sort()) { fs.mkdirSync(path.dirname(path.join(stage, rel)), { recursive: true }); fs.copyFileSync(path.join(root, rel), path.join(stage, rel)); }
   const extra = Object.keys(APP);
+  const icns = path.join(root, 'src-tauri', 'icons', 'icon.icns'); // the mesh logo (scripts/make-icon.js)
+  if (fs.existsSync(icns)) { const dest = 'JARVIS.app/Contents/Resources/AppIcon.icns'; fs.mkdirSync(path.dirname(path.join(stage, dest)), { recursive: true }); fs.copyFileSync(icns, path.join(stage, dest)); extra.push(dest); }
   for (const [rel, text] of Object.entries(APP)) { fs.mkdirSync(path.dirname(path.join(stage, rel)), { recursive: true }); fs.writeFileSync(path.join(stage, rel), text); }
   // Tokens are opt-in: the zip then holds secrets, so move it by AirDrop or USB only, and delete it afterwards.
   if (withTokens) for (const rel of ['data/tokens/ui.token', 'data/tokens/mac.token', 'data/tokens/wake.token', 'data/wake.json']) if (fs.existsSync(path.join(root, rel))) { fs.mkdirSync(path.dirname(path.join(stage, rel)), { recursive: true }); fs.copyFileSync(path.join(root, rel), path.join(stage, rel)); extra.push(rel); }
