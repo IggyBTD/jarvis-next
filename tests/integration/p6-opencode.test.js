@@ -177,7 +177,7 @@ test('bridge: edits, web fetches and outside folders are classified; the older r
     await waitFor(() => s.fake.rec.replies.length === 4);
     stop();
     const tiers = s.events.filter((e) => e.type === 'gate.request').map((e) => `${e.request.action}:${e.request.tier}`);
-    assert.deepEqual(tiers, ['opencode_edit:T2', 'opencode_edit:T3', 'opencode_webfetch:T2', 'opencode_external_directory:T3']);
+    assert.deepEqual(tiers.sort(), ['opencode_edit:T2', 'opencode_edit:T3', 'opencode_webfetch:T2', 'opencode_external_directory:T3'].sort()); // edits wait for the machine to resolve their paths (F4-2), so the order can change
     assert.ok(s.fake.rec.replies.every((r) => r.variant === 'old' && r.answer === 'once'));
   } finally { await s.close(); }
 });

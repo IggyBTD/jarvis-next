@@ -6,6 +6,7 @@ import { classifyCommand } from '../../server/core/policy.js';
 import { createOpencodeBridge } from '../../server/core/opencode-bridge.js';
 import { isArming } from '../../shared/opencode-arming.js';
 import { testConfig } from '../helpers.js';
+import { resolveLexical } from '../../shared/command-scope.js';
 
 const oc = () => testConfig().cfg.policy.opencode;
 
@@ -35,8 +36,10 @@ function bridge({ trusted = () => [], mode = 'auto' } = {}) {
   const answered = []; // what the mode answered by itself (audit lines)
   const audit = { append: async (r) => { if (r.component === 'opencode-bridge' && r.outcome === 'approved') answered.push(r.action); } };
   const gate = { requestApproval: async (r) => { asked.push(`${r.action}:${r.tier}`); return { approved: false, decision: 'deny' }; } };
-  const router = { capabilities: () => ({ opencode: async () => ({ status: 200, json: {} }) }) };
-  const machines = { pc: { label: 'PC', workspaceDir: 'C:\\Users\\bethe\\jarvis-workspace' } };
+  const ws = 'C:\\Users\\bethe\\jarvis-workspace';
+  // an agent with no links on its disk answers resolve_paths with the lexical paths (since F4-2 the bridge asks the machine)
+  const router = { capabilities: () => ({ opencode: async () => ({ status: 200, json: {} }), call: async (_n, { paths }) => ({ ok: true, data: { workspace: ws, paths: paths.map((x) => resolveLexical(x, { os: 'win32', cwd: ws })) } }) }) };
+  const machines = { pc: { label: 'PC', os: 'win32', workspaceDir: ws } };
   const b = createOpencodeBridge({ router, gate, audit, policyCfg: { opencode: oc() }, machines, modes: { get: () => mode }, trusted });
   let n = 0;
   const ask = async (props) => { await b.handle('pc', { id: `p${++n}`, sessionID: 's', ...props }); };

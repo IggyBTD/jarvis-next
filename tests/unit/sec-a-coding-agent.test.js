@@ -8,6 +8,7 @@ import { createToolRouter } from '../../server/core/tool-router.js';
 import { registerAgentTaskTool } from '../../server/core/agent-tasks.js';
 import { testConfig } from '../helpers.js';
 import { makeRig } from '../rig.js';
+import { resolveLexical } from '../../shared/command-scope.js';
 
 const policyCfg = (edit = () => {}) => { const t = testConfig((f) => edit(f['policy.json'])); const cfg = t.cfg.policy; t.cleanup(); return cfg; };
 const oc = () => policyCfg().opencode;
@@ -18,7 +19,12 @@ function bridge({ trusted = () => [], protect = () => [], mode = 'auto', policy 
   const replies = [];
   const audit = { append: async () => {} };
   const gate = { requestApproval: async (r) => { asked.push(`${r.action}:${r.tier}`); return { approved: false, decision: 'deny' }; } };
-  const router = { capabilities: () => ({ opencode: async (_m, _p, body) => { replies.push(body.reply ?? body.response); return { status: 200, json: {} }; } }) };
+  const ws = machines.pc.workspaceDir;
+  const router = { capabilities: () => ({
+    opencode: async (_m, _p, body) => { replies.push(body.reply ?? body.response); return { status: 200, json: {} }; },
+    // an agent with no links on its disk: real paths are the lexical ones
+    call: async (_n, { paths }) => ({ ok: true, data: { workspace: ws, paths: paths.map((x) => resolveLexical(x, { os: 'win32', cwd: ws })) } }),
+  }) };
   const b = createOpencodeBridge({ router, gate, audit, policyCfg: policy, machines, modes: { get: () => mode }, trusted, protect });
   b.state.set('pc', { routes: { permissionReply: 'new' }, inflight: new Map(), seen: new Set() });
   let n = 0;
@@ -193,6 +199,71 @@ test('F1-3: the Claude Code backend may not read or edit the JARVIS folder in an
     const denied = a.slice(a.indexOf('--disallowedTools') + 1);
     assert.ok(a.includes('--disallowedTools') && denied.includes('Read(//c/Users/bethe/Jarvis-Next/**)') && denied.includes('Edit(//c/Users/bethe/Jarvis-Next/**)'), m);
   }
+});
+
+// ---- F4-2 -----------------------------------------------------------------------------------------------------------------------
+
+// A real agent registry on a temp folder: a workspace with a junction (a directory link on POSIX) that leads into a "JARVIS" folder.
+async function realAgentBridge(mode = 'auto') {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { tmpDir, rmDir } = await import('../helpers.js');
+  const { createRegistry } = await import('../../agent/registry/mod.js');
+  const root = fs.realpathSync.native(tmpDir('f42'));
+  const ws = path.join(root, 'ws');
+  const jarvis = path.join(root, 'jarvis');
+  fs.mkdirSync(path.join(jarvis, 'data', 'tokens'), { recursive: true });
+  fs.writeFileSync(path.join(jarvis, 'data', 'tokens', 'ui.token'), 'fake');
+  fs.mkdirSync(path.join(ws, 'src'), { recursive: true });
+  fs.symlinkSync(jarvis, path.join(ws, 'link'), process.platform === 'win32' ? 'junction' : 'dir');
+  const t = testConfig((f) => { f['machines.json'].machines.pc.workspaceDir = ws; f['machines.json'].machines.mac.workspaceDir = ws; });
+  const machineId = process.platform === 'darwin' ? 'mac' : 'pc';
+  const registry = createRegistry({ cfg: t.cfg, machineId });
+  const asked = [];
+  const replies = [];
+  const gate = { requestApproval: async (r) => { asked.push(`${r.action}:${r.tier}`); return { approved: false, decision: 'deny' }; } };
+  const router = { capabilities: () => ({
+    opencode: async (_m, _p, body) => { replies.push(body.reply); return { status: 200, json: {} }; },
+    call: (name, args) => registry.execute(name, { args }),
+  }) };
+  const machines = { [machineId]: { label: 'here', os: process.platform, workspaceDir: ws } };
+  const b = createOpencodeBridge({ router, gate, audit: { append: async () => {} }, policyCfg: t.cfg.policy, machines, modes: { get: () => mode }, protect: () => [jarvis] });
+  b.state.set(machineId, { routes: { permissionReply: 'new' }, inflight: new Map(), seen: new Set() });
+  let n = 0;
+  const ask = (props) => b.handle(machineId, { id: `p${++n}`, sessionID: 's', ...props });
+  return { ask, bash: (command) => ask({ permission: 'bash', patterns: [command], metadata: { command } }), asked, replies, ws, registry, close() { t.cleanup(); rmDir(root); } };
+}
+
+test('F4-2: the agent resolves real paths: a junction out of the workspace is outside, and leads into protected folders', async () => {
+  const r = await realAgentBridge();
+  try {
+    const sep = process.platform === 'win32' ? '\\' : '/';
+    await r.ask({ permission: 'edit', patterns: [`link${sep}data${sep}tokens${sep}ui.token`] });
+    await r.ask({ permission: 'external_directory', patterns: [`${r.ws}${sep}link${sep}*`] });
+    await r.bash(process.platform === 'win32' ? 'Get-Content link\\data\\tokens\\ui.token' : 'cat link/data/tokens/ui.token');
+    await r.bash(process.platform === 'win32' ? 'Get-ChildItem link' : 'ls link');
+    assert.deepEqual(r.asked, ['opencode_edit:T3', 'opencode_external_directory:T3', 'opencode_bash:T3', 'opencode_bash:T3']);
+    // inside the workspace, nothing changes: an edit and a read-only command run by themselves in Auto
+    await r.ask({ permission: 'edit', patterns: [`src${sep}app.js`] });
+    await r.bash(process.platform === 'win32' ? 'Get-Content src\\app.js' : 'cat src/app.js');
+    assert.equal(r.asked.length, 4);
+    assert.deepEqual(r.replies.slice(-2), ['once', 'once']);
+    // the system action itself
+    const res = await r.registry.execute('resolve_paths', { args: { paths: ['link', '..\\..\\x', 'src\\GIT~1\\hooks\\pre-commit', '\\\\host\\share', 'src'] } });
+    assert.equal(res.ok, true);
+    assert.equal(res.data.paths[0].toLowerCase().endsWith('jarvis'), true);
+    if (process.platform === 'win32') assert.equal(res.data.paths[2], null);
+    if (process.platform === 'win32') assert.equal(res.data.paths[3], null);
+  } finally { r.close(); }
+});
+
+test('F4-2: .., short names and trailing dots are T3 or armed', async () => {
+  const t = bridge({ mode: 'bypass' });
+  await t.ask({ permission: 'edit', patterns: [`${WS}\\..\\..\\x`] });
+  await t.ask({ permission: 'edit', patterns: ['GIT~1/hooks/pre-commit'] });
+  await t.ask({ permission: 'edit', patterns: ['package.json.'] });
+  await t.ask({ permission: 'edit', patterns: ['.git./hooks/pre-commit'] });
+  assert.deepEqual(t.asked, ['opencode_edit:T3', 'opencode_edit:T3', 'opencode_edit:T2', 'opencode_edit:T2']); // the last two ask because they arm (even Bypass)
 });
 
 test('F1-3: a web fetch of a local file is T3', async () => {

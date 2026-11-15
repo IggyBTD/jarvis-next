@@ -5,7 +5,7 @@
 // do not survive an OpenCode restart, so a restart voids every in-flight approval and fails the running task.
 import { parsePermission, replyRequest, discoverRoutes } from '../../shared/opencode-routes.js';
 import { classifyCommand, createPolicy, modeAnswer, pathsOutside, pathsProtected, resolveRequestPath } from './policy.js';
-import { resolveLexical } from '../../shared/command-scope.js';
+import { resolveLexical, pathsOf, within } from '../../shared/command-scope.js';
 import { clip } from '../../shared/util.js';
 import { isArming } from '../../shared/opencode-arming.js';
 
@@ -34,9 +34,38 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
     os: machines[machine].os ?? 'win32', workspace: abs(machine, machines[machine].workspaceDir), trusted: trusted(machine).map((t) => abs(machine, t)).filter(Boolean),
     protected: [...protect(machine), ...(reported.get(machine) ?? [])].map((t) => abs(machine, t)).filter(Boolean),
   });
-  const outsideWorkspace = (paths, machine) => pathsOutside(paths, scopeOf(machine));
   // Arming files are matched as sent and as resolved (package.json. is package.json on Windows).
-  const arming = (paths, machine) => { const sc = scopeOf(machine); return paths.some((p) => isArming(p) || isArming(sc.workspace ? resolveRequestPath(p, sc) : null)); };
+  const arming = (paths, sc) => paths.some((p) => isArming(p) || isArming(sc.workspace ? resolveRequestPath(p, sc) : null));
+
+  // What only the machine itself can see: links, junctions and 8.3 short names. Its agent resolves the paths (system action
+  // resolve_paths, no side effects); a path it cannot resolve, or no answer at all, counts as outside.
+  async function realCheck(machine, paths, sc) {
+    const list = [...paths, ...sc.trusted, ...sc.protected];
+    const no = { outside: true, own: false, arm: false };
+    if (!paths.length) return { outside: false, own: false, arm: false };
+    if (list.length > 200) return no;
+    let r;
+    try { r = await router.capabilities(machine).call('resolve_paths', { paths: list }, { timeoutMs: 5000 }); } catch { return no; }
+    const got = r?.ok && Array.isArray(r.data?.paths) && r.data.paths.length === list.length && typeof r.data.workspace === 'string' ? r.data.paths : null;
+    if (!got) return no;
+    const real = got.slice(0, paths.length);
+    const roots = [r.data.workspace, ...got.slice(paths.length, paths.length + sc.trusted.length)].filter(Boolean);
+    const own = [...got.slice(paths.length + sc.trusted.length).filter(Boolean), ...sc.protected];
+    return {
+      outside: real.some((p) => !p || !roots.some((x) => within(p, x, sc.os))),
+      own: real.some((p) => p && own.some((x) => within(p, x, sc.os, { loose: true }))),
+      arm: real.some((p) => p && isArming(p)),
+    };
+  }
+
+  // Paths of an edit, a folder request or any other path permission: { tier, armed, own }. T3 when outside the workspace and trusted
+  // folders (as written or as the machine resolves them) or under JARVIS's own folders, which also arm (even Bypass asks).
+  async function classifyPaths(machine, paths) {
+    const sc = scopeOf(machine);
+    const real = await realCheck(machine, paths, sc);
+    const own = pathsProtected(paths, sc) || real.own;
+    return { own, armed: own || real.arm || arming(paths, sc), tier: own || real.outside || pathsOutside(paths, sc) ? 'T3' : 'T2' };
+  }
 
   async function respond(machine, p, answer) {
     const s = get(machine);
@@ -64,30 +93,36 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
     let cls = null;
     let armed = false;
     if (p.kind === 'bash' || p.kind === 'shell') {
-      cls = classifyCommand(p.command, policyCfg.opencode, scopeOf(machine));
+      const sc = scopeOf(machine);
+      cls = classifyCommand(p.command, policyCfg.opencode, sc);
+      if (cls.tier !== 'T3') {
+        // the words that resolve inside the workspace on paper: does any of them lead out through a link or junction?
+        const named = pathsOf(p.command ?? '', sc).paths.filter(Boolean);
+        const real = await realCheck(machine, named, sc);
+        if (real.outside || real.own) cls = { class: 'destructive', tier: 'T3', reason: real.own ? 'leads into JARVIS\'s own folder' : 'a path in it leads outside the workspace (a link or junction), or could not be checked' };
+      }
       args = { command: p.command ?? '' };
       tier = cls.tier;
       summary = `The coding agent wants to run a command on ${machines[machine].label}: ${clip(p.command ?? '(empty)', 300)}`;
     } else if (EDIT_KINDS.has(p.kind)) {
       args = { paths: p.patterns.slice(0, 10), ...(p.metadata?.filepath ? { file: p.metadata.filepath } : {}) };
       const paths = [...p.patterns, p.metadata?.filepath].filter(Boolean);
-      const own = pathsProtected(paths, scopeOf(machine));
-      armed = own || arming(paths, machine);
-      tier = own || outsideWorkspace(paths, machine) ? 'T3' : 'T2';
+      const c = await classifyPaths(machine, paths);
+      const own = c.own;
+      ({ armed, tier } = c);
       summary = `The coding agent wants to change ${p.patterns.slice(0, 3).join(', ') || 'a file'} on ${machines[machine].label}${own ? ' (JARVIS\'s own folder)' : tier === 'T3' ? ' (outside the workspace)' : ''}.`;
     } else if (p.kind === 'webfetch') {
       args = { url: p.patterns[0] ?? p.metadata?.url ?? '' };
       if (!/^https?:\/\//i.test(args.url)) tier = 'T3'; // file:, data: and anything else that is not the web
       summary = `The coding agent wants to fetch ${clip(args.url, 200)} on ${machines[machine].label}.`;
     } else if (p.kind === 'external_directory') {
-      tier = outsideWorkspace(p.patterns, machine) ? 'T3' : 'T2'; // a trusted folder is not "outside"; JARVIS's own folders always are
-      armed = pathsProtected(p.patterns, scopeOf(machine));
+      ({ armed, tier } = await classifyPaths(machine, p.patterns)); // a trusted folder is not "outside"; JARVIS's own folders always are
       args = { paths: p.patterns.slice(0, 10) };
       summary = `The coding agent wants to use a folder outside the workspace and your trusted folders on ${machines[machine].label}: ${p.patterns.slice(0, 3).join(', ')}`;
     } else {
       args = { patterns: p.patterns.slice(0, 10), title: p.title };
       // read, list, glob, grep and kinds this version does not know: their patterns are paths too
-      if (p.patterns.length) { tier = outsideWorkspace(p.patterns, machine) ? 'T3' : 'T2'; armed = pathsProtected(p.patterns, scopeOf(machine)); }
+      if (p.patterns.length) ({ armed, tier } = await classifyPaths(machine, p.patterns));
       summary = `The coding agent asks for permission "${p.kind}" on ${machines[machine].label}.`;
     }
 

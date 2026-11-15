@@ -57,6 +57,39 @@ function realOfDeepestExisting(p) {
   }
 }
 
+// For the server's permission bridge (system action resolve_paths): the real path of one the coding agent asked for, or null when it
+// cannot be known. Relative paths are under the workspace, ~ is this machine's home, a trailing wildcard names its folder. Links,
+// junctions and 8.3 short names are resolved through the deepest part that exists; UNC, device and provider paths, variables,
+// drive-relative paths, alternate streams and a short name in a part that does not exist yet are null. On Windows trailing dots and
+// spaces are dropped from every name first, as Windows itself does.
+export function realPathOf(raw, ctx) {
+  const s = String(raw ?? '').replace(/[\\/]\*+$/, '');
+  if (!s || s.includes('\0') || /[`$]|%[A-Za-z_][\w()]*%/.test(s)) return null;
+  const win = ctx.os === 'win32';
+  if (win) {
+    const p = s.replace(/\//g, '\\');
+    if (p.startsWith('\\\\') || /^[^\\:]{2,}:/.test(p) || /^[a-z]:(?!\\)/i.test(p) || p.slice(2).includes(':')) return null;
+  }
+  let abs = path.resolve(ctx.workspaceDir, expandHome(s));
+  if (win) {
+    const segs = abs.split('\\');
+    if (segs.some((seg, i) => i > 0 && seg && /^[. ]+$/.test(seg))) return null;
+    abs = segs.map((seg, i) => (i === 0 ? seg : seg.replace(/[. ]+$/, ''))).join('\\');
+  }
+  let cur = abs;
+  const rest = [];
+  for (;;) {
+    try { cur = fs.realpathSync.native(cur); break; } catch {
+      const parent = path.dirname(cur);
+      if (parent === cur) return null;
+      rest.unshift(path.basename(cur));
+      cur = parent;
+    }
+  }
+  if (win && rest.some((seg) => /~\d/.test(seg))) return null; // a short name that does not exist yet could become anything
+  return path.join(cur, ...rest);
+}
+
 export function rootsFor(ctx) {
   return (ctx.files.roots[ctx.os] ?? []).map((r) => realOfDeepestExisting(path.resolve(expandHome(r))));
 }

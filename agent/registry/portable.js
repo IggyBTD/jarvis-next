@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { action, safePath, dirPath, expandHome, spawnTracked } from './common.js';
+import { action, safePath, dirPath, expandHome, spawnTracked, realPathOf } from './common.js';
 import { sendWol } from '../../shared/wol.js';
 import { parseLhm } from '../../shared/lhm.js';
 import { gitSnapshot, gitChanges } from './git.js';
@@ -252,6 +252,8 @@ export const portable = {
 
   git_snapshot: action({ run: ({ path: p, name }, ctx) => gitSnapshot(p, name, ctx) }),
   git_changes: action({ run: ({ path: p, name }, ctx) => gitChanges(p, name, ctx) }),
+  // system: the permission bridge asks this machine what the coding agent's paths really are (links, junctions, short names)
+  resolve_paths: action({ run: ({ paths }, ctx) => ({ workspace: realPathOf(ctx.workspaceDir, ctx), paths: paths.map((p) => realPathOf(p, ctx)) }) }),
 
   // --- user scripts ------------------------------------------------------------------------------------------------------
   run_user_script: action({

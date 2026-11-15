@@ -2651,6 +2651,36 @@
       "system": true
     },
     {
+      "name": "resolve_paths",
+      "description": "Resolve paths the coding agent asked for to real absolute paths (links, junctions and short names followed); null for one that cannot be known.",
+      "category": "dev",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "paths": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          }
+        },
+        "required": [
+          "paths"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "system": true
+    },
+    {
       "name": "google_calendar_events",
       "description": "List upcoming events from the user's connected Google calendars (read only). Use this, not the browser, for any question about their calendar, schedule or what is coming up.",
       "category": "google",
