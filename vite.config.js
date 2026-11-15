@@ -27,6 +27,8 @@ const iconChoice = () => ({
 
 export default defineConfig({
   plugins: [iconChoice()],
+  // two pages: the desktop app (index.html) and the phone app (mobile.html, docs/mobile.md); the server serves both from dist/
+  build: { rollupOptions: { input: { main: 'index.html', mobile: 'mobile.html' } } },
   server: {
     port: 5174,
     strictPort: true,

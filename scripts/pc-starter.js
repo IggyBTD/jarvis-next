@@ -11,6 +11,7 @@ import { ipAllowed, isLoopback } from '../shared/net.js';
 import { reachable } from './wake.js';
 import { background, freshen } from './launch-app.js';
 import { isMain } from '../shared/util.js';
+import { launcherHtml } from './phone-launcher.js';
 
 export function createStarter({ token, allowed, ports, probe = reachable, start = background, refresh = freshen, logs = path.join(ROOT, 'data', 'logs') }) {
   const same = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
@@ -20,6 +21,11 @@ export function createStarter({ token, allowed, ports, probe = reachable, start 
     const out = (status, body) => { res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(body)); };
     const ip = req.socket.remoteAddress;
     if (!isLoopback(ip) && !ipAllowed(ip, allowed)) return out(403, { error: 'forbidden' });
+    // the phone's home-screen page and its icon: no secrets in them (the key is in the address after #), so they need no token
+    if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }); return res.end(launcherHtml({ serverPort: ports.server })); }
+    if (req.method === 'GET' && req.url === '/apple-touch-icon.png') {
+      try { const png = fs.readFileSync(path.join(ROOT, 'public', 'apple-touch-icon.png')); res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'public, max-age=3600' }); return res.end(png); } catch { return out(404, { error: 'not found' }); }
+    }
     const given = String(req.headers.authorization ?? '').replace(/^Bearer /, '');
     if (!given || !same(given, token)) return out(401, { error: 'unauthorized' });
     if (req.method === 'GET' && req.url === '/health') return out(200, await state());
