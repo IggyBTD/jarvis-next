@@ -47,6 +47,8 @@ export function wrapUntrusted(source, text, { max = 8000 } = {}) {
   const cut = body.length > max;
   if (cut) body = `${body.slice(0, max)}\n[truncated, ${text.length - max} more characters]`;
   body = body.replace(/<\/?untrusted[^>]*>/gi, '[tag removed]');
+  // markup a model might copy into its own reply and have read back as a tool call or as hidden thinking: the < is written as &lt;
+  body = body.replace(/<(?=\s*\/?\s*(?:tool_call|think|function|tool)\b|\|)/gi, '&lt;');
   const label = String(source).replace(/[^\w .:/-]/g, '').slice(0, 80);
   return `<untrusted source="${label}">\n${body}\n</untrusted>`;
 }

@@ -91,6 +91,9 @@ const stripThink = (t) => String(t ?? '').replace(/<think>[\s\S]*?(<\/think>|$)/
 export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, now = () => performance.now() }) {
   const base = config.baseUrl.replace(/\/$/, '');
   let last = null;
+  // Once this backend has answered with structured tool calls, it is never read for <tool_call> text again: from then on such text in
+  // a reply can only be something the model copied (a quoted mail, a page), not a call it meant to make.
+  let structured = false;
   const flags = (use) => ({ thinking: config.thinking?.[use] ?? false });
 
   // Thinking switch, by the method in models.json (see docs/decisions.md D-07).
@@ -175,7 +178,12 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
     }, use);
     const t0 = now();
     const { res, ctl, arm, done } = await open(body, { signal });
-    const splitter = new StreamSplitter({ toolCalls: !!tools?.length });
+    const splitter = new StreamSplitter({ toolCalls: !!tools?.length && !structured });
+    // An inline call whose text is already in a tool result or an untrusted block of this request is an echo of that content, not a call.
+    const flat = (s) => String(s ?? '').replace(/[\s\\]/g, '');
+    let quoted = null;
+    const echoes = (text) => { quoted ??= flat(messages.filter((m) => m.role === 'tool' || (typeof m.content === 'string' && m.content.includes('<untrusted'))).map((m) => (typeof m.content === 'string' ? m.content : '')).join('\n')); const t = flat(text); return !!t && quoted.includes(t); };
+    let echoed = 0;
     const sse = new SseParser();
     const acc = new Map();
     const inline = [];
@@ -193,7 +201,8 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
         else if (p.kind === 'reasoning') { reasoning += p.text; onDelta?.({ reasoning: p.text }); }
         else {
           const j = parseJson(p.text.trim());
-          if (j && typeof j.name === 'string') inline.push({ id: `call_inline_${inline.length}`, name: j.name, arguments: JSON.stringify(j.arguments ?? j.parameters ?? {}) });
+          if (echoes(p.text)) echoed += 1;
+          else if (j && typeof j.name === 'string') inline.push({ id: `call_inline_${inline.length}`, name: j.name, arguments: JSON.stringify(j.arguments ?? j.parameters ?? {}) });
           else bad += 1;
         }
       }
@@ -234,6 +243,7 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
       throw e instanceof LlmError ? e : new LlmError(`stream failed: ${e.message}`);
     } finally { done(); }
     emit(splitter.flush());
+    if (acc.size) structured = true;
 
     const toolCalls = [...acc.values(), ...inline].filter((c) => c.name).map((c, i) => {
       const args = c.arguments.trim() === '' ? {} : parseJson(c.arguments);
@@ -245,7 +255,7 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
     const end = now();
     const completionTokens = usage?.completion_tokens ?? Math.ceil((content.length + reasoning.length) / 4);
     const genSeconds = tFirst === null ? 0 : Math.max((end - tFirst) / 1000, 0.001);
-    const stats = { ttftMs: tFirst === null ? null : Math.round(tFirst - t0), tokensPerSec: genSeconds && completionTokens > 1 ? Number((completionTokens / genSeconds).toFixed(2)) : null, completionTokens, promptTokens: usage?.prompt_tokens ?? null, malformedChunks: bad, droppedToolCalls: splitter.dropped };
+    const stats = { ttftMs: tFirst === null ? null : Math.round(tFirst - t0), tokensPerSec: genSeconds && completionTokens > 1 ? Number((completionTokens / genSeconds).toFixed(2)) : null, completionTokens, promptTokens: usage?.prompt_tokens ?? null, malformedChunks: bad, droppedToolCalls: splitter.dropped + echoed };
     if (stats.tokensPerSec) last = { ...stats, at: Date.now() };
     return { content: content.trim(), reasoning, toolCalls, finishReason, truncated, usage, stats };
   }
