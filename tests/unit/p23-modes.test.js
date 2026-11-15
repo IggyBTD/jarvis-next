@@ -15,8 +15,8 @@ test('modes', () => {
   assert.deepEqual(MODES, ['auto', 'manual', 'accept-edits', 'plan', 'bypass']);
   const row = (mode) => [edit, shell, readOnly, destructive, outside, armed].map((r) => modeAnswer(mode, r));
   assert.deepEqual(row('auto'), ['once', null, 'once', null, null, null]); // Auto runs only the read-only allowlist by itself (F1-1)
-  assert.deepEqual(row('manual'), [null, null, 'once', null, null, null]);
+  assert.deepEqual(row('manual'), [null, null, null, null, null, null]); // Manual asks for everything (F1-2)
   assert.deepEqual(row('accept-edits'), ['once', null, 'once', null, null, null]);
-  assert.deepEqual(row('plan'), ['reject', 'reject', 'once', 'reject', 'reject', 'reject']);
+  assert.deepEqual(row('plan'), ['reject', 'reject', null, 'reject', 'reject', 'reject']); // Plan runs nothing by itself (F1-2)
   assert.deepEqual(row('bypass'), ['once', 'once', 'once', null, null, null]);
 });

@@ -11,11 +11,12 @@ const oc = () => testConfig().cfg.policy.opencode;
 
 test('read-only PowerShell is allowed alone, never when chained, redirected or destructive', () => {
   const cfg = oc();
-  for (const c of ['Get-ChildItem -Path "C:\\Users\\bethe\\Jarvis-Next\\src"', 'Test-Path -LiteralPath C:\\x', 'Get-Content .\\package.json', 'Select-String -Path a.js -Pattern foo', 'Get-Date']) {
-    assert.equal(classifyCommand(c, cfg).class, 'allow', c);
+  const scope = { os: 'win32', workspace: 'C:\\Users\\bethe\\jarvis-workspace' }; // since F1-2 a read must stay inside the workspace
+  for (const c of ['Get-ChildItem -Path "C:\\Users\\bethe\\jarvis-workspace\\src"', 'Test-Path -LiteralPath src', 'Get-Content .\\package.json', 'Select-String -Path a.js -Pattern foo', 'Get-Date']) {
+    assert.equal(classifyCommand(c, cfg, scope).class, 'allow', c);
   }
-  for (const c of ['Get-ChildItem . | Remove-Item', 'Get-Content a > b', 'Get-Content (Get-Content p)', 'Get-ChildItem; Set-Content x y', 'Remove-Item -Recurse C:\\x', 'Set-Content a b']) {
-    assert.notEqual(classifyCommand(c, cfg).class, 'allow', c);
+  for (const c of ['Get-ChildItem . | Remove-Item', 'Get-Content a > b', 'Get-Content (Get-Content p)', 'Get-ChildItem; Set-Content x y', 'Remove-Item -Recurse C:\\x', 'Set-Content a b', 'Get-ChildItem -Path "C:\\Users\\bethe\\Jarvis-Next\\src"', 'Test-Path -LiteralPath C:\\x']) {
+    assert.notEqual(classifyCommand(c, cfg, scope).class, 'allow', c);
   }
   assert.equal(classifyCommand('Remove-Item C:\\x -Recurse -Force', cfg).class, 'destructive');
 });

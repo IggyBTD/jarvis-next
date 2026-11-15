@@ -4,6 +4,7 @@
 // (destructive commands, interpreters and installs, files that arm later commands, anything outside the working folder, which Claude
 // Code itself does not edit). The flag --dangerously-skip-permissions and the bypassPermissions mode are never used.
 import { ARMING } from './opencode-arming.js';
+import { CLAUDE_SAFE } from './command-scope.js';
 
 const SHELLS = ['sh', 'bash', 'zsh', 'fish', 'dash', 'cmd', 'powershell', 'pwsh', 'python', 'python3', 'py', 'node', 'deno', 'bun', 'npx', 'ruby', 'perl', 'php', 'osascript'];
 const READ = ['Read', 'Grep', 'Glob', 'LS'];
@@ -16,7 +17,10 @@ export function bashRule(glob) {
 }
 
 export function claudeArgs(mode, policy = {}) {
-  const allow = (policy.allowCommands ?? []).map(bashRule).filter(Boolean);
+  // A prefix rule cannot check arguments (git diff --output=x writes a file), so only commands that stay harmless whatever they are given
+  // become rules, and only those policy.json lists. Claude Code reads files with its own Read, Grep and Glob tools.
+  const on = new Set((policy.allowCommands ?? []).map((g) => String(g).replace(/\*+$/, '').trim().toLowerCase()));
+  const allow = CLAUDE_SAFE.filter((g) => on.has(g.replace(/\*+$/, '').toLowerCase())).map(bashRule).filter(Boolean);
   const destructive = [...(policy.destructive ?? []), ...(policy.interpreters ?? [])].map(bashRule).filter(Boolean);
   const arming = ARMING.map((p) => `Edit(**/${p})`);
   const floors = [...destructive, ...SHELLS.map((s) => `Bash(${s}:*)`), ...arming];

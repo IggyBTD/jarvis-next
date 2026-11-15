@@ -123,8 +123,8 @@ test('manager: restarts with backoff after a crash, tells listeners, and stop() 
   } finally { await manager.stop(); rmDir(dir); }
 });
 
-test('bridge: an allowlisted read-only command is approved by policy and logged; nothing asks the user', async () => {
-  const s = await makeAgentStack();
+test('bridge: in Auto, an allowlisted read-only command is approved by policy and logged; nothing asks the user', async () => {
+  const s = await makeAgentStack({ mode: 'auto' });
   try {
     const id = s.fake.ask({ command: 'git status' });
     await waitFor(() => s.fake.rec.replies.length === 1);
@@ -183,7 +183,7 @@ test('bridge: edits, web fetches and outside folders are classified; the older r
 });
 
 test('bridge: a restart voids in-flight approvals and sends no reply to a stale id; the task fails cleanly', async () => {
-  const s = await makeAgentStack();
+  const s = await makeAgentStack({ mode: 'auto' });
   try {
     const started = s.router.invoke({ name: 'agent_task', args: { prompt: 'do a thing' } }, { target: 'pc', source: 'user', convId: 'cv' });
     const out = await started;

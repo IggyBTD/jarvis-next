@@ -32,7 +32,7 @@ export function stubSpawn() {
   return fn;
 }
 
-export async function makeAgentStack({ edit = () => {}, taskTimeoutMs, variant = 'new', clients = 1 } = {}) {
+export async function makeAgentStack({ edit = () => {}, taskTimeoutMs, variant = 'new', clients = 1, mode = 'manual' } = {}) {
   const root = tmpDir('stack');
   const fake = await createFakeOpencode({ variant });
   const t = testConfig((f) => {
@@ -61,7 +61,7 @@ export async function makeAgentStack({ edit = () => {}, taskTimeoutMs, variant =
   const tasks = createAgentTasks({ router, bus, audit, conversations, dataDir: t.dataDir, taskTimeoutMs: cfg.policy.opencode.taskTimeoutMs });
   registerAgentTaskTool(router, tasks);
   const machines = { pc: cfg.machines.machines.pc };
-  const bridge = createOpencodeBridge({ router, gate, audit, tasks, policyCfg: cfg.policy, machines });
+  const bridge = createOpencodeBridge({ router, gate, audit, tasks, policyCfg: cfg.policy, machines, modes: { get: () => mode } });
   await manager.start();
   bridge.start();
   const waitIdle = async () => { for (let i = 0; i < 100 && !manager.status().running; i++) await new Promise((r) => setTimeout(r, 20)); };

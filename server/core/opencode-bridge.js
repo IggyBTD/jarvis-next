@@ -4,7 +4,8 @@
 // "always", and OpenCode's direct shell route is never called (the agent client does not even allow the path). Pending permissions
 // do not survive an OpenCode restart, so a restart voids every in-flight approval and fails the running task.
 import { parsePermission, replyRequest, discoverRoutes } from '../../shared/opencode-routes.js';
-import { classifyCommand, createPolicy, modeAnswer } from './policy.js';
+import { classifyCommand, createPolicy, modeAnswer, pathsOutside, resolveRequestPath } from './policy.js';
+import { resolveLexical } from '../../shared/command-scope.js';
 import { clip } from '../../shared/util.js';
 import { isArming } from '../../shared/opencode-arming.js';
 
@@ -17,14 +18,20 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
   const stop = new AbortController();
   const get = (m) => { if (!state.has(m)) state.set(m, { routes: null, inflight: new Map(), seen: new Set() }); return state.get(m); };
 
-  // A path is outside when it is absolute and under none of the roots (the workspace and the folders the person trusts). A pattern may
-  // end in a wildcard (C:\proj\src\*), which names the folder itself.
-  const norm = (p) => String(p ?? '').replace(/\\/g, '/').replace(/\/?\*+$/, '').replace(/\/+$/, '').toLowerCase();
-  const under = (p, root) => { const r = norm(root); return !!r && (norm(p) === r || norm(p).startsWith(`${r}/`)); };
-  const outsideWorkspace = (paths, machine) => {
-    const roots = [machines[machine].workspaceDir, ...trusted(machine)].filter(Boolean);
-    return paths.some((p) => /^([a-z]:[\\/]|[\\/]|~)/i.test(p) && !roots.some((r) => under(p, r)));
+  // Where a machine's requests are checked against: its OS, its workspace and the folders the person trusts, as absolute paths. A
+  // folder written with ~ needs that machine's home (from its /info); until it is known the folder cannot be resolved, so everything
+  // counts as outside (it asks).
+  const homes = new Map();
+  const abs = (machine, p) => {
+    const os = machines[machine].os ?? 'win32';
+    const s = String(p ?? '');
+    const expanded = s.startsWith('~') ? (homes.has(machine) ? `${homes.get(machine)}${s.slice(1)}` : null) : s;
+    return expanded ? resolveLexical(expanded, { os, cwd: expanded }) : null;
   };
+  const scopeOf = (machine) => ({ os: machines[machine].os ?? 'win32', workspace: abs(machine, machines[machine].workspaceDir), trusted: trusted(machine).map((t) => abs(machine, t)).filter(Boolean) });
+  const outsideWorkspace = (paths, machine) => pathsOutside(paths, scopeOf(machine));
+  // Arming files are matched as sent and as resolved (package.json. is package.json on Windows).
+  const arming = (paths, machine) => { const sc = scopeOf(machine); return paths.some((p) => isArming(p) || isArming(sc.workspace ? resolveRequestPath(p, sc) : null)); };
 
   async function respond(machine, p, answer) {
     const s = get(machine);
@@ -52,14 +59,14 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
     let cls = null;
     let armed = false;
     if (p.kind === 'bash' || p.kind === 'shell') {
-      cls = classifyCommand(p.command, policyCfg.opencode);
+      cls = classifyCommand(p.command, policyCfg.opencode, scopeOf(machine));
       args = { command: p.command ?? '' };
       tier = cls.tier;
       summary = `The coding agent wants to run a command on ${machines[machine].label}: ${clip(p.command ?? '(empty)', 300)}`;
     } else if (EDIT_KINDS.has(p.kind)) {
       args = { paths: p.patterns.slice(0, 10), ...(p.metadata?.filepath ? { file: p.metadata.filepath } : {}) };
       const paths = [...p.patterns, p.metadata?.filepath].filter(Boolean);
-      armed = paths.some(isArming);
+      armed = arming(paths, machine);
       tier = outsideWorkspace(paths, machine) ? 'T3' : 'T2';
       summary = `The coding agent wants to change ${p.patterns.slice(0, 3).join(', ') || 'a file'} on ${machines[machine].label}${tier === 'T3' ? ' (outside the workspace)' : ''}.`;
     } else if (p.kind === 'webfetch') {
@@ -100,6 +107,7 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
 
   async function onConnected(machine) {
     const caps = router.capabilities(machine);
+    router.info?.(machine).then((i) => { if (typeof i?.home === 'string' && i.home) homes.set(machine, i.home); }).catch(() => {});
     try {
       const doc = await caps.opencode('GET', '/doc');
       if (doc.status === 200 && doc.json) get(machine).routes = discoverRoutes(doc.json);
