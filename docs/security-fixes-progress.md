@@ -1,4 +1,4 @@
-STATUS: IN PROGRESS, stage A
+STATUS: IN PROGRESS, stage B (stage A done)
 
 # Security fix run: progress
 
@@ -16,7 +16,7 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F1-2 | A | DONE | 46cfdd5 | parsed allowlist (shared/command-scope.js), paths resolved inside the workspace, T3 for variables and outside paths, Manual and Plan ask; git --output now unverified at runtime only |
 | F1-3 | A | DONE | 40f98ad | JARVIS folder and Temp untrusted; root and data folder T3 and armed in every mode (edits, folders, reads, commands); agent reports its own folders in /info; Claude deny rules; arming list extended; non-http webfetch T3 |
 | F4-2 | A | DONE | a1a6da3 | system action resolve_paths on the agent (links, junctions, short names, trailing dots); bridge checks edits, folders and command words against real paths; no answer is outside |
-| F4-1 | A | TODO | | |
+| F4-1 | A | DONE | c02fc71 | shared route and method allowlist (shared/proxy-routes.js) enforced by server and agent on the raw address; no % at all; permission answers only once or reject; opencode-manager takes the checked body. %2573hell reaching OpenCode was not run against real OpenCode (it is refused before forwarding now) |
 | F2-1 | B | TODO | | |
 | F2-2 | B | TODO | | |
 | F2-4 | B | TODO | | |
@@ -44,6 +44,8 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F5-3 | D | TODO | | |
 
 ## Stage summaries
+
+Stage A (coding agent), commits 23436e3 to c02fc71, tests 192 -> 210, all green, chokepoint check green. The permission bridge now goes through policy.decide; Auto runs only a parsed read-only allowlist whose paths must resolve inside the workspace (lexically on the server and for real on the machine); Manual asks for everything and Plan runs nothing by itself; interpreters, installs, variables and outside paths are T3; the JARVIS folder and data folder are T3 and armed in every mode; the agent forwards only the server's own sidecar routes. Closes CH-1 (agent_task after untrusted content asks; any non-allowlisted command asks), CH-2 (token files are under the protected data folder; reads, folder requests and commands that reach them are T3 in every mode), CH-3 (dist/** is armed and the JARVIS folder is protected) and CH-5 (git --output is not allowlisted; Manual and Plan never auto-run). The tainted flag for agent_task is temporary until stage B.
 
 ## Unverified (runtime checks that settle them)
 
