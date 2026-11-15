@@ -4,7 +4,7 @@
 // "always", and OpenCode's direct shell route is never called (the agent client does not even allow the path). Pending permissions
 // do not survive an OpenCode restart, so a restart voids every in-flight approval and fails the running task.
 import { parsePermission, replyRequest, discoverRoutes } from '../../shared/opencode-routes.js';
-import { classifyCommand, createPolicy, modeAnswer, pathsOutside, resolveRequestPath } from './policy.js';
+import { classifyCommand, createPolicy, modeAnswer, pathsOutside, pathsProtected, resolveRequestPath } from './policy.js';
 import { resolveLexical } from '../../shared/command-scope.js';
 import { clip } from '../../shared/util.js';
 import { isArming } from '../../shared/opencode-arming.js';
@@ -13,7 +13,8 @@ const EDIT_KINDS = new Set(['edit', 'write', 'patch', 'multiedit']);
 export { modeAnswer }; // lives in policy.js; re-exported for callers that read the bridge
 
 // trusted(machine) -> folders the person has allowed the coding agent to use besides its workspace (the chosen project folder, policy.json trustedFolders)
-export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, policy = createPolicy(policyCfg), machines, modes, trusted = () => [], log = () => {}, reconnectDelayMs = 500 }) {
+// protect(machine) -> JARVIS's own folder and data folder there: T3 in every mode, trusted or not (the agent's /info adds its own)
+export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, policy = createPolicy(policyCfg), machines, modes, trusted = () => [], protect = () => [], log = () => {}, reconnectDelayMs = 500 }) {
   const state = new Map();     // machine -> { routes, inflight: Map<permissionId, AbortController>, seen: Set }
   const stop = new AbortController();
   const get = (m) => { if (!state.has(m)) state.set(m, { routes: null, inflight: new Map(), seen: new Set() }); return state.get(m); };
@@ -22,13 +23,17 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
   // folder written with ~ needs that machine's home (from its /info); until it is known the folder cannot be resolved, so everything
   // counts as outside (it asks).
   const homes = new Map();
+  const reported = new Map(); // machine -> JARVIS folders its agent reported (/info jarvis_dirs)
   const abs = (machine, p) => {
     const os = machines[machine].os ?? 'win32';
     const s = String(p ?? '');
     const expanded = s.startsWith('~') ? (homes.has(machine) ? `${homes.get(machine)}${s.slice(1)}` : null) : s;
     return expanded ? resolveLexical(expanded, { os, cwd: expanded }) : null;
   };
-  const scopeOf = (machine) => ({ os: machines[machine].os ?? 'win32', workspace: abs(machine, machines[machine].workspaceDir), trusted: trusted(machine).map((t) => abs(machine, t)).filter(Boolean) });
+  const scopeOf = (machine) => ({
+    os: machines[machine].os ?? 'win32', workspace: abs(machine, machines[machine].workspaceDir), trusted: trusted(machine).map((t) => abs(machine, t)).filter(Boolean),
+    protected: [...protect(machine), ...(reported.get(machine) ?? [])].map((t) => abs(machine, t)).filter(Boolean),
+  });
   const outsideWorkspace = (paths, machine) => pathsOutside(paths, scopeOf(machine));
   // Arming files are matched as sent and as resolved (package.json. is package.json on Windows).
   const arming = (paths, machine) => { const sc = scopeOf(machine); return paths.some((p) => isArming(p) || isArming(sc.workspace ? resolveRequestPath(p, sc) : null)); };
@@ -66,18 +71,23 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
     } else if (EDIT_KINDS.has(p.kind)) {
       args = { paths: p.patterns.slice(0, 10), ...(p.metadata?.filepath ? { file: p.metadata.filepath } : {}) };
       const paths = [...p.patterns, p.metadata?.filepath].filter(Boolean);
-      armed = arming(paths, machine);
-      tier = outsideWorkspace(paths, machine) ? 'T3' : 'T2';
-      summary = `The coding agent wants to change ${p.patterns.slice(0, 3).join(', ') || 'a file'} on ${machines[machine].label}${tier === 'T3' ? ' (outside the workspace)' : ''}.`;
+      const own = pathsProtected(paths, scopeOf(machine));
+      armed = own || arming(paths, machine);
+      tier = own || outsideWorkspace(paths, machine) ? 'T3' : 'T2';
+      summary = `The coding agent wants to change ${p.patterns.slice(0, 3).join(', ') || 'a file'} on ${machines[machine].label}${own ? ' (JARVIS\'s own folder)' : tier === 'T3' ? ' (outside the workspace)' : ''}.`;
     } else if (p.kind === 'webfetch') {
       args = { url: p.patterns[0] ?? p.metadata?.url ?? '' };
+      if (!/^https?:\/\//i.test(args.url)) tier = 'T3'; // file:, data: and anything else that is not the web
       summary = `The coding agent wants to fetch ${clip(args.url, 200)} on ${machines[machine].label}.`;
     } else if (p.kind === 'external_directory') {
-      tier = outsideWorkspace(p.patterns, machine) ? 'T3' : 'T2'; // a trusted folder is not "outside"
+      tier = outsideWorkspace(p.patterns, machine) ? 'T3' : 'T2'; // a trusted folder is not "outside"; JARVIS's own folders always are
+      armed = pathsProtected(p.patterns, scopeOf(machine));
       args = { paths: p.patterns.slice(0, 10) };
       summary = `The coding agent wants to use a folder outside the workspace and your trusted folders on ${machines[machine].label}: ${p.patterns.slice(0, 3).join(', ')}`;
     } else {
       args = { patterns: p.patterns.slice(0, 10), title: p.title };
+      // read, list, glob, grep and kinds this version does not know: their patterns are paths too
+      if (p.patterns.length) { tier = outsideWorkspace(p.patterns, machine) ? 'T3' : 'T2'; armed = pathsProtected(p.patterns, scopeOf(machine)); }
       summary = `The coding agent asks for permission "${p.kind}" on ${machines[machine].label}.`;
     }
 
@@ -107,7 +117,10 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
 
   async function onConnected(machine) {
     const caps = router.capabilities(machine);
-    router.info?.(machine).then((i) => { if (typeof i?.home === 'string' && i.home) homes.set(machine, i.home); }).catch(() => {});
+    router.info?.(machine).then((i) => {
+      if (typeof i?.home === 'string' && i.home) homes.set(machine, i.home);
+      if (Array.isArray(i?.jarvis_dirs)) reported.set(machine, i.jarvis_dirs.filter((d) => typeof d === 'string' && d));
+    }).catch(() => {});
     try {
       const doc = await caps.opencode('GET', '/doc');
       if (doc.status === 200 && doc.json) get(machine).routes = discoverRoutes(doc.json);

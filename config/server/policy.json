@@ -12,7 +12,7 @@
     "taskTimeoutMs": 1800000,
     "maxCommandLength": 1500,
     "trustedFolders": {
-      "pc": ["C:\\Users\\bethe\\Jarvis-Next", "C:\\Users\\bethe\\AppData\\Local\\Temp"],
+      "pc": [],
       "mac": []
     },
     "allowCommands": ["git status", "git diff", "git log", "git show", "git branch", "git rev-parse", "ls", "dir", "cat", "head", "tail", "wc", "pwd", "Get-ChildItem", "Get-Content", "Get-Item", "Get-ItemProperty", "Test-Path", "Resolve-Path", "Get-Location", "Select-String", "Get-Date", "Get-Command", "Get-Process", "Get-Service", "Get-Volume", "Get-PSDrive", "Get-ComputerInfo", "Get-NetIPAddress", "$PSVersionTable", "node --version", "npm --version"],

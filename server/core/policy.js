@@ -82,6 +82,7 @@ const forms = (c) => { const one = c.replace(/[ \t]+/g, ' '); return [...new Set
 export function classifyCommand(command, cfg, scope = null) {
   const c = String(command ?? '').trim();
   if (!c || c.length > cfg.maxCommandLength) return { class: 'ask', tier: 'T3', reason: c ? 'command is very long' : 'empty command' };
+  if (scope && touchesProtected(c, scope)) return { class: 'destructive', tier: 'T3', reason: 'touches JARVIS\'s own folder' };
   const ro = scope?.workspace ? readOnly(c, { os: scope.os, workspace: scope.workspace, enabled: cfg.allowCommands }) : { ok: false, reason: 'no workspace to check paths against' };
   if (ro.ok) return { class: 'allow', tier: 'T0', reason: ro.reason };
   const variants = forms(c);
@@ -96,9 +97,20 @@ export function classifyCommand(command, cfg, scope = null) {
 }
 
 const inRoots = (p, scope) => [scope.workspace, ...(scope.trusted ?? [])].filter(Boolean).some((r) => within(p, r, scope.os));
+// scope.protected: JARVIS's own folder and data folder on that machine. Nothing under them is ever routine for the coding agent:
+// matched on every resolved path (case ignored) and on the command text itself, whichever slash it uses.
+export const isProtected = (p, scope) => !!p && (scope.protected ?? []).some((r) => within(p, r, scope.os, { loose: true }));
+function touchesProtected(c, scope) {
+  if (!(scope.protected ?? []).length) return false;
+  const text = c.toLowerCase().replace(/\//g, '\\');
+  if (scope.protected.some((r) => text.includes(r.toLowerCase().replace(/\//g, '\\')))) return true;
+  const { paths } = pathsOf(c, scope);
+  return paths.some((p) => isProtected(p, scope));
+}
 
 // The coding agent's paths (as it sent them; relative ones are under the workspace) resolved, or null for one that cannot be. A
 // trailing wildcard (C:\proj\src\*) names the folder itself.
 export const resolveRequestPath = (p, scope) => resolveLexical(String(p ?? '').replace(/[\\/]\*+$/, '') || '.', { os: scope.os, cwd: scope.workspace });
-// True when any of them is outside the workspace and the trusted folders, or cannot be resolved.
-export const pathsOutside = (paths, scope) => paths.some((p) => { const r = resolveRequestPath(p, scope); return !r || !inRoots(r, scope); });
+// True when any of them is outside the workspace and the trusted folders, under JARVIS's own folders, or cannot be resolved.
+export const pathsOutside = (paths, scope) => paths.some((p) => { const r = resolveRequestPath(p, scope); return !r || !inRoots(r, scope) || isProtected(r, scope); });
+export const pathsProtected = (paths, scope) => paths.some((p) => isProtected(resolveRequestPath(p, scope), scope));

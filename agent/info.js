@@ -3,7 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { runProgram as realRun } from './registry/common.js';
 
-export async function getInfo({ machine, platform = process.platform, runProgram = realRun, now = new Date() }) {
+// jarvisDirs: this install's own folder and data folder; the server's permission bridge keeps the coding agent out of them.
+export async function getInfo({ machine, platform = process.platform, runProgram = realRun, now = new Date(), jarvisDirs = [] }) {
   let osVersion = os.release();
   if (platform === 'darwin') {
     const r = await runProgram({ file: 'sw_vers', args: ['-productVersion'], timeoutMs: 3000 }).catch(() => null);
@@ -16,5 +17,6 @@ export async function getInfo({ machine, platform = process.platform, runProgram
     workspace_dir: machine.workspaceDir, package_manager: platform === 'win32' ? 'winget' : 'Homebrew',
     modifier_key: platform === 'win32' ? 'Ctrl' : 'Cmd', locale: Intl.DateTimeFormat().resolvedOptions().locale, timezone: tz,
     date: now.toLocaleString('en-CA', { timeZone: tz, hour12: false }).replace(',', ''),
+    jarvis_dirs: jarvisDirs,
   };
 }

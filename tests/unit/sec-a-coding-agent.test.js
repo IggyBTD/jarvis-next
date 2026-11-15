@@ -13,13 +13,13 @@ const policyCfg = (edit = () => {}) => { const t = testConfig((f) => edit(f['pol
 const oc = () => policyCfg().opencode;
 const WS = 'C:\\Users\\bethe\\jarvis-workspace';
 
-function bridge({ trusted = () => [], mode = 'auto', policy = policyCfg(), machines = { pc: { label: 'PC', os: 'win32', workspaceDir: WS } } } = {}) {
+function bridge({ trusted = () => [], protect = () => [], mode = 'auto', policy = policyCfg(), machines = { pc: { label: 'PC', os: 'win32', workspaceDir: WS } } } = {}) {
   const asked = [];
   const replies = [];
   const audit = { append: async () => {} };
   const gate = { requestApproval: async (r) => { asked.push(`${r.action}:${r.tier}`); return { approved: false, decision: 'deny' }; } };
   const router = { capabilities: () => ({ opencode: async (_m, _p, body) => { replies.push(body.reply ?? body.response); return { status: 200, json: {} }; } }) };
-  const b = createOpencodeBridge({ router, gate, audit, policyCfg: policy, machines, modes: { get: () => mode }, trusted });
+  const b = createOpencodeBridge({ router, gate, audit, policyCfg: policy, machines, modes: { get: () => mode }, trusted, protect });
   b.state.set('pc', { routes: { permissionReply: 'new' }, inflight: new Map(), seen: new Set() });
   let n = 0;
   const ask = async (props) => { await b.handle('pc', { id: `p${++n}`, sessionID: 's', ...props }); };
@@ -147,4 +147,56 @@ test('F1-2: the bridge resolves edit paths: .. out of the workspace is outside; 
   await t.bash('git diff --output=x');
   await t.bash('git status');
   assert.deepEqual(t.asked.slice(3), ['opencode_bash:T2']);
+});
+
+// ---- F1-3 -----------------------------------------------------------------------------------------------------------------------
+
+const ROOT = 'C:\\Users\\bethe\\Jarvis-Next';
+const DATA = 'C:\\Users\\bethe\\Jarvis-Next\\data';
+
+test('F1-3: the live JARVIS folder and the user Temp folder are not trusted folders', () => {
+  const pc = oc().trustedFolders.pc.map((f) => f.toLowerCase());
+  assert.ok(!pc.some((f) => f.includes('jarvis-next') || f.includes('\\temp')), pc.join(', '));
+});
+
+test('F1-3: anything under the JARVIS folder or its data folder is T3 in every mode, even when trusted or inside the workspace', async () => {
+  for (const mode of ['auto', 'manual', 'accept-edits', 'plan', 'bypass']) {
+    // the person chose the JARVIS folder itself as the project folder: that still does not open it
+    const t = bridge({ mode, trusted: () => [ROOT], protect: () => [ROOT, DATA] });
+    await t.ask({ permission: 'edit', patterns: [`${ROOT}\\dist\\index.html`] });
+    await t.ask({ permission: 'external_directory', patterns: [`${DATA}\\tokens\\*`] });
+    await t.ask({ permission: 'read', patterns: [`${DATA}\\tokens\\ui.token`] });
+    await t.bash(`Get-Content ${DATA}\\tokens\\ui.token`);
+    if (mode === 'plan') { assert.deepEqual([t.asked, t.replies], [[], ['reject', 'reject', 'reject', 'reject']], mode); continue; } // Plan refuses instead
+    assert.deepEqual(t.asked, ['opencode_edit:T3', 'opencode_external_directory:T3', 'opencode_read:T3', 'opencode_bash:T3'], mode);
+  }
+  // a workspace that contains the JARVIS folder: reads inside it are still T3
+  const w = bridge({ mode: 'auto', machines: { pc: { label: 'PC', os: 'win32', workspaceDir: 'C:\\Users\\bethe' } }, protect: () => [ROOT, DATA] });
+  await w.bash('Get-Content Jarvis-Next\\data\\tokens\\ui.token');
+  await w.bash('cat jarvis-next/data/tokens/mac.token');
+  await w.bash('Get-ChildItem Jarvis-Next');
+  await w.ask({ permission: 'edit', patterns: ['Jarvis-Next\\config\\server\\actions.json'] });
+  assert.deepEqual(w.asked, ['opencode_bash:T3', 'opencode_bash:T3', 'opencode_bash:T3', 'opencode_edit:T3']);
+});
+
+test('F1-3: .claude, .mcp.json, CLAUDE.md, dist and node_modules arm later commands', async () => {
+  const { isArming } = await import('../../shared/opencode-arming.js');
+  for (const f of ['.claude/settings.json', 'proj/.claude/commands/x.md', '.mcp.json', 'CLAUDE.md', 'proj/CLAUDE.md', 'dist/index.html', 'node_modules/x/index.js']) assert.ok(isArming(f), f);
+});
+
+test('F1-3: the Claude Code backend may not read or edit the JARVIS folder in any mode', async () => {
+  const { claudeArgs, absRule } = await import('../../shared/claude-args.js');
+  assert.equal(absRule('C:\\Users\\bethe\\Jarvis-Next'), '//c/Users/bethe/Jarvis-Next');
+  assert.equal(absRule('/Users/x/jarvis/'), '//Users/x/jarvis');
+  for (const m of ['auto', 'manual', 'accept-edits', 'plan', 'bypass']) {
+    const a = claudeArgs(m, oc(), { protect: [ROOT] });
+    const denied = a.slice(a.indexOf('--disallowedTools') + 1);
+    assert.ok(a.includes('--disallowedTools') && denied.includes('Read(//c/Users/bethe/Jarvis-Next/**)') && denied.includes('Edit(//c/Users/bethe/Jarvis-Next/**)'), m);
+  }
+});
+
+test('F1-3: a web fetch of a local file is T3', async () => {
+  const t = bridge({ mode: 'auto' });
+  await t.ask({ permission: 'webfetch', patterns: ['file:///C:/Users/bethe/Jarvis-Next/data/tokens/ui.token'] });
+  assert.deepEqual(t.asked, ['opencode_webfetch:T3']);
 });

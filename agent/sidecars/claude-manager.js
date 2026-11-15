@@ -20,7 +20,7 @@ export function findClaude(env = process.env, platform = process.platform) {
 const readBody = (req) => new Promise((resolve, reject) => { const c = []; let n = 0; req.on('data', (d) => { n += d.length; if (n > 20_000) { reject(new Error('body too large')); req.destroy(); } else c.push(d); }); req.on('end', () => { try { resolve(c.length ? JSON.parse(Buffer.concat(c).toString('utf8')) : {}); } catch { reject(new Error('body must be JSON')); } }); req.on('error', reject); });
 const reply = (res, status, body) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
 
-export function createClaudeManager({ workspaceDir, policy = {}, env = process.env, spawnFn = spawn, command = findClaude(env), log = () => {} }) {
+export function createClaudeManager({ workspaceDir, policy = {}, protect = [], env = process.env, spawnFn = spawn, command = findClaude(env), log = () => {} }) {
   const events = new EventEmitter();
   const runs = new Map(); // runId -> child
   const emit = (e) => events.emit('event', e);
@@ -28,7 +28,7 @@ export function createClaudeManager({ workspaceDir, policy = {}, env = process.e
   function start({ runId, prompt, mode, folder }) {
     const cwd = folder ? path.join(workspaceDir, folder) : workspaceDir;
     const text = `${mode === 'plan' ? `${PLAN_NOTE}\n\n` : ''}${prompt}`;
-    const child = spawnFn(command, ['-p', ...claudeArgs(mode, policy.opencode ?? policy)], { cwd, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: cleanEnv(env, {}) });
+    const child = spawnFn(command, ['-p', ...claudeArgs(mode, policy.opencode ?? policy, { protect })], { cwd, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: cleanEnv(env, {}) });
     runs.set(runId, child);
     let buf = '';
     let done = false;

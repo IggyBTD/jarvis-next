@@ -57,7 +57,7 @@ export function createAgent({ cfg, machineId, registry, sidecars = {}, tokens, l
       if (req.method === 'GET' && p === '/health') {
         return send(res, 200, { ok: true, machine: machineId, os: registry.ctx.os, version, uptimeSeconds: Math.round((Date.now() - started) / 1000), sidecars: Object.fromEntries(Object.entries(sidecars).map(([k, v]) => [k, v.status?.() ?? {}])) });
       }
-      if (req.method === 'GET' && p === '/info') { info = await getInfo({ machine: { ...machine, workspaceDir: registry.ctx.workspaceDir } }); registry.ctx.facts = info; return send(res, 200, info); }
+      if (req.method === 'GET' && p === '/info') { info = await getInfo({ machine: { ...machine, workspaceDir: registry.ctx.workspaceDir }, jarvisDirs: [cfg.root, cfg.dataDir].filter(Boolean) }); registry.ctx.facts = info; return send(res, 200, info); }
       if (req.method === 'GET' && p === '/actions') return send(res, 200, { actions: registry.list(), missing: registry.missing() });
       const act = p.match(/^\/action\/([a-z][a-z0-9_]*)$/);
       if (req.method === 'POST' && act) {
