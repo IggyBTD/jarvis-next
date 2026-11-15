@@ -1,10 +1,11 @@
 // How a JARVIS permission mode becomes the flags of the official `claude` program. A headless run cannot ask anything, so what a mode
-// would have asked about is refused (and reported in the result) instead: Auto, Accept edits and Bypass never get past the same floors
-// the permission bridge keeps (destructive commands, files that arm later commands, anything outside the working folder, which Claude
+// would have asked about is refused (and reported in the result) instead. Auto runs edits and the read-only allowlist and refuses every
+// other command (the bridge would ask for it); only Bypass runs other commands. All of them keep the floors the permission bridge keeps
+// (destructive commands, interpreters and installs, files that arm later commands, anything outside the working folder, which Claude
 // Code itself does not edit). The flag --dangerously-skip-permissions and the bypassPermissions mode are never used.
 import { ARMING } from './opencode-arming.js';
 
-const SHELLS = ['sh', 'bash', 'zsh', 'fish', 'dash', 'cmd', 'powershell', 'pwsh'];
+const SHELLS = ['sh', 'bash', 'zsh', 'fish', 'dash', 'cmd', 'powershell', 'pwsh', 'python', 'python3', 'py', 'node', 'deno', 'bun', 'npx', 'ruby', 'perl', 'php', 'osascript'];
 const READ = ['Read', 'Grep', 'Glob', 'LS'];
 
 // "git status*" -> Bash(git status:*), "ls" -> Bash(ls); patterns with a * anywhere else cannot be written as a rule and are skipped.
@@ -16,7 +17,7 @@ export function bashRule(glob) {
 
 export function claudeArgs(mode, policy = {}) {
   const allow = (policy.allowCommands ?? []).map(bashRule).filter(Boolean);
-  const destructive = (policy.destructive ?? []).map(bashRule).filter(Boolean);
+  const destructive = [...(policy.destructive ?? []), ...(policy.interpreters ?? [])].map(bashRule).filter(Boolean);
   const arming = ARMING.map((p) => `Edit(**/${p})`);
   const floors = [...destructive, ...SHELLS.map((s) => `Bash(${s}:*)`), ...arming];
   const flags = ['--output-format', 'stream-json', '--verbose', '--setting-sources', 'project'];
@@ -25,6 +26,7 @@ export function claudeArgs(mode, policy = {}) {
     case 'plan': return [...flags, '--permission-mode', 'plan', ...tools(READ, ['Edit', 'Write', 'NotebookEdit'])];
     case 'manual': return [...flags, '--permission-mode', 'default', ...tools(READ)];
     case 'accept-edits': return [...flags, '--permission-mode', 'acceptEdits', ...tools([...READ, 'Edit', 'Write', ...allow], floors)];
-    default: return [...flags, '--permission-mode', 'acceptEdits', ...tools([...READ, 'Edit', 'Write', 'Bash', 'WebFetch', 'WebSearch'], floors)]; // auto and bypass
+    case 'bypass': return [...flags, '--permission-mode', 'acceptEdits', ...tools([...READ, 'Edit', 'Write', 'Bash', 'WebFetch', 'WebSearch'], floors)];
+    default: return [...flags, '--permission-mode', 'acceptEdits', ...tools([...READ, 'Edit', 'Write', ...allow, 'WebFetch', 'WebSearch'], floors)]; // auto
   }
 }

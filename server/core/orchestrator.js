@@ -61,6 +61,7 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
       const maxIterations = models.maxIterations ?? 100; // only a runaway guard: a task runs until the model is done (or the user presses stop)
       const maxToolCalls = models.maxToolCalls ?? 200;
       const seen = new Map(); // exact repeats of one call in this message
+      let tainted = false;    // set once a tool result (outside content: mail, web, files, tasks) is in this turn; policy then asks for some tools
 
       for (let iteration = 1; ; iteration++) {
         if (iteration > maxIterations) { finalText = `I stopped after ${maxIterations} steps without finishing. Tell me how to continue.`; break; }
@@ -97,7 +98,8 @@ ${effortNote(effort)}` : ''}` }; // request only, never stored
           else {
             calls += 1;
             emit('tool.call', { name: c.name, args: c.args });
-            const r = await router.invoke(c, { target, source, convId: conv.id, signal: ctl.signal, conversation: conv });
+            const r = await router.invoke(c, { target, source, convId: conv.id, signal: ctl.signal, conversation: conv, tainted });
+            if (c.name !== 'list_action_categories') tainted = true;
             const shown = r.ok ? summarizeResult(c.name, r.data, null) : summarizeResult(c.name, null, r.error ?? (r.queued ? 'waiting for your approval' : r.denied ? 'you did not approve this' : 'did not run')); // what the steps row shows; never sent to the model
             emit('tool.result', { name: c.name, ok: r.ok, queued: !!r.queued, denied: !!r.denied, ms: r.durationMs ?? null, summary: shown.summary, detail: shown.detail, taskId: c.name === 'agent_task' ? r.data?.taskId ?? null : null });
             content = r.content;

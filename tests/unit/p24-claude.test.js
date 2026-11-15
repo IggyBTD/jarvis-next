@@ -28,9 +28,11 @@ test('modes become flags; nothing ever skips permissions', () => {
   assert.ok(!after(claudeArgs('manual', policy), '--allowedTools').includes('Edit'));
   const edits = claudeArgs('accept-edits', policy);
   assert.ok(after(edits, '--allowedTools').includes('Bash(git status:*)') && !after(edits, '--allowedTools').includes('Bash'));
+  assert.ok(!after(claudeArgs('auto', policy), '--allowedTools').includes('Bash')); // Auto runs the read-only allowlist only (F1-1)
+  assert.ok(after(claudeArgs('auto', policy), '--allowedTools').includes('Bash(git status:*)'));
+  assert.ok(after(claudeArgs('bypass', policy), '--allowedTools').includes('Bash'));
   for (const m of ['auto', 'bypass']) {
     const a = claudeArgs(m, policy);
-    assert.ok(after(a, '--allowedTools').includes('Bash'));
     const denied = after(a, '--disallowedTools');
     for (const must of ['Bash(rm -rf:*)', 'Bash(git push:*)', 'Bash(bash:*)', 'Edit(**/package.json)', 'Edit(**/.git/**)', 'Edit(**/*.sh)']) assert.ok(denied.includes(must), `${m} denies ${must}`);
   }

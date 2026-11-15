@@ -4,7 +4,7 @@ export const MODES = ['auto', 'manual', 'accept-edits', 'plan', 'bypass'];
 export const DEFAULT_MODE = 'auto';
 export const MODE_LABELS = { auto: 'Auto', manual: 'Manual', 'accept-edits': 'Accept edits', plan: 'Plan', bypass: 'Bypass permissions' };
 export const MODE_HINTS = {
-  auto: 'Edits and routine commands run; risky ones ask',
+  auto: 'Edits and read-only commands run; other commands ask',
   manual: 'Asks before every edit and command',
   'accept-edits': 'Edits run, commands ask',
   plan: 'Researches and proposes a plan, changes nothing',

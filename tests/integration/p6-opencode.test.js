@@ -139,10 +139,10 @@ test('bridge: an allowlisted read-only command is approved by policy and logged;
 test('bridge: any other command asks with the exact text, the target and the source; only once or reject go back', async () => {
   const s = await makeAgentStack();
   try {
-    s.fake.ask({ command: 'npm install left-pad' });
+    s.fake.ask({ command: 'make release' });
     const req = (await waitFor(() => s.events.find((e) => e.type === 'gate.request'))).request;
-    assert.deepEqual([req.action, req.tier, req.target, req.source, req.args.command], ['opencode_bash', 'T2', 'pc', 'agent', 'npm install left-pad']);
-    assert.match(req.summary, /npm install left-pad/);
+    assert.deepEqual([req.action, req.tier, req.target, req.source, req.args.command], ['opencode_bash', 'T2', 'pc', 'agent', 'make release']);
+    assert.match(req.summary, /make release/);
     assert.equal(s.fake.rec.replies.length, 0); // nothing answered before the user does
     await s.gate.reply(req.id, 'approve', 'ui');
     await waitFor(() => s.fake.rec.replies.length === 1);

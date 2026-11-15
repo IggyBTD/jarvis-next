@@ -51,7 +51,7 @@ export function loadConfig({ configDir = process.env.JARVIS_CONFIG_DIR ?? path.j
   }
   if (cfg.policy && cfg.actions) {
     const names = new Set(cfg.actions.actions.map((a) => a.name));
-    for (const n of Object.keys(cfg.policy.actions ?? {})) if (!names.has(n) && !/^(agent_task|browser_|list_action_categories|run_user_script)/.test(n)) problems.push(`policy.json: actions.${n} is not a known action`);
+    for (const n of Object.keys(cfg.policy.actions ?? {})) if (!names.has(n) && !/^(agent_task|browser_|list_action_categories|run_user_script|opencode_)/.test(n)) problems.push(`policy.json: actions.${n} is not a known action`);
   }
   if (problems.length) throw new ConfigError(problems);
 

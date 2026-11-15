@@ -1,32 +1,18 @@
 // The permission bridge (the safety-critical part of OpenCode integration). Every permission OpenCode asks for on a machine
-// becomes a gate request with source "agent", the exact command and the bound target. The answer goes back as "once" or
-// "reject" and nothing else: never "always", and OpenCode's direct shell route is never called (the agent client does
-// not even allow the path). Read-only commands on the allowlist are approved automatically and logged. Pending permissions do
-// not survive an OpenCode restart, so a restart voids every in-flight approval and fails the running task.
+// goes through policy.decide (source "agent", with the permission mode and the request's class) and, when policy says ask, becomes a
+// gate request with the exact command and the bound target. The answer goes back as "once" or "reject" and nothing else: never
+// "always", and OpenCode's direct shell route is never called (the agent client does not even allow the path). Pending permissions
+// do not survive an OpenCode restart, so a restart voids every in-flight approval and fails the running task.
 import { parsePermission, replyRequest, discoverRoutes } from '../../shared/opencode-routes.js';
-import { classifyCommand } from './policy.js';
+import { classifyCommand, createPolicy, modeAnswer } from './policy.js';
 import { clip } from '../../shared/util.js';
 import { isArming } from '../../shared/opencode-arming.js';
 
 const EDIT_KINDS = new Set(['edit', 'write', 'patch', 'multiedit']);
-
-// What a mode answers without asking: 'once', 'reject', or null (ask the person). T3 (outside the workspace, destructive commands,
-// files that arm later commands) is never answered here except by Plan, which refuses all of it, and by Manual, which asks.
-export function modeAnswer(mode, { kind, cls, tier, armed }) {
-  const isEdit = EDIT_KINDS.has(kind);
-  const isShell = kind === 'bash' || kind === 'shell';
-  const isDir = kind === 'external_directory'; // T2 here means a folder the person trusts; anything else arrives as T3
-  const safe = tier !== 'T3' && !armed;
-  if (mode === 'plan') return (isShell && cls?.class === 'allow') || kind === 'webfetch' || (isDir && safe) ? 'once' : 'reject';
-  if (mode === 'manual') return null;
-  if (mode === 'accept-edits') return (isEdit || isDir) && safe ? 'once' : null;
-  if (mode === 'auto') return safe && (isEdit || isShell || isDir || kind === 'webfetch') ? 'once' : null;
-  if (mode === 'bypass') return safe ? 'once' : null;
-  return null;
-}
+export { modeAnswer }; // lives in policy.js; re-exported for callers that read the bridge
 
 // trusted(machine) -> folders the person has allowed the coding agent to use besides its workspace (the chosen project folder, policy.json trustedFolders)
-export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, machines, modes, trusted = () => [], log = () => {}, reconnectDelayMs = 500 }) {
+export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, policy = createPolicy(policyCfg), machines, modes, trusted = () => [], log = () => {}, reconnectDelayMs = 500 }) {
   const state = new Map();     // machine -> { routes, inflight: Map<permissionId, AbortController>, seen: Set }
   const stop = new AbortController();
   const get = (m) => { if (!state.has(m)) state.set(m, { routes: null, inflight: new Map(), seen: new Set() }); return state.get(m); };
@@ -68,11 +54,6 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, ma
     if (p.kind === 'bash' || p.kind === 'shell') {
       cls = classifyCommand(p.command, policyCfg.opencode);
       args = { command: p.command ?? '' };
-      if (cls.class === 'allow') {
-        await audit.append({ ...base, action, args, tier: 'T0', decision: 'auto', outcome: 'approved', reason: cls.reason });
-        await respond(machine, p, 'once');
-        return;
-      }
       tier = cls.tier;
       summary = `The coding agent wants to run a command on ${machines[machine].label}: ${clip(p.command ?? '(empty)', 300)}`;
     } else if (EDIT_KINDS.has(p.kind)) {
@@ -94,10 +75,11 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, ma
     }
 
     const mode = modes?.get?.() ?? 'manual';
-    const byMode = modeAnswer(mode, { kind: p.kind, cls, tier, armed });
-    if (byMode) {
-      await audit.append({ ...base, action, args, tier, decision: byMode === 'once' ? 'auto' : 'deny', outcome: byMode === 'once' ? 'approved' : 'rejected', reason: `permission mode ${mode}` });
-      await respond(machine, p, byMode);
+    const verdict = policy.decide({ name: action, tier, source: 'agent', permission: { mode, kind: p.kind, cls, armed } });
+    if (verdict.mode !== 'ask') {
+      const once = verdict.mode === 'auto';
+      await audit.append({ ...base, action, args, tier, decision: once ? 'auto' : 'deny', outcome: once ? 'approved' : 'rejected', reason: cls?.class === 'allow' && once ? `${verdict.reason}, ${cls.reason}` : verdict.reason });
+      await respond(machine, p, once ? 'once' : 'reject');
       return;
     }
     const ctl = new AbortController();

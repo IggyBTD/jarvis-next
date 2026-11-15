@@ -114,7 +114,7 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
     if (bad.length) return refuse(`bad arguments: ${bad.join('; ')}`, 'invalid');
 
     tier = def.tierOf ? def.tierOf(args) : def.tier;
-    const verdict = policy.decide({ name: call.name, tier, source, job: ctx.job });
+    const verdict = policy.decide({ name: call.name, tier, source, job: ctx.job, tainted: !!ctx.tainted });
     const summary = `${call.name} on ${tag(target)}${Object.keys(args).length ? ` (${brief(args)})` : ''}`;
 
     let how = 'auto';
