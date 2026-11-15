@@ -15,7 +15,7 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F1-1 | A | DONE | 23436e3 | bridge through policy.decide; Auto asks for non-allowlisted; T3 for interpreters and destructive anywhere; agent_task asks after a tool result (temporary flag); Claude backend Auto no longer allows all Bash |
 | F1-2 | A | DONE | 46cfdd5 | parsed allowlist (shared/command-scope.js), paths resolved inside the workspace, T3 for variables and outside paths, Manual and Plan ask; git --output now unverified at runtime only |
 | F1-3 | A | DONE | 40f98ad | JARVIS folder and Temp untrusted; root and data folder T3 and armed in every mode (edits, folders, reads, commands); agent reports its own folders in /info; Claude deny rules; arming list extended; non-http webfetch T3 |
-| F4-2 | A | TODO | | |
+| F4-2 | A | DONE | a1a6da3 | system action resolve_paths on the agent (links, junctions, short names, trailing dots); bridge checks edits, folders and command words against real paths; no answer is outside |
 | F4-1 | A | TODO | | |
 | F2-1 | B | TODO | | |
 | F2-2 | B | TODO | | |
@@ -58,8 +58,11 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 - Auto mode (coding agent): only read-only commands on the allowlist run without asking. Builds, tests, installs and anything else now ask. Bypass still runs ordinary commands, but anything T3 (interpreters such as python -c or node -e, encoded PowerShell, package installs, registry writes, destructive commands anywhere in a chain) asks in every mode.
 - Claude Code backend in Auto: commands outside the read-only allowlist are refused (it cannot ask); switch to Bypass for a run that must build or test.
 - Manual mode now asks even for read-only commands (git status, Get-Content). Plan mode asks for reads and web fetches instead of running them, and still refuses anything that changes something.
-- The coding agent can no longer use the JARVIS folder (C:UsersetheJarvis-Next) or the user Temp folder without asking: reads, edits and commands there are T3 and ask in every mode (Plan refuses them), even if you pick that folder as the project folder. The Claude Code backend is denied them outright. Work on JARVIS itself with Claude Code.
+- The coding agent can no longer use the JARVIS folder (C:\Users\bethe\Jarvis-Next) or the user Temp folder without asking: reads, edits and commands there are T3 and ask in every mode (Plan refuses them), even if you pick that folder as the project folder. The Claude Code backend is denied them outright. Work on JARVIS itself with Claude Code.
 - npm test is no longer on the read-only list: it asks in Auto.
+- Mac: until the Mac agent is updated (node scripts/update.js) it has no resolve_paths action, so its coding agent asks for every edit and command that names a path. Update the Mac once and it is back to normal.
 - A chat turn that has already read something (mail, a web page, a file, any tool result) asks before starting a coding task.
 
 ## Decisions made without asking
+
+All in docs/decisions.md under "2026-11-15 Security fix run" (S-01 onwards).
