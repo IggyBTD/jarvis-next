@@ -1,6 +1,6 @@
-STATUS: IN PROGRESS, stage C (stages A and B done)
+STATUS: PAUSED by the owner during stage C (stages A and B done). The resume job 883971bf was deleted.
 
-NOW: a Fable sub-agent is writing per-device pairing (new files only: server/core/devices.js, tests/unit/sec-c-devices.test.js, docs/security/pairing-design.md). Do not edit anything until it returns; then review, test and wire it (F3-1, F3-4).
+NOW: the Fable pairing module is written but not committed or wired (untracked: server/core/devices.js, tests/unit/sec-c-devices.test.js, docs/security/pairing-design.md; its own 11 tests pass). Review of devices.js was in progress. To resume: review it, commit it, then wire F3-1 and F3-4, then the rest of stage C, D and FINAL.
 
 # Security fix run: progress
 
