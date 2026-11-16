@@ -5,6 +5,7 @@ import { EFFORTS, EFFORT_LABELS, EFFORT_HINTS } from '../../shared/effort.js';
 import { describeCall } from '../../shared/steps.js';
 import { prettyModelName } from '../core/model-name.js';
 import { hydrateIcons } from '../icons/index.js';
+import { revealHidden, hasHidden } from '../../shared/reveal.js';
 
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
 const label = (id) => state.machines[id]?.label ?? (id === 'mac' ? 'Mac' : 'PC');
@@ -136,22 +137,27 @@ export function openSettings() {
 
 // ---- an approval ------------------------------------------------------------------------------------------------------------------
 const TIER_WORD = { T2: 'Asks you first', T3: 'Always asks you' };
+const SOURCE = { user: 'you', voice: 'voice', scheduled: 'a scheduled job', agent: 'the coding agent' };
+const MAX_SHOWN = 20_000; // characters of a request the phone will show whole; longer ones are answered on the desktop
 export function openApproval(request, { index = 1, total = 1, onClose = null } = {}) {
   const { doing } = describeCall(request.action, request.args);
   const content = el('div', 'm-approval');
   content.append(el('p', 'm-appr-kicker', total > 1 ? `JARVIS wants to · ${index} of ${total}` : 'JARVIS wants to'));
   content.append(el('h3', 'm-appr-action', doing));
-  content.append(el('p', 'm-appr-meta', [`on ${label(request.target)}`, TIER_WORD[request.tier] ?? 'Needs your OK'].join(' · ')));
+  content.append(el('p', 'm-appr-meta', [`on ${label(request.target)}`, TIER_WORD[request.tier] ?? 'Needs your OK', `asked by ${SOURCE[request.source] ?? request.source ?? 'unknown'}`].join(' · ')));
+  // The whole request, never cut: the summary, the exact arguments with hidden characters shown as codes, what it would do, the
+  // screenshot. Approve stays off until the end of the request has been on screen; a request too long to check here is for the desktop.
+  if (request.summary) content.append(el('p', 'm-appr-note', revealHidden(request.summary)));
   let args = '';
-  try { args = Object.keys(request.args ?? {}).length ? JSON.stringify(request.args, null, 1).slice(0, 1500) : ''; } catch { /* arguments that cannot be shown */ }
-  if (args) {
-    const d = el('details', 'm-appr-details');
-    const sum = el('summary', '');
-    sum.append(el('span', '', 'The exact request'), Object.assign(el('span', 'icon'), { ariaHidden: 'true' }));
-    sum.lastChild.dataset.icon = 'chevron-right';
-    d.append(sum, el('pre', '', args));
-    content.append(d);
-  }
+  try { args = JSON.stringify(request.args ?? {}, null, 1); } catch { args = ''; }
+  const tooLong = !args || args.length > MAX_SHOWN;
+  const pre = el('pre', 'm-appr-request', tooLong ? 'This request is too long (or cannot be shown) to check on the phone. Answer it on the desktop.' : revealHidden(args));
+  const end = el('span', 'm-appr-end', '');
+  pre.append(end);
+  content.append(el('p', 'm-appr-kicker', 'The exact request'), pre);
+  if (hasHidden(args)) content.append(el('p', 'm-appr-note', 'It contains hidden characters, shown as [U+....].'));
+  if (request.dryRun) content.append(el('p', 'm-appr-kicker', 'What it would do'), el('pre', 'm-appr-request', revealHidden(JSON.stringify(request.dryRun, null, 1))));
+  if (typeof request.screenshot === 'string' && request.screenshot.startsWith('data:image/')) content.append(Object.assign(el('img', 'm-appr-shot'), { src: request.screenshot, alt: 'Screenshot of the page' }));
   // T3 away from the desktop needs the owner's PIN (the server checks it; nothing is stored here)
   const pin = request.tier === 'T3' ? Object.assign(el('input', 'm-pin'), { type: 'password', inputMode: 'numeric', autocomplete: 'off', placeholder: 'PIN' }) : null;
   if (pin) { pin.setAttribute('aria-label', 'PIN for this approval'); content.append(pin); }
@@ -160,6 +166,8 @@ export function openApproval(request, { index = 1, total = 1, onClose = null } =
   const no = el('button', 'm-secondary', 'Deny');
   yes.type = no.type = 'button';
   buttons.append(yes, no);
+  yes.disabled = true;
+  if (!tooLong) new IntersectionObserver((seen, obs) => { if (seen.some((s) => s.isIntersecting)) { yes.disabled = false; obs.disconnect(); } }, { root: pre }).observe(end);
   const sheet = openSheet({ title: '', content, footer: buttons, dismissible: false, onClose, label: `Approve: ${doing}` });
   const answer = (decision) => { replyGate(request.id, decision, decision === 'approve' ? pin?.value ?? '' : ''); sheet.close(); };
   yes.addEventListener('click', () => answer('approve'));

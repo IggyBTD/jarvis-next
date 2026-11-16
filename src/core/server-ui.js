@@ -15,12 +15,8 @@ const el = (tag, { dataset, ...props } = {}, ...kids) => { const n = Object.assi
 const toast = (text) => document.dispatchEvent(new CustomEvent('jarvis:toast', { detail: { text } }));
 const label = (id) => state.machines[id]?.label ?? (id === 'mac' ? 'Mac' : 'PC');
 
-// Control and zero-width characters are shown as codes so a command cannot hide what it does.
-// eslint-disable-next-line no-control-regex
-const HIDDEN = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f­​-‏‪-‮⁠-⁤⁦-⁩﻿]/g;
-export const revealHidden = (s) => String(s ?? '').replace(HIDDEN, (c) => `[U+${c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}]`);
-const HIDDEN_ONE = new RegExp(HIDDEN.source);
-const hasHidden = (s) => HIDDEN_ONE.test(String(s ?? ''));
+export { revealHidden } from '../../shared/reveal.js'; // codes for hidden characters (desktop dialog and phone sheet)
+import { revealHidden, hasHidden } from '../../shared/reveal.js';
 
 // ---- target switcher and tag ---------------------------------------------------------------------------------------
 const sw = $('target-switch');

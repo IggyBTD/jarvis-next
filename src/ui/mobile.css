@@ -207,6 +207,11 @@ li[data-state="queued"] > .m-step > .m-step-line { color: var(--warm); }
 .m-appr-details summary .icon { --icon-size: var(--s-4); color: var(--text-3); transition: rotate var(--dur-fast) var(--ease-out); }
 .m-appr-details[open] summary .icon { rotate: 90deg; }
 .m-appr-buttons { display: grid; gap: var(--s-2); }
+/* the whole request on an approval: scrolls, never cut; Approve waits until its end has been on screen */
+.m-appr-request { margin: var(--s-1) 0 0; padding: var(--s-2) var(--s-3); background: var(--surface-1); border-radius: var(--r-sm); color: var(--text-2); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: calc(var(--s-8) * 4); overflow: auto; }
+.m-appr-note { white-space: pre-wrap; }
+.m-appr-shot { display: block; width: 100%; margin-top: var(--s-3); border-radius: var(--r-sm); }
+.m-appr-buttons .m-primary:disabled { opacity: 0.5; }
 
 @media (prefers-reduced-motion: reduce) {
   .m-panel, .m-sheet.closing .m-panel { transition: none; }

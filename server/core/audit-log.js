@@ -99,7 +99,10 @@ export function createAuditLog({ dir, now = () => new Date() }) {
     const day = d.toISOString().slice(0, 10);
     const line = {
       ts: d.toISOString(), id: entry.id ?? crypto.randomUUID(), component: entry.component ?? 'server', target: entry.target ?? null,
-      source: entry.source ?? null, action: entry.action ?? null, args: boundedArgs(entry.args), tier: entry.tier ?? null,
+      source: entry.source ?? null, action: entry.action ?? null, args: boundedArgs(entry.args),
+      // the stored args are redacted and cut (500 characters a string); this hash of the whole request lets a cut command be checked
+      argsHash: crypto.createHash('sha256').update(canonical(entry.args ?? {})).digest('hex'),
+      tier: entry.tier ?? null,
       decision: entry.decision ?? null, outcome: entry.outcome ?? null, durationMs: entry.durationMs ?? null,
       ...(entry.reason ? { reason: redactString(String(entry.reason)).slice(0, 300) } : {}),
       ...(entry.taskId ? { taskId: entry.taskId } : {}),

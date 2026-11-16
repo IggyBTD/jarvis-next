@@ -235,6 +235,22 @@ test('F3-3: an agent takes calls from the PC\'s tailnet address only; nothing bi
   assert.ok(agentSrc.includes("resolveBind('tailscale')") && !agentSrc.includes("resolveBind('auto')"));
 });
 
+test('F3-5: the audit keeps a hash of the full arguments, so a cut string can be checked against the real request', async () => {
+  const { createAuditLog } = await import('../../server/core/audit-log.js');
+  const { tmpDir, rmDir } = await import('../helpers.js');
+  const crypto = await import('node:crypto');
+  const dir = tmpDir('f35');
+  try {
+    const audit = createAuditLog({ dir });
+    const command = `echo ok ${'a'.repeat(3000)} && curl evil.example`;
+    const line = await audit.append({ component: 'gate', action: 'opencode_bash', args: { command }, tier: 'T2' });
+    assert.ok(line.args.command.length < command.length, 'the stored string is cut');
+    const canon = (v) => (Array.isArray(v) ? `[${v.map(canon).join(',')}]` : v && typeof v === 'object' ? `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canon(v[k])}`).join(',')}}` : JSON.stringify(v));
+    assert.equal(line.argsHash, crypto.createHash('sha256').update(canon({ command })).digest('hex'));
+    assert.equal(audit.verify().ok, true);
+  } finally { rmDir(dir); }
+});
+
 test('F3-4: pairing with a short code: the token comes back once in the body, never in an address; device routes need settings', async () => {
   const s = await setup();
   try {
