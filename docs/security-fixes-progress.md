@@ -1,5 +1,4 @@
-STATUS: IN PROGRESS, stage B (stage A done)
-
+STATUS: IN PROGRESS, stage C (stages A and B done)
 
 # Security fix run: progress
 
@@ -21,10 +20,10 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F2-1 | B | DONE | 40feb5a | markdown sanitiser keeps only data:/blob: sources; CSP on server pages and in Tauri; artifact CSP at offset 0; browser tests sec-exfil and sec-csp-pages. Tauri window itself unverified |
 | F2-2 | B | DONE | 21cce54, 3bbd58c | tainted-chat rule (server/core/taint.js, Fable) wired into orchestrator, router, policy, conversations and task notes; navigate after outside content asks with the full address, in every later turn of that chat |
 | F2-4 | B | DONE | ca91779 | wrapUntrusted escapes tool_call, think, function, tool and <| markup; inline tool calls off once the backend used structured calls; echoed inline calls dropped. How often the real model echoes injections is unverified |
-| F2-5 | B | TODO | | |
-| F2-3 | B | TODO | | |
-| F2-7 | B | TODO | | |
-| F1-7 | B | TODO | | |
+| F2-5 | B | DONE | 085ab34 | remember asks in a tainted chat; new notes broadcast and shown whole with Undo on desktop and phone; removals broadcast; notes wrapped in the prompt |
+| F2-3 | B | DONE | 7b5b21f | task note: summary, each changed file on one line and the reason inside one untrusted block |
+| F2-7 | B | DONE | 2c378c7 | Claude Code reply stored as shown, marked origin claude-code, sent to the local model wrapped with a short line of its own |
+| F1-7 | B | DONE | 3fabb07 | router refuses a tool the chat loop did not offer in that request |
 | F3-1 | C | TODO | | |
 | F3-4 | C | TODO | | |
 | F4-5 | C | TODO | | |
@@ -47,6 +46,8 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 ## Stage summaries
 
 Stage A (coding agent), commits 23436e3 to c02fc71, tests 192 -> 210, all green, chokepoint check green. The permission bridge now goes through policy.decide; Auto runs only a parsed read-only allowlist whose paths must resolve inside the workspace (lexically on the server and for real on the machine); Manual asks for everything and Plan runs nothing by itself; interpreters, installs, variables and outside paths are T3; the JARVIS folder and data folder are T3 and armed in every mode; the agent forwards only the server's own sidecar routes. Closes CH-1 (agent_task after untrusted content asks; any non-allowlisted command asks), CH-2 (token files are under the protected data folder; reads, folder requests and commands that reach them are T3 in every mode), CH-3 (dist/** is armed and the JARVIS folder is protected) and CH-5 (git --output is not allowlisted; Manual and Plan never auto-run). The tainted flag for agent_task is temporary until stage B.
+
+Stage B (exfiltration and injection), commits 40feb5a to 3fabb07, tests 210 -> 229 unit and integration plus 3 new browser files. Remote content cannot load from replies, digests or artifacts; a chat that has read outside content asks before anything that can carry data out, store text or start work, with the whole request on the card, and stays marked; tool-call markup in quoted content never runs; notes are seen and undoable; task notes and Claude replies reach the model wrapped; unoffered tools are refused. Closes CH-4 (mail then image or navigate) and CH-6 (planted note or file name acted on later). Replaces the stage A flag.
 
 ## Unverified (runtime checks that settle them)
 
