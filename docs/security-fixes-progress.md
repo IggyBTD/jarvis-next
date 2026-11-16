@@ -1,5 +1,7 @@
 STATUS: IN PROGRESS, stage C (stages A and B done)
 
+NOW: a Fable sub-agent is writing per-device pairing (new files only: server/core/devices.js, tests/unit/sec-c-devices.test.js, docs/security/pairing-design.md). Do not edit anything until it returns; then review, test and wire it (F3-1, F3-4).
+
 # Security fix run: progress
 
 Run doc: docs/security/fix-run.md. Branch ui-extras. Resume job (CronCreate, session-only): 883971bf, every 30 min at :13 and :43.
@@ -48,6 +50,8 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 Stage A (coding agent), commits 23436e3 to c02fc71, tests 192 -> 210, all green, chokepoint check green. The permission bridge now goes through policy.decide; Auto runs only a parsed read-only allowlist whose paths must resolve inside the workspace (lexically on the server and for real on the machine); Manual asks for everything and Plan runs nothing by itself; interpreters, installs, variables and outside paths are T3; the JARVIS folder and data folder are T3 and armed in every mode; the agent forwards only the server's own sidecar routes. Closes CH-1 (agent_task after untrusted content asks; any non-allowlisted command asks), CH-2 (token files are under the protected data folder; reads, folder requests and commands that reach them are T3 in every mode), CH-3 (dist/** is armed and the JARVIS folder is protected) and CH-5 (git --output is not allowlisted; Manual and Plan never auto-run). The tainted flag for agent_task is temporary until stage B.
 
 Stage B (exfiltration and injection), commits 40feb5a to 3fabb07, tests 210 -> 229 unit and integration plus 3 new browser files. Remote content cannot load from replies, digests or artifacts; a chat that has read outside content asks before anything that can carry data out, store text or start work, with the whole request on the card, and stays marked; tool-call markup in quoted content never runs; notes are seen and undoable; task notes and Claude replies reach the model wrapped; unoffered tools are refused. Closes CH-4 (mail then image or navigate) and CH-6 (planted note or file name acted on later). Replaces the stage A flag.
+
+Browser tests after stage B, one file at a time: ui-server 19/19, mobile 17/17, browser-guard 5/5, ui-layout 12/12, sec-exfil 2/2, sec-csp-pages 1/1, sec-memory-undo 2/2, ui-shell 12/13. The ui-shell failure ("the plus opens a menu ... Accounts", the Google accounts card never shows its button) fails the same way on the pre-run baseline f0cf131, so it is not from this run.
 
 ## Unverified (runtime checks that settle them)
 
