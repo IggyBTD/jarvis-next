@@ -109,6 +109,9 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
     if (!args || typeof args !== 'object' || Array.isArray(args)) return refuse('the arguments must be a JSON object', 'invalid');
     if (hasForbiddenKey(args)) return refuse('arguments named target, host or machine are not accepted: only the user chooses the computer', 'invalid');
     if (!NAME_RE.test(String(call.name ?? '')) && !/^browser_[a-z_]+$/.test(String(call.name ?? ''))) return refuse('unknown tool', 'invalid');
+    // ctx.offered: the tools the model was given in this request (the chat loop). A name it was not given is unknown to it, whatever
+    // the registry holds, so an injected tool name cannot reach a tool that selection kept out.
+    if (ctx.offered && !ctx.offered.has(call.name)) return refuse(`unknown or unavailable tool "${name}" on ${tag(target)}`, 'invalid');
     const def = call.name === 'list_action_categories' ? listCategoriesDef : lookup(call.name, target);
     if (!def) return refuse(`unknown or unavailable tool "${name}" on ${tag(target)}`, 'invalid');
     const bad = validate(def.params, args);

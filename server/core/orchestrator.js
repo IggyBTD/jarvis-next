@@ -100,7 +100,7 @@ ${effortNote(effort)}` : ''}` }; // request only, never stored
             emit('tool.call', { name: c.name, args: c.args });
             // the chat's taint is read fresh for every call (a mail read earlier in this same batch counts), and set by any result that
             // carries someone else's text (server/core/taint.js); it is saved with the chat and lasts as long as the chat
-            const r = await router.invoke(c, { target, source, convId: conv.id, signal: ctl.signal, conversation: conv, tainted: isTainted(stateOf(conv)) });
+            const r = await router.invoke(c, { target, source, convId: conv.id, signal: ctl.signal, conversation: conv, tainted: isTainted(stateOf(conv)), offered: new Set(sel.names ?? []) });
             const why = taintOf(c.name, r);
             if (why) conv.taint = markTainted(stateOf(conv), why, now().toISOString());
             const shown = r.ok ? summarizeResult(c.name, r.data, null) : summarizeResult(c.name, null, r.error ?? (r.queued ? 'waiting for your approval' : r.denied ? 'you did not approve this' : 'did not run')); // what the steps row shows; never sent to the model
