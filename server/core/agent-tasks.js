@@ -66,7 +66,15 @@ export function createAgentTasks({ router, bus, audit, conversations, dataDir, t
       bus.publish('chat.delta', { convId: t.convId, target: t.target, text });
       bus.publish('chat.done', { convId: t.convId, target: t.target, text, stats: { requests: 1, tools: 0 } });
     } else if (conv) {
-      const note = `Agent task ${t.id} on ${t.target} ${state}.${t.summary ? `\n${wrapUntrusted('agent summary', t.summary, { max: 1500 })}` : ''}${t.files?.length ? `\nChanged files: ${t.files.slice(0, 20).map((f) => `${f.status} ${f.path}`).join(', ')}` : ''}${error ? `\nReason: ${error}` : ''}`;
+      // Everything the coding agent or its tools produced (summary, changed file names, the failure reason) goes inside one untrusted
+      // block, each file name and the reason on one line of its own: a file named like an instruction is still only data.
+      const line = (s, n) => clip(String(s ?? '').replace(/[\r\n\u2028\u2029]+/g, ' '), n);
+      const report = [
+        t.summary ? `Summary:\n${t.summary}` : '',
+        t.files?.length ? `Changed files (${t.files.length}):\n${t.files.slice(0, 20).map((f) => `- ${line(f.status, 4)} ${line(f.path, 200)}`).join('\n')}` : '',
+        error ? `Reason: ${line(error, 300)}` : '',
+      ].filter(Boolean).join('\n');
+      const note = `Agent task ${t.id} on ${t.target} ${state}.${report ? `\n${wrapUntrusted('agent task report', report, { max: 6000 })}` : ''}`;
       conversations.append(conv, { role: 'system', content: note, target: t.target });
       bus.publish('chat.note', { convId: t.convId, target: t.target, text: `Agent task ${state}${t.summary ? `: ${clip(t.summary, 200)}` : error ? `: ${error}` : ''}` });
       onNote?.(t.convId, note); // lets the model report back, instead of waiting for the user to ask
