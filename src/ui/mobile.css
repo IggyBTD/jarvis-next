@@ -60,6 +60,7 @@ button { -webkit-appearance: none; appearance: none; touch-action: manipulation;
 .m-think .m-logo { --orb-size: var(--s-6); order: -1; }
 .m-note { align-self: flex-start; color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
 .m-note.bad { color: var(--danger); }
+.m-memo { display: flex; align-items: center; gap: var(--s-2); overflow-wrap: anywhere; }
 
 /* what JARVIS writes */
 .m-prose { display: grid; grid-template-columns: minmax(0, 1fr); /* a wide code line scrolls inside its box, it never widens the reply */ gap: var(--s-3); font: 400 var(--fs-5)/var(--lh-prose) var(--serif); color: var(--text); overflow-wrap: anywhere; }

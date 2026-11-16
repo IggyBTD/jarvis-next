@@ -129,6 +129,8 @@ export function sendChat(text) {
 }
 export const abort = () => send({ type: 'chat.abort', convId });
 export const replyGate = (id, decision) => send({ type: 'gate.reply', id, decision });
+// Undo for a note the model saved (the server announces it to every client): the person's own call, through the router like any other.
+export const forgetNote = (noteId) => send({ type: 'action.invoke', id: newId(), name: 'forget', args: { note: noteId } });
 export function setTarget(target) {
   if (!isOnline() || target === state.target) return;
   state.target = target; // optimistic: the server confirms (target.changed) or answers with the real one (target.rejected)

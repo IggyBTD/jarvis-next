@@ -27,7 +27,7 @@ import { restoreProject } from './agent-client.js';
 import { actionCard, approvalCard, planCard } from './tool-cards.js';
 import { assistantToolMessage, toolResultMessage } from './tool-calls.js';
 import { recordReply, statsLine } from './reply-stats.js';
-import { serverMode, sendChat, abortChat, onLink, state as link, setConvId } from './server-link.js';
+import { serverMode, sendChat, abortChat, onLink, state as link, setConvId, runAction } from './server-link.js';
 
 const input = document.getElementById('hud-chat-input');
 const output = document.getElementById('chat-output');
@@ -916,6 +916,32 @@ async function resumeCommand(arg) {
   renderHistory();
   return `Resumed "${pick.name}" (${history.length} messages). File changes from before cannot be rewound, but the conversation can.`;
 }
+
+// A note the model saved for later chats shows in every window at once, whole, with Undo (a note planted by a page or a mail is seen
+// before it matters). The server announces removals, so the row follows a removal made anywhere.
+const memos = new Map(); // note id -> row
+onLink((e) => {
+  if (e.type === 'memory.added' && typeof e.id === 'string' && !memos.has(e.id)) {
+    const row = document.createElement('div');
+    row.className = 'chat-memo';
+    row.setAttribute('role', 'status');
+    const text = document.createElement('span');
+    text.textContent = `Saved for later chats: ${e.text ?? ''}`;
+    const undo = document.createElement('button');
+    undo.type = 'button';
+    undo.className = 'av-btn';
+    undo.textContent = 'Undo';
+    undo.addEventListener('click', () => { undo.disabled = true; runAction('forget', { note: e.id }); });
+    row.append(text, undo);
+    output.appendChild(row);
+    memos.set(e.id, row);
+  } else if (e.type === 'memory.removed' && memos.has(e.id)) {
+    const row = memos.get(e.id);
+    row.firstChild.textContent = 'Note removed.';
+    row.querySelector('button')?.remove();
+    memos.delete(e.id);
+  }
+});
 
 // With the server on, a reload (or another device) shows the chat this window was in, and the list of chats appears once connected.
 onLink((e) => {

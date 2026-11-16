@@ -208,6 +208,21 @@ export function onError(e) {
   endTurn();
   follow();
 }
+// A note the model saved for later chats, shown whole with Undo; a removal made anywhere updates the row.
+const memos = new Map();
+export function onMemory(e, undo) {
+  if (e.type === 'memory.removed') { const row = memos.get(e.id); if (row) { row.firstChild.textContent = 'Note removed.'; row.querySelector('button')?.remove(); memos.delete(e.id); } return; }
+  if (typeof e.id !== 'string' || memos.has(e.id)) return;
+  const row = el('div', 'm-note m-memo');
+  row.append(el('span', '', `Saved for later chats: ${e.text ?? ''}`));
+  const b = el('button', 'm-text-btn', 'Undo');
+  b.type = 'button';
+  b.addEventListener('click', () => { b.disabled = true; undo(e.id); });
+  row.append(b);
+  memos.set(e.id, row);
+  log.append(row);
+  follow();
+}
 export function onNote(e) {
   if (!e.text) return;
   log.append(el('div', 'm-note', e.text));

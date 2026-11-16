@@ -9,7 +9,7 @@ import '@fontsource/jetbrains-mono/latin-400.css';
 import { hydrateIcons, setIcon } from '../icons/index.js';
 import { mountLogos } from '../core/node-mesh.js';
 import { prettyModelName } from '../core/model-name.js';
-import { state, onLink, connect, retry, hasToken, sendChat, abort, newChat, openChat } from './link.js';
+import { state, onLink, connect, retry, hasToken, sendChat, abort, newChat, openChat, forgetNote } from './link.js';
 import * as chat from './chat.js';
 import { openChats, openSettings, openApproval } from './panels.js';
 import { sheetOpen } from './sheets.js';
@@ -163,6 +163,7 @@ onLink((e) => {
     case 'tool.call': chat.onToolCall(e); break;
     case 'tool.result': chat.onToolResult(e); break;
     case 'chat.note': chat.onNote(e); break;
+    case 'memory.added': case 'memory.removed': chat.onMemory(e, forgetNote); break;
     case 'chat.done': chat.onDone(e); renderBar(); refreshSend(); break;
     case 'chat.error': chat.onError(e); refreshSend(); break;
     case 'title': case 'target': case 'health': renderBar(); break;

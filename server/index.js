@@ -99,7 +99,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
     return undefined; // telemetry-rollup: the telemetry service already writes minute rows; this job exists so the schedule shows it
   };
   const scheduler = createScheduler({ schedules: cfg.schedules, dataDir: cfg.dataDir, run: jobRun, log });
-  registerMemoryTools(router, { memory });
+  registerMemoryTools(router, { memory, bus });
   registerTimeTools(router, { reminders, scheduler, timezone: cfg.schedules.timezone });
 
   const macInvoke = async (name) => { const r = await router.invoke({ name, args: {} }, { target: 'mac', source: 'scheduled', job: 'telemetry-rollup' }); if (!r.ok) throw new Error(r.error ?? 'failed'); return r.data; };

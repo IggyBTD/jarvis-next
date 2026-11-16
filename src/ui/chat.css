@@ -108,7 +108,7 @@ li[data-state="queued"] > .step > .step-line, li[data-state="queued"] .step-flag
 
 /* ---- empty state: the greeting and the input card sit together in the middle of the pane, the way Claude's new chat does ------- */
 #chat-stack:not(:has(.chat-line)) { justify-content: center; padding-bottom: var(--s-6); overflow-y: auto; }
-#chat-stack:not(:has(.chat-line)) #chat-output { display: none; }
+#chat-stack:not(:has(.chat-line, .chat-memo)) #chat-output { display: none; } /* a saved-note row shows even in an empty chat */
 #chat-stack:has(.chat-line) #chat-empty, #chat-stack:has(.chat-line) > .machine { display: none; }
 #chat-empty { flex: none; width: min(var(--measure), calc(100% - 2 * var(--chat-gutter))); margin: 0 auto var(--s-5); text-align: center; }
 #chat-empty .logo { --orb-size: clamp(var(--s-7), 24vh, calc(var(--s-8) * 3)); margin: 0 auto var(--s-4); cursor: grab; touch-action: none; } /* the centrepiece: 192 px on a tall window, smaller on a short one, so the greeting and the card stay centred together */
@@ -170,6 +170,9 @@ body[data-page="code"] .ac-source { display: block; margin-bottom: var(--s-4); }
 .hljs-number, .hljs-symbol, .hljs-bullet { color: var(--accent); }
 .hljs-title, .hljs-function, .hljs-class .hljs-title { color: var(--text); font-weight: 600; }
 .hljs-meta, .hljs-tag, .hljs-name { color: var(--text-2); }
+
+/* a note the model saved for later chats, with Undo (every window shows it) */
+.chat-memo { display: flex; align-items: center; gap: var(--s-3); margin: var(--s-2) 0; color: var(--text-3); font-size: var(--fs-3); line-height: var(--lh-sm); overflow-wrap: anywhere; }
 
 /* ---- agent action cards, diffs, approvals ---------------------------------------------------------- */
 .tool-card { margin: var(--s-1) 0; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface-1); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); color: var(--text-2); overflow: hidden; }
