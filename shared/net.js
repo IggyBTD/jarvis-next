@@ -25,6 +25,20 @@ export const callerIp = (req) => {
   return h['x-forwarded-for'] || h.forwarded || h['x-real-ip'] || Object.keys(h).some((k) => k.startsWith('tailscale-')) ? 'proxied' : req?.socket?.remoteAddress ?? 'unknown';
 };
 
+// Who may call an agent. An agent that only takes local calls (the PC's, next to the server) keeps its loopback list. Any other agent
+// (the Mac's) takes calls from the tailnet only, never a private range: from the PC's own address when the server address in
+// machines.json is a tailnet IP, else from the tailnet entries of its list. An older config with every private range still only
+// lets the PC in.
+const TAILNET = '100.64.0.0/10';
+export function agentCallers(machine, serverUrl) {
+  const list = (machine?.allowedCallers ?? []).map(String);
+  if (list.length && list.every((c) => isLoopback(c))) return list;
+  let host = '';
+  try { host = new URL(serverUrl).hostname; } catch { /* no server address */ }
+  if (ipAllowed(host, [TAILNET]) && list.some((c) => ipAllowed(host, [c]))) return [host];
+  return list.filter((c) => (c.includes('/') ? c === TAILNET || (ipAllowed(c.split('/')[0], [TAILNET]) && Number(c.split('/')[1]) >= 10) : ipAllowed(c, [TAILNET])));
+}
+
 // 'tailscale': the Tailscale interface, else loopback; never the LAN (on a foreign Wi-Fi the LAN is anyone's). 'auto' also tries the LAN.
 export function resolveBind(bind, interfaces = os.networkInterfaces()) {
   if (bind !== 'auto' && bind !== 'tailscale') return { host: bind, reason: 'configured' };

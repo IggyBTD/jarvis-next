@@ -9,7 +9,7 @@ import { loadConfig, tokenPath, dataPath } from '../server/core/config.js';
 import { createAuth, loadTokens, createLimiter } from '../server/core/auth.js';
 import { createRegistry } from './registry/mod.js';
 import { getInfo } from './info.js';
-import { ipAllowed, isLoopback, resolveBind } from '../shared/net.js';
+import { ipAllowed, isLoopback, resolveBind, agentCallers } from '../shared/net.js';
 import { installProcessGuards, isMain } from '../shared/util.js';
 import { checkProxy, isReplyRoute, replyBodyOk } from '../shared/proxy-routes.js';
 
@@ -31,6 +31,8 @@ const send = (res, status, obj) => { if (!res.headersSent) res.writeHead(status,
  */
 export function createAgent({ cfg, machineId, registry, sidecars = {}, tokens, log = () => {}, version = '1' }) {
   const machine = cfg.machines.machines[machineId];
+  // the PC's tailnet address only (or loopback for the PC's own agent); never a private range, whatever an older config lists
+  const callers = agentCallers(machine, cfg.machines.server?.url);
   const auth = createAuth({ tokens, limiter: createLimiter(), reload: () => loadTokens(cfg) });
   let lastReload = Date.now();
   const sseClients = new Set();
@@ -45,7 +47,7 @@ export function createAgent({ cfg, machineId, registry, sidecars = {}, tokens, l
   async function handle(req, res) {
     try {
       const ip = req.socket.remoteAddress;
-      if (!ipAllowed(ip, machine.allowedCallers ?? [])) return send(res, 403, { error: 'caller address not allowed' });
+      if (!ipAllowed(ip, callers)) return send(res, 403, { error: 'caller address not allowed' });
       if (req.headers.origin) return send(res, 403, { error: 'browsers are not allowed here' });
       if (Date.now() - lastReload > 30_000) { auth.reload(); lastReload = Date.now(); }
       const verdict = auth.check(req.headers.authorization, { roles: ['machine'], ip });
@@ -122,7 +124,7 @@ if (isMain(import.meta.url)) {
   const { sidecars, stopSidecars } = await (await import('./sidecars/start.js')).startSidecars({ cfg, machineId, registry, log });
   const agent = createAgent({ cfg, machineId, registry, sidecars, tokens, log });
   const loopbackOnly = (machine.allowedCallers ?? []).every((c) => isLoopback(c));
-  const bind = loopbackOnly ? { host: '127.0.0.1', reason: 'only local callers are allowed' } : resolveBind('auto');
+  const bind = loopbackOnly ? { host: '127.0.0.1', reason: 'only local callers are allowed' } : resolveBind('tailscale'); // the tailnet or loopback, never the LAN
   const addr = await agent.listen(machine.agentPort, bind.host);
   log(`agent ${machineId} listening on ${addr.address}:${addr.port} (${bind.reason})`);
   const stop = async () => { await stopSidecars(); await agent.close(); process.exit(0); };

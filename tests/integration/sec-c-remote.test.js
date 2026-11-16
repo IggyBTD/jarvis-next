@@ -213,6 +213,28 @@ test('F3-2: the starter binds the tailnet only, takes only tailnet callers (loop
   } finally { srv2.close(); }
 });
 
+test('F3-3: an agent takes calls from the PC\'s tailnet address only; nothing binds the LAN', async () => {
+  const { agentCallers, ipAllowed } = await import('../../shared/net.js');
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { ROOT } = await import('../../server/core/config.js');
+  // an old Mac config (every tailnet and private range) still only lets the PC in
+  const mac = { allowedCallers: ['100.64.0.0/10', '192.168.0.0/16', '10.0.0.0/8', '172.16.0.0/12'] };
+  const callers = agentCallers(mac, 'http://100.121.198.40:7410');
+  assert.deepEqual(callers, ['100.121.198.40']);
+  for (const ip of ['192.168.1.20', '10.0.0.5', '100.99.1.1']) assert.equal(ipAllowed(ip, callers), false, ip);
+  assert.equal(ipAllowed('100.121.198.40', callers), true);
+  // a name in server.url: tailnet entries only, never a private range
+  assert.deepEqual(agentCallers(mac, 'http://pc.tail1234.ts.net:7410'), ['100.64.0.0/10']);
+  // the PC agent (the server is on the same machine) keeps loopback only
+  assert.deepEqual(agentCallers({ allowedCallers: ['127.0.0.1', '::1'] }, 'http://100.121.198.40:7410'), ['127.0.0.1', '::1']);
+  const conf = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'server', 'machines.json'), 'utf8'));
+  assert.equal(conf.server.bind, 'tailscale');
+  assert.ok(conf.machines.mac.allowedCallers.every((c) => !/^(10\.|172\.16|192\.168)/.test(c)), conf.machines.mac.allowedCallers.join(', '));
+  const agentSrc = fs.readFileSync(path.join(ROOT, 'agent', 'index.js'), 'utf8');
+  assert.ok(agentSrc.includes("resolveBind('tailscale')") && !agentSrc.includes("resolveBind('auto')"));
+});
+
 test('F3-4: pairing with a short code: the token comes back once in the body, never in an address; device routes need settings', async () => {
   const s = await setup();
   try {
