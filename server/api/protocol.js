@@ -14,10 +14,10 @@ export const CLIENT_MESSAGES = {
   ping: msg({}),
   'chat.send': msg({ convId: str(64), text: { type: 'string', minLength: 1, maxLength: 8000 }, effort: { enum: EFFORTS }, code: { type: 'boolean' } }, ['text']),
   'chat.abort': msg({ convId: str(64) }, ['convId']),
-  'mode.set': msg({ mode: { enum: MODES } }, ['mode']),
+  'mode.set': msg({ mode: { enum: MODES }, pin: optStr(64) }, ['mode']), // pin: the owner's PIN for Bypass from a device that is not the desktop (never logged)
   'backend.set': msg({ backend: { enum: ['local', 'claude'] } }, ['backend']),
   'target.set': msg({ target: { enum: ['pc', 'mac'] } }, ['target']),
-  'gate.reply': msg({ decision: { enum: ['approve', 'deny'] } }, ['id', 'decision']),
+  'gate.reply': msg({ decision: { enum: ['approve', 'deny'] }, pin: optStr(64) }, ['id', 'decision']), // pin: for a T3 approval away from the desktop (never logged)
   'agent.task': msg({ prompt: { type: 'string', minLength: 1, maxLength: 8000 }, workspace: optStr(200) }, ['prompt']),
   'agent.abort': msg({ taskId: str(80) }, ['taskId']),
   'digest.get': msg({ date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' } }),

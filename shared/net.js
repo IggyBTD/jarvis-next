@@ -18,6 +18,12 @@ export function ipAllowed(ip, list) {
   });
 }
 export const isLoopback = (ip) => ['127.0.0.1', '::1'].includes(norm(ip)) || norm(ip).startsWith('127.');
+// The caller's address for permission checks: the socket's own, or 'proxied' when a proxy stands in between (tailscale serve or any
+// local proxy makes every caller look like loopback, so loopback then proves nothing).
+export const callerIp = (req) => {
+  const h = req?.headers ?? {};
+  return h['x-forwarded-for'] || h.forwarded || h['x-real-ip'] || Object.keys(h).some((k) => k.startsWith('tailscale-')) ? 'proxied' : req?.socket?.remoteAddress ?? 'unknown';
+};
 
 export function resolveBind(bind, interfaces = os.networkInterfaces()) {
   if (bind !== 'auto') return { host: bind, reason: 'configured' };

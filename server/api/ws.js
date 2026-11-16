@@ -5,11 +5,28 @@
 import { WebSocketServer } from 'ws';
 import { parseClientMessage, BROADCAST, MAX_FRAME } from './protocol.js';
 import { BusyError } from '../core/orchestrator.js';
+import { callerIp } from '../../shared/net.js';
 
 const DEFAULT_CONV = 'main';
 const MAX_BUFFER = 8 * 1024 * 1024;
 
-export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks, modes, backend, reminders, voice, wake, log = () => {} }) {
+// devices (server/core/devices.js): every message is checked against the sending device's scopes (chat, approve, settings, and the
+// T3 and admin step-up), and sockets whose token was revoked or rotated are closed. Without it (test harnesses) nothing is checked.
+const NEED = {
+  'chat.send': 'chat', 'chat.abort': 'chat', 'agent.task': 'chat', 'agent.abort': 'chat', 'digest.get': 'chat', 'digest.run': 'chat', 'voice.start': 'chat', 'voice.stop': 'chat',
+  'voice.barge_in': 'chat', 'action.invoke': 'chat', 'wake.pc': 'chat', 'reminder.dismiss': 'chat', 'target.set': 'target', 'backend.set': 'settings',
+};
+
+export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks, modes, backend, reminders, voice, wake, devices = null, log = () => {} }) {
+  const may = (c, what, opts = {}) => (devices ? devices.can(c.principal, what, { ip: c.ip, ...opts }) : { ok: true });
+  // The tier of an approval is the gate's own, never the client's. A pin travels only with gate.reply and mode.set.
+  const permission = (c, m) => {
+    if (m.type === 'hello') return may(c, 'chat');
+    if (m.type === 'ping') return { ok: true };
+    if (m.type === 'mode.set') return may(c, m.mode === 'bypass' ? 'admin' : 'settings', { pin: m.pin });
+    if (m.type === 'gate.reply') return m.decision === 'deny' ? may(c, 'deny') : may(c, 'approve', { tier: gate.pending().find((p) => p.id === m.id)?.tier, pin: m.pin });
+    return Object.hasOwn(NEED, m.type) ? may(c, NEED[m.type]) : { ok: false, reason: 'unknown message' };
+  };
   const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_FRAME, perMessageDeflate: false, handleProtocols: (protocols) => (protocols.has('jarvis.v1') ? 'jarvis.v1' : false) });
   const clients = new Set();
   const streams = new Map(); // convId -> text of the reply being written
@@ -66,7 +83,7 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
     'target.set'(c, m) {
       try { targetState.set(m.target, { by: 'ui', clientId: c.id }); send(c, { type: 'target.ack', id: m.id, target: m.target }); } catch (e) { send(c, { type: 'target.rejected', id: m.id, target: targetState.get(), reason: e.message }); }
     },
-    async 'gate.reply'(c, m) { const r = await gate.reply(m.id, m.decision, c.id); if (!r.ok) send(c, { type: 'error', id: m.id, reason: r.error }); },
+    async 'gate.reply'(c, m) { const r = await gate.reply(m.id, m.decision, c.principal?.deviceId ? `${c.principal.deviceId}/${c.id}` : c.id); if (!r.ok) send(c, { type: 'error', id: m.id, reason: r.error }); },
     async 'agent.task'(c, m) {
       const out = await router.invoke({ name: 'agent_task', args: { prompt: m.prompt, ...(m.workspace ? { workspace: m.workspace } : {}) } }, { target: targetState.bind().target, source: 'user' });
       send(c, { type: 'agent.task.ack', id: m.id, ok: out.ok, message: out.content });
@@ -94,10 +111,12 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
     const proto = String(req.headers['sec-websocket-protocol'] ?? '').split(',').map((s) => s.trim());
     const fromProto = proto.find((p) => p.startsWith('bearer.'));
     const header = req.headers.authorization ?? (fromProto ? `Bearer ${fromProto.slice(7)}` : undefined);
-    const verdict = auth.check(header, { roles: ['ui'], ip: req.socket.remoteAddress });
+    const ip = callerIp(req);
+    const verdict = auth.check(header, { roles: ['ui'], ip });
     if (!verdict.ok) return refuse(verdict.status === 429 ? 429 : verdict.status === 403 ? 403 : 401, 'Unauthorized');
     wss.handleUpgrade(req, socket, head, (ws) => {
-      const c = { ws, id: `ui-${Math.random().toString(36).slice(2, 10)}`, hello: false };
+      // the bearer is kept in memory so sweep() can ask the device store whether it still holds (revoked or rotated: closed)
+      const c = { ws, id: `ui-${Math.random().toString(36).slice(2, 10)}`, hello: false, principal: verdict.principal, ip, bearer: String(header ?? '').replace(/^Bearer\s+/, '') };
       clients.add(c);
       ws.isAlive = true;
       ws.on('pong', () => { ws.isAlive = true; });
@@ -109,19 +128,24 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
         if (!parsed.ok) return send(c, { type: 'error', reason: parsed.error });
         const m = parsed.msg;
         if (!c.hello && m.type !== 'hello' && m.type !== 'ping') return send(c, { type: 'error', id: m.id, reason: 'send hello first' });
+        const allowed = permission(c, m);
+        if (!allowed.ok) return send(c, { type: 'error', id: m.id, reason: allowed.reason || 'this device may not do that' });
         try { await handlers[m.type](c, m); } catch (e) { log(`ws handler ${m.type}: ${e.stack ?? e}`); send(c, { type: 'error', id: m.id, reason: 'internal error' }); }
       });
     });
   });
 
-  const beat = setInterval(() => { for (const c of clients) { if (!c.ws.isAlive) { c.ws.terminate(); continue; } c.ws.isAlive = false; c.ws.ping(); } }, 20_000);
+  // A socket whose token no longer holds (the device was revoked, or its token rotated, from here or from the command on the PC) is
+  // closed: it would otherwise keep receiving every chat and approval.
+  const sweep = () => { if (!devices) return; for (const c of clients) if (!devices.authenticate(c.bearer, { ip: c.ip })) { clients.delete(c); c.ws.close(4401, 'this device is no longer paired'); } };
+  const beat = setInterval(() => { sweep(); for (const c of clients) { if (!c.ws.isAlive) { c.ws.terminate(); continue; } c.ws.isAlive = false; c.ws.ping(); } }, 20_000);
   beat.unref?.();
   const healthPush = setInterval(async () => { if (clients.size) broadcast({ type: 'health', ...(await health().catch(() => ({}))) }); }, 5000);
   healthPush.unref?.();
 
   return {
     clientCount: () => clients.size,
-    buildState, broadcast,
+    buildState, broadcast, sweep,
     close() { clearInterval(beat); clearInterval(healthPush); for (const c of clients) c.ws.close(1001, 'server stopping'); wss.close(); },
   };
 }

@@ -64,6 +64,7 @@ export const settle = () => new Promise((res) => setTimeout(res, 30));
 // HTTP + WebSocket on a random port, wired to the rig. Returns { url, wsUrl, uiToken, close }.
 import http from 'node:http';
 import { createAuth } from '../server/core/auth.js';
+import { createDevices } from '../server/core/devices.js';
 import { createLlmProxy } from '../server/core/llm-proxy.js';
 import { createHttpHandler, createHealth } from '../server/api/http.js';
 import { attachWs } from '../server/api/ws.js';
@@ -73,21 +74,23 @@ import { createTelemetry } from '../server/telemetry/index.js';
 
 export async function startApi(r, extra = {}) {
   const uiToken = 'u'.repeat(64);
-  const auth = createAuth({ tokens: { ui: [uiToken], machines: { pc: [r.tokens.pc], mac: [r.tokens.mac] } } });
+  // paired devices as in the server; uiToken is the old shared token (its legacy path), used from loopback like the desktop app
+  const devices = extra.devices ?? createDevices({ dataDir: r.cfg.dataDir, legacyToken: () => uiToken, scryptN: 1024 });
+  const auth = createAuth({ tokens: { ui: [], machines: { pc: [r.tokens.pc], mac: [r.tokens.mac] } }, devices });
   const health = createHealth({ llm: r.llm, queue: r.queue, router: r.router, machines: r.cfg.machines.machines, ttlMs: 50 });
   const llmProxy = createLlmProxy({ llm: r.llm, queue: r.queue, modelId: 'local', audit: r.audit });
   const server = http.createServer();
   const telemetry = extra.telemetry ?? createTelemetry({ bus: r.bus, dataDir: r.cfg.dataDir, providers: {} });
-  const wsApi = attachWs({ server, cfg: r.cfg, auth, bus: r.bus, gate: r.gate, orchestrator: r.orchestrator, targetState: r.target, prompts: r.prompts, router: r.router, conversations: r.conversations, telemetry, health, modes: createPermissionMode({ dataDir: r.cfg.dataDir, bus: r.bus }), backend: createCodeBackend({ dataDir: r.cfg.dataDir, bus: r.bus }), ...extra });
+  const wsApi = attachWs({ server, cfg: r.cfg, auth, bus: r.bus, gate: r.gate, orchestrator: r.orchestrator, targetState: r.target, prompts: r.prompts, router: r.router, conversations: r.conversations, telemetry, health, modes: createPermissionMode({ dataDir: r.cfg.dataDir, bus: r.bus }), backend: createCodeBackend({ dataDir: r.cfg.dataDir, bus: r.bus }), devices, ...extra });
   let build = wsApi.buildState;
-  const handler = createHttpHandler({ cfg: r.cfg, auth, llmProxy, models: { list: () => r.llm.listModels(), select: (k) => r.llm.selectModel(k) }, environment: async () => ({ machine: 'pc', label: 'PC', hostname: 'pc-host', os: 'Windows 11', user: 'tester', folder: '/ws', branch: 'main', dirty: 2, repo: true, remote: { on: true, url: 'http://100.1.2.3:7410', devices: 1 } }), health, audit: r.audit, conversations: r.conversations, digest: extra.digest, osint: extra.osint, buildState: () => build() });
+  const handler = createHttpHandler({ cfg: r.cfg, auth, llmProxy, models: { list: () => r.llm.listModels(), select: (k) => r.llm.selectModel(k) }, environment: async () => ({ machine: 'pc', label: 'PC', hostname: 'pc-host', os: 'Windows 11', user: 'tester', folder: '/ws', branch: 'main', dirty: 2, repo: true, remote: { on: true, url: 'http://100.1.2.3:7410', devices: 1 } }), health, audit: r.audit, conversations: r.conversations, digest: extra.digest, osint: extra.osint, buildState: () => build(), devices, devicesChanged: () => wsApi.sweep() });
   server.on('request', handler);
   await new Promise((ok) => server.listen(extra.port ?? 0, '127.0.0.1', ok));
   const port = server.address().port;
   r.state.clients = 0;
   const origCount = wsApi.clientCount;
   Object.defineProperty(r.state, 'clients', { get: () => origCount(), set: () => {}, configurable: true });
-  return { url: `http://127.0.0.1:${port}`, wsUrl: `ws://127.0.0.1:${port}/ws`, uiToken, auth, wsApi, close: async () => { wsApi.close(); server.closeAllConnections?.(); await new Promise((ok) => server.close(ok)); } };
+  return { url: `http://127.0.0.1:${port}`, wsUrl: `ws://127.0.0.1:${port}/ws`, uiToken, auth, wsApi, devices, close: async () => { wsApi.close(); server.closeAllConnections?.(); await new Promise((ok) => server.close(ok)); } };
 }
 
 // A small WebSocket test client: collects messages, waits for one that matches.

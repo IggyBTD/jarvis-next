@@ -216,8 +216,13 @@ test('the old shared token: chat and approve, T3 only with the PIN, gone once re
   assert.ok(!fs.readFileSync(file, 'utf8').includes(OLD));
   assert.equal(devices.can(who, 'chat').ok, true);
   assert.equal(devices.can(who, 'approve', { tier: 'T2', ip: LAN }).ok, true);
-  assert.equal(devices.can(who, 'approve', { tier: 'T3', ip: LOOP }).ok, false);
-  assert.equal(devices.can(who, 'settings').ok, false);
+  assert.equal(devices.can(who, 'approve', { tier: 'T3', ip: LAN }).ok, false);
+  assert.equal(devices.can(who, 'approve', { tier: 'T3', ip: 'proxied' }).ok, false);
+  assert.equal(devices.can(who, 'settings', { ip: LAN }).ok, false);
+  // migration: on the PC itself (the desktop app before it is paired) the old token keeps the desktop's rights; through a proxy it does not
+  assert.equal(devices.can(who, 'approve', { tier: 'T3', ip: LOOP }).ok, true);
+  assert.equal(devices.can(who, 'admin', { ip: LOOP }).ok, true);
+  assert.equal(devices.can(who, 'settings', { ip: 'proxied' }).ok, false);
   devices.setPin({ by: LOCAL, newPin: PIN });
   assert.equal(devices.can(who, 'approve', { tier: 'T3', pin: PIN, ip: LAN }).ok, true);
   assert.ok(devices.revoke('legacy', { by: who, pin: PIN, ip: LAN }).error, 'a holder of the shared token cannot end it for the others');

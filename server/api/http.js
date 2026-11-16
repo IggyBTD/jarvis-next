@@ -2,7 +2,7 @@
 // OpenAI-compatible proxy for OpenCode. Browser pages may call the REST routes only from the configured origins.
 import fs from 'node:fs';
 import path from 'node:path';
-import { ipAllowed } from '../../shared/net.js';
+import { ipAllowed, callerIp } from '../../shared/net.js';
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ico': 'image/x-icon', '.wasm': 'application/wasm', '.map': 'application/json' };
 
@@ -50,11 +50,11 @@ export function createHealth({ llm, queue, router, machines, contextLength = nul
 
 const readBody = (req) => new Promise((resolve, reject) => { const c = []; let n = 0; req.on('data', (d) => { n += d.length; if (n > 20_000) { reject(Object.assign(new Error('body too large'), { status: 413 })); req.destroy(); } else c.push(d); }); req.on('end', () => { try { resolve(c.length ? JSON.parse(Buffer.concat(c).toString('utf8')) : {}); } catch { reject(Object.assign(new Error('body must be JSON'), { status: 400 })); } }); req.on('error', reject); });
 
-export function createHttpHandler({ cfg, auth, llmProxy, models, environment, setProject, health, audit, conversations, digest, osint, browserView, bundle, latex, accounts, msAccounts, buildState, log = () => {} }) {
+export function createHttpHandler({ cfg, auth, llmProxy, models, environment, setProject, health, audit, conversations, digest, osint, browserView, bundle, latex, accounts, msAccounts, buildState, devices = null, devicesChanged = () => {}, log = () => {} }) {
   const origins = cfg.machines.server.origins ?? [];
   return async function handle(req, res) {
     try {
-      const ip = req.socket.remoteAddress;
+      const ip = callerIp(req); // 'proxied' behind tailscale serve or any proxy, so loopback never stands in for the desktop
       const origin = req.headers.origin;
       const sameOrigin = !!origin && (origin === `http://${req.headers.host}` || origin === `https://${req.headers.host}`); // https when reached through tailscale serve
       const cors = origin && (sameOrigin || origins.includes(origin)) ? { 'access-control-allow-origin': origin, vary: 'Origin' } : {};
@@ -68,6 +68,14 @@ export function createHttpHandler({ cfg, auth, llmProxy, models, environment, se
       const url = new URL(req.url, 'http://server');
       const p = url.pathname;
       if ((req.method === 'GET' || req.method === 'HEAD') && !/^\/(api|v1|health|ws)(\/|$)/.test(p)) return serveStatic(req, res, path.join(cfg.root, 'dist'), p);
+      // Pairing: the one route that needs no token. The short code (typed in the app) is checked, limited and single use in the devices
+      // module; the new device's token comes back once, in the body, never in an address.
+      if (devices && p === '/api/devices/pair' && req.method === 'POST') {
+        const b = await readBody(req);
+        const out = devices.completePairing({ code: b.code, name: b.name, ip });
+        audit?.append({ component: 'devices', source: 'user', action: 'device_pair', args: { device: out.device?.id ?? null, kind: out.device?.kind ?? null, from: ip }, tier: 'T2', decision: out.error ? 'deny' : 'auto', outcome: out.error ? 'refused' : 'paired', reason: out.error }).catch(() => {});
+        return json(res, out.error ? 403 : 200, out, cors);
+      }
       const need = p.startsWith('/v1/') || p === '/v1' ? ['machine', 'model'] : ['ui', 'machine'];
       const verdict = auth.check(req.headers.authorization, { roles: need, ip });
       if (!verdict.ok) return json(res, verdict.status, { error: verdict.status === 429 ? 'too many attempts' : verdict.status === 403 ? 'this token cannot use this route' : 'unauthorized' }, cors);
@@ -80,6 +88,27 @@ export function createHttpHandler({ cfg, auth, llmProxy, models, environment, se
         return res.end(zip);
       }
       if (verdict.principal.role !== 'ui') return json(res, 403, { error: 'this token cannot use this route' }, cors);
+      // Each device may do what its scopes allow (server/core/devices.js): settings for the audit log, the browser view, accounts, the
+      // model menu and the device list; admin (settings plus the desktop on the PC or the PIN) for the trusted project folder.
+      const may = (what, opts = {}) => (devices ? devices.can(verdict.principal, what, { ip, ...opts }) : { ok: true });
+      const refused = (r) => json(res, 403, { error: r.reason || 'this device may not do that' }, cors);
+      const settingsRoute = /^\/api\/(audit|browser\/|osint\/opensky|accounts\/|devices$)/.test(p) || (p === '/api/model' && req.method === 'POST');
+      const scope = may(settingsRoute ? 'settings' : 'chat');
+      if (!scope.ok) return refused(scope);
+      if (devices && p.startsWith('/api/devices/') && req.method === 'POST') {
+        const b = await readBody(req);
+        const by = verdict.principal;
+        const route = p.slice('/api/devices/'.length);
+        const out = route === 'pair/start' ? devices.startPairing({ by, kind: b.kind, pin: b.pin, ip })
+          : route === 'revoke' ? devices.revoke(b.id, { by, pin: b.pin, ip })
+            : route === 'rotate' ? devices.rotate(b.id, { by, pin: b.pin, ip })
+              : route === 'pin' ? devices.setPin({ by, pin: b.pin, newPin: b.newPin, ip })
+                : { error: 'not found' };
+        audit?.append({ component: 'devices', source: 'user', action: `device_${route.replace('/', '_')}`, args: { by: by.deviceId ?? null, kind: route === 'pair/start' ? b.kind ?? 'phone' : undefined, id: typeof b.id === 'string' ? b.id.slice(0, 40) : undefined }, tier: 'T2', decision: out.error ? 'deny' : 'approved', outcome: out.error ? 'refused' : 'done', reason: out.error }).catch(() => {});
+        if (!out.error && (route === 'revoke' || route === 'rotate')) devicesChanged();
+        return json(res, out.error ? (out.error === 'not found' ? 404 : 403) : 200, out, cors);
+      }
+      if (devices && p === '/api/devices' && req.method === 'GET') return json(res, 200, { devices: devices.list(), ...devices.info(), me: verdict.principal.deviceId ?? null }, cors);
       if (req.method === 'GET' && p === '/api/state') return json(res, 200, await buildState(), cors);
       if (models && p === '/api/models' && req.method === 'GET') { try { return json(res, 200, await models.list(), cors); } catch { return json(res, 502, { error: 'the model server could not be reached' }, cors); } }
       if (models && p === '/api/model' && req.method === 'POST') { // the model menu: load the chosen model (the others are unloaded) and switch the request settings to its profile
@@ -87,7 +116,7 @@ export function createHttpHandler({ cfg, auth, llmProxy, models, environment, se
         try { return json(res, 200, await models.select(key), cors); } catch (e) { return json(res, e.status === 409 || e.status === 404 ? e.status : 502, { error: e.message }, cors); }
       }
       if (environment && p === '/api/environment' && req.method === 'GET') return json(res, 200, await environment(), cors);
-      if (setProject && p === '/api/project' && req.method === 'POST') { try { return json(res, 200, setProject((await readBody(req)).folder), cors); } catch (e) { return json(res, e.status ?? 500, { error: e.message }, cors); } }
+      if (setProject && p === '/api/project' && req.method === 'POST') { try { const b = await readBody(req); const ok = may('admin', { pin: b.pin }); if (!ok.ok) return refused(ok); return json(res, 200, setProject(b.folder), cors); } catch (e) { return json(res, e.status ?? 500, { error: e.message }, cors); } }
       if (req.method === 'GET' && p === '/api/audit') return json(res, 200, { entries: audit.tail(Math.min(200, Number(url.searchParams.get('n')) || 50)), verify: url.searchParams.get('verify') === '1' ? audit.verify() : undefined }, cors);
       if (osint && p === '/api/osint/aircraft' && req.method === 'GET') { const q = url.searchParams; return json(res, 200, await osint.aircraft({ force: q.get('force') === '1', since: q.get('since') ?? 0, mine: q.get('watch') !== '0' }), cors); }
       if (osint && p === '/api/osint/watch' && req.method === 'GET') return json(res, 200, osint.watch(), cors);

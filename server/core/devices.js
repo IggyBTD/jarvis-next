@@ -159,11 +159,14 @@ export function createDevices({ dataDir, now = Date.now, legacyToken = () => nul
       const { tier, pin, ip, id } = obj(opts);
       const d = current(load(), principal);
       if (!d) return no('unknown or revoked device');
-      const has = (scope) => d.scopes.includes(scope);
-      const admin = () => (has('settings') ? stepUp(d, pin, ip) : no('this device may not change settings'));
+      // Migration: the old shared token used from the PC itself (the desktop app before it is paired) keeps the desktop's rights
+      // until the owner revokes it. From anywhere else, or through a proxy ('proxied' is not loopback), it has LEGACY_SCOPES only.
+      const localLegacy = d.id === 'legacy' && isLoopback(ip);
+      const has = (scope) => d.scopes.includes(scope) || (localLegacy && scope === 'settings');
+      const admin = () => (has('settings') ? (localLegacy ? yes : stepUp(d, pin, ip)) : no('this device may not change settings'));
       if (what === 'chat' || what === 'target') return has('chat') ? yes : no('this device may not chat');
       if (what === 'deny') return yes;
-      if (what === 'approve') return !has('approve') ? no('this device may not approve') : ['T0', 'T1', 'T2'].includes(tier) ? yes : stepUp(d, pin, ip);
+      if (what === 'approve') return !has('approve') ? no('this device may not approve') : ['T0', 'T1', 'T2'].includes(tier) || localLegacy ? yes : stepUp(d, pin, ip);
       if (what === 'settings') return has('settings') ? yes : no('this device may not change settings');
       if (what === 'admin') return admin();
       if (what === 'device') return typeof id === 'string' && id === d.id && id !== 'legacy' ? yes : admin();

@@ -13,6 +13,8 @@ export const modelTokenFor = (machineToken) => crypto.createHmac('sha256', machi
 const uiTokenPath = (cfg) => path.join(cfg.dataDir, 'tokens', 'ui.token');
 const readToken = (file) => { try { return fs.readFileSync(file, 'utf8').trim() || null; } catch { return null; } };
 const readPrev = (file, now) => { const p = readJson(`${file}.prev`); return p && p.until > now() ? p.token : null; };
+// The old shared UI token as the file holds it now (never its .prev grace copy): the devices module's legacy path reads it on every call.
+export const currentUiToken = (cfg) => readToken(uiTokenPath(cfg));
 const writeToken = (file, token) => { writeFileAtomic(file, `${token}\n`, 0o600); };
 
 // Creates every missing token file. Returns the names that were created.
@@ -61,17 +63,19 @@ export function createLimiter({ max = 10, windowMs = 60_000, now = Date.now, max
   };
 }
 
-export function createAuth({ tokens, limiter = createLimiter(), reload = null }) {
+// devices (server/core/devices.js): the paired devices. When given, a UI token is only ever a device's token (or the old shared
+// token through the devices module's legacy path, which it can revoke); tokens.ui and its rotation grace are not looked at.
+export function createAuth({ tokens, limiter = createLimiter(), reload = null, devices = null }) {
   let current = tokens;
   const parseBearer = (header) => { const m = String(header ?? '').match(/^Bearer\s+([A-Za-z0-9._~+/=-]{16,512})$/); return m ? m[1] : null; };
 
   // Walks every candidate (no early exit between roles) and returns the first match.
-  function authenticate(header) {
+  function authenticate(header, { ip } = {}) {
     const given = parseBearer(header);
     if (!given) return null;
     let found = null;
     const hit = (principal) => { found ??= principal; };
-    for (const t of current.ui) if (safeEqual(given, t)) hit({ role: 'ui' });
+    if (devices) { const p = devices.authenticate(given, { ip }); if (p) hit(p); } else for (const t of current.ui) if (safeEqual(given, t)) hit({ role: 'ui' });
     for (const [id, list] of Object.entries(current.machines)) {
       for (const t of list) {
         if (safeEqual(given, t)) hit({ role: 'machine', machine: id });
@@ -83,7 +87,7 @@ export function createAuth({ tokens, limiter = createLimiter(), reload = null })
 
   // { ok, status, principal }. roles: which roles may use this route.
   function check(header, { roles, ip = 'unknown' }) {
-    const principal = authenticate(header);
+    const principal = authenticate(header, { ip });
     if (principal) return roles.includes(principal.role) ? { ok: true, status: 200, principal } : { ok: false, status: 403, principal };
     if (limiter.blocked(ip)) return { ok: false, status: 429, principal: null };
     limiter.fail(ip);

@@ -6,14 +6,20 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { loadConfig, tokenPath, ROOT } from '../server/core/config.js';
+import { loadConfig, ROOT } from '../server/core/config.js';
+import { createDevices } from '../server/core/devices.js';
+import { currentUiToken } from '../server/core/auth.js';
 import { ipAllowed, isLoopback } from '../shared/net.js';
 import { reachable } from './wake.js';
 import { background, freshen } from './launch-app.js';
 import { isMain } from '../shared/util.js';
 import { launcherHtml } from './phone-launcher.js';
 
-export function createStarter({ token, allowed, ports, probe = reachable, start = background, refresh = freshen, logs = path.join(ROOT, 'data', 'logs') }) {
+// check(header, ip) -> true when the caller may start things: deviceCheck(devices) in use (a revoked or rotated token fails at once);
+// the plain token compare is kept for tests that build a starter with one token.
+export const deviceCheck = (devices) => (header, ip) => { const p = devices.authenticate(String(header ?? '').replace(/^Bearer /, ''), { ip }); return !!p && devices.can(p, 'chat', { ip }).ok; };
+
+export function createStarter({ token, check = null, allowed, ports, probe = reachable, start = background, refresh = freshen, logs = path.join(ROOT, 'data', 'logs') }) {
   const same = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
   const state = async () => ({ server: await probe('127.0.0.1', ports.server), agent: await probe('127.0.0.1', ports.agent) });
   let starting = false;
@@ -27,7 +33,7 @@ export function createStarter({ token, allowed, ports, probe = reachable, start 
       try { const png = fs.readFileSync(path.join(ROOT, 'public', 'apple-touch-icon.png')); res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'public, max-age=3600' }); return res.end(png); } catch { return out(404, { error: 'not found' }); }
     }
     const given = String(req.headers.authorization ?? '').replace(/^Bearer /, '');
-    if (!given || !same(given, token)) return out(401, { error: 'unauthorized' });
+    if (check ? !check(req.headers.authorization, ip) : !given || !same(given, token)) return out(401, { error: 'unauthorized' });
     if (req.method === 'GET' && req.url === '/health') return out(200, await state());
     if (req.method !== 'POST' || req.url !== '/start') return out(404, { error: 'not found' });
     const s = await state();
@@ -45,8 +51,9 @@ export function createStarter({ token, allowed, ports, probe = reachable, start 
 if (isMain(import.meta.url)) {
   const cfg = loadConfig({ only: ['machines.json'] });
   const m = cfg.machines;
-  const token = fs.readFileSync(path.join(path.dirname(tokenPath(cfg, 'pc')), 'ui.token'), 'utf8').trim();
+  // the paired devices and the old shared token, read from disk on every request, so a revoke or a rotation applies here at once
+  const devices = createDevices({ dataDir: cfg.dataDir, legacyToken: () => currentUiToken(cfg) });
   const port = (m.server.port ?? 7410) + 1;
-  const handler = createStarter({ token, allowed: m.machines.mac.allowedCallers, ports: { server: m.server.port ?? 7410, agent: m.machines.pc.agentPort } });
+  const handler = createStarter({ check: deviceCheck(devices), allowed: m.machines.mac.allowedCallers, ports: { server: m.server.port ?? 7410, agent: m.machines.pc.agentPort } });
   http.createServer(handler).listen(port, '0.0.0.0', () => console.log(`JARVIS starter on port ${port}`));
 }

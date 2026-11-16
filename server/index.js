@@ -8,7 +8,8 @@ import { buildMacBundle } from '../scripts/make-mac-bundle.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadConfig, dataPath, resolveData } from './core/config.js';
-import { createAuth, loadTokens, generateTokens } from './core/auth.js';
+import { createAuth, loadTokens, generateTokens, currentUiToken } from './core/auth.js';
+import { createDevices } from './core/devices.js';
 import { createAuditLog } from './core/audit-log.js';
 import { createPolicy } from './core/policy.js';
 import { createGate } from './core/gate.js';
@@ -113,11 +114,13 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
       send: (c, o) => c.ws.readyState === 1 && c.ws.send(JSON.stringify(o)), sendBinary: (c, b) => c.ws.readyState === 1 && c.ws.send(b) });
   }
 
-  const auth = createAuth({ tokens, reload });
+  // paired devices (server/core/devices.js); the old shared ui.token stays usable through its legacy path until the owner revokes it
+  const devices = createDevices({ dataDir: cfg.dataDir, legacyToken: () => currentUiToken(cfg) });
+  const auth = createAuth({ tokens, reload, devices });
   setInterval(() => { reload(); auth.reload(); }, 60_000).unref();
   const health = createHealth({ llm, queue, router, machines, contextLength: cfg.models.contextLength });
   const server = http.createServer();
-  wsApi = attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks: tasks, modes, backend, reminders, voice, log });
+  wsApi = attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks: tasks, modes, backend, reminders, voice, devices, log });
   // The Intel page's browser view: the guarded browser of whichever computer is the active target, driven by the person. Reaches the
   // agent only through router.capabilities (allowlisted routes). Everything but looking is audited; typed text is never logged.
   const VIEW = { navigate: 'view_navigate', click: 'view_click', type: 'view_type', press: 'view_press', scroll: 'view_scroll', back: 'view_back', forward: 'view_forward', reload: 'view_reload', close: 'close' };
@@ -162,7 +165,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   const msAccounts = createMicrosoftAccounts({ dataDir: cfg.dataDir, clientFile: msClientFile });
   registerMicrosoftTools(router, { accounts: msAccounts, clientFile: msClientFile });
   const osint = createOpensky({ dataDir: cfg.dataDir, watchFile: path.join(cfg.root, 'config', 'osint-watch.json') });
-  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, llmProxy, environment: async () => {
+  server.on('request', createHttpHandler({ cfg, auth: { check: (h, o) => auth.check(h, o) }, devices, devicesChanged: () => wsApi.sweep(), llmProxy, environment: async () => {
     const machine = targetState.get();
     const facts = prompts.facts(machine) ?? (await prompts.refresh(machine).then((e) => e.facts).catch(() => null)) ?? {};
     const workspace = facts.workspace_dir ?? machines[machine]?.workspaceDir ?? null;
