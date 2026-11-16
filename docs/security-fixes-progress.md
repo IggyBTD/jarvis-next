@@ -1,5 +1,6 @@
 STATUS: IN PROGRESS, stage C (stages A and B done; resumed by the owner). Resume job: acf6db86.
 
+
 # Security fix run: progress
 
 Run doc: docs/security/fix-run.md. Branch ui-extras. Resume job (CronCreate, session-only): 883971bf, every 30 min at :13 and :43.
@@ -26,7 +27,7 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F1-7 | B | DONE | 3fabb07 | router refuses a tool the chat loop did not offer in that request |
 | F3-1 | C | DONE | 4c9ef91, c695387 | per-device tokens (server/core/devices.js, Fable), scopes on every WS message and REST route, T3 and admin need the desktop on the PC or the PIN, tier from the gate, revoked or rotated sockets closed, starter checks the same store, scripts/devices.js |
 | F3-4 | C | DONE | 8d86fac | pairing codes typed in the phone app, launcher, desktop page and open-mac.js; no token in links, argv or the Mac zip; old #token links still work once and are stripped; PIN fields on T3 cards |
-| F4-5 | C | TODO | | |
+| F4-5 | C | PARTIAL | 42e3ac4, 3301224 | clean child environments for every program the agent starts (shared/child-env.js, Fable); OpenCode keeps only its own variables; tripwire on outside permission answers; T3 for env dumps, port 4096, DPAPI and Keychain calls; jarvis.ps1 no key on argv. Not done: secret store (shared/secret-store.js) written and tested but not wired, because the server never starts programs; OpenCode as its own OS user needs an administrator (HUMAN_TODO section 12) |
 | F3-2 | C | TODO | | |
 | F3-3 | C | TODO | | |
 | F3-5 | C | TODO | | |
@@ -52,6 +53,8 @@ Stage B (exfiltration and injection), commits 40feb5a to 3fabb07, tests 210 -> 2
 Browser tests after stage B, one file at a time: ui-server 19/19, mobile 17/17, browser-guard 5/5, ui-layout 12/12, sec-exfil 2/2, sec-csp-pages 1/1, sec-memory-undo 2/2, ui-shell 12/13. The ui-shell failure ("the plus opens a menu ... Accounts", the Google accounts card never shows its button) fails the same way on the pre-run baseline f0cf131, so it is not from this run.
 
 ## Unverified (runtime checks that settle them)
+
+- F4-5: whether OpenCode 1.19.1 passes OPENCODE_SERVER_PASSWORD to the commands it runs, and whether it can get its password any other way. Check: in an approved task run Get-ChildItem env: (it now asks as T3; approve it once in a scratch session) and opencode serve --help. Also one real run each of git, npm and code through registry actions under the clean environment (apps opened by actions lose user variables such as JAVA_HOME).
 
 - F3-1, F3-4 on real devices: pairing the iPhone launcher and app (two codes, two storages), the home-screen icon starting the server with the launcher's own token, open-mac.js --pair and the starter ring on the Mac, the Tauri or launch-app desktop window pairing from Settings. Check: the steps in What changes for you, then node scripts/devices.js list shows each device with a recent last seen.
 
