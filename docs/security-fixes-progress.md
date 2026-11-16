@@ -28,8 +28,8 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F3-1 | C | DONE | 4c9ef91, c695387 | per-device tokens (server/core/devices.js, Fable), scopes on every WS message and REST route, T3 and admin need the desktop on the PC or the PIN, tier from the gate, revoked or rotated sockets closed, starter checks the same store, scripts/devices.js |
 | F3-4 | C | DONE | 8d86fac | pairing codes typed in the phone app, launcher, desktop page and open-mac.js; no token in links, argv or the Mac zip; old #token links still work once and are stripped; PIN fields on T3 cards |
 | F4-5 | C | PARTIAL | 42e3ac4, 3301224 | clean child environments for every program the agent starts (shared/child-env.js, Fable); OpenCode keeps only its own variables; tripwire on outside permission answers; T3 for env dumps, port 4096, DPAPI and Keychain calls; jarvis.ps1 no key on argv. Not done: secret store (shared/secret-store.js) written and tested but not wired, because the server never starts programs; OpenCode as its own OS user needs an administrator (HUMAN_TODO section 12) |
-| F3-2 | C | TODO | | |
-| F3-3 | C | TODO | | |
+| F3-2 | C | DONE | bb144be | starter binds the Tailscale address (loopback if down, never LAN or 0.0.0.0), tailnet callers only, no loopback exemption, wrong-key limiter |
+| F3-3 | C | DONE | 7bd3270 | agents take calls from the PC tailnet address only (private ranges ignored even in old configs); agent and server bind mode tailscale, never LAN |
 | F3-5 | C | TODO | | |
 | F1-4 | C | TODO | | |
 | F1-5 | C | TODO | | |
@@ -77,6 +77,7 @@ Browser tests after stage B, one file at a time: ui-server 19/19, mobile 17/17, 
   4. node scripts/client-link.js browser. On the Mac open the plain address in Safari and type the code in Settings, JARVIS server, Pairing code. Then node scripts/client-link.js browser again and on the Mac run node scripts/open-mac.js --pair CODE.
   5. node scripts/devices.js revoke legacy (this also replaces ui.token with no grace). From now on a lost device is ended with node scripts/devices.js revoke <id> (list shows the ids).
   6. Delete dist-mac/jarvis-mac-with-tokens.zip (it holds the old shared token) and stop using old links that contain #token.
+- The server and the agents no longer fall back to the LAN address: if Tailscale is down when the server starts, only the PC itself can reach it until a restart with Tailscale up. The starter (7411) takes calls from the tailnet only; to narrow it to your phone and Mac, set server.starterCallers in config/server/machines.json to their two Tailscale addresses.
 - Approving a T3 request anywhere but the desktop app on the PC asks for the PIN. Bypass mode and choosing the trusted project folder need the desktop app on the PC or the PIN; the phone cannot change settings.
 
 - Auto mode (coding agent): only read-only commands on the allowlist run without asking. Builds, tests, installs and anything else now ask. Bypass still runs ordinary commands, but anything T3 (interpreters such as python -c or node -e, encoded PowerShell, package installs, registry writes, destructive commands anywhere in a chain) asks in every mode.
