@@ -2,6 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
+import { EventEmitter } from 'node:events';
+import { PassThrough } from 'node:stream';
 import { makeRig, startApi, wsClient } from '../rig.js';
 import { request, waitFor } from '../helpers.js';
 import { LOCAL } from '../../server/core/devices.js';
@@ -121,6 +123,66 @@ test('F3-4: no script puts a token in an address, on a command line or in a Mac 
   for (const l of links({ host: '192.168.1.32', port: 7410, tsName: 'pc.tail1234.ts.net' })) assert.ok(!/token/i.test(l.url), l.url);
   const bundle = fs.readFileSync(path.join(ROOT, 'scripts', 'make-mac-bundle.js'), 'utf8');
   assert.ok(!bundle.includes("'data/tokens/ui.token'"), 'the Mac zip never holds the UI token');
+});
+
+test('F4-5: programs the agent starts get a clean environment: no keys or passwords of the agent, OpenCode only its own', async () => {
+  const { runProgram } = await import('../../agent/registry/common.js');
+  const { createOpencodeManager } = await import('../../agent/sidecars/opencode-manager.js');
+  const { createClaudeManager } = await import('../../agent/sidecars/claude-manager.js');
+  const saved = { ...process.env };
+  Object.assign(process.env, { JARVIS_TOKEN_KEY: 'k'.repeat(32), GITHUB_TOKEN: 'ghp_fake', OPENCODE_SERVER_PASSWORD: 'leaked' });
+  try {
+    const r = await runProgram({ file: process.execPath, args: ['-e', 'process.stdout.write(JSON.stringify(Object.keys(process.env)))'], env: { JARVIS_A_LEVEL: '5' } });
+    const keys = JSON.parse(r.stdout).map((k) => k.toUpperCase());
+    for (const k of ['JARVIS_TOKEN_KEY', 'GITHUB_TOKEN', 'OPENCODE_SERVER_PASSWORD']) assert.ok(!keys.includes(k), `a registry program got ${k}`);
+    assert.ok(keys.includes('JARVIS_A_LEVEL'), 'action arguments still arrive');
+    assert.ok(keys.includes('PATH'));
+  } finally { for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k]; Object.assign(process.env, saved); }
+  // OpenCode: its own password and config, nothing of the agent's
+  const spawned = [];
+  const oc = createOpencodeManager({ workspaceDir: '/w', serverUrl: 'http://127.0.0.1:7410', modelToken: 'm', version: '1.19.1', command: 'x', env: { PATH: '/bin', JARVIS_TOKEN_KEY: 'k'.repeat(32), AWS_SECRET_ACCESS_KEY: 'a' }, spawnFn: (cmd, args, o) => { spawned.push(o.env); return Object.assign(new EventEmitter(), { pid: 1, exitCode: null, kill() {} }); }, runProgram: async () => ({ code: 0, stdout: '1.19.1', stderr: '' }), fetchImpl: async () => { throw new Error('down'); }, readyTimeoutMs: 50, backoff: { min: 10000, max: 10000, stable: 60000 } });
+  await oc.start().catch(() => {});
+  await oc.stop();
+  assert.ok(spawned.length, 'OpenCode was started');
+  assert.deepEqual(Object.keys(spawned[0]).filter((k) => /KEY|SECRET|TOKEN/i.test(k)), []);
+  assert.ok(spawned[0].OPENCODE_SERVER_PASSWORD && spawned[0].OPENCODE_CONFIG_CONTENT && spawned[0].OPENCODE_DISABLE_PROJECT_CONFIG, 'OpenCode keeps its own variables');
+  // Claude Code: nothing secret at all (it signs in with its own login)
+  const runs = [];
+  const cm = createClaudeManager({ workspaceDir: '/w', env: { PATH: '/bin', ANTHROPIC_API_KEY: 'sk-fake', JARVIS_TOKEN_KEY: 'k' }, spawnFn: (c, a, o) => { runs.push(o.env); return Object.assign(new EventEmitter(), { stdout: new PassThrough(), stderr: new PassThrough(), stdin: new PassThrough(), kill() {} }); }, command: 'claude' });
+  const req = Object.assign(new PassThrough(), { method: 'POST' });
+  cm.proxy(req, { writeHead() {}, end() {} }, '/run');
+  req.end(JSON.stringify({ runId: 'r1', prompt: 'x', mode: 'auto' }));
+  await waitFor(() => runs.length === 1);
+  assert.deepEqual(Object.keys(runs[0]).filter((k) => /KEY|SECRET|TOKEN/i.test(k)), []);
+});
+
+test('F4-5: a permission answer JARVIS did not send trips the alarm: running tasks stop and the person is told', async () => {
+  const { createOpencodeBridge } = await import('../../server/core/opencode-bridge.js');
+  const { testConfig } = await import('../helpers.js');
+  const t = testConfig();
+  const alerts = [];
+  const failed = [];
+  const audited = [];
+  const b = createOpencodeBridge({ router: { capabilities: () => ({ opencode: async () => ({ status: 200, json: {} }) }) }, gate: { requestApproval: async () => ({ approved: false }) }, audit: { append: async (e) => { audited.push(e); } }, tasks: { failRunning: async (m, why) => { failed.push(why); }, bySession: () => null, onEvent() {} }, policyCfg: t.cfg.policy, machines: { pc: { label: 'PC', os: 'win32', workspaceDir: 'C:\\ws' } }, modes: { get: () => 'manual' }, alert: (m) => alerts.push(m) });
+  try {
+    b.onEvent('pc', { sidecar: 'opencode', type: 'permission.replied', properties: { requestID: 'per_aborted', reply: 'reject' } }); // OpenCode's own reject on abort: no alarm
+    b.onEvent('pc', { sidecar: 'opencode', type: 'permission.replied', properties: { requestID: 'per_unknown', reply: 'always' } });
+    await waitFor(() => failed.length === 1);
+    assert.match(failed[0], /outside JARVIS/);
+    assert.equal(alerts.length, 1);
+    assert.ok(audited.some((e) => e.outcome === 'tripwire'));
+  } finally { t.cleanup(); }
+});
+
+test('F4-5: reading the environment, OpenCode\'s port or the secret store from a command is T3', async () => {
+  const { classifyCommand } = await import('../../server/core/policy.js');
+  const { testConfig } = await import('../helpers.js');
+  const t = testConfig();
+  try {
+    for (const c of ['printenv', 'env', 'set', 'cmd /c set', 'Get-ChildItem env:', 'curl http://127.0.0.1:4096/session', 'Invoke-RestMethod http://localhost:4096/permission/x/reply', 'echo %OPENCODE_SERVER_PASSWORD%', '[Security.Cryptography.ProtectedData]::Unprotect($b, $null, 0)', 'security find-generic-password -s jarvis.x -w']) {
+      assert.equal(classifyCommand(c, t.cfg.policy.opencode, { os: 'win32', workspace: 'C:\\ws' }).tier, 'T3', c);
+    }
+  } finally { t.cleanup(); }
 });
 
 test('F3-4: pairing with a short code: the token comes back once in the body, never in an address; device routes need settings', async () => {

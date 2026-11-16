@@ -16,14 +16,17 @@ function Stop-Jarvis {
 }
 
 function Start-Jarvis {
-  # each part gets its own window, with the token key loaded from your user environment
+  # each part gets its own window. Only the server needs the token key: it inherits it from this process (never on a command line, where
+  # every program can read it), and the agent and the app are started after it is removed again.
   $key = [Environment]::GetEnvironmentVariable('JARVIS_TOKEN_KEY', 'User')
   if (-not $key) { Write-Warning 'JARVIS_TOKEN_KEY is not set (Google sign-in will fail)' }
   foreach ($p in @(@('server', 'npm run server'), @('agent', 'npm run agent'), @('app', 'npm run tauri dev'))) {
-    $cmd = "`$host.UI.RawUI.WindowTitle = 'jarvis $($p[0])'; `$env:JARVIS_TOKEN_KEY = '$key'; Set-Location '$JarvisRoot'; $($p[1])"
+    if ($p[0] -eq 'server' -and $key) { $env:JARVIS_TOKEN_KEY = $key } else { Remove-Item Env:JARVIS_TOKEN_KEY -ErrorAction SilentlyContinue }
+    $cmd = "`$host.UI.RawUI.WindowTitle = 'jarvis $($p[0])'; Set-Location '$JarvisRoot'; $($p[1])"
     Start-Process pwsh -ArgumentList '-NoExit', '-Command', $cmd
     Start-Sleep 3   # server and agent first, so the app finds them
   }
+  Remove-Item Env:JARVIS_TOKEN_KEY -ErrorAction SilentlyContinue
 }
 
 function Restart-Jarvis { Stop-Jarvis; Start-Jarvis }

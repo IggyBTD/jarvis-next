@@ -14,10 +14,10 @@ export { modeAnswer }; // lives in policy.js; re-exported for callers that read 
 
 // trusted(machine) -> folders the person has allowed the coding agent to use besides its workspace (the chosen project folder, policy.json trustedFolders)
 // protect(machine) -> JARVIS's own folder and data folder there: T3 in every mode, trusted or not (the agent's /info adds its own)
-export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, policy = createPolicy(policyCfg), machines, modes, trusted = () => [], protect = () => [], log = () => {}, reconnectDelayMs = 500 }) {
+export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, policy = createPolicy(policyCfg), machines, modes, trusted = () => [], protect = () => [], alert = () => {}, log = () => {}, reconnectDelayMs = 500 }) {
   const state = new Map();     // machine -> { routes, inflight: Map<permissionId, AbortController>, seen: Set }
   const stop = new AbortController();
-  const get = (m) => { if (!state.has(m)) state.set(m, { routes: null, inflight: new Map(), seen: new Set() }); return state.get(m); };
+  const get = (m) => { if (!state.has(m)) state.set(m, { routes: null, inflight: new Map(), seen: new Set(), replied: new Set() }); return state.get(m); };
 
   // Where a machine's requests are checked against: its OS, its workspace and the folders the person trusts, as absolute paths. A
   // folder written with ~ needs that machine's home (from its /info); until it is known the folder cannot be resolved, so everything
@@ -71,6 +71,8 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
     const s = get(machine);
     try {
       const req = replyRequest(s.routes ?? discoverRoutes(null), p, answer);
+      (s.replied ??= new Set()).add(p.id); // only answers in this set are ours; any other answer OpenCode reports trips the alarm (onEvent)
+      if (s.replied.size > 500) s.replied.delete(s.replied.values().next().value);
       const r = await router.capabilities(machine).opencode(req.method, req.path, req.body);
       if (r.status >= 300) log(`OpenCode refused the permission reply (${r.status})`);
       return r.status < 300;
@@ -143,6 +145,15 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
     await respond(machine, p, answer.approved ? 'once' : 'reject');
   }
 
+  function tripwire(machine, id, reply) {
+    const why = 'a permission was answered outside JARVIS (something used OpenCode directly), so the task was stopped';
+    audit.append({ component: 'opencode-bridge', target: machine, source: 'agent', action: 'opencode_permission_replied', args: { id: id.slice(0, 80), reply: String(reply ?? '').slice(0, 20) }, tier: 'T3', decision: 'deny', outcome: 'tripwire', reason: why }).catch(() => {});
+    voidInFlight(machine, why);
+    tasks?.failRunning(machine, why);
+    log(`tripwire on ${machine}: ${why}`);
+    alert(`On the ${machines[machine]?.label ?? machine}, ${why}. Check what the coding agent ran.`);
+  }
+
   function voidInFlight(machine, reason) {
     const s = get(machine);
     for (const ctl of s.inflight.values()) ctl.abort(new Error(reason));
@@ -170,7 +181,16 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
     if (ev.sidecar === 'claude') { tasks?.onClaudeEvent?.(machine, ev); return; }
     if (ev.sidecar !== 'opencode') return;
     if (ev.type === 'permission.asked' || ev.type === 'permission.updated') { handle(machine, ev.properties).catch((e) => log(`permission failed: ${e.message}`)); return; }
-    if (ev.type === 'permission.replied') { get(machine).inflight.get(ev.properties?.requestID ?? ev.properties?.permissionID)?.abort(new Error('answered elsewhere')); return; }
+    if (ev.type === 'permission.replied') {
+      const id = String(ev.properties?.requestID ?? ev.properties?.permissionID ?? '');
+      get(machine).inflight.get(id)?.abort(new Error('answered elsewhere'));
+      // Only JARVIS answers OpenCode's permission requests. An answer it did not send means something used OpenCode's own API on that
+      // machine (with its password, from a command it ran): stop the running work, write it down and tell the person.
+      // (a reject is harmless and OpenCode sends one itself when a session is aborted, so only an approval counts)
+      const answer = String(ev.properties?.reply ?? ev.properties?.response ?? '').toLowerCase();
+      if (!get(machine).replied?.has(id) && answer !== 'reject') tripwire(machine, id, answer);
+      return;
+    }
     if (ev.type === 'opencode.restarted' || ev.type === 'opencode.exited') {
       voidInFlight(machine, 'OpenCode restarted');
       tasks?.failRunning(machine, 'OpenCode restarted, so the task was stopped');

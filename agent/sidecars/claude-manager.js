@@ -28,7 +28,7 @@ export function createClaudeManager({ workspaceDir, policy = {}, protect = [], e
   function start({ runId, prompt, mode, folder }) {
     const cwd = folder ? path.join(workspaceDir, folder) : workspaceDir;
     const text = `${mode === 'plan' ? `${PLAN_NOTE}\n\n` : ''}${prompt}`;
-    const child = spawnFn(command, ['-p', ...claudeArgs(mode, policy.opencode ?? policy, { protect })], { cwd, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: cleanEnv(env, {}) });
+    const child = spawnFn(command, ['-p', ...claudeArgs(mode, policy.opencode ?? policy, { protect })], { cwd, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: cleanEnv(env, {}, { allowSecret: [] }) });
     runs.set(runId, child);
     let buf = '';
     let done = false;

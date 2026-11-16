@@ -89,6 +89,8 @@ export function classifyCommand(command, cfg, scope = null) {
   const variants = forms(c);
   if (cfg.destructive.some((g) => variants.some((v) => globAnywhere(g).test(v)))) return { class: 'destructive', tier: 'T3', reason: 'matches a destructive pattern' };
   if ((cfg.interpreters ?? []).some((g) => variants.some((v) => globAnywhere(g).test(v)))) return { class: 'destructive', tier: 'T3', reason: 'runs an interpreter, inline or encoded code, or an install' };
+  // a command that prints the environment it runs in (OpenCode's own password is in it): set, env, printenv, export, declare -x
+  if (/(^|[;&|]\s*)(set|env|printenv|export|declare(\s+-[a-z]+)*|typeset)\s*($|[;&|])/i.test(c)) return { class: 'destructive', tier: 'T3', reason: 'prints the environment' };
   if (scope) {
     const { dynamic, paths } = pathsOf(c, scope);
     if (dynamic) return { class: 'destructive', tier: 'T3', reason: 'uses a variable or substitution, so what it touches cannot be known' };

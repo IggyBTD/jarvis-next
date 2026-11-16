@@ -75,3 +75,9 @@ Run an OpenAI-compatible speech-to-text server on :8770 and text-to-speech on :8
 3. Paste the prompt in `docs/MAC_PROMPT.md` into Claude Code on the Mac (fill in the PC's address).
 4. When it tells you the Mac's address, put it into the PC's `config\server\machines.json` as `machines.mac.host`, then restart the server (`npm run server`).
 5. Open the link from step 1 in a browser on the Mac.
+
+## 12. After the security fixes (docs/security-fixes-progress.md)
+
+1. Pair every device and end the old shared token: the six steps under "What changes for you" in docs/security-fixes-progress.md (PIN, desktop, phone, Mac, revoke legacy, delete dist-mac/jarvis-mac-with-tokens.zip).
+2. Run OpenCode as its own low-privilege user, so the commands it runs cannot read JARVIS's files or tokens: the plan in docs/security/secrets-design.md section 4 (it needs an administrator). Until then the clean child environment, the T3 patterns and the tripwire (an OpenCode permission answered outside JARVIS stops the task and shows a "Security:" message) are what stands in the way.
+3. Check on the real OpenCode 1.19.1 whether its server password can reach it other than through OPENCODE_SERVER_PASSWORD (opencode serve --help, the config schema), and whether its commands inherit that variable. If they do not, write it in docs/decisions.md.

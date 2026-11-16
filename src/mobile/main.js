@@ -164,6 +164,7 @@ onLink((e) => {
     case 'tool.result': chat.onToolResult(e); break;
     case 'chat.note': chat.onNote(e); break;
     case 'memory.added': case 'memory.removed': chat.onMemory(e, forgetNote); break;
+    case 'security.alert': toast(`Security: ${e.reason}`); break;
     case 'chat.done': chat.onDone(e); renderBar(); refreshSend(); break;
     case 'chat.error': chat.onError(e); refreshSend(); break;
     case 'title': case 'target': case 'health': renderBar(); break;

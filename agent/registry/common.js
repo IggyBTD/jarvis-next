@@ -3,9 +3,13 @@
 import { execFile, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
+import { childEnv } from '../../shared/child-env.js';
 import path from 'node:path';
 
 const MAX_BUFFER = 4 * 1024 * 1024;
+// What a program the registry starts may see of the agent's environment (shared/child-env.js): what it needs to start, never a key or a
+// token; action arguments (JARVIS_A_*) and user-script arguments (JARVIS_ARG_*) are handed over on purpose.
+const envFor = (env) => childEnv(process.env, env, { allowSecret: [/^JARVIS_A_/, /^JARVIS_ARG_/] });
 
 /**
  * Starts a program with an argument array. spec: { file, args[], env?, cwd?, stdin?, timeoutMs? }.
@@ -16,7 +20,7 @@ export function runProgram(spec) {
   if (typeof file !== 'string' || !file || file.includes('\0')) return Promise.reject(new Error('program name must be a non-empty string'));
   if (!Array.isArray(args) || args.some((a) => typeof a !== 'string' || a.includes('\0'))) return Promise.reject(new Error('arguments must be an array of strings'));
   return new Promise((resolve, reject) => {
-    const child = execFile(file, args, { env: { ...process.env, ...env }, cwd, timeout: timeoutMs, windowsHide: true, maxBuffer: MAX_BUFFER, encoding: 'utf8' }, (err, stdout, stderr) => {
+    const child = execFile(file, args, { env: envFor(env), cwd, timeout: timeoutMs, windowsHide: true, maxBuffer: MAX_BUFFER, encoding: 'utf8' }, (err, stdout, stderr) => {
       if (err && (err.code === 'ENOENT' || err.code === 'EACCES')) return reject(new Error(`cannot start ${file}: ${err.code}`));
       resolve({ code: err ? (typeof err.code === 'number' ? err.code : 1) : 0, stdout: stdout ?? '', stderr: err?.killed ? `${stderr ?? ''}\n[timed out after ${timeoutMs} ms]` : stderr ?? '' });
     });
@@ -28,7 +32,7 @@ export function runProgram(spec) {
 export function spawnTracked(spec, registry, key) {
   const { file, args = [], env = {}, cwd } = spec;
   if (registry.has(key)) throw new Error(`${key} is already running`);
-  const child = spawn(file, args, { env: { ...process.env, ...env }, cwd, stdio: 'ignore', windowsHide: true, detached: false });
+  const child = spawn(file, args, { env: envFor(env), cwd, stdio: 'ignore', windowsHide: true, detached: false });
   registry.set(key, { child, startedAt: Date.now(), spec: { file, args } });
   child.on('exit', () => registry.delete(key));
   child.on('error', () => registry.delete(key));

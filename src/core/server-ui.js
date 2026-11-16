@@ -306,6 +306,7 @@ onLink((e) => {
     case 'digest.error': toast(`Digest problem: ${e.reason}`); break;
     case 'auth.banner': digestData = { ...(digestData ?? {}), authError: true }; break;
     case 'server-error': toast(e.reason); break;
+    case 'security.alert': toast(`Security: ${e.reason}`); break;
     default: break;
   }
   if (e.type === 'state' || e.type === 'agent.status') showCodingTasks();
