@@ -3,7 +3,7 @@
 // tool call from its result.
 import fs from 'node:fs';
 import path from 'node:path';
-import { writeJsonAtomic, readJson, newId } from '../../shared/util.js';
+import { writeJsonAtomic, readJson, newId, wrapUntrusted } from '../../shared/util.js';
 import { stateOf, cleanState } from './taint.js';
 
 export const estimateTokens = (m) => Math.ceil((typeof m.content === 'string' ? m.content.length : JSON.stringify(m.content ?? '').length) / 3.5) + (m.tool_calls ? Math.ceil(JSON.stringify(m.tool_calls).length / 3.5) : 0) + 8;
@@ -68,7 +68,11 @@ export function createConversations({ dir, now = () => new Date() }) {
 // oldest whole exchanges are dropped; the list never starts with a tool message or an assistant message that has tool calls
 // whose results were cut.
 export function fit(messages, budget) {
-  const api = messages.map(({ ts, target, partial, ...m }) => ({ ...m }));
+  // A reply written by Claude Code (the Code page) is shown to the person as it is, but the local model gets it as data inside an
+  // untrusted block with one line of its own, so repository text never becomes the model's own earlier words.
+  const api = messages.map(({ ts, target, partial, origin, ...m }) => (origin === 'claude-code'
+    ? { ...m, content: `Claude Code ran the task and reported back (its words, not mine):\n${wrapUntrusted('Claude Code result', m.content, { max: 6000 })}` }
+    : { ...m }));
   const total = (list) => list.reduce((n, m) => n + estimateTokens(m), 0);
   if (total(api) <= budget) return api;
   const lastUser = api.findLastIndex((m) => m.role === 'user');

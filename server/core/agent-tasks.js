@@ -62,7 +62,7 @@ export function createAgentTasks({ router, bus, audit, conversations, dataDir, t
     if (conv && t.direct) {
       // a Code-page message answered by Claude Code: its result is the assistant's reply
       const text = state === 'done' ? (t.summary ?? '(no reply)') : `Claude Code ${state === 'aborted' ? 'was stopped' : 'did not finish'}${error ? `: ${error}` : ''}`;
-      conversations.append(conv, { role: 'assistant', content: text, target: t.target });
+      conversations.append(conv, { role: 'assistant', content: text, target: t.target, origin: 'claude-code' }); // shown as written; the local model gets it wrapped (conversations.js fit)
       bus.publish('chat.delta', { convId: t.convId, target: t.target, text });
       bus.publish('chat.done', { convId: t.convId, target: t.target, text, stats: { requests: 1, tools: 0 } });
     } else if (conv) {
