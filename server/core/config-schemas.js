@@ -14,7 +14,7 @@ const samplingSchema = obj({ temperature: { type: 'number', minimum: 0, maximum:
 
 export const SCHEMAS = {
   'machines.json': obj({
-    server: obj({ bind: str, port, origins: strs, url: str }, ['bind', 'port']),
+    server: obj({ bind: str, port, origins: strs, url: str, starterCallers: strs }, ['bind', 'port']),
     machines: {
       type: 'object',
       additionalProperties: obj({

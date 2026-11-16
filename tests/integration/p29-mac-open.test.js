@@ -15,7 +15,7 @@ const ask = (port, method, url, token) => new Promise((ok, no) => {
 test('starter: needs the token, starts only what is down, and does nothing when all is up', async () => {
   const started = [];
   let up = { 7410: false, 7421: false };
-  const h = createStarter({ token: 'tok', allowed: ['100.64.0.0/10'], ports: { server: 7410, agent: 7421 }, probe: async (_h, p) => up[p], start: (script) => started.push(script), refresh: async () => started.push('refresh') });
+  const h = createStarter({ token: 'tok', allowed: ['100.64.0.0/10', '127.0.0.1'] /* the test connects from loopback, which is no longer exempt (F3-2) */, ports: { server: 7410, agent: 7421 }, probe: async (_h, p) => up[p], start: (script) => started.push(script), refresh: async () => started.push('refresh') });
   const srv = http.createServer(h);
   await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
   const port = srv.address().port;
@@ -99,7 +99,7 @@ test('logo: the icon is the node mesh (30 nodes from the shared geometry), and t
 
 test('phone launcher: the starter serves the home-screen page and its icon without a key, and still refuses everything else', async () => {
   const { links } = await import('../../scripts/client-link.js');
-  const handler = createStarter({ token: 'secret-token', allowed: ['100.64.0.0/10'], ports: { server: 7410, agent: 7421 }, probe: async () => false, start: () => {}, refresh: async () => {} });
+  const handler = createStarter({ token: 'secret-token', allowed: ['100.64.0.0/10', '127.0.0.1'] /* the test connects from loopback, which is no longer exempt (F3-2) */, ports: { server: 7410, agent: 7421 }, probe: async () => false, start: () => {}, refresh: async () => {} });
   const srv = http.createServer(handler);
   await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
   const get = (p) => new Promise((ok, no) => http.get({ port: srv.address().port, host: '127.0.0.1', path: p }, (res) => { const b = []; res.on('data', (d) => b.push(d)); res.on('end', () => ok({ status: res.statusCode, type: res.headers['content-type'], body: Buffer.concat(b) })); }).on('error', no));

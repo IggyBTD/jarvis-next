@@ -25,11 +25,13 @@ export const callerIp = (req) => {
   return h['x-forwarded-for'] || h.forwarded || h['x-real-ip'] || Object.keys(h).some((k) => k.startsWith('tailscale-')) ? 'proxied' : req?.socket?.remoteAddress ?? 'unknown';
 };
 
+// 'tailscale': the Tailscale interface, else loopback; never the LAN (on a foreign Wi-Fi the LAN is anyone's). 'auto' also tries the LAN.
 export function resolveBind(bind, interfaces = os.networkInterfaces()) {
-  if (bind !== 'auto') return { host: bind, reason: 'configured' };
+  if (bind !== 'auto' && bind !== 'tailscale') return { host: bind, reason: 'configured' };
   const all = Object.values(interfaces).flat().filter((i) => i && i.family === 'IPv4' && !i.internal);
   const ts = all.find((i) => ipAllowed(i.address, ['100.64.0.0/10']));
   if (ts) return { host: ts.address, reason: 'Tailscale interface' };
+  if (bind === 'tailscale') return { host: '127.0.0.1', reason: 'no Tailscale interface found; loopback only (never the LAN)' };
   const lan = all.find((i) => ipAllowed(i.address, ['192.168.0.0/16', '10.0.0.0/8', '172.16.0.0/12']));
   if (lan) return { host: lan.address, reason: 'LAN address' };
   return { host: '127.0.0.1', reason: 'no Tailscale or LAN interface found; loopback only' };

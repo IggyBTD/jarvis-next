@@ -9,7 +9,8 @@ import crypto from 'node:crypto';
 import { loadConfig, ROOT } from '../server/core/config.js';
 import { createDevices } from '../server/core/devices.js';
 import { currentUiToken } from '../server/core/auth.js';
-import { ipAllowed, isLoopback } from '../shared/net.js';
+import { ipAllowed, resolveBind } from '../shared/net.js';
+import { createLimiter } from '../server/core/auth.js';
 import { reachable } from './wake.js';
 import { background, freshen } from './launch-app.js';
 import { isMain } from '../shared/util.js';
@@ -17,23 +18,30 @@ import { launcherHtml } from './phone-launcher.js';
 
 // check(header, ip) -> true when the caller may start things: deviceCheck(devices) in use (a revoked or rotated token fails at once);
 // the plain token compare is kept for tests that build a starter with one token.
+// Who may ring: tailnet devices only (the phone and the Mac). machines.json server.starterCallers narrows it to their two addresses.
+export const STARTER_CALLERS = ['100.64.0.0/10'];
+// Where it listens: the Tailscale address, else loopback; never the LAN and never every address.
+export const starterBind = (interfaces) => resolveBind('tailscale', interfaces);
+
 export const deviceCheck = (devices) => (header, ip) => { const p = devices.authenticate(String(header ?? '').replace(/^Bearer /, ''), { ip }); return !!p && devices.can(p, 'chat', { ip }).ok; };
 
-export function createStarter({ token, check = null, allowed, ports, probe = reachable, start = background, refresh = freshen, logs = path.join(ROOT, 'data', 'logs') }) {
+export function createStarter({ token, check = null, allowed, ports, limiter = createLimiter(), probe = reachable, start = background, refresh = freshen, logs = path.join(ROOT, 'data', 'logs') }) {
   const same = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
   const state = async () => ({ server: await probe('127.0.0.1', ports.server), agent: await probe('127.0.0.1', ports.agent) });
   let starting = false;
   return async (req, res) => {
     const out = (status, body) => { res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(body)); };
     const ip = req.socket.remoteAddress;
-    if (!isLoopback(ip) && !ipAllowed(ip, allowed)) return out(403, { error: 'forbidden' });
+    // no loopback exemption: behind tailscale serve or any local proxy every caller is loopback
+    if (!ipAllowed(ip, allowed)) return out(403, { error: 'forbidden' });
     // the phone's home-screen page and its icon: no secrets in them (the key is in the address after #), so they need no token
     if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }); return res.end(launcherHtml({ serverPort: ports.server })); }
     if (req.method === 'GET' && req.url === '/apple-touch-icon.png') {
       try { const png = fs.readFileSync(path.join(ROOT, 'public', 'apple-touch-icon.png')); res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'public, max-age=3600' }); return res.end(png); } catch { return out(404, { error: 'not found' }); }
     }
     const given = String(req.headers.authorization ?? '').replace(/^Bearer /, '');
-    if (check ? !check(req.headers.authorization, ip) : !given || !same(given, token)) return out(401, { error: 'unauthorized' });
+    if (limiter.blocked(ip)) return out(429, { error: 'too many attempts' });
+    if (check ? !check(req.headers.authorization, ip) : !given || !same(given, token)) { limiter.fail(ip); return out(401, { error: 'unauthorized' }); }
     if (req.method === 'GET' && req.url === '/health') return out(200, await state());
     if (req.method !== 'POST' || req.url !== '/start') return out(404, { error: 'not found' });
     const s = await state();
@@ -54,6 +62,7 @@ if (isMain(import.meta.url)) {
   // the paired devices and the old shared token, read from disk on every request, so a revoke or a rotation applies here at once
   const devices = createDevices({ dataDir: cfg.dataDir, legacyToken: () => currentUiToken(cfg) });
   const port = (m.server.port ?? 7410) + 1;
-  const handler = createStarter({ check: deviceCheck(devices), allowed: m.machines.mac.allowedCallers, ports: { server: m.server.port ?? 7410, agent: m.machines.pc.agentPort } });
-  http.createServer(handler).listen(port, '0.0.0.0', () => console.log(`JARVIS starter on port ${port}`));
+  const handler = createStarter({ check: deviceCheck(devices), allowed: m.server.starterCallers ?? STARTER_CALLERS, ports: { server: m.server.port ?? 7410, agent: m.machines.pc.agentPort } });
+  const bind = starterBind();
+  http.createServer(handler).listen(port, bind.host, () => console.log(`JARVIS starter on ${bind.host}:${port} (${bind.reason})`));
 }

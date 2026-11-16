@@ -185,6 +185,34 @@ test('F4-5: reading the environment, OpenCode\'s port or the secret store from a
   } finally { t.cleanup(); }
 });
 
+test('F3-2: the starter binds the tailnet only, takes only tailnet callers (loopback no longer exempt) and limits wrong keys', async () => {
+  const { resolveBind } = await import('../../shared/net.js');
+  const ifc = (...addrs) => ({ eth: addrs.map((address) => ({ address, family: 'IPv4', internal: false })) });
+  assert.equal(resolveBind('tailscale', ifc('192.168.1.5', '100.80.1.1')).host, '100.80.1.1');
+  assert.equal(resolveBind('tailscale', ifc('192.168.1.5')).host, '127.0.0.1', 'no Tailscale: loopback, never the LAN');
+  const { starterBind, STARTER_CALLERS } = await import('../../scripts/pc-starter.js');
+  assert.equal(starterBind(ifc('192.168.1.5')).host, '127.0.0.1');
+  assert.ok(STARTER_CALLERS.every((c) => c.startsWith('100.')), 'tailnet callers only by default');
+  const h = createStarter({ token: 't'.repeat(32), allowed: STARTER_CALLERS, ports: { server: 1, agent: 2 }, probe: async () => true, start: () => {}, refresh: async () => {} });
+  const srv = http.createServer(h);
+  await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
+  try {
+    const at = `http://127.0.0.1:${srv.address().port}`;
+    assert.equal((await request(`${at}/`)).status, 403, 'a loopback caller (a local proxy) is not trusted');
+  } finally { srv.close(); }
+  // wrong keys from an allowed address are limited
+  const h2 = createStarter({ token: 't'.repeat(32), allowed: ['127.0.0.1'], ports: { server: 1, agent: 2 }, probe: async () => true, start: () => {}, refresh: async () => {} });
+  const srv2 = http.createServer(h2);
+  await new Promise((ok) => srv2.listen(0, '127.0.0.1', ok));
+  try {
+    const at = `http://127.0.0.1:${srv2.address().port}`;
+    const codes = [];
+    for (let i = 0; i < 12; i++) codes.push((await request(`${at}/health`, { headers: bearer(`wrong${'x'.repeat(30)}${i}`) })).status);
+    assert.equal(codes.at(-1), 429, codes.join(','));
+    assert.equal((await request(`${at}/health`, { headers: bearer('t'.repeat(32)) })).status, 429, 'blocked for a while, the right key included');
+  } finally { srv2.close(); }
+});
+
 test('F3-4: pairing with a short code: the token comes back once in the body, never in an address; device routes need settings', async () => {
   const s = await setup();
   try {
