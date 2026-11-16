@@ -1,6 +1,4 @@
-STATUS: PAUSED by the owner during stage C (stages A and B done). The resume job 883971bf was deleted.
-
-NOW: the Fable pairing module is written but not committed or wired (untracked: server/core/devices.js, tests/unit/sec-c-devices.test.js, docs/security/pairing-design.md; its own 11 tests pass). Review of devices.js was in progress. To resume: review it, commit it, then wire F3-1 and F3-4, then the rest of stage C, D and FINAL.
+STATUS: IN PROGRESS, stage C (stages A and B done; resumed by the owner). Resume job: acf6db86.
 
 # Security fix run: progress
 
@@ -26,8 +24,8 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F2-3 | B | DONE | 7b5b21f | task note: summary, each changed file on one line and the reason inside one untrusted block |
 | F2-7 | B | DONE | 2c378c7 | Claude Code reply stored as shown, marked origin claude-code, sent to the local model wrapped with a short line of its own |
 | F1-7 | B | DONE | 3fabb07 | router refuses a tool the chat loop did not offer in that request |
-| F3-1 | C | TODO | | |
-| F3-4 | C | TODO | | |
+| F3-1 | C | DONE | 4c9ef91, c695387 | per-device tokens (server/core/devices.js, Fable), scopes on every WS message and REST route, T3 and admin need the desktop on the PC or the PIN, tier from the gate, revoked or rotated sockets closed, starter checks the same store, scripts/devices.js |
+| F3-4 | C | DONE | 8d86fac | pairing codes typed in the phone app, launcher, desktop page and open-mac.js; no token in links, argv or the Mac zip; old #token links still work once and are stripped; PIN fields on T3 cards |
 | F4-5 | C | TODO | | |
 | F3-2 | C | TODO | | |
 | F3-3 | C | TODO | | |
@@ -55,6 +53,8 @@ Browser tests after stage B, one file at a time: ui-server 19/19, mobile 17/17, 
 
 ## Unverified (runtime checks that settle them)
 
+- F3-1, F3-4 on real devices: pairing the iPhone launcher and app (two codes, two storages), the home-screen icon starting the server with the launcher's own token, open-mac.js --pair and the starter ring on the Mac, the Tauri or launch-app desktop window pairing from Settings. Check: the steps in What changes for you, then node scripts/devices.js list shows each device with a recent last seen.
+
 - F2-4 and F2-2: how often the real model follows or echoes an injection. Check with a fixed red-team set against the PC model: a mail with an instruction to open an address, a mail holding <tool_call> markup, a page asking for an image link; every case must end in an approval card or nothing.
 
 - F2-1: the Tauri window under its new CSP (not runnable here). Check: npm run tauri dev, open a chat with a reply containing an image from a local listener (python -m http.server on another port) and confirm no request arrives; open a chart artifact and confirm it draws (inline scripts in srcdoc frames depend on dangerousDisableAssetCspModification). Then the same with npm run tauri build.
@@ -66,6 +66,15 @@ Browser tests after stage B, one file at a time: ui-server 19/19, mobile 17/17, 
 - F1-2 (CH-5): whether `git log --format=... --output=<file>` writes chosen content on the installed git. It is no longer allowlisted in any mode, so the hole is closed either way. Check in a scratch repository.
 
 ## What changes for you
+
+- Pairing (F3-1, F3-4). Every device now gets its own token from a short code. Until you finish the steps below, the old shared token keeps working: on the PC itself with all rights, elsewhere only to chat and approve up to T2 (T3 then needs the PIN, so set one first). Steps, all on the PC unless said otherwise:
+  1. node scripts/devices.js pin (choose a PIN of 6 or more characters).
+  2. node scripts/devices.js pair desktop, then type the code in the desktop window: Settings, JARVIS server, Pairing code, Pair.
+  3. node scripts/client-link.js phone. On the iPhone delete the old JARVIS icon, open the plain address it prints in Safari, type the first code on the launcher page, Add to Home Screen, open it, type the second code in the app.
+  4. node scripts/client-link.js browser. On the Mac open the plain address in Safari and type the code in Settings, JARVIS server, Pairing code. Then node scripts/client-link.js browser again and on the Mac run node scripts/open-mac.js --pair CODE.
+  5. node scripts/devices.js revoke legacy (this also replaces ui.token with no grace). From now on a lost device is ended with node scripts/devices.js revoke <id> (list shows the ids).
+  6. Delete dist-mac/jarvis-mac-with-tokens.zip (it holds the old shared token) and stop using old links that contain #token.
+- Approving a T3 request anywhere but the desktop app on the PC asks for the PIN. Bypass mode and choosing the trusted project folder need the desktop app on the PC or the PIN; the phone cannot change settings.
 
 - Auto mode (coding agent): only read-only commands on the allowlist run without asking. Builds, tests, installs and anything else now ask. Bypass still runs ordinary commands, but anything T3 (interpreters such as python -c or node -e, encoded PowerShell, package installs, registry writes, destructive commands anywhere in a chain) asks in every mode.
 - Claude Code backend in Auto: commands outside the read-only allowlist are refused (it cannot ask); switch to Bypass for a run that must build or test.
