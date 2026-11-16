@@ -42,10 +42,11 @@ test('client links: home link always, Tailscale links only when it is running; t
   assert.equal(await tailscaleName(async () => ({ code: 1, stdout: '', stderr: 'stopped' })), null);
   assert.equal(await tailscaleName(async () => { throw new Error('ENOENT'); }), null);
   assert.equal(await tailscaleName(async () => ({ code: 0, stdout: JSON.stringify({ BackendState: 'Stopped', Self: { DNSName: 'x.' } }), stderr: '' })), null);
-  const home = links({ host: '192.168.1.32', port: 7410, token: 'T' });
-  assert.deepEqual(home.map((l) => l.url), ['http://192.168.1.32:7410/#token=T', 'http://192.168.1.32:7411/#token=T']); // the second is the iPhone link, through the starter
-  const away = links({ host: '192.168.1.32', port: 7410, token: 'T', tsName: 'pc.tail1234.ts.net' });
-  assert.deepEqual(away.map((l) => l.url), ['http://192.168.1.32:7410/#token=T', 'http://pc.tail1234.ts.net:7411/#token=T', 'https://pc.tail1234.ts.net/#token=T', 'http://pc.tail1234.ts.net:7410/#token=T']);
+  // plain addresses since the security fixes (F3-4): a device is paired with a code, never with a key in a link
+  const home = links({ host: '192.168.1.32', port: 7410 });
+  assert.deepEqual(home.map((l) => l.url), ['http://192.168.1.32:7410/', 'http://192.168.1.32:7411/']); // the second is the iPhone link, through the starter
+  const away = links({ host: '192.168.1.32', port: 7410, tsName: 'pc.tail1234.ts.net' });
+  assert.deepEqual(away.map((l) => l.url), ['http://192.168.1.32:7410/', 'http://pc.tail1234.ts.net:7411/', 'https://pc.tail1234.ts.net/', 'http://pc.tail1234.ts.net:7410/']);
   assert.match(away[1].label, /iPhone/);
   assert.match(away[2].label, /tailscale serve --bg 7410/);
 });

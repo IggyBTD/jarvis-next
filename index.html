@@ -310,7 +310,8 @@
           <p>Run the model, the tools and the approvals on your PC, and use this app as a light client. Off keeps the original behaviour: this app talks to LM Studio directly and controls only this computer.</p>
           <div class="set-row"><label for="srv-enabled">Use the JARVIS server</label><input type="checkbox" id="srv-enabled"></div>
           <div class="set-row"><label for="srv-url">Server address</label><input type="text" id="srv-url" class="set-input" placeholder="ws://pc:7410" autocomplete="off" spellcheck="false"></div>
-          <div class="set-row"><label for="srv-token">UI token</label><input type="password" id="srv-token" class="set-input" placeholder="from data/tokens/ui.token" autocomplete="off" spellcheck="false"></div>
+          <div class="set-row"><label for="srv-code">Pairing code</label><input type="text" id="srv-code" class="set-input" placeholder="XXXX-XXXX" maxlength="9" autocomplete="off" spellcheck="false" autocapitalize="characters"><button type="button" class="av-btn" id="srv-pair">Pair</button></div>
+          <div class="set-row"><label for="srv-token">Device token</label><input type="password" id="srv-token" class="set-input" placeholder="filled in by pairing" autocomplete="off" spellcheck="false"></div>
           <div class="set-row"><label for="srv-mac">PC MAC address (for Wake-on-LAN)</label><input type="text" id="srv-mac" class="set-input" placeholder="aa:bb:cc:dd:ee:ff" autocomplete="off" spellcheck="false"></div>
           <div class="set-row"><span id="srv-status" class="does" aria-live="polite">Off</span><button type="button" class="av-btn" id="srv-save">Save and connect</button></div>
         </div>
@@ -329,6 +330,7 @@
     <pre id="gate-args" class="gate-pre"></pre>
     <div id="gate-dry-wrap" hidden><h3 class="gate-sub">What it would do</h3><pre id="gate-dry" class="gate-pre"></pre></div>
     <img id="gate-shot" class="gate-shot" alt="Screenshot of the page" hidden>
+    <div id="gate-pin-row" class="gate-pin" hidden><label for="gate-pin">PIN (not needed in the app on the PC itself)</label><input type="password" id="gate-pin" class="set-input" inputmode="numeric" autocomplete="off"></div>
     <div class="gate-actions"><button type="button" class="av-btn" id="gate-deny">Deny</button><button type="button" class="av-btn primary" id="gate-approve">Approve</button></div>
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>

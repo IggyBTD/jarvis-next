@@ -16,11 +16,19 @@ const store = {
 };
 
 let token = (() => { try { return JSON.parse(store.get(KEY) ?? '{}').token ?? ''; } catch { return ''; } })();
-// The token travels in the address after "#" (never sent to a server). It stays there on purpose: "Add to Home Screen" saves this address, and
-// iOS gives a home-screen app its own storage, so the address is how the token gets in.
+// A phone is paired with a short code typed in the app (pair() below) and keeps its own token in its own storage. An old link with the
+// shared key after "#" still works while that key lives: it is kept here and taken out of the address at once (no history, no Share sheet).
 const fromHash = new URLSearchParams(location.hash.slice(1)).get('token');
-if (fromHash) { token = fromHash; store.set(KEY, JSON.stringify({ token })); }
+if (fromHash) { token = fromHash; store.set(KEY, JSON.stringify({ token })); history.replaceState(null, '', location.pathname + location.search); }
 export const hasToken = () => !!token;
+// Pairing: the code from the PC (node scripts/client-link.js phone). The token comes back once, in the answer body.
+export async function pair(code, name = 'iPhone') {
+  const r = await fetch(`${location.origin}/api/devices/pair`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, name }) }).then((x) => x.json()).catch(() => ({ error: 'the PC did not answer' }));
+  if (!r.token) return { error: r.error ?? 'try again' };
+  token = r.token;
+  store.set(KEY, JSON.stringify({ token }));
+  return { ok: true };
+}
 export function forget() { store.del(KEY); store.del(CONV_KEY); token = ''; history.replaceState(null, '', location.pathname); location.reload(); }
 
 const newId = () => `p-${Math.random().toString(36).slice(2, 8)}${Date.now().toString(36)}`;
@@ -128,7 +136,7 @@ export function sendChat(text) {
   return { ok: true };
 }
 export const abort = () => send({ type: 'chat.abort', convId });
-export const replyGate = (id, decision) => send({ type: 'gate.reply', id, decision });
+export const replyGate = (id, decision, pin = '') => send({ type: 'gate.reply', id, decision, ...(pin ? { pin } : {}) }); // the PIN: only for a T3 approval
 // Undo for a note the model saved (the server announces it to every client): the person's own call, through the router like any other.
 export const forgetNote = (noteId) => send({ type: 'action.invoke', id: newId(), name: 'forget', args: { note: noteId } });
 export function setTarget(target) {

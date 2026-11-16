@@ -79,8 +79,9 @@ export async function buildMacBundle({ root = ROOT, outDir = path.join(root, 'di
   const icns = path.join(root, 'src-tauri', 'icons', 'icon.icns'); // the mesh logo (scripts/make-icon.js)
   if (fs.existsSync(icns)) { const dest = 'JARVIS.app/Contents/Resources/AppIcon.icns'; fs.mkdirSync(path.dirname(path.join(stage, dest)), { recursive: true }); fs.copyFileSync(icns, path.join(stage, dest)); extra.push(dest); }
   for (const [rel, text] of Object.entries(APP)) { fs.mkdirSync(path.dirname(path.join(stage, rel)), { recursive: true }); fs.writeFileSync(path.join(stage, rel), text); }
-  // Tokens are opt-in: the zip then holds secrets, so move it by AirDrop or USB only, and delete it afterwards.
-  if (withTokens) for (const rel of ['data/tokens/ui.token', 'data/tokens/mac.token', 'data/tokens/wake.token', 'data/wake.json']) if (fs.existsSync(path.join(root, rel))) { fs.mkdirSync(path.dirname(path.join(stage, rel)), { recursive: true }); fs.copyFileSync(path.join(root, rel), path.join(stage, rel)); extra.push(rel); }
+  // Machine tokens are opt-in: the zip then holds secrets, so move it by AirDrop or USB only, and delete it afterwards. The UI token is
+  // never in it: the Mac's browser and open-mac.js are paired with a code (node scripts/client-link.js browser).
+  if (withTokens) for (const rel of ['data/tokens/mac.token', 'data/tokens/wake.token', 'data/wake.json']) if (fs.existsSync(path.join(root, rel))) { fs.mkdirSync(path.dirname(path.join(stage, rel)), { recursive: true }); fs.copyFileSync(path.join(root, rel), path.join(stage, rel)); extra.push(rel); }
   const rootPkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   fs.writeFileSync(path.join(stage, 'package.json'), `${JSON.stringify({ name: 'jarvis-mac', private: true, type: 'module', engines: { node: '>=22' }, dependencies: { playwright: rootPkg.devDependencies.playwright ?? rootPkg.dependencies.playwright } }, null, 2)}\n`);
   fs.writeFileSync(path.join(stage, 'README-MAC.md'), 'JARVIS helper for the Mac. Follow docs/MAC_PROMPT.md (or paste it into Claude Code), or docs/setup-mac.md by hand.\nThe tokens are NOT in this folder: put mac.token in data/tokens/ yourself.\n');
@@ -95,4 +96,5 @@ if (isMain(import.meta.url)) {
   const i = process.argv.indexOf('--out');
   const r = await buildMacBundle({ ...(i === -1 ? {} : { outDir: path.resolve(process.argv[i + 1]) }), withTokens: process.argv.includes('--with-tokens') });
   console.log(`${r.files.length} files, ${(r.bytes / 1024).toFixed(0)} KB: ${r.zip}`);
+  if (process.argv.includes('--with-tokens')) console.log('WARNING: this zip holds the Mac machine token. Move it by AirDrop or USB only and delete it on both computers as soon as it is unpacked.');
 }

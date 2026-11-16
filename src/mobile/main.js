@@ -9,7 +9,7 @@ import '@fontsource/jetbrains-mono/latin-400.css';
 import { hydrateIcons, setIcon } from '../icons/index.js';
 import { mountLogos } from '../core/node-mesh.js';
 import { prettyModelName } from '../core/model-name.js';
-import { state, onLink, connect, retry, hasToken, sendChat, abort, newChat, openChat, forgetNote } from './link.js';
+import { state, onLink, connect, retry, hasToken, sendChat, abort, newChat, openChat, forgetNote, pair } from './link.js';
 import * as chat from './chat.js';
 import { openChats, openSettings, openApproval } from './panels.js';
 import { sheetOpen } from './sheets.js';
@@ -182,8 +182,30 @@ $('m-title').addEventListener('click', () => { if (!sheetOpen()) openSettings();
 // ---- start ------------------------------------------------------------------------------------------------------------------------------------
 if (!hasToken()) {
   app.dataset.state = 'off';
-  $('m-greet').textContent = 'One more step';
-  $('m-greet-sub').textContent = 'Open the phone link from your PC in Safari. It has the key in it.';
+  $('m-greet').textContent = 'Pair this phone';
+  $('m-greet-sub').textContent = 'On your PC run node scripts/client-link.js phone, then type the code for the app here.';
+  const form = document.createElement('form');
+  form.className = 'm-pair';
+  const code = Object.assign(document.createElement('input'), { id: 'm-pair-code', placeholder: 'XXXX-XXXX', maxLength: 9, autocomplete: 'off', spellcheck: false });
+  code.setAttribute('autocapitalize', 'characters');
+  code.setAttribute('aria-label', 'Pairing code');
+  const go = Object.assign(document.createElement('button'), { type: 'submit', className: 'm-primary', textContent: 'Pair' });
+  form.append(code, go);
+  $('m-greet-sub').after(form);
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    go.disabled = true;
+    const r = await pair(code.value);
+    go.disabled = false;
+    if (r.error) { $('m-greet-sub').textContent = `Not paired: ${r.error}`; return; }
+    form.remove();
+    app.dataset.state = 'connecting';
+    $('m-greet').textContent = 'Hello';
+    $('m-greet-sub').textContent = 'Running on your PC.';
+    renderBar();
+    renderStatus();
+    connect();
+  });
 } else {
   renderBar();
   renderStatus();

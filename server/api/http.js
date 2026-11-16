@@ -57,7 +57,9 @@ export function createHttpHandler({ cfg, auth, llmProxy, models, environment, se
       const ip = callerIp(req); // 'proxied' behind tailscale serve or any proxy, so loopback never stands in for the desktop
       const origin = req.headers.origin;
       const sameOrigin = !!origin && (origin === `http://${req.headers.host}` || origin === `https://${req.headers.host}`); // https when reached through tailscale serve
-      const cors = origin && (sameOrigin || origins.includes(origin)) ? { 'access-control-allow-origin': origin, vary: 'Origin' } : {};
+      // the phone launcher served by the starter on the same host, one port up, pairs itself here
+      const starterOrigin = !!origin && origin === `http://${String(req.headers.host ?? '').replace(/:\d+$/, '')}:${(cfg.machines.server.port ?? 7410) + 1}`;
+      const cors = origin && (sameOrigin || starterOrigin || origins.includes(origin)) ? { 'access-control-allow-origin': origin, vary: 'Origin' } : {};
       if (req.method === 'OPTIONS') {
         if (!cors['access-control-allow-origin']) return json(res, 403, { error: 'origin not allowed' });
         res.writeHead(204, { ...cors, 'access-control-allow-headers': 'authorization, content-type', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE', 'access-control-max-age': '600' });

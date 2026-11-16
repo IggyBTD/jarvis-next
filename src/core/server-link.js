@@ -206,7 +206,7 @@ export const sendBinary = (bytes) => { if (ws?.readyState === 1) ws.send(bytes);
 export const voiceStart = (mode = 'push_to_talk') => send({ type: 'voice.start', mode });
 export const voiceStop = () => send({ type: 'voice.stop' });
 export const voiceBargeIn = () => send({ type: 'voice.barge_in' });
-export const replyGate = (id, decision) => send({ type: 'gate.reply', id, decision });
+export const replyGate = (id, decision, pin = '') => send({ type: 'gate.reply', id, decision, ...(pin ? { pin } : {}) }); // the PIN: only for a T3 approval
 export const runAction = (name, args = {}) => send({ type: 'action.invoke', id: reqId(), name, args });
 export const requestDigest = () => send({ type: 'digest.run' });
 export const sendAgentTask = (prompt) => send({ type: 'agent.task', id: reqId(), prompt });

@@ -110,15 +110,16 @@ test('phone launcher: the starter serves the home-screen page and its icon witho
     const html = page.body.toString('utf8');
     assert.match(html, /const SERVER_PORT = 7410;/);
     assert.match(html, /apple-touch-icon/);
-    assert.match(html, /\/mobile\.html#token=/, 'it moves on to the phone app with the key from the address');
+    assert.match(html, /\/mobile\.html'/, 'it moves on to the phone app, with nothing secret in the address (F3-4)');
+    assert.ok(!/mobile\.html#token/.test(html));
     assert.ok(!html.includes('secret-token'), 'the page holds no key');
     const icon = await get('/apple-touch-icon.png');
     assert.equal(icon.status, 200);
     assert.equal(icon.body.subarray(1, 4).toString(), 'PNG');
     assert.equal((await get('/health')).status, 401, 'everything else still needs the key');
   } finally { srv.close(); }
-  const l = links({ host: '192.168.1.5', port: 7410, token: 'T', tsName: 'pc.tail.ts.net' });
-  assert.ok(l.some((x) => x.url === 'http://pc.tail.ts.net:7411/#token=T' && /iPhone/.test(x.label)), 'client-link prints the iPhone link (through the starter)');
+  const l = links({ host: '192.168.1.5', port: 7410, tsName: 'pc.tail.ts.net' });
+  assert.ok(l.some((x) => x.url === 'http://pc.tail.ts.net:7411/' && /iPhone/.test(x.label)), 'client-link prints the iPhone link (through the starter)');
 });
 
 test('the phone app is a second page of the same build, with a home-screen manifest and icon', async () => {

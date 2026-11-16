@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { launch, appId } from '../../scripts/launch-app.js';
 import { packIco } from '../../scripts/make-icon.js';
 
-test('launch: starts the agent and server only when they are down, waits for the server, opens the app window with the profile and the token fragment', async () => {
+test('launch: starts the agent and server only when they are down, waits for the server, opens the app window with the profile and no token', async () => {
   const up = new Set();
   const started = [];
   let opened;
@@ -12,7 +12,7 @@ test('launch: starts the agent and server only when they are down, waits for the
   await launch({ refresh: async () => {}, platform: 'win32', probe, start, exists: (f) => /msedge/.test(f), open: (exe, args) => { opened = { exe, args }; }, wait: async () => {} });
   assert.deepEqual(started, ['agent/index.js', 'server/index.js']);
   assert.match(opened.exe, /msedge/);
-  assert.match(opened.args[0], /^--app=http:\/\/127\.0\.0\.1:7410\/#token=\w{20,}/);
+  assert.equal(opened.args[0], '--app=http://127.0.0.1:7410/'); // no token on the command line since the security fixes (F3-4)
   assert.ok(opened.args.some((a) => /data[\\/]app-profile$/.test(a)));
 
   started.length = 0;
@@ -26,7 +26,7 @@ test('launch: starts the agent and server only when they are down, waits for the
 test('launch: --install opens a normal window at the address; the app id is 32 letters a to p', async () => {
   let opened;
   await launch({ refresh: async () => {}, install: true, platform: 'win32', probe: async () => true, exists: () => true, open: (exe, args) => { opened = args; } });
-  assert.match(opened[0], /^http:\/\/127\.0\.0\.1:7410\/#token=/);
+  assert.equal(opened[0], 'http://127.0.0.1:7410/');
   assert.match(appId('http://127.0.0.1:7410/'), /^[a-p]{32}$/);
 });
 

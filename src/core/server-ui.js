@@ -146,11 +146,17 @@ function paintGate() {
   const shot = $('gate-shot');
   shot.hidden = !r.screenshot;
   if (r.screenshot) shot.src = String(r.screenshot).startsWith('data:image/') ? r.screenshot : '';
+  // T3 away from the desktop on the PC needs the owner's PIN; the field is cleared for every request
+  $('gate-pin-row').hidden = r.tier !== 'T3';
+  if ($('gate-pin').dataset.for !== r.id) { $('gate-pin').value = ''; $('gate-pin').dataset.for = r.id; }
   if (!dlg.open) { dlg.showModal(); $('gate-deny').focus(); }
 }
 function answer(decision) {
   if (!shownId) return;
   const id = shownId;
+  const r = state.pending.find((p) => p.id === id);
+  // a T3 approval waits for the server's answer (a wrong PIN is refused and the dialog stays); everything else closes at once
+  if (decision === 'approve' && r?.tier === 'T3') { replyGate(id, decision, $('gate-pin').value); $('gate-pin').value = ''; return; }
   state.pending = state.pending.filter((p) => p.id !== id);
   replyGate(id, decision);
   shownId = null;
@@ -263,6 +269,19 @@ function fillSettings() { const s = getSettings(); f.enabled.checked = s.enabled
 function paintSettingsStatus() {
   f.status.textContent = !getSettings().enabled ? 'Off' : state.status === 'online' ? 'Connected' : state.status === 'connecting' ? 'Connecting...' : state.status === 'refused' ? state.lastError : 'Not connected. Retrying.';
 }
+// Pairing this window: the code from the PC (node scripts/devices.js pair desktop, or Add device on a paired desktop). The device token
+// comes back once in the answer body and is kept in this window's settings.
+$('srv-pair').addEventListener('click', async () => {
+  const base = f.url.value.trim().replace(/^ws/i, 'http').replace(/\/ws$/, '').replace(/\/+$/, '');
+  f.status.textContent = 'Pairing...';
+  const r = await fetch(`${base}/api/devices/pair`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: $('srv-code').value, name: 'desktop window' }) }).then((x) => x.json()).catch(() => ({ error: 'the server did not answer' }));
+  if (!r.token) { f.status.textContent = `Not paired: ${r.error ?? 'try again'}`; return; }
+  $('srv-code').value = '';
+  f.token.value = r.token;
+  saveSettings({ enabled: true, url: f.url.value.trim(), token: r.token, pcMac: f.mac.value.trim() });
+  f.enabled.checked = true;
+  paint();
+});
 $('srv-save').addEventListener('click', () => {
   saveSettings({ enabled: f.enabled.checked, url: f.url.value.trim(), token: f.token.value.trim(), pcMac: f.mac.value.trim() });
   paint();

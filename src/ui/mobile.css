@@ -61,6 +61,10 @@ button { -webkit-appearance: none; appearance: none; touch-action: manipulation;
 .m-note { align-self: flex-start; color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
 .m-note.bad { color: var(--danger); }
 .m-memo { display: flex; align-items: center; gap: var(--s-2); overflow-wrap: anywhere; }
+/* pairing a phone, and the PIN on a T3 approval: plain fields, the system keyboard */
+.m-pair { display: flex; gap: var(--s-2); margin-top: var(--s-4); }
+.m-pair input, .m-pin { min-height: var(--tap); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface-1); color: var(--text); font: 500 var(--fs-5)/var(--lh-md) var(--mono); letter-spacing: 0.08em; }
+.m-pin { width: 100%; margin-top: var(--s-3); }
 
 /* what JARVIS writes */
 .m-prose { display: grid; grid-template-columns: minmax(0, 1fr); /* a wide code line scrolls inside its box, it never widens the reply */ gap: var(--s-3); font: 400 var(--fs-5)/var(--lh-prose) var(--serif); color: var(--text); overflow-wrap: anywhere; }

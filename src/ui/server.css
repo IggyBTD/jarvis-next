@@ -33,6 +33,7 @@
 .gate-sub { margin: var(--s-3) 0 var(--s-1); color: var(--text-3); font: 600 var(--fs-2)/var(--lh-xs) var(--sans); }
 .gate-pre { max-height: 160px; overflow: auto; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface-1); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .gate-shot { display: block; max-width: 100%; max-height: 240px; margin-top: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-sm); }
+.gate-pin { display: grid; gap: var(--s-1); margin-top: var(--s-4); color: var(--text-2); font-size: var(--fs-3); }
 .gate-actions { display: flex; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-5); }
 .gate-actions .av-btn { height: var(--h-md); padding: 0 var(--s-5); font-weight: 600; }
 .av-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }

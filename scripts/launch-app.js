@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { loadConfig, tokenPath, ROOT } from '../server/core/config.js';
+import { loadConfig, ROOT } from '../server/core/config.js';
 import { reachable } from './wake.js';
 import { isMain, sleep } from '../shared/util.js';
 
@@ -67,13 +67,13 @@ export async function launch({ install = false, platform = process.platform, pro
   if (!(await probe('127.0.0.1', port))) throw new Error(`The JARVIS server did not start. See ${path.join(logs, 'server.log')}`);
   const exe = (BROWSERS[platform] ?? []).find(exists);
   if (!exe) throw new Error('Edge or Chrome is needed to show the app window.');
-  // the token goes in the #fragment: it is never sent anywhere, and the page removes it from the address at once
-  const token = fs.readFileSync(path.join(path.dirname(tokenPath(cfg, me ?? 'pc')), 'ui.token'), 'utf8').trim();
+  // No token on the command line (every process can read it there). The window keeps the device token it got when it was paired, in
+  // its own profile; a new profile shows the pairing screen (node scripts/devices.js pair desktop prints the code).
   const profile = path.join(ROOT, 'data', 'app-profile');
   const id = appId(`http://127.0.0.1:${port}/`);
-  // Once installed (in this profile), start the installed app: it has no browser title bar. The page keeps the token it saved on the first run.
+  // Once installed (in this profile), start the installed app: it has no browser title bar.
   const installed = fs.existsSync(path.join(profile, 'Default', 'Web Applications', 'Manifest Resources', id));
-  const target = install ? [`http://127.0.0.1:${port}/#token=${token}`] : installed ? [`--app-id=${id}`] : [`--app=http://127.0.0.1:${port}/#token=${token}`];
+  const target = install ? [`http://127.0.0.1:${port}/`] : installed ? [`--app-id=${id}`] : [`--app=http://127.0.0.1:${port}/`];
   open(exe, [...target, `--user-data-dir=${profile}`, '--window-size=1440,900', '--no-first-run', '--no-default-browser-check', '--disable-features=Translate']);
   return { exe, installed };
 }

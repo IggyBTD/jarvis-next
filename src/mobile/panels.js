@@ -152,13 +152,16 @@ export function openApproval(request, { index = 1, total = 1, onClose = null } =
     d.append(sum, el('pre', '', args));
     content.append(d);
   }
+  // T3 away from the desktop needs the owner's PIN (the server checks it; nothing is stored here)
+  const pin = request.tier === 'T3' ? Object.assign(el('input', 'm-pin'), { type: 'password', inputMode: 'numeric', autocomplete: 'off', placeholder: 'PIN' }) : null;
+  if (pin) { pin.setAttribute('aria-label', 'PIN for this approval'); content.append(pin); }
   const buttons = el('div', 'm-appr-buttons');
   const yes = el('button', 'm-primary', 'Approve');
   const no = el('button', 'm-secondary', 'Deny');
   yes.type = no.type = 'button';
   buttons.append(yes, no);
   const sheet = openSheet({ title: '', content, footer: buttons, dismissible: false, onClose, label: `Approve: ${doing}` });
-  const answer = (decision) => { replyGate(request.id, decision); sheet.close(); };
+  const answer = (decision) => { replyGate(request.id, decision, decision === 'approve' ? pin?.value ?? '' : ''); sheet.close(); };
   yes.addEventListener('click', () => answer('approve'));
   no.addEventListener('click', () => answer('deny'));
   sheet.panel.focus({ preventScroll: true }); // nothing is focused by default: neither answer is the easy one

@@ -1,13 +1,14 @@
 // Opens JARVIS on the Mac. If the PC's server is not answering, rings the PC's starter (scripts/pc-starter.js); if that is not
 // reachable and data/wake.json exists, wakes the PC. Then opens the interface in its own window (Chrome or Edge app mode, else
-// the default browser). Needs data/tokens/ui.token (copied by hand) and the PC address in config/server/machines.json.
-//   node scripts/open-mac.js
+// the default browser). Needs a pairing (node scripts/open-mac.js --pair CODE, the code from node scripts/client-link.js browser on the PC;
+// the old data/tokens/ui.token still works until it is revoked), data/tokens/mac.token for updates, and the PC address in machines.json.
+//   node scripts/open-mac.js [--pair CODE]
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { loadConfig, tokenPath, ROOT } from '../server/core/config.js';
 import { reachable, wake } from './wake.js';
-import { isMain, sleep, readJson } from '../shared/util.js';
+import { isMain, sleep, readJson, writeFileAtomic } from '../shared/util.js';
 import { applyBundle } from './update.js';
 
 // Pulls the current Mac helper (this launcher, the agent, config except machines.json) from the PC. Never blocks opening: any failure is ignored.
@@ -48,16 +49,31 @@ if (isMain(import.meta.url)) {
   const cfg = loadConfig({ only: ['machines.json'] });
   const url = new URL(cfg.machines.server.url);
   const server = { host: url.hostname, port: Number(url.port || 80) };
-  const tokenFile = path.join(path.dirname(tokenPath(cfg, 'mac')), 'ui.token');
-  if (!fs.existsSync(tokenFile)) fail(`Missing ${tokenFile}. Copy ui.token from the PC (data/tokens) by hand.`);
-  const token = fs.readFileSync(tokenFile, 'utf8').trim();
+  const tokens = path.dirname(tokenPath(cfg, 'mac'));
+  const read = (name) => { try { return fs.readFileSync(path.join(tokens, name), 'utf8').trim(); } catch { return ''; } };
+  // This launcher is a paired device of its own (it only rings the PC's starter): node scripts/open-mac.js --pair CODE, with a code from
+  // node scripts/client-link.js browser on the PC. The old shared ui.token still works until it is revoked on the PC.
+  const p = process.argv.indexOf('--pair');
+  if (p !== -1) {
+    const res = await fetch(`${url.origin}/api/devices/pair`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: process.argv[p + 1] ?? '', name: 'Mac launcher' }) }).then((x) => x.json()).catch((e) => ({ error: e.message }));
+    if (res.error || !res.token) fail(`Not paired: ${res.error ?? 'no answer'}`);
+    fs.mkdirSync(tokens, { recursive: true });
+    writeFileAtomic(path.join(tokens, 'device.token'), `${res.token}\n`, 0o600);
+    console.log('Paired. The Mac launcher has its own token now.');
+    process.exit(0);
+  }
+  const token = read('device.token') || read('ui.token');
+  if (!token) fail(`Not paired yet. On the PC run node scripts/client-link.js browser, then here: node scripts/open-mac.js --pair CODE`);
   const wakeFile = path.join(ROOT, 'data', 'tokens', 'wake.token');
   const r = await bringUp({ server, token, wakeConf: readJson(path.join(ROOT, 'data', 'wake.json')), wakeToken: fs.existsSync(wakeFile) ? fs.readFileSync(wakeFile, 'utf8').trim() : '' });
   if (!r.ok) fail(r.reason);
-  const up = await selfUpdate({ base: url.origin, token });
+  // the update comes with the Mac's machine token (the agent's own), which may fetch the bundle and nothing a person can do
+  const machineToken = read('mac.token');
+  const up = machineToken ? await selfUpdate({ base: url.origin, token: machineToken }) : null;
   if (up?.written.length) fs.appendFileSync(logFile, `${new Date().toISOString()} updated: ${up.written.join(', ')}
 `); // ponytail: the new code runs from the next launch; a changed package.json needs node scripts/update.js once
-  const target = `${url.origin}/#token=${token}`; // the #fragment is never sent anywhere
-  if (process.env.JARVIS_NO_WINDOW) { console.log(`Would open ${url.origin}/ (JARVIS_NO_WINDOW is set)`); process.exit(0); } // for testing on another OS
+  // the plain address: Safari keeps the token the page got when it was paired (Settings, pairing code); nothing secret in the address
+  const target = `${url.origin}/`;
+  if (process.env.JARVIS_NO_WINDOW) { console.log(`Would open ${target} (JARVIS_NO_WINDOW is set)`); process.exit(0); } // for testing on another OS
   spawn('open', ['-a', 'Safari', target], { detached: true, stdio: 'ignore' }).unref(); // Safari has no app mode: File > Add to Dock gives a window of its own
 }

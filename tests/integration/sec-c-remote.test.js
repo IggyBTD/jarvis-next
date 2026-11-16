@@ -105,6 +105,24 @@ test('F3-1: the command on the PC pairs, lists, sets the PIN and ends the old sh
   assert.equal(rotated, 0, 'the rig has no ui.token file to rotate');
 });
 
+test('F3-4: no script puts a token in an address, on a command line or in a Mac zip', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { ROOT } = await import('../../server/core/config.js');
+  for (const f of ['launch-app.js', 'client-link.js', 'open-mac.js', 'phone-launcher.js']) {
+    const src = fs.readFileSync(path.join(ROOT, 'scripts', f), 'utf8');
+    assert.ok(!/[#?&]token=\$\{|#token=' \+|token=' \+ token/.test(src), `${f} builds an address with a token`);
+  }
+  const { launch } = await import('../../scripts/launch-app.js');
+  let opened = null;
+  await launch({ refresh: async () => {}, platform: 'win32', probe: async () => true, start: () => {}, exists: (f) => /msedge/.test(f), open: (exe, args) => { opened = args; }, wait: async () => {} });
+  assert.ok(opened.every((a) => !/token/i.test(a) && !/[0-9a-f]{64}/.test(a)), opened.join(' '));
+  const { links } = await import('../../scripts/client-link.js');
+  for (const l of links({ host: '192.168.1.32', port: 7410, tsName: 'pc.tail1234.ts.net' })) assert.ok(!/token/i.test(l.url), l.url);
+  const bundle = fs.readFileSync(path.join(ROOT, 'scripts', 'make-mac-bundle.js'), 'utf8');
+  assert.ok(!bundle.includes("'data/tokens/ui.token'"), 'the Mac zip never holds the UI token');
+});
+
 test('F3-4: pairing with a short code: the token comes back once in the body, never in an address; device routes need settings', async () => {
   const s = await setup();
   try {
