@@ -1,4 +1,6 @@
-STATUS: IN PROGRESS, stage C (stages A and B done; resumed by the owner). Resume job: acf6db86.
+STATUS: STOPPED by the owner during stage C (do not restart on your own). The resume job acf6db86 was deleted.
+
+NOW: F1-4 was half done and is NOT committed: server/core/tool-router.js (capabilities().call reaches system actions only), server/api/ws.js (a Code-page Claude task goes through router.invoke), tests/unit/sec-c-chokepoint.test.js (new; two of its three tests fail until scripts/check-chokepoint.js is rewritten, so npm test is red with these files in place). Left: rewrite the checker, then F1-5, F1-6, stage D and FINAL.
 
 
 # Security fix run: progress
@@ -30,7 +32,7 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F4-5 | C | PARTIAL | 42e3ac4, 3301224 | clean child environments for every program the agent starts (shared/child-env.js, Fable); OpenCode keeps only its own variables; tripwire on outside permission answers; T3 for env dumps, port 4096, DPAPI and Keychain calls; jarvis.ps1 no key on argv. Not done: secret store (shared/secret-store.js) written and tested but not wired, because the server never starts programs; OpenCode as its own OS user needs an administrator (HUMAN_TODO section 12) |
 | F3-2 | C | DONE | bb144be | starter binds the Tailscale address (loopback if down, never LAN or 0.0.0.0), tailnet callers only, no loopback exemption, wrong-key limiter |
 | F3-3 | C | DONE | 7bd3270 | agents take calls from the PC tailnet address only (private ranges ignored even in old configs); agent and server bind mode tailscale, never LAN |
-| F3-5 | C | TODO | | |
+| F3-5 | C | DONE | d760bc6 | phone sheet shows who asked, summary, the whole request uncut with hidden characters revealed, dry run and screenshot; Approve waits until the end has been on screen; audit argsHash of the whole arguments |
 | F1-4 | C | TODO | | |
 | F1-5 | C | TODO | | |
 | F1-6 | C | TODO | | |
