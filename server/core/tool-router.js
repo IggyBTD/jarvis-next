@@ -179,7 +179,9 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
       claude: (method, sub, body, o) => agent.claude(target, method, sub, body, { signal: ctx.signal, ...o }),
       browser: (method, sub, body, o) => agent.browser(target, method, sub, body, { signal: ctx.signal, ...o }),
       events: (onEvent, o) => agent.events(target, onEvent, o),
-      call: (name, args, o) => agent.call(target, name, args, { signal: ctx.signal, ...o }), // used by tool handlers that were already approved as a whole
+      // system actions only (git snapshots and changes for tasks, path resolution for the bridge): never offered to the model, no side
+      // effect a person would approve. Every other action goes through invoke, with policy, the gate and the audit.
+      call: (name, args, o) => (contract.get(name)?.system ? agent.call(target, name, args, { signal: ctx.signal, ...o }) : Promise.resolve({ ok: false, error: `${name} is not a system action; tools go through invoke` })),
     };
   }
 

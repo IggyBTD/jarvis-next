@@ -59,13 +59,14 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
   }
 
   // Code page with the Claude backend: the message is the coding task itself (no local model in between). The reply is written into the chat when the run ends.
-  function codeTurn(c, convId, text) {
+  // The task goes through the router like any other tool call (policy, audit), never to the task list directly.
+  async function codeTurn(c, convId, text) {
     if (!agentTasks) return send(c, { type: 'chat.error', convId, reason: 'The coding agent is not available.' });
     const conv = conversations.ensure(convId);
     const target = targetState.get();
     conversations.append(conv, { role: 'user', content: text, target });
-    const r = agentTasks.start({ prompt: text }, { target, convId, direct: true });
-    if (r.error) send(c, { type: 'chat.error', convId, reason: r.error });
+    const out = await router.invoke({ name: 'agent_task', args: { prompt: text } }, { target, source: 'user', convId, direct: true });
+    if (!out.ok) send(c, { type: 'chat.error', convId, reason: out.error ?? 'the coding task did not start' });
   }
 
   const handlers = {
