@@ -3,6 +3,7 @@
 // chats; search, inline rename, a right-click menu, and a typing animation when the model names a chat.
 // Everything that changes a chat goes through `jarvis:session-op` (chat-ui.js owns the open conversation).
 import { listSessions } from './sessions.js';
+import { setMathText } from './inline-math.js';
 import { setPage } from './whiteboard-mode.js';
 import { registerContext } from './native-chrome.js';
 import { listProjects, getProjectById, onProjects, createProject, updateProject, deleteProject } from './projects.js';
@@ -40,7 +41,7 @@ export function openSession(s) {
 const typers = new WeakMap();
 export function typeInto(el, text) {
   clearInterval(typers.get(el));
-  if (still.matches || !text) { el.textContent = text; return; }
+  if (still.matches || !text || text.includes('$')) { setMathText(el, text); return; } // a name with maths in it appears whole, typeset
   let n = 0;
   el.textContent = '';
   el.classList.add('typing');
@@ -83,7 +84,7 @@ function chatButton(s) {
   const b = Object.assign(document.createElement('button'), { type: 'button', className: `chat-item${s.id === current ? ' current' : ''}` });
   b.dataset.id = s.id;
   const name = Object.assign(document.createElement('span'), { className: 'ci-name' });
-  if (typing?.id === s.id) { typeInto(name, typing.name); typing = null; } else name.textContent = s.name || 'Untitled';
+  if (typing?.id === s.id) { typeInto(name, typing.name); typing = null; } else setMathText(name, s.name || 'Untitled');
   b.append(name);
   const project = s.project && getProjectById(s.project);
   if (project) b.append(Object.assign(document.createElement('span'), { className: 'ci-tag', textContent: project.name }));
@@ -355,7 +356,7 @@ document.addEventListener('jarvis:session-name', (e) => {
   if (id && hist[pos] !== id) { hist = hist.slice(0, pos + 1); hist.push(id); pos = hist.length - 1; }
   named = !!name;
   if (name) {
-    if (animate) { typing = { id, name }; typeInto(title, name); } else title.textContent = name;
+    if (animate) { typing = { id, name }; typeInto(title, name); } else setMathText(title, name);
   } else title.textContent = 'New chat';
   refreshChats();
 });
@@ -373,8 +374,9 @@ function titleFrom(text) {
 }
 new MutationObserver(() => {
   if (named) return;
-  const first = out.querySelector('.chat-line.user .chat-text')?.textContent.trim();
-  title.textContent = first ? titleFrom(first) : 'New chat';
+  const box = out.querySelector('.chat-line.user .chat-text');
+  const first = (box?.dataset.raw ?? box?.textContent)?.trim();
+  setMathText(title, first ? titleFrom(first) : 'New chat');
 }).observe(out, { childList: true });
 
 refreshChats();

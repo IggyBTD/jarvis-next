@@ -42,15 +42,17 @@ async function loadRemote() {
 }
 
 // Asks the server for the provider's consent link and opens it in the default browser; the server catches the redirect.
-async function connectRemote(provider, kind, name) {
+// tab: a blank tab opened straight from the click (a browser only allows a new tab from a click, not after the wait for the server)
+async function connectRemote(provider, kind, name, tab = null) {
   notice = '';
   try {
     const res = await serverFetch(`/accounts/${provider}/start`, { method: 'POST', body: JSON.stringify({ kind, name }) });
     const j = await res.json();
     if (!res.ok) throw new Error(j.error ?? 'could not start sign-in');
     if (window.__TAURI_INTERNALS__) await (await import('@tauri-apps/api/core')).invoke('open_signin', { url: j.url });
-    else if (!window.open(j.url, '_blank', 'noopener')) notice = 'The browser blocked the sign-in tab. Allow pop-ups for this page and try again.';
-  } catch (e) { notice = e.message; }
+    else if (tab && !tab.closed) tab.location.href = j.url;
+    else if (!window.open(j.url, '_blank')) notice = 'The browser blocked the sign-in tab. Allow pop-ups for this page and try again.';
+  } catch (e) { tab?.close(); notice = e.message; }
   await loadRemote();
 }
 
@@ -62,7 +64,7 @@ function form(p) {
   const ok = el('button', { type: 'button', className: 'av-btn', textContent: isRemote(p) ? 'Connect in browser' : 'Add account' });
   const no = el('button', { type: 'button', className: 'av-btn', textContent: 'Cancel' });
   ok.addEventListener('click', () => {
-    if (isRemote(p)) { adding = null; connectRemote(p.id, kind.value, name.value.trim()); return; }
+    if (isRemote(p)) { adding = null; connectRemote(p.id, kind.value, name.value.trim(), window.__TAURI_INTERNALS__ ? null : window.open('about:blank', '_blank')); return; }
     accounts = [...accounts, { id: `${p.id}-${Date.now().toString(36)}`, provider: p.id, kind: kind.value, name: name.value.trim() || kind.value, email: email.value.trim(), added: Date.now() }];
     save(accounts); adding = null; paint();
   });

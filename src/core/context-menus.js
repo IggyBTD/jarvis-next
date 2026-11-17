@@ -11,7 +11,8 @@ const lastOf = (line) => { const all = [...document.querySelectorAll('#chat-outp
 
 // a message: copy what was picked or the whole text; the last answer can be redone, your own message edited
 registerContext('#chat-output .chat-line.user, #chat-output .chat-line.assistant', (line) => {
-  const text = line.querySelector('.chat-text')?.innerText.trim() ?? '';
+  const box = line.querySelector('.chat-text');
+  const text = (box?.dataset.raw ?? box?.innerText)?.trim() ?? '';
   const items = [];
   if (selected()) items.push(['Copy selection', () => copy(selected()), true]);
   items.push(['Copy message', () => copy(text), !!text]);

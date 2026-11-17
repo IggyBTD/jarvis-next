@@ -1,43 +1,61 @@
-// Ctrl+L: LaTeX mode. A "LaTeX" chip beside the input shows it is on. You type maths the way Desmos lets you ("x^2/2 + sqrt(x)") into
-// the ordinary input, and the input shows it typeset instead of the typed text (the real text is still there, under it, with the caret).
-// When you send, symbol-only text becomes LaTeX between $ signs. Text with words in it stays as typed and is shown as typed.
-import katex from 'katex';
-import 'katex/dist/katex.min.css';
+// Ctrl+L: LaTeX mode. A "LaTeX" chip beside the input shows it is on. The input is swapped for a maths editor (MathLive): typing "^" opens
+// the exponent slot right away with the caret inside it, "/" makes a fraction, "sqrt" a root, and everything is typeset as you type.
+// The ordinary input stays underneath as the message the chat reads: while the editor is on it holds "$latex$". Turning the mode off
+// puts that text back in the ordinary input.
+import { MathfieldElement } from 'mathlive';
+import 'katex/dist/katex.min.css'; // the maths fonts (MathLive uses the same ones), bundled locally
 import { toLatex } from '../../shared/latex.js';
+
+MathfieldElement.fontsDirectory = null; // the fonts come from the KaTeX stylesheet above
+MathfieldElement.soundsDirectory = null;
 
 const input = document.getElementById('hud-chat-input');
 const chip = document.getElementById('latex-chip');
-const view = Object.assign(document.createElement('div'), { id: 'latex-view', hidden: true });
-view.setAttribute('aria-hidden', 'true');
-input.parentElement.append(view);
+const field = new MathfieldElement();
+field.id = 'latex-field';
+field.hidden = true;
+field.setAttribute('aria-label', 'Message JARVIS in maths. Enter sends.');
+input.after(field); // in the textarea's place in the row, before the microphone and send buttons
+// options can only be set once the field is on the page
+field.mathVirtualKeyboardPolicy = 'manual';
+field.smartMode = false;
+field.menuItems = [];
 let on = false;
 
-function render() {
-  const typed = input.value;
-  const r = on && typed.trim() && !typed.startsWith('/') ? toLatex(typed) : null;
-  const typeset = !!(r?.complete && r.latex);
-  input.classList.toggle('latex-hidden', typeset);
-  view.hidden = !typeset;
-  if (!typeset) return;
-  Object.assign(view.style, { left: `${input.offsetLeft}px`, width: `${input.offsetWidth}px`, top: `${input.offsetTop}px`, height: `${input.offsetHeight}px` });
-  try { katex.render(r.latex, view, { throwOnError: true }); } catch { input.classList.remove('latex-hidden'); view.hidden = true; }
+// the chat reads the ordinary input: keep it in step with the editor
+function sync() {
+  const latex = field.value.trim();
+  input.value = latex ? `$${latex}$` : '';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 export function toggleLatexMode() {
   on = !on;
   chip.hidden = !on;
-  render();
-  input.focus();
+  field.hidden = !on;
+  input.classList.toggle('latex-off', on);
+  if (on) {
+    // text already typed becomes the start of the formula
+    const typed = input.value.trim();
+    const r = typed && !typed.startsWith('/') && !typed.startsWith('$') ? toLatex(typed) : null;
+    field.value = r?.latex ?? '';
+    sync();
+    field.focus();
+  } else {
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.focus();
+  }
 }
 
-function convert() {
-  const typed = input.value.trim();
-  if (!on || !typed || typed.startsWith('/')) return;
-  const r = toLatex(typed);
-  if (r.complete && r.latex) { input.value = `$${r.latex}$`; input.dispatchEvent(new Event('input', { bubbles: true })); }
-}
-// capture: the conversion happens before the chat's own send handlers read the field
-input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) convert(); }, true);
-document.getElementById('send-btn').addEventListener('click', convert, true);
-input.addEventListener('input', render);
+field.addEventListener('input', sync);
+field.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || e.shiftKey || e.isComposing) return;
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('send-btn').click();
+  // the chat empties its input when the message goes out: empty the editor with it
+  setTimeout(() => { if (!input.value) field.value = ''; }, 60);
+}, true);
+// something elsewhere in the app focuses the input (a new chat, a click on the card): the editor takes it
+input.addEventListener('focus', () => { if (on) field.focus(); });
 chip.addEventListener('click', toggleLatexMode);

@@ -54,6 +54,7 @@
     "marked": "^18.0.14",
     "marked-highlight": "^2.2.4",
     "marked-katex-extension": "^5.1.13",
+    "mathlive": "^0.111.4",
     "mermaid": "^12.1.0",
     "pdfjs-dist": "^6.4.299",
     "three": "^0.186.1",

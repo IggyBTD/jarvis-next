@@ -19,6 +19,7 @@ import { MESH_N, MESH_LINK, meshPoints } from './mesh-geometry.js';
 const N = MESH_N;
 const LINK = MESH_LINK;
 const SPIN = 0.4;            // rad/s at rest (the old value)
+const ROLL = -0.6;           // the big logo on the new-chat page turns about an axis leaning this far (rad, about 34 degrees) instead of an upright one
 const SPHERE = 0.26;         // sphere radius as a share of the icon's width (a little smaller than before)
 const RIPPLE_LIFE = 1.2;     // s
 const RIPPLE_SPEED = 2.4;    // sphere radii per second
@@ -271,7 +272,10 @@ const seen = new IntersectionObserver((entries) => {
   start();
 });
 
-function paintOnce(icon) { readInk(performance.now()); draw(icon.ctx, icon.size, project(1), 1); }
+// the hero icon is drawn with the whole sphere rolled, so its steady turn is about a diagonal axis
+const rolled = (pts) => { const c = Math.cos(ROLL), s = Math.sin(ROLL); return pts.map((p) => ({ ...p, x: p.x * c - p.y * s, y: p.x * s + p.y * c })); };
+const view = (icon, pts) => (icon.hero ? rolled(pts) : pts);
+function paintOnce(icon) { readInk(performance.now()); draw(icon.ctx, icon.size, view(icon, project(1)), 1); }
 const live = () => { for (const [cv, icon] of icons) if (!cv.isConnected && !icon.keep) { icons.delete(cv); sizes.unobserve(cv); seen.unobserve(cv); } return [...icons.values()].filter((i) => i.visible && i.size && !i.frozen); };
 
 function frame(now) {
@@ -284,7 +288,10 @@ function frame(now) {
   readInk(now);
   step(dt, t);
   const pts = project(t);
-  for (const icon of on) { draw(icon.ctx, icon.size, pts, t); if (icon.restAt && now > icon.restAt && !dragging && !ripples.length) icon.frozen = true; } // the last frame drawn stays as it is
+  const rolledPts = on.some((i) => i.hero) ? rolled(pts) : null;
+  if (rolledPts) lastPts = rolledPts; // a click on the big logo is placed on what is drawn
+  // ponytail: the hero never freezes while it is on screen (the loop ends when the page is hidden or with reduced motion); the others rest as before
+  for (const icon of on) { draw(icon.ctx, icon.size, icon.hero ? rolledPts : pts, t); if (icon.restAt && now > icon.restAt && !dragging && !ripples.length && !icon.hero) icon.frozen = true; } // the last frame drawn stays as it is
   raf = requestAnimationFrame(frame);
 }
 function start() { if (!raf && !calm.matches && icons.size) raf = requestAnimationFrame(frame); }

@@ -37,7 +37,7 @@ export function selectTools({ defs, text, recent = [], unlocked = new Set(), max
   const scores = categoryScores(text);
   const present = [...new Set(defs.map((d) => d.category))];
   const ranked = Object.entries(scores).filter(([c, n]) => n > 0 && present.includes(c)).sort((a, b) => b[1] - a[1] || present.indexOf(a[0]) - present.indexOf(b[0])).map(([c]) => c);
-  const order = [...new Set([...ranked, ...unlocked, ...(ranked.length ? [] : DEFAULT_ORDER)])].filter((c) => present.includes(c));
+  const order = [...new Set([...ranked, ...unlocked, ...(ranked.length || (!recent.length && !unlocked.size) ? [] : DEFAULT_ORDER)])].filter((c) => present.includes(c));
   const used = new Set(recent);
   const picked = [];
   const add = (d) => { if (picked.length < max && !picked.includes(d)) picked.push(d); };

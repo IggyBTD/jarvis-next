@@ -68,6 +68,8 @@ button.attach-chip:hover { color: var(--danger); border-color: var(--danger); }
 /* LaTeX mode signal beside the input */
 .latex-chip { align-self: center; flex: none; height: var(--h-sm); padding: 0 var(--s-2); border: 1px solid var(--accent); border-radius: var(--r-sm); background: transparent; color: var(--accent); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
 .latex-chip:hover { background: var(--surface-3); }
-/* LaTeX mode: the input shows the typeset maths over its own (invisible) text; the caret stays */
-#composer .chat-input.latex-hidden { color: transparent; caret-color: var(--text); }
-#composer #latex-view { position: absolute; display: flex; align-items: center; overflow: hidden; white-space: nowrap; pointer-events: none; color: var(--text); font-size: var(--fs-5); }
+/* LaTeX mode: the maths editor takes the input's place; the ordinary input stays focusable (so the app can focus it) but takes no room */
+#composer .chat-input.latex-off { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+#composer #latex-field { flex: 1; min-width: 0; display: block; align-self: center; min-height: var(--lh-lg); padding: 0; border: 0; border-radius: 0; outline: none; background: transparent; color: var(--text); font-size: var(--fs-6); --caret-color: var(--text); --selection-background-color: var(--accent-wash); --contains-highlight-background-color: var(--accent-wash); --placeholder-color: var(--text-3); --primary: var(--accent); }
+#composer #latex-field[hidden] { display: none; }
+#composer #latex-field::part(menu-toggle), #composer #latex-field::part(virtual-keyboard-toggle) { display: none; }

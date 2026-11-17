@@ -44,7 +44,7 @@ async function dragTo(from, to) {
 }
 const send = async (text) => { await page.waitForSelector('#dock-stop', { state: 'hidden' }); await page.fill('#hud-chat-input', text); await page.keyboard.press('Enter'); };
 
-test('the empty chat page: the big mesh is the centrepiece and the group stays centred; it reacts to typing, a click and a drag, and then rests without a loop', async () => {
+test('the empty chat page: the big mesh is the centrepiece and the group stays centred; it turns by itself, a click moves it, and it stops when the page is hidden', async () => {
   const g = await page.evaluate(() => {
     const h = document.querySelector('canvas.hero').getBoundingClientRect();
     const c = document.getElementById('composer-dock').getBoundingClientRect();
@@ -62,35 +62,26 @@ test('the empty chat page: the big mesh is the centrepiece and the group stays c
     window.requestAnimationFrame = (f) => { window.__frames++; return raf(f); };
   });
   const sig = () => page.evaluate(() => window.__sig());
-  const settle = async () => { let last = await sig(); for (let k = 0; k < 40; k++) { await page.waitForTimeout(250); const now = await sig(); if (now === last) { await page.waitForTimeout(250); if ((await sig()) === now) return now; } last = now; } throw new Error('the mesh never came to rest'); };
-  await settle();
+  // it turns on its own, with nothing touching it
+  await page.waitForTimeout(3000); // past the intro
+  const a1 = await sig();
   await page.evaluate(() => { window.__frames = 0; });
   await page.waitForTimeout(1000);
-  assert.ok((await page.evaluate(() => window.__frames)) < 20, 'resting: no animation loop');
-  // typing: the letters move it, and it rests again after
-  const still = await sig();
-  await page.click('#hud-chat-input');
-  await page.evaluate(() => { window.__frames = 0; });
-  await page.keyboard.type('hello there, how are you today', { delay: 35 });
-  assert.notEqual(await sig(), still, 'typing changed the picture');
-  assert.ok((await page.evaluate(() => window.__frames)) > 15, 'it ran while typing');
-  await settle();
-  // a click makes it jump; a drag turns it
+  assert.notEqual(await sig(), a1, 'the logo keeps turning by itself');
+  assert.ok((await page.evaluate(() => window.__frames)) > 20, 'the loop runs while the logo is on screen');
+  // a click makes it jump
   const box = await page.locator('canvas.hero').boundingBox();
   const base = await sig();
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await page.waitForTimeout(150);
   assert.notEqual(await sig(), base, 'a click changed the picture');
-  await settle();
-  const before = await sig();
-  await page.mouse.move(box.x + 40, box.y + box.height / 2);
-  await page.mouse.down();
-  for (let k = 1; k <= 10; k++) await page.mouse.move(box.x + 40 + k * 9, box.y + box.height / 2);
-  await page.mouse.up();
-  await page.waitForTimeout(200);
-  assert.notEqual(await sig(), before, 'a drag turned it');
-  await settle();
-  await page.fill('#hud-chat-input', ''); // the next test starts from an empty box
+  // the empty page goes away (a chat starts): the loop ends
+  await page.evaluate(() => { document.getElementById('chat-empty').style.display = 'none'; });
+  await page.waitForTimeout(800);
+  await page.evaluate(() => { window.__frames = 0; });
+  await page.waitForTimeout(1000);
+  assert.ok((await page.evaluate(() => window.__frames)) < 20, 'hidden: no animation loop');
+  await page.evaluate(() => { document.getElementById('chat-empty').style.display = ''; });
 });
 
 test('a new chat shows the greeting and the input card together, in the middle; after a message the card is at the bottom', async () => {
@@ -180,7 +171,7 @@ test('the panel: one Overview tab that cannot be closed, with cards that fold; o
   assert.match(await page.textContent('#out-body'), /<h1>hi<\/h1>|&lt;h1&gt;|h1/);
   await page.click('#out-back');
   await page.waitForSelector('#out-list .out-file');
-  for (const [id, pane, text] of [['pc', '#pc-meters', /GPU temp[\s\S]*CPU temp[\s\S]*GPU compute load[\s\S]*CPU compute load/], ['llm', '#llm-ctx', /Context left/], ['tasks', '#bg-list', /Nothing running/], ['env', '#env-branch', /Current\s*main/]]) {
+  for (const [id, pane, text] of [['pc', '#pc-meters', /GPU temp[\s\S]*CPU temp[\s\S]*GPU compute load[\s\S]*CPU compute load/], ['llm', '#llm-ctx', /Context used/], ['tasks', '#bg-list', /Nothing running/], ['env', '#env-branch', /Current\s*main/]]) {
     await waitFor(async () => text.test(await page.textContent(pane)));
   }
   assert.match(await page.textContent('#env-remote'), /Status\s*on/);
@@ -227,18 +218,18 @@ test('the plus opens a menu of places to add a file from; Accounts takes several
   await page.click('#sidebar [data-page="accounts"]');
   assert.match(await page.textContent('#acct-root'), /Google[\s\S]*Microsoft[\s\S]*GitHub/);
   for (const [kind, name] of [['School', 'University'], ['Work', 'Company']]) {
-    await page.click('#acct-root .set-card:has(h2:text-is("Google")) .acct-head .av-btn');
+    await page.click('#acct-root .set-card:has(h2:text-is("GitHub")) .acct-foot .av-btn');
     await page.selectOption('#acct-root .acct-form select', kind);
     await page.fill('#acct-root .acct-form input[type="text"]', name);
     await page.click('#acct-root .acct-form .av-btn:has-text("Add account")');
   }
-  assert.equal(await page.locator('#acct-root .set-card:has(h2:text-is("Google")) .set-row').count(), 2);
+  assert.equal(await page.locator('#acct-root .set-card:has(h2:text-is("GitHub")) .acct-row').count(), 2);
   await page.reload();
   await page.waitForSelector('#target-switch:not([hidden])');
   await page.click('#sidebar [data-page="accounts"]');
-  assert.equal(await page.locator('#acct-root .set-card:has(h2:text-is("Google")) .set-row').count(), 2);
-  while (await page.locator('#acct-root .set-row .av-btn.danger').count()) await page.locator('#acct-root .set-row .av-btn.danger').first().click();
-  assert.equal(await page.locator('#acct-root .set-row').count(), 0);
+  assert.equal(await page.locator('#acct-root .set-card:has(h2:text-is("GitHub")) .acct-row').count(), 2);
+  while (await page.locator('#acct-root .acct-row .av-btn.danger').count()) await page.locator('#acct-root .acct-row .av-btn.danger').first().click();
+  assert.equal(await page.locator('#acct-root .acct-row').count(), 0);
   await page.click('.mode-btn[data-page="chat"]');
 });
 

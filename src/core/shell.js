@@ -1,6 +1,7 @@
 // The app shell: sidebar, page switching, chat list, live readout, settings and artifacts pages.
 // It only moves and fills DOM; every behaviour (chat, tools, telemetry, voice) stays in its module.
 import { hydrateIcons } from '../icons/index.js';
+import { setMathText } from './inline-math.js';
 import { PAGES, setPage, currentPage } from './whiteboard-mode.js';
 import { openWidget, openArtifact } from './whiteboard.js';
 import { listArtifacts, onArtifactsChange } from './artifacts.js';
@@ -156,7 +157,7 @@ function renderArtifacts() {
     const b = Object.assign(document.createElement('button'), { type: 'button', className: 'art-tile' });
     b.append(
       Object.assign(document.createElement('span'), { className: 'a-type', textContent: a.type === 'code' && a.lang ? a.lang : a.type }),
-      Object.assign(document.createElement('span'), { className: 'a-title', textContent: a.title }),
+      (() => { const t = Object.assign(document.createElement('span'), { className: 'a-title' }); setMathText(t, a.title); return t; })(),
       Object.assign(document.createElement('span'), { className: 'a-sub', textContent: `${a.versions.length} version${a.versions.length === 1 ? '' : 's'}` }),
     );
     b.addEventListener('click', () => openArtifact(a.id));

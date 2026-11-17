@@ -62,6 +62,7 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
       const maxIterations = models.maxIterations ?? 100; // only a runaway guard: a task runs until the model is done (or the user presses stop)
       const maxToolCalls = models.maxToolCalls ?? 200;
       const seen = new Map(); // exact repeats of one call in this message
+      const saidBefore = new Set(); // texts the model wrote beside tool calls in this message
 
       for (let iteration = 1; ; iteration++) {
         if (iteration > maxIterations) { finalText = `I stopped after ${maxIterations} steps without finishing. Tell me how to continue.`; break; }
@@ -86,6 +87,13 @@ ${effortNote(effort)}` : ''}` }; // request only, never stored
         turn.ttftMs ??= res.stats.ttftMs;
         if (!res.toolCalls.length) { finalText = res.content; truncated = res.truncated; break; }
 
+        // Announcing the same plan again with another tool call is a stall, not progress: take the tools away so the model writes the answer.
+        let stalled = false;
+        const said = res.content.replace(/\s+/g, ' ').trim();
+        if (said.length > 40) {
+          if (saidBefore.has(said)) stalled = true;
+          saidBefore.add(said);
+        }
         conversations.append(conv, {
           role: 'assistant', content: res.content, target,
           tool_calls: res.toolCalls.map((c) => ({ id: c.id, type: 'function', function: { name: c.name, arguments: c.arguments || '{}' } })),
@@ -113,6 +121,7 @@ ${effortNote(effort)}` : ''}` }; // request only, never stored
           conversations.append(conv, { role: 'tool', tool_call_id: c.id, name: c.name, content, target });
         }
         if (malformed > 2) { emit('chat.error', { reason: 'The model kept sending malformed tool calls. Try rephrasing.' }); return { ok: false, error: 'malformed' }; }
+        if (stalled) { wrapUp = true; conversations.append(conv, { role: 'system', content: 'You repeated yourself instead of doing the work. Tools are off for the rest of this message. Write the complete answer now, directly in your reply.', target }); }
         if (calls >= maxToolCalls) wrapUp = true;
         streamed = '';
       }

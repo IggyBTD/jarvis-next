@@ -264,9 +264,10 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
     try {
       const res = await fetchImpl(`${base}/models`, { signal: AbortSignal.timeout(3000) });
       if (!res.ok) return { reachable: false, error: `HTTP ${res.status}`, tokensPerSec: last?.tokensPerSec ?? null };
+      // LM Studio lists "qwen3.8-27b" for the key "unsloth/qwen3.8-27b", so the match below also accepts the part after the slash.
       const ids = ((await res.json()).data ?? []).map((m) => m.id);
       const mine = await listModels().then((r) => r.models.find((m) => m.key === config.modelId)).catch(() => null); // size on disk and loaded context
-      return { reachable: true, sizeBytes: mine?.sizeBytes ?? null, loadedContext: mine?.loadedContext ?? null, modelId: config.modelId, settings: { thinking: config.thinking?.chat ?? false, temperature: config.sampling?.temperature ?? null, mtp: !!config.mtp?.enabled }, loaded: ids, modelPresent: ids.includes(config.modelId), tokensPerSec: last?.tokensPerSec ?? null, lastRequestAt: last?.at ?? null };
+      return { reachable: true, sizeBytes: mine?.sizeBytes ?? null, loadedContext: mine?.loadedContext ?? null, modelId: config.modelId, settings: { thinking: config.thinking?.chat ?? false, temperature: config.sampling?.temperature ?? null, mtp: !!config.mtp?.enabled }, loaded: ids, modelPresent: ids.some((id) => id === config.modelId || config.modelId.endsWith(`/${id}`)), tokensPerSec: last?.tokensPerSec ?? null, lastRequestAt: last?.at ?? null };
     } catch (e) { return { reachable: false, error: e.cause?.code ?? e.message, tokensPerSec: last?.tokensPerSec ?? null }; }
   }
 

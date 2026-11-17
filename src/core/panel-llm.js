@@ -46,7 +46,7 @@ function paint() {
   const used = live.ctxUsed;
   const max = live.ctxMax;
   $('llm-ctx').replaceChildren(
-    meter('Context left', used == null || !max ? '' : `${fmtK(Math.max(0, max - used))} of ${fmtK(max)}`, used == null || !max ? null : used / max),
+    meter('Context used', !max ? '' : `${used == null ? '--' : fmtK(used)} of ${fmtK(max)}`, used == null || !max ? null : used / max),
   );
 
   // how the model is set up (what the server sends with every request)

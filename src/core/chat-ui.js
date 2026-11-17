@@ -7,6 +7,7 @@ import { pulse, setThinking } from './mesh-state.js';
 import { describeCall, summarizeSaved, summarizeKinds } from '../../shared/steps.js';
 import { meshIcon, feedMesh, feedMeshTotal, resetMeshFeed, restMesh } from './node-mesh.js';
 import { renderBlocks, highlightCode } from './markdown.js';
+import { setMathText } from './inline-math.js';
 import { parseReply } from './tool-router.js';
 import { upsertArtifact } from './artifacts.js';
 import { runCommand, registerCommandHost, hasCommand } from './commands.js';
@@ -94,7 +95,7 @@ function addLine(role, text, { files = [], meta = clock() } = {}) {
   el.className = `chat-line ${role}`;
   const body = document.createElement('div');
   body.className = 'chat-text';
-  body.textContent = text;
+  if (role === 'user') setMathText(body, text); else body.textContent = text; // what you sent can hold maths between $ signs
   el.append(body);
   files.forEach((name) => {
     const f = document.createElement('span');
@@ -187,7 +188,7 @@ function stepsGroup() {
     q('.step-name').textContent = doing;
     let argText = '';
     try { argText = Object.keys(args ?? {}).length ? JSON.stringify(args, null, 1).slice(0, 700) : ''; } catch { /* arguments that cannot be shown */ }
-    q('.step-args').textContent = argText ? `Request\n${argText}` : '';
+    q('.step-args').innerHTML = argText ? `<span class="step-label">Request</span>${highlightCode(argText, 'json')}` : ''; // highlightCode escapes the text
     const subs = new Map();
     const row = {
       name, args, state, li, doing, did, ms: null, summary: '', note: '',
@@ -200,7 +201,7 @@ function stepsGroup() {
         q('.step-flag').textContent = STEP_STATE[s];
         if (r.summary !== undefined) row.summary = r.summary;
         row.facts();
-        if (r.detail) q('.step-detail').textContent = `Result\n${r.detail}`;
+        if (r.detail) q('.step-detail').innerHTML = `<span class="step-label">Result</span>${/^\s*[{[]/.test(r.detail) ? highlightCode(r.detail, 'json') : escapeHtml(r.detail)}`;
         q('details.step').classList.toggle('plain', !argText && !r.detail && !q('.step-facts').textContent);
         refresh();
       },
@@ -485,7 +486,7 @@ async function sendViaServer(text) {
           if (last?.role === 'assistant' && last.content) { latest = last.content; pending.className = 'chat-line assistant'; paint(true); stamp(pending); end(); }
           break;
         }
-        case 'title': document.getElementById('chat-title').textContent = e.title; break;
+        case 'title': setMathText(document.getElementById('chat-title'), e.title); break;
         default: break;
       }
     });

@@ -265,21 +265,31 @@ test('the sidebar lists the saved chats from the server, a click reopens one, a 
   await page.waitForSelector('#chat-output .chat-line.user', { timeout: 15000 }); // the chat this window was in comes back
 });
 
-test('Ctrl+L turns LaTeX mode on with a chip beside the input and no window; symbols you send become LaTeX', async () => {
+test('Ctrl+L swaps the input for a maths editor: "2^" opens the exponent at once, and sending gives LaTeX between $ signs', async () => {
   await page.keyboard.press('Control+l');
   await page.waitForSelector('#latex-chip:not([hidden])');
+  await page.waitForSelector('#latex-field:not([hidden])');
   assert.equal(await page.locator('dialog[open]').count(), 0);
-  await page.fill('#hud-chat-input', 'x^2/2 + sqrt(x)');
-  await page.waitForSelector('#latex-view .katex'); // the input shows the maths typeset, not the typed text
-  assert.equal(await page.$eval('#hud-chat-input', (e) => getComputedStyle(e).color), 'rgba(0, 0, 0, 0)');
-  await page.fill('#hud-chat-input', 'integral of x');
-  assert.equal(await page.isHidden('#latex-view'), true); // words stay as typed
-  await page.fill('#hud-chat-input', '');
+  await page.click('#latex-field');
+  await page.waitForFunction(() => document.querySelector('#latex-field')?.matches(':focus'));
+  await page.keyboard.type('2^');
+  // the exponent slot exists straight away, before any exponent is typed
+  assert.match(await page.$eval('#latex-field', (e) => e.value), /^2\^\{/);
+  await page.keyboard.type('3');
+  assert.equal(await page.$eval('#latex-field', (e) => e.value), '2^3');
+  assert.equal(await page.$eval('#hud-chat-input', (e) => e.value), '$2^3$');
   rig.model.script({ content: 'ok' });
-  await send('x^2/2 + sqrt(x)');
-  await waitFor(() => rig.model.requests.some((r) => r.body.messages.some((m) => typeof m.content === 'string' && m.content.includes(String.raw`$\frac{x^{2}}{2}+\sqrt{x}$`))));
+  await page.keyboard.press('Enter');
+  await waitFor(() => rig.model.requests.some((r) => r.body.messages.some((m) => typeof m.content === 'string' && m.content.includes('$2^3$'))));
+  await waitFor(async () => (await page.$eval('#latex-field', (e) => e.value)) === ''); // the editor empties with the chat's input
+  await page.waitForSelector('#chat-output .chat-line.user .chat-text .katex'); // your message is shown typeset, not as $2^3$
+  // a chat name with maths in it is typeset in the title and the list, and the list entry keeps the typed text
+  await page.evaluate(() => document.dispatchEvent(new CustomEvent('jarvis:session-name', { detail: { id: document.querySelector('.chat-item.current')?.dataset.id ?? 'x', name: 'Solve $x^2$ now', animate: false } })));
+  await page.waitForSelector('#chat-title .katex');
+  assert.equal(await page.$eval('#chat-title', (e) => e.dataset.raw), 'Solve $x^2$ now');
   await page.keyboard.press('Control+l');
   assert.equal(await page.isHidden('#latex-chip'), true);
+  assert.equal(await page.isHidden('#latex-field'), true);
 });
 
 test('no script errors on the page', () => { assert.deepEqual(errors.filter((e) => !/transformCallback/.test(e)), []); });

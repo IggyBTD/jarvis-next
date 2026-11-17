@@ -309,13 +309,25 @@ test('orchestrator: a switch mid-turn does not redirect; the next turn gets the 
   } finally { await r.close(); }
 });
 
+test('orchestrator: repeating the same announcement with another tool call turns tools off and gets an answer', async () => {
+  const r = await makeRig();
+  try {
+    let n = 0;
+    const plan = 'I will write you a long story. Let me think about what to make it before I start, then write it.';
+    r.model.setDefault((body) => (body.tools ? { content: plan, toolCalls: [{ name: 'set_volume', arguments: { level: n++ % 100 } }] } : { content: 'Once upon a time.' }));
+    const out = await r.orchestrator.runTurn({ convId: 'c-stall', text: 'write me a long story' });
+    assert.equal(out.text, 'Once upon a time.');
+    assert.equal(r.model.requests.length, 3); // announce, announce again (stall), then the answer without tools
+  } finally { await r.close(); }
+});
+
 test('orchestrator: model iteration and tool-call limits, malformed calls, then a graceful end', async () => {
   const r = await makeRig();
   try {
     r.cfg.models.maxIterations = 8; r.cfg.models.maxToolCalls = 12; // the shipped numbers are a high runaway guard; this test pins small ones
     let n = 0; // different arguments each time, so the repeat guard stays out of it
     r.model.setDefault((body) => (body.tools ? { toolCalls: [{ name: 'set_volume', arguments: { level: n++ % 100 } }] } : { content: 'wrapped up' }));
-    const out = await r.orchestrator.runTurn({ convId: 'c3', text: 'loop forever' });
+    const out = await r.orchestrator.runTurn({ convId: 'c3', text: 'set the volume forever' });
     assert.match(out.text, /stopped after 8 steps/);
     assert.equal(r.model.requests.length, 8);
     assert.equal(r.pc.calls.length, 8);
@@ -323,7 +335,7 @@ test('orchestrator: model iteration and tool-call limits, malformed calls, then 
     r.model.requests.length = 0;
     r.pc.calls.length = 0;
     r.model.setDefault((body) => (body.tools ? { toolCalls: Array.from({ length: 5 }, () => ({ name: 'set_volume', arguments: { level: n++ % 100 } })) } : { content: 'wrapped up' }));
-    const out2 = await r.orchestrator.runTurn({ convId: 'c4', text: 'many calls' });
+    const out2 = await r.orchestrator.runTurn({ convId: 'c4', text: 'set the volume many times' });
     assert.equal(out2.text, 'wrapped up');
     assert.equal(r.pc.calls.length, 12); // capped
     assert.equal(r.model.requests.at(-1).body.tools, undefined); // the last call had no tools
@@ -332,12 +344,12 @@ test('orchestrator: model iteration and tool-call limits, malformed calls, then 
     r.model.requests.length = 0;
     r.pc.calls.length = 0;
     r.model.setDefault((body) => (body.tools ? { toolCalls: [{ name: 'get_volume', arguments: {} }] } : { content: 'wrapped up' }));
-    await r.orchestrator.runTurn({ convId: 'c6', text: 'same call over and over' });
+    await r.orchestrator.runTurn({ convId: 'c6', text: 'set the volume, same call over and over' });
     assert.equal(r.pc.calls.length, 2); // the third identical call is refused as a loop, not run
     assert.ok(r.conversations.get('c6').messages.some((m) => m.role === 'tool' && /exact get_volume call/.test(m.content)));
 
     r.model.setDefault(() => ({ toolCalls: [{ name: 'set_volume', arguments: '{"level": ' }] }));
-    const bad = await r.orchestrator.runTurn({ convId: 'c5', text: 'bad json' });
+    const bad = await r.orchestrator.runTurn({ convId: 'c5', text: 'set the volume, bad json' });
     assert.deepEqual([bad.ok, bad.error], [false, 'malformed']);
     assert.equal(r.events.filter((e) => e.convId === 'c5' && e.type === 'chat.error').length, 1);
   } finally { await r.close(); }
