@@ -43,7 +43,7 @@ import { createVoice } from './voice/session.js';
 import { createVad, createStt, createTts } from './voice/engines.js';
 import { createHttpHandler, createHealth } from './api/http.js';
 import { attachWs } from './api/ws.js';
-import { resolveBind } from '../shared/net.js';
+import { resolveBind, guardHost } from '../shared/net.js';
 import { installProcessGuards, isMain } from '../shared/util.js';
 
 // The git branch of a folder on this PC, read from .git/HEAD (the server never starts programs). Null when it is not a repository.
@@ -208,6 +208,9 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
       return r;
     },
   }, health, audit, conversations, digest, osint, accounts, msAccounts, browserView, bundle, latex, buildState: () => wsApi.buildState(), log }));
+
+  // F3-7: a Host allowlist in front of every request and socket, here and on the loopback twin below (DNS rebinding)
+  guardHost(server);
 
   // The same handlers also answer on loopback, so this PC's own app works whatever the network address does (Tailscale down, a new LAN IP).
   const loopback = http.createServer();

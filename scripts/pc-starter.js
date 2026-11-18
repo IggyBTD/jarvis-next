@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 import { loadConfig, ROOT } from '../server/core/config.js';
 import { createDevices } from '../server/core/devices.js';
 import { currentUiToken } from '../server/core/auth.js';
-import { ipAllowed, resolveBind } from '../shared/net.js';
+import { ipAllowed, resolveBind, hostAllowed } from '../shared/net.js';
 import { createLimiter } from '../server/core/auth.js';
 import { reachable } from './wake.js';
 import { background, freshen } from './launch-app.js';
@@ -31,6 +31,7 @@ export function createStarter({ token, check = null, allowed, ports, limiter = c
   let starting = false;
   return async (req, res) => {
     const out = (status, body) => { res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(body)); };
+    if (!hostAllowed(req.headers.host)) return out(421, { error: 'host not allowed' }); // F3-7: DNS rebinding
     const ip = req.socket.remoteAddress;
     // no loopback exemption: behind tailscale serve or any local proxy every caller is loopback
     if (!ipAllowed(ip, allowed)) return out(403, { error: 'forbidden' });

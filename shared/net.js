@@ -50,3 +50,27 @@ export function resolveBind(bind, interfaces = os.networkInterfaces()) {
   if (lan) return { host: lan.address, reason: 'LAN address' };
   return { host: '127.0.0.1', reason: 'no Tailscale or LAN interface found; loopback only' };
 }
+
+// F3-7: DNS rebinding reaches a server under a name the attacker controls. A Host is allowed only when no outside DNS can point it at
+// this machine: an IP literal, localhost or *.localhost (browsers keep those on loopback), or a Tailscale name (*.ts.net, set by
+// Tailscale only).
+export function hostAllowed(host) {
+  if (!host) return false;
+  let name;
+  try { name = new URL(`http://${host}`).hostname.toLowerCase(); } catch { return false; }
+  return name.startsWith('[') || v4(name) !== null || name === 'localhost' || name.endsWith('.localhost') || name.endsWith('.ts.net');
+}
+
+// Puts hostAllowed in front of every request and upgrade listener already on the server; call it after the last one is added.
+export function guardHost(server) {
+  for (const ev of ['request', 'upgrade']) {
+    const ls = server.listeners(ev);
+    server.removeAllListeners(ev);
+    server.on(ev, (req, out, head) => {
+      if (hostAllowed(req.headers.host)) return ls.forEach((l) => l.call(server, req, out, head));
+      if (ev === 'request') { out.writeHead(421, { 'content-type': 'text/plain' }); return out.end('Misdirected request'); }
+      out.write('HTTP/1.1 421 Misdirected Request\r\nConnection: close\r\nContent-Length: 0\r\n\r\n');
+      out.destroy();
+    });
+  }
+}
