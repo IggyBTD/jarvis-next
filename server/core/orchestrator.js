@@ -1,5 +1,6 @@
 // The chat loop: one user message -> model -> tool calls through the router -> model ... -> answer.
-// Limits per turn (models.json): 100 model calls and 200 tool calls by default, a runaway guard only. The target is bound when the turn starts and
+// Limits per turn (models.json): 100 model calls and 200 tool calls by default, a runaway guard only, and at most maxCallsPerTool (20) calls
+// of any one tool, whatever its arguments (F5-1: an injected loop that varies its arguments stops there). The target is bound when the turn starts and
 // stays for the whole turn. The user can abort at any time; the conversation never keeps a tool call without a result.
 import { fit, estimateTokens } from './conversations.js';
 import { effortNote, DEFAULT_EFFORT } from '../../shared/effort.js';
@@ -61,6 +62,8 @@ export function createOrchestrator({ llm, queue, router, prompts, conversations,
       let wrapUp = false;
       const maxIterations = models.maxIterations ?? 100; // only a runaway guard: a task runs until the model is done (or the user presses stop)
       const maxToolCalls = models.maxToolCalls ?? 200;
+      const maxCallsPerTool = models.maxCallsPerTool ?? 20;
+      const perTool = new Map(); // calls run per tool name in this message
       const seen = new Map(); // exact repeats of one call in this message
       const saidBefore = new Set(); // texts the model wrote beside tool calls in this message
 
@@ -98,13 +101,16 @@ ${effortNote(effort)}` : ''}` }; // request only, never stored
           role: 'assistant', content: res.content, target,
           tool_calls: res.toolCalls.map((c) => ({ id: c.id, type: 'function', function: { name: c.name, arguments: c.arguments || '{}' } })),
         });
+        let capped = 0;
         for (const c of res.toolCalls) {
           let content;
           if (calls >= maxToolCalls) content = 'Skipped: the limit of tool calls for this message was reached.';
+          else if ((perTool.get(c.name) ?? 0) >= maxCallsPerTool) { capped += 1; content = `Skipped: ${c.name} already ran ${maxCallsPerTool} times in this message, the most one tool may. Answer from what you have, and say what is left.`; }
           else if (c.args === null) { malformed += 1; content = `Your arguments for ${c.name} were not a valid JSON object. Send a JSON object that matches the tool's parameters.`; }
           else if (repeated(seen, c) >= 3) content = `You already made this exact ${c.name} call ${seen.get(key(c)) - 1} times in this message. Do not repeat it: try something different, or answer from what you have.`;
           else {
             calls += 1;
+            perTool.set(c.name, (perTool.get(c.name) ?? 0) + 1);
             emit('tool.call', { name: c.name, args: c.args });
             // the chat's taint is read fresh for every call (a mail read earlier in this same batch counts), and set by any result that
             // carries someone else's text (server/core/taint.js); it is saved with the chat and lasts as long as the chat
@@ -122,7 +128,7 @@ ${effortNote(effort)}` : ''}` }; // request only, never stored
         }
         if (malformed > 2) { emit('chat.error', { reason: 'The model kept sending malformed tool calls. Try rephrasing.' }); return { ok: false, error: 'malformed' }; }
         if (stalled) { wrapUp = true; conversations.append(conv, { role: 'system', content: 'You repeated yourself instead of doing the work. Tools are off for the rest of this message. Write the complete answer now, directly in your reply.', target }); }
-        if (calls >= maxToolCalls) wrapUp = true;
+        if (calls >= maxToolCalls || (capped && capped === res.toolCalls.length)) wrapUp = true;
         streamed = '';
       }
 

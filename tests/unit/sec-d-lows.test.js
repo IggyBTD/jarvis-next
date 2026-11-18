@@ -134,3 +134,19 @@ test('F4-4: write_file makes data files only; nothing becomes a script by copy o
     assert.equal((await ex('move_file', { from: at('tool.ps1'), to: at('WindowsPowerShell', 'profile.ps1') })).ok, false, 'but not into a profile folder');
   } finally { t.cleanup(); rmDir(root); }
 });
+
+// ---- F5-1 -----------------------------------------------------------------------------------------------------------------------
+
+test('F5-1: one tool runs at most maxCallsPerTool times in a message, even with new arguments each time; then tools go off', async () => {
+  const { makeRig } = await import('../rig.js');
+  const r = await makeRig();
+  try {
+    r.cfg.models.maxIterations = 100; r.cfg.models.maxToolCalls = 200; // the shipped runaway guard
+    let n = 0;
+    r.model.setDefault((body) => (body.tools ? { toolCalls: [{ name: 'set_volume', arguments: { level: n++ % 100 } }] } : { content: 'wrapped up' }));
+    const out = await r.orchestrator.runTurn({ convId: 'f51', text: 'set the volume forever' });
+    assert.equal(r.pc.calls.filter((c) => /set_volume/.test(JSON.stringify(c))).length, 20);
+    assert.equal(out.text, 'wrapped up');
+    assert.ok(r.model.requests.length <= 23, String(r.model.requests.length));
+  } finally { await r.close(); }
+});
