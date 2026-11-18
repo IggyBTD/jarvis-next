@@ -1,4 +1,4 @@
-STATUS: IN PROGRESS, stage D (stages A, B and C done). Resume job: 43a3da9b.
+STATUS: IN PROGRESS, FINAL re-check (stages A, B, C and D done). Resume job: 43a3da9b.
 
 
 
@@ -39,11 +39,11 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F3-6 | D | DONE | 81bc86c | client-link prints Tailscale names only; no raw-address "At home" link |
 | F3-7 | D | DONE | 655d42a | Host allowlist by kind (IP literal, localhost, *.localhost, *.ts.net) in front of every server request and upgrade, and the starter; 421 otherwise |
 | F3-8 | D | DONE | f4b3b83 | audit strips query strings and search-like values; Mac telemetry skips actions that are off (battery_status was the refusals) |
-| F4-3 | D | TODO | | |
+| F4-3 | D | DONE | bb113d9, b47fdec | separate browser contexts for the model and the person (Intel view shows the person's own page), Enter and Space ask on any focused control, WebSockets checked like every request, DNS pinned by a local proxy |
 | F4-4 | D | DONE | 35d9e56 | writablePath: write_file data and document types only, copy and move keep the source type, zip only .zip, no profile or startup folders, no hidden names or streams |
-| F5-1 | D | TODO | | |
-| F5-2 | D | TODO | | |
-| F5-3 | D | TODO | | |
+| F5-1 | D | DONE | 3ff0960 | one tool runs at most 20 times per message (models.maxCallsPerTool), whatever its arguments; the owner's 100/200 guard left as set |
+| F5-2 | D | DONE | cc096d8 | model proxy: 2 requests in flight per token, output capped at 8192 tokens |
+| F5-3 | D | DONE | f60eff6 | reportBack logs one line when it gives up; the note stays in the chat |
 
 ## Stage summaries
 
