@@ -194,3 +194,42 @@ test('F5-3: reportBack says so when it gives up on a chat that stayed busy', asy
   assert.match(lines[0], /gave up/);
   assert.match(lines[0], /\bc\b/);
 });
+
+// ---- F4-3 (DNS pinning) ---------------------------------------------------------------------------------------------------------
+
+test('F4-3: the pinning proxy resolves once, refuses private answers, and connects to the address it checked', async () => {
+  const http = await import('node:http');
+  const net = await import('node:net');
+  const { createPinProxy } = await import('../../sidecars/browser-guard/pin-proxy.js');
+  const site = http.createServer((req, res) => res.end(`hello ${req.headers.host}`));
+  await new Promise((ok) => site.listen(0, '127.0.0.1', ok));
+  const port = site.address().port;
+  const answers = { 'fixture.test': [{ address: '127.0.0.1', family: 4 }], 'evil.test': [{ address: '10.0.0.9', family: 4 }], 'mixed.test': [{ address: '93.184.216.34', family: 4 }, { address: '192.168.1.1', family: 4 }] };
+  const lookups = [];
+  const proxy = await createPinProxy({ allowLoopback: true, resolve: async (h) => { lookups.push(h); return answers[h] ?? []; } });
+  const strict = await createPinProxy({ resolve: async (h) => answers[h] ?? [] });
+  const auth = (p) => `Basic ${Buffer.from(`${p.username}:${p.password}`).toString('base64')}`;
+  const get = (p, target, headers = {}) => new Promise((ok, no) => {
+    const u = new URL(p.url);
+    http.get({ host: u.hostname, port: u.port, path: target, headers: { host: new URL(target).host, ...headers } }, (res) => { let b = ''; res.on('data', (d) => { b += d; }); res.on('end', () => ok({ status: res.statusCode, body: b })); }).on('error', no);
+  });
+  const connect = (p, target) => new Promise((ok) => {
+    const u = new URL(p.url);
+    const s = net.connect({ host: u.hostname, port: Number(u.port) }, () => s.write(`CONNECT ${target} HTTP/1.1\r\nHost: ${target}\r\nProxy-Authorization: ${auth(p)}\r\n\r\n`));
+    s.once('data', (d) => { ok(Number(String(d).split(' ')[1])); s.destroy(); });
+    s.on('error', () => ok(0));
+  });
+  try {
+    const page = await get(proxy, `http://fixture.test:${port}/`, { 'proxy-authorization': auth(proxy) });
+    assert.equal(page.status, 200);
+    assert.equal(page.body, `hello fixture.test:${port}`, 'the Host header is kept; the connection went to the checked address');
+    assert.equal((await get(proxy, `http://fixture.test:${port}/`)).status, 407);
+    assert.equal((await get(proxy, `http://evil.test:${port}/`, { 'proxy-authorization': auth(proxy) })).status, 403);
+    assert.equal((await get(proxy, `http://mixed.test:${port}/`, { 'proxy-authorization': auth(proxy) })).status, 403, 'one private answer refuses the name');
+    assert.equal(await connect(proxy, `fixture.test:${port}`), 200);
+    assert.equal(await connect(proxy, 'evil.test:443'), 403);
+    assert.equal(await connect(strict, `fixture.test:${port}`), 403, 'loopback is refused outside the test fixture');
+    assert.equal(await connect(strict, `localhost:${port}`), 403);
+    assert.ok(lookups.every((h) => h !== 'localhost'));
+  } finally { await proxy.close(); await strict.close(); site.close(); }
+});

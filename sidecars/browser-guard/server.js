@@ -10,19 +10,23 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { chromium } from 'playwright';
 import { checkUrl, isSubmitLike, isSensitiveField, looksLikeCaptcha } from './guard.js';
+import { createPinProxy } from './pin-proxy.js';
 import { safeEqual, isMain } from '../../shared/util.js';
 
 const KEYS = new Set(['Enter', 'Tab', 'Escape', 'Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End', 'Space']);
 const MAX_TEXT = 8000;
 
-export function createBrowserService({ token, policy, headed = false, allowLoopback = false, launch = async () => { let last; for (const channel of [...new Set([process.env.JARVIS_BROWSER_CHANNEL, 'chrome', 'msedge', undefined])]) { try { return await chromium.launch({ headless: !headed, channel: channel || undefined }); } catch (e) { last = e; } } throw new Error(`no browser could be started (${String(last?.message).split('\n')[0]}). Install Google Chrome or run: npx playwright install chromium`); }, now = Date.now }) {
+export function createBrowserService({ token, policy, headed = false, allowLoopback = false, resolve, launch = async () => { let last; for (const channel of [...new Set([process.env.JARVIS_BROWSER_CHANNEL, 'chrome', 'msedge', undefined])]) { try { return await chromium.launch({ headless: !headed, channel: channel || undefined }); } catch (e) { last = e; } } throw new Error(`no browser could be started (${String(last?.message).split('\n')[0]}). Install Google Chrome or run: npx playwright install chromium`); }, now = Date.now }) {
   let browser = null;
   const sides = { model: { context: null, page: null }, view: { context: null, page: null } };
   let paused = false; // the model's side only
   const typedSites = new Set();
   const challenges = new Map();
   const hostCache = new Map();
-  const opts = { allow: policy.allowDomains, deny: policy.denyDomains, allowLoopback };
+  const opts = { allow: policy.allowDomains, deny: policy.denyDomains, allowLoopback, ...(resolve ? { resolve } : {}) };
+  // DNS is pinned (F4-3): every context goes through this proxy, so the browser never resolves a name; the proxy resolves it once,
+  // refuses private answers and connects to the address it checked (pin-proxy.js)
+  let pin = null;
 
   const allowed = async (url) => {
     if (/^(data|blob|about):/.test(url)) return true;
@@ -37,7 +41,8 @@ export function createBrowserService({ token, policy, headed = false, allowLoopb
     if (s.page && !s.page.isClosed()) return s.page;
     browser ??= await launch();
     if (!s.context) {
-      s.context = await browser.newContext({ acceptDownloads: false, serviceWorkers: 'block', permissions: [], viewport: { width: 1280, height: 800 } });
+      pin ??= await createPinProxy({ allowLoopback, ...(resolve ? { resolve } : {}) });
+      s.context = await browser.newContext({ acceptDownloads: false, serviceWorkers: 'block', permissions: [], viewport: { width: 1280, height: 800 }, proxy: { server: pin.url, username: pin.username, password: pin.password } });
       // Every request the page makes, redirects and subresources included, is checked; a blocked one is aborted.
       await s.context.route('**/*', async (route) => (await allowed(route.request().url()) ? route.continue() : route.abort('blockedbyclient')));
       // route() does not see WebSockets: ws: and wss: are checked here as http: and https:, and a refused one is closed unopened
@@ -162,7 +167,7 @@ export function createBrowserService({ token, policy, headed = false, allowLoopb
     return actions[name](args ?? {});
   }
   const modelPage = () => (sides.model.page && !sides.model.page.isClosed() ? sides.model.page : null);
-  return { handle, names: Object.keys(actions), state: () => ({ running: !!modelPage(), url: modelPage()?.url() ?? null, paused, view: viewState() }), async stop() { await closeSide('model'); await closeSide('view'); await browser?.close().catch(() => {}); browser = null; } };
+  return { handle, names: Object.keys(actions), state: () => ({ running: !!modelPage(), url: modelPage()?.url() ?? null, paused, view: viewState() }), async stop() { await closeSide('model'); await closeSide('view'); await browser?.close().catch(() => {}); browser = null; await pin?.close(); pin = null; } };
 }
 
 export function createBrowserServer({ token, service }) {

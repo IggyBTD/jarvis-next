@@ -45,6 +45,20 @@ test('F4-3: the person signs in in the view; the model\'s browser does not have 
   assert.ok((await svc.handle('view_screenshot')).jpeg.length > 100, 'the view has its own screenshot');
 });
 
+test('F4-3: DNS is pinned: the browser reaches a name only at the address the guard resolved and checked', async () => {
+  // Chromium cannot resolve fixture.test itself; the page loads only because the pinning proxy resolved it (to the fixture) and
+  // connected there. A name that answers private is refused by the same resolver.
+  const answers = { 'fixture.test': [{ address: '127.0.0.1', family: 4 }], 'rebind.test': [{ address: '10.0.0.9', family: 4 }] };
+  const pinned = createBrowserService({ token: 't', policy, allowLoopback: true, resolve: async (h) => answers[h] ?? [] });
+  try {
+    const port = new URL(base).port;
+    const ok = await pinned.handle('navigate', { url: `http://fixture.test:${port}/whoami` });
+    assert.equal(ok.status, 'ok', JSON.stringify(ok));
+    assert.match((await pinned.handle('read')).text, /Who/);
+    assert.equal((await pinned.handle('navigate', { url: `http://rebind.test:${port}/` })).status, 'refused');
+  } finally { await pinned.stop(); }
+});
+
 test('F4-3: a WebSocket is checked like any other request: one to a denied host never connects', async () => {
   const wss = new WebSocketServer({ port: 0, host: '127.0.0.1' });
   let connected = 0;
