@@ -41,16 +41,17 @@ export function readJson(file, fallback = null) {
 }
 
 // Anything that came from a web page, an email, a file or a tool is data. It goes into model context inside a marked
-// block, and the closing marker cannot be forged from inside the block.
+// block whose id is random per block: it ends only at </untrusted id="<same id>">, which text inside cannot guess.
 export function wrapUntrusted(source, text, { max = 8000 } = {}) {
   let body = String(text ?? '');
   const cut = body.length > max;
   if (cut) body = `${body.slice(0, max)}\n[truncated, ${text.length - max} more characters]`;
-  body = body.replace(/<\/?untrusted[^>]*>/gi, '[tag removed]');
+  body = body.replace(/<\s*\/?\s*untrusted\b[^>]*>?/gi, '[tag removed]');
   // markup a model might copy into its own reply and have read back as a tool call or as hidden thinking: the < is written as &lt;
   body = body.replace(/<(?=\s*\/?\s*(?:tool_call|think|function|tool)\b|\|)/gi, '&lt;');
   const label = String(source).replace(/[^\w .:/-]/g, '').slice(0, 80);
-  return `<untrusted source="${label}">\n${body}\n</untrusted>`;
+  const id = crypto.randomBytes(8).toString('hex');
+  return `<untrusted source="${label}" id="${id}">\n${body}\n</untrusted id="${id}">`;
 }
 
 export const clip = (s, n) => { const t = String(s ?? ''); return t.length > n ? `${t.slice(0, n)}...[${t.length - n} more]` : t; };

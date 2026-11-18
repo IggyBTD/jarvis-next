@@ -62,8 +62,8 @@ test('digest: calendar rows and numbers come from code; the model call has no to
       assert.equal(req.body.chat_template_kwargs.enable_thinking, false);
     }
     const mailPrompt = r.model.requests[0].body.messages.at(-1).content;
-    assert.match(mailPrompt, /^<untrusted source="unread email">/);
-    assert.equal((mailPrompt.match(/<\/untrusted>/g) ?? []).length, 1); // the forged closing tag was neutralised
+    assert.match(mailPrompt, /^<untrusted source="unread email" id="[0-9a-f]{16}">/);
+    assert.equal((mailPrompt.match(/<\/untrusted/g) ?? []).length, 1); // the forged closing tag was neutralised
     assert.ok(fs.existsSync(path.join(r.dir, 'digests', '2026-10-18.md')));
     assert.ok(r.events.some((e) => e.type === 'digest.ready'));
     assert.equal(r.digest.latestMeta().date, '2026-10-18');

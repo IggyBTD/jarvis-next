@@ -237,7 +237,7 @@ test('agent tasks: start, snapshot, summary, changed files, conversation note; q
     assert.equal(t1.summary, 'Added new.txt.');
     if (hasGit) assert.deepEqual((t1.files ?? [{ path: JSON.stringify(t1) }]).map((f) => f.path), ['new.txt']);
     const note = s.conversations.get('conv1').messages.find((m) => m.role === 'system');
-    assert.match(note.content, /Agent task .* done\.[\s\S]*<untrusted source="agent task report">[\s\S]*Added new\.txt\./);
+    assert.match(note.content, /Agent task .* done\.[\s\S]*<untrusted source="agent task report" id="[0-9a-f]+">[\s\S]*Added new\.txt\./);
     assert.ok(s.events.some((e) => e.type === 'chat.note'));
 
     // the queued one starts when the first ends, then is aborted

@@ -142,7 +142,7 @@ export function summarizeResult(name, data, error) {
 export function summarizeSaved(name, content) {
   const text = String(content ?? '');
   const ok = /\] \S+ finished:/.test(text.slice(0, 300));
-  const inner = text.match(/<untrusted[^>]*>\n?([\s\S]*?)\n?<\/untrusted>/)?.[1] ?? text.replace(/^\[[^\]]*\]\s*\S+\s+(finished|failed|was not run):?\s*/, '');
+  const inner = text.match(/<untrusted[^>]*>\n?([\s\S]*?)\n?<\/untrusted[^>]*>/)?.[1] ?? text.replace(/^\[[^\]]*\]\s*\S+\s+(finished|failed|was not run):?\s*/, '');
   if (!ok) return { summary: clipText(inner, 140), detail: clipText(inner, 500) };
   try { return summarizeResult(name, JSON.parse(inner)); } catch { return { summary: clipText(inner, 120) || 'Done', detail: clipText(inner, 500) }; }
 }

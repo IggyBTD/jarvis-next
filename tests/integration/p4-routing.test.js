@@ -108,8 +108,8 @@ test('router: T0 and T1 run at once, are tagged with the target, wrapped as untr
     const out = await r.router.invoke(call('get_volume'), ctx(r));
     assert.equal(out.ok, true);
     assert.equal(out.target, 'pc');
-    assert.match(out.content, /^\[PC\] get_volume finished:\n<untrusted source="get_volume result from PC">/);
-    assert.equal((out.content.match(/<\/untrusted>/g) ?? []).length, 1); // the forged closing tag was neutralised
+    assert.match(out.content, /^\[PC\] get_volume finished:\n<untrusted source="get_volume result from PC" id="[0-9a-f]{16}">/);
+    assert.equal((out.content.match(/<\/untrusted/g) ?? []).length, 1); // the forged closing tag was neutralised
     assert.deepEqual(r.pc.calls, [{ name: 'get_volume', args: {}, dryRun: false }]);
     const line = lastAudit(r, 1)[0];
     assert.deepEqual([line.action, line.target, line.source, line.tier, line.decision, line.outcome], ['get_volume', 'pc', 'user', 'T0', 'auto', 'ok']);
