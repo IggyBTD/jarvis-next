@@ -3,7 +3,7 @@
 // run is a human step on the Mac (HUMAN_TODO.md sections 5 and 7). UI scripting needs Accessibility/Automation permission.
 import path from 'node:path';
 import fs from 'node:fs';
-import { action, safePath, dirPath, resolveApp, tryJson, asList, clipText, spawnTracked } from './common.js';
+import { action, safePath, writablePath, dirPath, resolveApp, tryJson, asList, clipText, spawnTracked } from './common.js';
 import { gitRun } from './git.js';
 
 const osa = (script, ...argv) => ({ file: 'osascript', args: ['-e', script, ...argv.map(String)] });
@@ -88,7 +88,7 @@ export const darwin = {
   open_ports: simple({ file: 'lsof', args: ['-iTCP', '-sTCP:LISTEN', '-n', '-P'] }),
 
   trash_file: action({ plan: ({ path: p }, ctx) => osa('on run argv\ntell application "Finder" to delete POSIX file (item 1 of argv)\nend run', safePath(p, ctx)), parse: (_r, { path: p }) => ({ trashed: p }) }),
-  zip_folder: action({ plan: ({ path: p, to }, ctx) => { const src = dirPath(p, ctx); const dst = to ? safePath(to, ctx) : `${src}.zip`; if (fs.existsSync(dst)) throw new Error('destination exists'); return { file: 'ditto', args: ['-c', '-k', '--sequesterRsrc', '--keepParent', src, dst], timeoutMs: 300_000 }; }, parse: (_r, a) => ({ zipped: a.path }) }),
+  zip_folder: action({ plan: ({ path: p, to }, ctx) => { const src = dirPath(p, ctx); const dst = to ? writablePath(to, ctx, { also: '.zip' }) : `${src}.zip`; if (fs.existsSync(dst)) throw new Error('destination exists'); return { file: 'ditto', args: ['-c', '-k', '--sequesterRsrc', '--keepParent', src, dst], timeoutMs: 300_000 }; }, parse: (_r, a) => ({ zipped: a.path }) }),
 
   get_clipboard: simple({ file: 'pbpaste', args: [] }, (r) => ({ text: clipText(r.at(-1).stdout, 4000) })),
   set_clipboard: action({ plan: ({ text: t }) => ({ file: 'pbcopy', args: [], stdin: t }), parse: () => ({ set: true }) }),

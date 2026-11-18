@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { action, safePath, dirPath, expandHome, spawnTracked, realPathOf } from './common.js';
+import { action, safePath, writablePath, dirPath, expandHome, spawnTracked, realPathOf } from './common.js';
 import { sendWol } from '../../shared/wol.js';
 import { parseLhm } from '../../shared/lhm.js';
 import { gitSnapshot, gitChanges } from './git.js';
@@ -132,7 +132,7 @@ export const portable = {
   } }),
   copy_file: action({ describe: (a) => ({ would: `copy ${a.from} to ${a.to}` }), async run({ from, to }, ctx) {
     const src = safePath(from, ctx);
-    const dst = safePath(to, ctx);
+    const dst = writablePath(to, ctx, { also: path.extname(src) });
     if (!stat(src)?.isFile()) throw new Error('source is not a file');
     if (fs.existsSync(dst)) throw new Error('destination already exists; nothing was overwritten');
     fs.mkdirSync(path.dirname(dst), { recursive: true });
@@ -142,7 +142,7 @@ export const portable = {
   // Saves text the model wrote. Nothing is overwritten unless asked: a new file, append to one, or overwrite it on purpose.
   write_file: action({ describe: (a) => ({ would: `${a.append ? 'append to' : a.overwrite ? 'overwrite' : 'create'} ${a.path} (${String(a.content ?? '').length} characters)` }), async run({ path: target, content, append = false, overwrite = false }, ctx) {
     if (typeof content !== 'string') throw new Error('content must be text');
-    const dst = safePath(target, ctx);
+    const dst = writablePath(target, ctx);
     const there = stat(dst);
     if (there && !there.isFile()) throw new Error('that path is a folder');
     if (there && !append && !overwrite) throw new Error('the file already exists; nothing was overwritten (set append to add to it, or overwrite to replace it)');
@@ -152,7 +152,7 @@ export const portable = {
   } }),
   move_file: action({ describe: (a) => ({ would: `move ${a.from} to ${a.to}` }), async run({ from, to }, ctx) {
     const src = safePath(from, ctx);
-    const dst = safePath(to, ctx);
+    const dst = writablePath(to, ctx, { also: path.extname(src) });
     if (!fs.existsSync(src)) throw new Error('source does not exist');
     if (fs.existsSync(dst)) throw new Error('destination already exists; nothing was overwritten');
     fs.mkdirSync(path.dirname(dst), { recursive: true });

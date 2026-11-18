@@ -1751,7 +1751,7 @@
     },
     {
       "name": "write_file",
-      "description": "Save text to a file inside the allowed roots (a relative path goes in the workspace). Nothing is overwritten unless overwrite is true; append adds to the end: save a long text in parts of up to about 10000 characters, the first without append and the rest with append true. You write the text yourself; this only stores it.",
+      "description": "Save text to a file inside the allowed roots (a relative path goes in the workspace). Nothing is overwritten unless overwrite is true; append adds to the end: save a long text in parts of up to about 10000 characters, the first without append and the rest with append true. Data and documents only (.txt, .md, .json, .csv, .html and the like); scripts and programs are refused. You write the text yourself; this only stores it.",
       "category": "files",
       "tier": "T2",
       "platforms": [

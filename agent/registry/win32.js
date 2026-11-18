@@ -5,7 +5,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
-import { action, safePath, dirPath, resolveApp, tryJson, asList, clipText, spawnTracked } from './common.js';
+import { action, safePath, writablePath, dirPath, resolveApp, tryJson, asList, clipText, spawnTracked } from './common.js';
 import { gitRun } from './git.js';
 
 const envA = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [`JARVIS_A_${k}`, String(v)]));
@@ -141,7 +141,7 @@ export const win32 = {
   open_ports: simple(ps('Get-NetTCPConnection -State Listen | Select-Object LocalAddress, LocalPort, OwningProcess | Sort-Object LocalPort | ConvertTo-Json -Compress'), (r) => asList(json(r)).slice(0, 200)),
 
   trash_file: action({ plan: ({ path: p }, ctx) => ps("Add-Type -AssemblyName Microsoft.VisualBasic; $p = $env:JARVIS_A_path; if (Test-Path -LiteralPath $p -PathType Container) { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($p, 'OnlyErrorDialogs', 'SendToRecycleBin') } else { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($p, 'OnlyErrorDialogs', 'SendToRecycleBin') }; 'trashed'", { path: safePath(p, ctx) }), parse: (_r, { path: p }) => ({ trashed: p }) }),
-  zip_folder: action({ plan: ({ path: p, to }, ctx) => { const src = dirPath(p, ctx); const dst = to ? safePath(to, ctx) : `${src}.zip`; if (fs.existsSync(dst)) throw new Error('destination exists'); return ps('Compress-Archive -LiteralPath $env:JARVIS_A_src -DestinationPath $env:JARVIS_A_dst; "zipped"', { src, dst }, { timeoutMs: 300_000 }); }, parse: (_r, a) => ({ zipped: a.path }) }),
+  zip_folder: action({ plan: ({ path: p, to }, ctx) => { const src = dirPath(p, ctx); const dst = to ? writablePath(to, ctx, { also: '.zip' }) : `${src}.zip`; if (fs.existsSync(dst)) throw new Error('destination exists'); return ps('Compress-Archive -LiteralPath $env:JARVIS_A_src -DestinationPath $env:JARVIS_A_dst; "zipped"', { src, dst }, { timeoutMs: 300_000 }); }, parse: (_r, a) => ({ zipped: a.path }) }),
 
   get_clipboard: simple(ps('Get-Clipboard -Raw'), (r) => ({ text: clipText(r.at(-1).stdout, 4000) })),
   set_clipboard: action({ plan: ({ text: t }) => ps('Set-Clipboard -Value $env:JARVIS_A_text; "ok"', { text: t }), parse: () => ({ set: true }) }),

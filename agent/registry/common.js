@@ -111,6 +111,20 @@ export function safePath(raw, ctx) {
   if (!ok) throw new Error('that path is outside the folders JARVIS may use (config/server/files.json)');
   return real;
 }
+// F4-4: where an action creates a file. write_file makes data and documents only, by type: nothing a shell or file manager runs on
+// open or at start. A copy or move keeps its own type, so a program can be moved as itself but text is never renamed into a script.
+// Nothing is written under a shell profile or startup folder, and a name with a stream (a:b) or a hidden name is refused.
+const DATA_TYPES = new Set(['', '.txt', '.md', '.markdown', '.json', '.jsonl', '.csv', '.tsv', '.log', '.yaml', '.yml', '.xml', '.html', '.htm', '.css', '.toml', '.tex', '.rtf', '.svg', '.ics']);
+const AUTOLOAD_DIRS = new Set(['windowspowershell', 'powershell', 'startup', 'launchagents', 'launchdaemons']);
+export function writablePath(raw, ctx, { also = null } = {}) {
+  const p = safePath(raw, ctx);
+  const name = path.basename(p);
+  const ext = path.extname(name).toLowerCase();
+  if (name.startsWith('.') || name.includes(':')) throw new Error('JARVIS does not write hidden files or file streams');
+  if (!DATA_TYPES.has(ext) && !(also != null && also.toLowerCase() === ext)) throw new Error(`JARVIS does not create ${ext || 'that kind of'} files: scripts and programs could run on their own`);
+  if (p.split(/[\\/]/).some((s) => AUTOLOAD_DIRS.has(s.toLowerCase()))) throw new Error('JARVIS does not write into a shell profile or startup folder');
+  return p;
+}
 export function dirPath(raw, ctx) {
   const p = safePath(raw, ctx);
   if (!fs.existsSync(p) || !fs.statSync(p).isDirectory()) throw new Error('not a folder');

@@ -100,3 +100,37 @@ test('F3-8: Mac telemetry does not call an action that is off, so it leaves no r
     assert.ok(!lines.some((e) => e.action === 'battery_status'), JSON.stringify(lines.map((e) => [e.action, e.outcome])));
   } finally { await app.stop?.(); t.cleanup(); }
 });
+
+// ---- F4-4 -----------------------------------------------------------------------------------------------------------------------
+
+test('F4-4: write_file makes data files only; nothing becomes a script by copy or move; nothing lands in a shell profile folder', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { createRegistry } = await import('../../agent/registry/mod.js');
+  const { testConfig, tmpDir, rmDir } = await import('../helpers.js');
+  const root = tmpDir('f44');
+  const t = testConfig((f) => {
+    f['files.json'].roots = { win32: [root], darwin: [root] };
+    f['machines.json'].machines.pc.workspaceDir = path.join(root, 'ws');
+    for (const a of f['actions.json'].actions) a.enabled = true;
+  });
+  const reg = createRegistry({ cfg: t.cfg, machineId: 'pc', os: 'win32', runProgram: async () => ({ code: 0, stdout: '', stderr: '' }), sleep: async () => {} });
+  const ex = (name, args) => reg.execute(name, { args });
+  const at = (...p) => path.join(root, ...p);
+  try {
+    assert.equal((await ex('write_file', { path: at('notes.md'), content: '# ok' })).ok, true);
+    assert.equal((await ex('write_file', { path: at('data.json'), content: '{}' })).ok, true);
+    for (const name of ['run.ps1', 'x.bat', 'x.cmd', 'x.vbs', 'x.js', 'x.lnk', 'x.url', 'x.exe', 'x.hta', 'x.command', 'x.sh', 'x.PS1', 'x.ps1 ', 'x.ps1.', 'x.txt:evil.ps1', 'x.ps1:y.txt', '.bashrc']) {
+      const r = await ex('write_file', { path: at(name), content: 'calc' });
+      assert.equal(r.ok, false, name);
+    }
+    for (const dir of ['WindowsPowerShell', 'PowerShell', 'Startup']) assert.equal((await ex('write_file', { path: at(dir, 'notes.txt'), content: 'x' })).ok, false, dir);
+    fs.writeFileSync(at('plain.txt'), 'calc');
+    assert.equal((await ex('move_file', { from: at('plain.txt'), to: at('profile.ps1') })).ok, false, 'a text file is not renamed into a script');
+    assert.equal((await ex('copy_file', { from: at('plain.txt'), to: at('run.bat') })).ok, false);
+    fs.writeFileSync(at('tool.ps1'), 'Get-Date');
+    assert.equal((await ex('copy_file', { from: at('tool.ps1'), to: at('ws', 'tool.ps1') })).ok, true, 'a script may be copied as itself');
+    fs.mkdirSync(at('WindowsPowerShell'));
+    assert.equal((await ex('move_file', { from: at('tool.ps1'), to: at('WindowsPowerShell', 'profile.ps1') })).ok, false, 'but not into a profile folder');
+  } finally { t.cleanup(); rmDir(root); }
+});
