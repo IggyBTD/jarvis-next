@@ -5,7 +5,7 @@
 // do not survive an OpenCode restart, so a restart voids every in-flight approval and fails the running task.
 import { parsePermission, replyRequest, discoverRoutes } from '../../shared/opencode-routes.js';
 import { classifyCommand, createPolicy, modeAnswer, pathsOutside, pathsProtected, resolveRequestPath } from './policy.js';
-import { resolveLexical, pathsOf, within } from '../../shared/command-scope.js';
+import { resolveLexical, pathsOf, within, systemFolders } from '../../shared/command-scope.js';
 import { clip } from '../../shared/util.js';
 import { isArming } from '../../shared/opencode-arming.js';
 
@@ -30,10 +30,21 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
     const expanded = s.startsWith('~') ? (homes.has(machine) ? `${homes.get(machine)}${s.slice(1)}` : null) : s;
     return expanded ? resolveLexical(expanded, { os, cwd: expanded }) : null;
   };
-  const scopeOf = (machine) => ({
-    os: machines[machine].os ?? 'win32', workspace: abs(machine, machines[machine].workspaceDir), trusted: trusted(machine).map((t) => abs(machine, t)).filter(Boolean),
-    protected: [...protect(machine), ...(reported.get(machine) ?? [])].map((t) => abs(machine, t)).filter(Boolean),
-  });
+  // The machine's home: from its /info, or until that arrives from a workspace under C:\Users\<name> or /Users/<name>
+  const homeOf = (machine, workspace) => homes.get(machine) ?? /^([a-z]:\\users\\[^\\]+|\/users\/[^/]+)/i.exec(workspace ?? '')?.[1] ?? null;
+  const scopeOf = (machine) => {
+    const os = machines[machine].os ?? 'win32';
+    const workspace = abs(machine, machines[machine].workspaceDir);
+    const trustedHere = trusted(machine).map((t) => abs(machine, t)).filter(Boolean);
+    // a system folder that holds the folder you work in (the workspace or a trusted folder) is not protected on that machine: it
+    // was chosen to work in. JARVIS's own folders are protected wherever they are (F1-3).
+    const system = systemFolders(os, homeOf(machine, workspace)).filter((s) => ![workspace, ...trustedHere].some((w) => w && within(w, s, os, { loose: true })));
+    return {
+      os, workspace, trusted: trustedHere,
+      // JARVIS's own folders and the system's (shared/command-scope.js systemFolders): T3 in every mode
+      protected: [...[...protect(machine), ...(reported.get(machine) ?? [])].map((t) => abs(machine, t)).filter(Boolean), ...system],
+    };
+  };
   // Arming files are matched as sent and as resolved (package.json. is package.json on Windows).
   const arming = (paths, sc) => paths.some((p) => isArming(p) || isArming(sc.workspace ? resolveRequestPath(p, sc) : null));
 
@@ -41,7 +52,7 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
   // resolve_paths, no side effects); a path it cannot resolve, or no answer at all, counts as outside.
   async function realCheck(machine, paths, sc) {
     const list = [...paths, ...sc.trusted, ...sc.protected];
-    const no = { outside: true, own: false, arm: false };
+    const no = { outside: true, own: false, arm: false, unchecked: true }; // could not check: T3, since a link could lead anywhere
     if (!paths.length) return { outside: false, own: false, arm: false };
     if (list.length > 200) return no;
     let r;
@@ -58,13 +69,16 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
     };
   }
 
-  // Paths of an edit, a folder request or any other path permission: { tier, armed, own }. T3 when outside the workspace and trusted
-  // folders (as written or as the machine resolves them) or under JARVIS's own folders, which also arm (even Bypass asks).
+  // Paths of an edit, a folder request or any other path permission: { tier, armed, own, wide }. T3 under JARVIS's own folders or the
+  // system's (as written or as the machine resolves them), which also arm, and for a path that cannot be resolved. T2 and wide when
+  // outside the workspace and trusted folders: Auto asks for those, Accept edits and Bypass let them through.
   async function classifyPaths(machine, paths) {
     const sc = scopeOf(machine);
     const real = await realCheck(machine, paths, sc);
     const own = pathsProtected(paths, sc) || real.own;
-    return { own, armed: own || real.arm || arming(paths, sc), tier: own || real.outside || pathsOutside(paths, sc) ? 'T3' : 'T2' };
+    const unresolved = paths.some((p) => !resolveRequestPath(p, sc));
+    const wide = real.outside || pathsOutside(paths, sc);
+    return { own, armed: own || real.arm || arming(paths, sc), tier: own || unresolved || real.unchecked ? 'T3' : 'T2', wide };
   }
 
   async function respond(machine, p, answer) {
@@ -94,6 +108,7 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
     let summary;
     let cls = null;
     let armed = false;
+    let wide = false;
     if (p.kind === 'bash' || p.kind === 'shell') {
       const sc = scopeOf(machine);
       cls = classifyCommand(p.command, policyCfg.opencode, sc);
@@ -101,7 +116,8 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
         // the words that resolve inside the workspace on paper: does any of them lead out through a link or junction?
         const named = pathsOf(p.command ?? '', sc).paths.filter(Boolean);
         const real = await realCheck(machine, named, sc);
-        if (real.outside || real.own) cls = { class: 'destructive', tier: 'T3', reason: real.own ? 'leads into JARVIS\'s own folder' : 'a path in it leads outside the workspace (a link or junction), or could not be checked' };
+        if (real.own || real.unchecked) cls = { class: 'destructive', tier: 'T3', reason: real.own ? 'leads into JARVIS\'s own folder or a system folder' : 'its paths could not be checked on the machine' };
+        else if (real.outside) cls = { ...cls, wide: true, reason: 'a path in it leads outside the workspace (a link or junction)' };
       }
       args = { command: p.command ?? '' };
       tier = cls.tier;
@@ -111,25 +127,25 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
       const paths = [...p.patterns, p.metadata?.filepath].filter(Boolean);
       const c = await classifyPaths(machine, paths);
       const own = c.own;
-      ({ armed, tier } = c);
+      ({ armed, tier, wide } = c);
       summary = `The coding agent wants to change ${p.patterns.slice(0, 3).join(', ') || 'a file'} on ${machines[machine].label}${own ? ' (JARVIS\'s own folder)' : tier === 'T3' ? ' (outside the workspace)' : ''}.`;
     } else if (p.kind === 'webfetch') {
       args = { url: p.patterns[0] ?? p.metadata?.url ?? '' };
       if (!/^https?:\/\//i.test(args.url)) tier = 'T3'; // file:, data: and anything else that is not the web
       summary = `The coding agent wants to fetch ${clip(args.url, 200)} on ${machines[machine].label}.`;
     } else if (p.kind === 'external_directory') {
-      ({ armed, tier } = await classifyPaths(machine, p.patterns)); // a trusted folder is not "outside"; JARVIS's own folders always are
+      ({ armed, tier, wide } = await classifyPaths(machine, p.patterns)); // a trusted folder is not "outside"; JARVIS's own folders always are
       args = { paths: p.patterns.slice(0, 10) };
       summary = `The coding agent wants to use a folder outside the workspace and your trusted folders on ${machines[machine].label}: ${p.patterns.slice(0, 3).join(', ')}`;
     } else {
       args = { patterns: p.patterns.slice(0, 10), title: p.title };
       // read, list, glob, grep and kinds this version does not know: their patterns are paths too
-      if (p.patterns.length) ({ armed, tier } = await classifyPaths(machine, p.patterns));
+      if (p.patterns.length) ({ armed, tier, wide } = await classifyPaths(machine, p.patterns));
       summary = `The coding agent asks for permission "${p.kind}" on ${machines[machine].label}.`;
     }
 
     const mode = modes?.get?.() ?? 'manual';
-    const verdict = policy.decide({ name: action, tier, source: 'agent', permission: { mode, kind: p.kind, cls, armed } });
+    const verdict = policy.decide({ name: action, tier, source: 'agent', permission: { mode, kind: p.kind, cls, armed, wide } });
     if (verdict.mode !== 'ask') {
       const once = verdict.mode === 'auto';
       // nothing is answered 'once' unless it is on record first (F1-5): a failed audit write turns the answer into a reject

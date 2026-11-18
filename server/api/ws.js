@@ -23,7 +23,7 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
   const permission = (c, m) => {
     if (m.type === 'hello') return may(c, 'chat');
     if (m.type === 'ping') return { ok: true };
-    if (m.type === 'mode.set') return may(c, m.mode === 'bypass' ? 'admin' : 'settings', { pin: m.pin });
+    if (m.type === 'mode.set') return may(c, m.mode === 'bypass' || m.mode === 'accept-edits' ? 'admin' : 'settings', { pin: m.pin }); // both run any command that is not T3 (2026-11-18)
     if (m.type === 'gate.reply') return m.decision === 'deny' ? may(c, 'deny') : may(c, 'approve', { tier: gate.pending().find((p) => p.id === m.id)?.tier, pin: m.pin });
     return Object.hasOwn(NEED, m.type) ? may(c, NEED[m.type]) : { ok: false, reason: 'unknown message' };
   };

@@ -57,7 +57,7 @@ test('folders the person trusts (and the workspace) are not "outside"; any other
   await t.ask({ permission: 'external_directory', patterns: ['C:\\Users\\bethe\\Documents\\*'] });
   await t.ask({ permission: 'external_directory', patterns: ['C:\\Users\\bethe\\Jarvis-Next-evil\\*'] }); // a sibling with the same prefix is not inside
   await t.ask({ permission: 'edit', patterns: ['C:\\Windows\\System32\\hosts'] });
-  assert.deepEqual(t.asked, ['opencode_external_directory:T3', 'opencode_external_directory:T3', 'opencode_edit:T3']);
+  assert.deepEqual(t.asked, ['opencode_external_directory:T2', 'opencode_external_directory:T2', 'opencode_edit:T3']); // outside folders are wide (still asked in Auto); C:\Windows is a system folder
 });
 
 test('JARVIS\'s safety code and keys always ask, even inside a trusted folder', async () => {

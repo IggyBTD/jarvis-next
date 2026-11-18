@@ -283,3 +283,21 @@ test('F3-4: pairing with a short code: the token comes back once in the body, ne
     await waitFor(async () => (await request(`${s.api.url}/api/state`, { headers: bearer(done.json.token) })).status === 401);
   } finally { await s.close(); }
 });
+
+test('Accept edits: switching to it from a device other than the desktop on this PC needs the PIN, as Bypass does (2026-11-18)', async () => {
+  const s = await setup();
+  try {
+    s.api.devices.setPin({ by: LOCAL, newPin: PIN });
+    const mac = s.pair('browser'); // the Mac's browser: chat, approve and settings
+    const c = await s.connect(mac.token);
+    for (const [id, mode] of [['a1', 'accept-edits'], ['a2', 'bypass']]) {
+      c.send({ type: 'mode.set', id, mode });
+      assert.match((await c.next((m) => m.type === 'error' && m.id === id)).reason, /PIN/, mode);
+    }
+    c.send({ type: 'mode.set', id: 'a3', mode: 'accept-edits', pin: PIN });
+    assert.equal((await c.next((m) => m.type === 'mode')).mode, 'accept-edits');
+    c.send({ type: 'mode.set', id: 'a4', mode: 'manual' });
+    assert.equal((await c.next((m) => m.type === 'mode' && m.mode === 'manual')).mode, 'manual', 'other modes need no PIN');
+    c.close();
+  } finally { await s.close(); }
+});

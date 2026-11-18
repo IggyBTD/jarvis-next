@@ -50,6 +50,23 @@ export function resolveLexical(raw, { os, cwd }) {
   return path.win32.resolve(cwd, segs.map((seg) => (seg === '.' || seg === '..' ? seg : seg.replace(/[. ]+$/, ''))).join('\\'));
 }
 
+// Folders of the system and of the user's own setup that the coding agent never touches by itself, in any mode: the OS and its
+// programs, the profile's AppData or Library (startup items, browser profiles, credentials), keys, and the files and folders a shell
+// loads when it starts. They are added to the protected roots, so everything that guards JARVIS's own folder guards these too.
+// home is that machine's home folder; without it only the folders outside the home are listed.
+export function systemFolders(os, home = null) {
+  if (os === 'win32') {
+    const h = home ? home.replace(/[\\/]+$/, '').replace(/\//g, '\\') : null;
+    return ['C:\\Windows', 'C:\\Program Files', 'C:\\Program Files (x86)', 'C:\\ProgramData', 'C:\\$Recycle.Bin', 'C:\\System Volume Information', 'C:\\Recovery', 'C:\\Boot',
+      ...(h ? ['AppData', '.ssh', '.aws', '.azure', '.gnupg', '.docker', '.kube', '.config\\gh', '.gitconfig', '.bashrc', '.bash_profile', '.profile', 'NTUSER.DAT', 'Documents\\WindowsPowerShell', 'Documents\\PowerShell', 'OneDrive\\Documents\\WindowsPowerShell', 'OneDrive\\Documents\\PowerShell'].map((x) => `${h}\\${x}`) : [])];
+  }
+  const h = home ? home.replace(/\/+$/, '') : null;
+  return ['/System', '/Library', '/usr', '/bin', '/sbin', '/etc', '/private', '/var', '/Applications', '/Volumes',
+    ...(h ? ['Library', '.ssh', '.aws', '.azure', '.gnupg', '.docker', '.kube', '.config/gh', '.gitconfig', '.zshrc', '.zprofile', '.zshenv', '.bashrc', '.bash_profile', '.profile'].map((x) => `${h}/${x}`) : [])];
+}
+// Environment variables that name the system's or the home's folders: a command that uses one could reach any of the folders above.
+export const SYSTEM_VARS = /(\$env:|%|\$\{?)(windir|systemroot|systemdrive|programfiles(\(x86\))?|programw6432|programdata|allusersprofile|appdata|localappdata|userprofile|homedrive|homepath|home|temp|tmp|public|commonprogramfiles|onedrive)\b/i;
+
 // p inside root (or root itself). Case is ignored on Windows, and wherever loose is set (for protected roots: matching more is safer).
 export function within(p, root, os, { loose = false } = {}) {
   if (!p || !root) return false;

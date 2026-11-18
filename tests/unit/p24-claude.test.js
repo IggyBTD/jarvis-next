@@ -8,7 +8,7 @@ import { claudeArgs, bashRule } from '../../shared/claude-args.js';
 import { createClaudeManager } from '../../agent/sidecars/claude-manager.js';
 import { createAgentTasks } from '../../server/core/agent-tasks.js';
 
-const policy = { allowCommands: ['git status*', 'ls', 'npm test'], destructive: ['rm -rf*', 'git push*', '*| sh*'] };
+const policy = { allowCommands: ['git status*', 'ls', 'npm test'], destructive: ['rm -rf*', 'git push*', '*| sh*'], system: ['reg add*'] };
 const after = (a, flag) => a.slice(a.indexOf(flag) + 1);
 
 test('bash rules', () => {
@@ -27,14 +27,16 @@ test('modes become flags; nothing ever skips permissions', () => {
   assert.ok(after(claudeArgs('plan', policy), '--disallowedTools').includes('Edit'));
   assert.ok(!after(claudeArgs('manual', policy), '--allowedTools').includes('Edit'));
   const edits = claudeArgs('accept-edits', policy);
-  assert.ok(after(edits, '--allowedTools').includes('Bash(git status:*)') && !after(edits, '--allowedTools').includes('Bash'));
+  assert.ok(after(edits, '--allowedTools').includes('Bash')); // Accept edits runs any command but the floors since 2026-11-18
   assert.ok(!after(claudeArgs('auto', policy), '--allowedTools').includes('Bash')); // Auto runs the read-only allowlist only (F1-1)
   assert.ok(after(claudeArgs('auto', policy), '--allowedTools').includes('Bash(git status:*)'));
   assert.ok(after(claudeArgs('bypass', policy), '--allowedTools').includes('Bash'));
-  for (const m of ['auto', 'bypass']) {
-    const a = claudeArgs(m, policy);
-    const denied = after(a, '--disallowedTools');
-    for (const must of ['Bash(rm -rf:*)', 'Bash(git push:*)', 'Bash(bash:*)', 'Edit(**/package.json)', 'Edit(**/.git/**)', 'Edit(**/*.sh)']) assert.ok(denied.includes(must), `${m} denies ${must}`);
+  const autoDenied = after(claudeArgs('auto', policy), '--disallowedTools');
+  for (const must of ['Bash(rm -rf:*)', 'Bash(git push:*)', 'Bash(bash:*)', 'Bash(node:*)', 'Edit(**/package.json)', 'Edit(**/.git/**)', 'Edit(**/*.sh)']) assert.ok(autoDenied.includes(must), `auto denies ${must}`);
+  for (const m of ['accept-edits', 'bypass']) {
+    const denied = after(claudeArgs(m, policy), '--disallowedTools');
+    for (const must of ['Bash(rm -rf:*)', 'Bash(git push:*)', 'Bash(bash:*)', 'Bash(reg add:*)']) assert.ok(denied.includes(must), `${m} denies ${must}`);
+    for (const not of ['Bash(node:*)', 'Edit(**/package.json)']) assert.ok(!denied.includes(not), `${m} allows ${not}`);
   }
 });
 

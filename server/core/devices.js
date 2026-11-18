@@ -148,9 +148,9 @@ export function createDevices({ dataDir, now = Date.now, legacyToken = () => nul
   //   'deny'     any paired device: gate.reply with decision deny
   //   'approve'  scope approve: gate.reply with decision approve. tier comes from gate.pending(), never from the client
   //              message. T0 to T2 pass; T3, or a tier that is missing or unknown, also needs the desktop on loopback or the PIN.
-  //   'settings' scope settings: mode.set (not bypass), backend.set, POST /api/model, GET /api/audit, /api/browser/*,
+  //   'settings' scope settings: mode.set (not bypass or accept-edits), backend.set, POST /api/model, GET /api/audit, /api/browser/*,
   //              the OpenSky key, GET /api/devices
-  //   'admin'    scope settings plus the desktop on loopback or the PIN: mode.set bypass, POST /api/project, start a pairing,
+  //   'admin'    scope settings plus the desktop on loopback or the PIN: mode.set bypass or accept-edits, POST /api/project, start a pairing,
   //              revoke or rotate another device, change the PIN
   //   'device'   act on the device `id`: its own id passes (sign out here, renew my token); any other id is 'admin'
   // ip must be the socket's remote address, and something that is not loopback when the request came through a proxy.
