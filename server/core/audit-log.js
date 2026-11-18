@@ -9,13 +9,15 @@ import crypto from 'node:crypto';
 import { writeJsonAtomic, readJson } from '../../shared/util.js';
 
 const GENESIS = '0'.repeat(64);
-const SENSITIVE_WORDS = new Set(['password', 'passwd', 'passphrase', 'pwd', 'secret', 'token', 'authorization', 'cookie', 'cookies', 'credential', 'credentials', 'bearer', 'otp', 'body', 'snippet']);
+// query, q, search and terms (F3-8): what was searched for is personal, and every client can read the audit
+const SENSITIVE_WORDS = new Set(['password', 'passwd', 'passphrase', 'pwd', 'secret', 'token', 'authorization', 'cookie', 'cookies', 'credential', 'credentials', 'bearer', 'otp', 'body', 'snippet', 'query', 'q', 'search', 'term', 'terms']);
 const keyIsSensitive = (key) => {
   const words = String(key).replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
   if (words.some((w) => SENSITIVE_WORDS.has(w))) return true;
   return words.includes('key') && words.some((w) => ['api', 'private', 'access', 'secret', 'ssh'].includes(w));
 };
 const VALUE_PATTERNS = [
+  [/(\bhttps?:\/\/[^\s?#"'<>]*)[?#][^\s"'<>]*/gi, '$1?[redacted]'], // a web address keeps its page, not its query string (F3-8)
   [/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer [redacted]'],
   [/\b[0-9a-f]{64}\b/gi, '[redacted-hex]'],
   [/\bya29\.[\w.-]+/g, '[redacted-google-token]'],

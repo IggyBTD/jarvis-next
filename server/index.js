@@ -118,7 +118,8 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   registerMemoryTools(router, { memory, bus });
   registerTimeTools(router, { reminders, scheduler, timezone: cfg.schedules.timezone });
 
-  const macInvoke = async (name) => { const r = await router.invoke({ name, args: {} }, { target: 'mac', source: 'scheduled', job: 'telemetry-rollup' }); if (!r.ok) throw new Error(r.error ?? 'failed'); return r.data; };
+  // an action that is off on the Mac (battery_status by default) is skipped, not called: a call would only be refused and audited (F3-8)
+  const macInvoke = async (name) => { if (!router.has(name, 'mac')) throw new Error(`${name} is off`); const r = await router.invoke({ name, args: {} }, { target: 'mac', source: 'scheduled', job: 'telemetry-rollup' }); if (!r.ok) throw new Error(r.error ?? 'failed'); return r.data; };
   const telemetry = createTelemetry({ bus, dataDir: cfg.dataDir, providers: { pc: createPcProvider({ lhm: createLhmProvider({ url: env.LHM_URL }) }), mac: createMacProvider({ invoke: macInvoke }) }, log });
   const google = createGoogle({ clientFile: resolveData(cfg, cfg.digest.google.clientFile), tokenFile: resolveData(cfg, cfg.digest.google.tokenFile) });
   const digest = createDigest({ llm, queue, google, cfg: cfg.digest, dataDir: cfg.dataDir, bus, timezone: cfg.schedules.timezone, log, summarizeTelemetry: (fromMs, toMs) => summarize({ dir: telemetry.dir, machine: 'pc', fromMs, toMs, thresholds: cfg.digest.thresholds }) });

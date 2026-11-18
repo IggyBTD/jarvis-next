@@ -74,3 +74,29 @@ test('F3-7: the server and the starter refuse a request or a socket whose Host i
     assert.equal(res.status, 421);
   } finally { await app.stop?.(); await pc.close?.(); await mac.close?.(); await model.close?.(); t.cleanup(); }
 });
+
+// ---- F3-8 -----------------------------------------------------------------------------------------------------------------------
+
+test('F3-8: the audit keeps no query strings and no search terms', async () => {
+  const { redact } = await import('../../server/core/audit-log.js');
+  const r = redact({ url: 'https://www.google.com/search?q=my+rash+symptoms&hl=en#top', query: 'divorce lawyer near me', searchTerms: 'x', note: 'see http://a.example/p?id=7 and https://b.example/q' });
+  assert.equal(r.url, 'https://www.google.com/search?[redacted]');
+  assert.equal(r.query, '[redacted]');
+  assert.equal(r.searchTerms, '[redacted]');
+  assert.equal(r.note, 'see http://a.example/p?[redacted] and https://b.example/q');
+});
+
+test('F3-8: Mac telemetry does not call an action that is off, so it leaves no refusal in the audit', async () => {
+  const { testConfig } = await import('../helpers.js');
+  const { createServerApp } = await import('../../server/index.js');
+  const { generateTokens } = await import('../../server/core/auth.js');
+  const t = testConfig((f) => { f['schedules.json'].jobs.digest.enabled = false; f['digest.json'].gmail = false; f['digest.json'].calendar = false; });
+  generateTokens(t.cfg);
+  const app = await createServerApp({ cfg: t.cfg, log: () => {} });
+  try {
+    assert.equal(t.cfg.actions.actions.find((a) => a.name === 'battery_status').enabled, false, 'the case this covers');
+    await app.telemetry.poll('mac');
+    const lines = app.audit.tail(50).filter((e) => e.target === 'mac');
+    assert.ok(!lines.some((e) => e.action === 'battery_status'), JSON.stringify(lines.map((e) => [e.action, e.outcome])));
+  } finally { await app.stop?.(); t.cleanup(); }
+});
