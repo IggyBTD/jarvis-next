@@ -31,7 +31,7 @@ export function createLlmProxy({ llm, queue, audit, modelId, perToken = 2, maxTo
     let body;
     try { body = JSON.parse(await readBody(req)); } catch (e) { return send(res, e.status ?? 400, { error: { message: e.status ? e.message : 'body must be JSON' } }); }
     if (!body || !Array.isArray(body.messages)) return send(res, 400, { error: { message: 'messages is required' } });
-    for (const k of ['max_tokens', 'max_completion_tokens']) if (!Number.isFinite(body[k]) || body[k] > maxTokens) body[k] = maxTokens;
+    for (const k of ['max_tokens', 'max_completion_tokens']) if (!Number.isInteger(body[k]) || body[k] < 1 || body[k] > maxTokens) body[k] = maxTokens; // -1 means no limit to LM Studio (R1-5)
 
     const ctl = new AbortController();
     res.on('close', () => { if (!res.writableEnded) ctl.abort(new Error('client left')); });
