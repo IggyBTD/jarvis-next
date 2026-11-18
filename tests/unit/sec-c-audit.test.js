@@ -115,3 +115,28 @@ test('F1-5: the other machine keeps anchors append-only and gives them back; the
     assert.ok(s.fresh().checkAnchors(got.data.anchors).length, 'a cut log no longer reaches the anchor');
   } finally { rmDir(s.root); t.cleanup(); }
 });
+
+// ---- F1-6 -----------------------------------------------------------------------------------------------------------------------
+
+test('F1-6: a queued request is rated again when approved, and an entry planted in the queue file is ignored', async () => {
+  const t = testConfig((f) => { for (const a of f['actions.json'].actions) if (a.name === 'kill_process') a.enabled = true; });
+  const calls = [];
+  const fetchImpl = async (u, o) => { calls.push(JSON.parse(o?.body ?? '{}').dryRun ? 'dry run' : String(u)); return new Response('{"ok":true,"data":{}}'); };
+  try {
+    const audit = { append: async () => ({}) };
+    // a planted entry: T0 for an action that is T3 (written without the queue key)
+    const planted = [{ id: 'g-planted', action: 'kill_process', args: { pid: 4 }, tier: 'T0', target: 'pc', source: 'scheduled', summary: 'check the weather', queued: true, expiresAt: Date.now() + 60_000 }];
+    fs.writeFileSync(path.join(t.dataDir, 'pending-approvals.json'), JSON.stringify(planted));
+    const gate = createGate({ audit, bus: createBus(), clientCount: () => 1, dataDir: t.dataDir, key: KEY });
+    assert.deepEqual(gate.pending().map((p) => p.id), [], 'an unsigned entry is not loaded');
+    // the same entry signed by a gate with the key, then its tier changed in the file: approving it does not run it
+    const keyless = createGate({ audit, bus: createBus(), clientCount: () => 1, dataDir: t.dataDir });
+    const router = createToolRouter({ cfg: t.cfg, policy: createPolicy(t.cfg.policy), gate: keyless, audit, tokens: () => 'x'.repeat(64), fetchImpl });
+    const r = await keyless.reply('g-planted', 'approve', 'phone');
+    assert.equal(r.ok, true);
+    assert.equal(r.result.ok, false, 'the tier is rated again and does not match');
+    assert.match(r.result.error, /T3|tier/);
+    assert.equal(calls.filter((u) => /kill_process/.test(u)).length, 0, 'nothing ran');
+    void router;
+  } finally { t.cleanup(); }
+});

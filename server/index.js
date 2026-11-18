@@ -67,10 +67,11 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
 
   const bus = createBus();
   // the audit key and mark (data/tokens): every line is an HMAC and the log's length is recorded outside data/audit (F1-5)
-  const audit = createAuditLog({ dir: dataPath(cfg, 'audit'), ...auditKeyFor(cfg.dataDir, { create: true }) });
+  const auditKey = auditKeyFor(cfg.dataDir, { create: true });
+  const audit = createAuditLog({ dir: dataPath(cfg, 'audit'), ...auditKey });
   let wsApi = null;
   const clientCount = () => wsApi?.clientCount() ?? 0;
-  const gate = createGate({ audit, bus, clientCount, dataDir: cfg.dataDir, timeoutMs: cfg.policy.approvalTimeoutMs, expiryMs: cfg.policy.pendingExpiryMs });
+  const gate = createGate({ audit, bus, clientCount, dataDir: cfg.dataDir, timeoutMs: cfg.policy.approvalTimeoutMs, expiryMs: cfg.policy.pendingExpiryMs, key: auditKey.key });
   const policy = createPolicy(cfg.policy);
   const router = createToolRouter({ cfg, policy, gate, audit, tokens: (id) => tokens.machines[id]?.[0] ?? '' });
   const targetState = createTargetState({ dataDir: cfg.dataDir, machines: ids, bus });

@@ -1,4 +1,4 @@
-STATUS: IN PROGRESS, stage C (resumed by the owner on 2026-11-18). Resume job: 43a3da9b.
+STATUS: IN PROGRESS, stage D (stages A, B and C done). Resume job: 43a3da9b.
 
 
 
@@ -34,7 +34,7 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F3-5 | C | DONE | d760bc6 | phone sheet shows who asked, summary, the whole request uncut with hidden characters revealed, dry run and screenshot; Approve waits until the end has been on screen; audit argsHash of the whole arguments |
 | F1-4 | C | DONE | 2c954fe (router, ws, test; committed by another session), next commit (checker) | capabilities().call system actions only; Code-page Claude task via router.invoke; check scans scripts/, forbids .capabilities( outside a named list, catches shell options and Function(, reads code lines whole |
 | F1-5 | C | DONE | next commit | HMAC chain with data/tokens/audit.key, tagged head and an outside mark (cut, hand-fixed head and deleted folder fail verify), anchors on the Mac checked nightly, torn-line cut written into the log, T2/T3 fail closed on audit write failure (router, gate, bridge) |
-| F1-6 | C | TODO | | |
+| F1-6 | C | DONE | next commit | queued approvals signed with the audit key (unsigned entries ignored) and re-rated from contract and policy on approval |
 | F2-6 | D | TODO | | |
 | F3-6 | D | TODO | | |
 | F3-7 | D | TODO | | |
@@ -54,6 +54,8 @@ Stage B (exfiltration and injection), commits 40feb5a to 3fabb07, tests 210 -> 2
 Browser tests after stage B, one file at a time: ui-server 19/19, mobile 17/17, browser-guard 5/5, ui-layout 12/12, sec-exfil 2/2, sec-csp-pages 1/1, sec-memory-undo 2/2, ui-shell 12/13. The ui-shell failure ("the plus opens a menu ... Accounts", the Google accounts card never shows its button) fails the same way on the pre-run baseline f0cf131, so it is not from this run.
 
 Note (2026-11-18): history was rewritten by another session after 2026-11-17 (commit hashes in this table from before then no longer exist; the final summary maps them by commit message).
+
+Stage C (tokens and the remote path), tests 229 -> 274. Per-device pairing with scopes and a PIN step-up, no token in links, argv or zips, clean child environments with an OpenCode tripwire, the starter and agents on the tailnet only, whole requests on the phone, a narrowed chokepoint with a stronger check, a keyed audit chain with off-box anchors and fail-closed writes, signed and re-rated queued approvals. F4-5 is partial (secret store not wired; OpenCode as its own user is the owner's step).
 
 ## Unverified (runtime checks that settle them)
 

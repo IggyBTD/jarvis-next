@@ -3,15 +3,20 @@
 // scheduled source, a queueable request is stored in data/pending-approvals.json (expiry 12 h by default) and an
 // unqueueable one is denied. Every outcome produces an audit line.
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { readJson, writeJsonAtomic, newId } from '../../shared/util.js';
 
-export function createGate({ audit, bus, clientCount, dataDir, timeoutMs = 120_000, expiryMs = 43_200_000, now = Date.now }) {
+// key (the audit key): queued requests are signed when stored and only signed ones are loaded, so an entry planted in
+// pending-approvals.json is ignored (F1-6). The router also rates every queued request again when it is approved.
+export function createGate({ audit, bus, clientCount, dataDir, timeoutMs = 120_000, expiryMs = 43_200_000, now = Date.now, key = null }) {
   const file = path.join(dataDir, 'pending-approvals.json');
   const waiting = new Map();   // id -> { request, resolve, timer }
-  let queued = readJson(file, []).filter((r) => r && r.id && r.expiresAt > now());
+  const sig = (r) => crypto.createHmac('sha256', key).update(JSON.stringify([r.id, r.action, r.args ?? null, r.tier, r.target, r.source, r.taskId ?? null, r.expiresAt])).digest('hex');
+  const signed = (r) => !key || (typeof r.sig === 'string' && r.sig.length === 64 && crypto.timingSafeEqual(Buffer.from(r.sig), Buffer.from(sig(r))));
+  let queued = readJson(file, []).filter((r) => r && r.id && r.expiresAt > now() && signed(r));
   let executor = null;         // (request) => Promise<result>; set by the router, runs a queued request that was approved
 
-  const save = () => { try { writeJsonAtomic(file, queued); } catch (e) { console.error(`[gate] cannot save pending approvals: ${e.message}`); } };
+  const save = () => { try { writeJsonAtomic(file, queued.map((r) => (key ? { ...r, sig: sig(r) } : r))); } catch (e) { console.error(`[gate] cannot save pending approvals: ${e.message}`); } };
   const log = (request, decision, outcome, reason) => audit.append({
     component: 'gate', target: request.target, source: request.source, action: request.action, args: request.args,
     tier: request.tier, decision, outcome, reason, taskId: request.taskId, id: request.id,

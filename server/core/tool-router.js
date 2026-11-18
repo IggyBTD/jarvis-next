@@ -194,6 +194,11 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
     if (!def) return { ok: false, error: 'tool no longer available' };
     const bad = validate(def.params, request.args ?? {});
     if (bad.length) return { ok: false, error: `bad arguments: ${bad.join('; ')}` };
+    // rated again now, from the contract and policy, never from what the queue file says (F1-6)
+    const tier = def.tierOf ? def.tierOf(request.args ?? {}) : def.tier;
+    if (tier !== request.tier) return { ok: false, error: `the queued request said ${request.tier}, but ${request.action} is ${tier}; it was not run` };
+    const verdict = policy.decide({ name: request.action, tier, source: request.source, job: request.job });
+    if (verdict.mode === 'deny' && !verdict.queueable) return { ok: false, error: verdict.reason };
     const ctx = { target: request.target, source: request.source, taskId: request.taskId, signal: AbortSignal.timeout(120_000) };
     return execute({ def, name: request.action, args: request.args, tier: request.tier, how: 'approved-queued', ctx, started: now(), base: { component: 'router', target: request.target, source: request.source, taskId: request.taskId } });
   }
