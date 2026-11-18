@@ -41,6 +41,8 @@ test('F2-1: a reply or digest with remote images, media, styles or fonts fetches
       `<img src="${u('raw-img')}"> <img srcset="${u('srcset')} 1x"> <video poster="${u('poster')}" src="${u('video')}"></video> <audio src="${u('audio')}"></audio>`,
       `<video><source src="${u('source')}"></video> <picture><source srcset="${u('picture')}"><img src="data:image/gif;base64,R0lGODlhAQABAAAAACw="></picture> <input type="image" src="${u('input')}">`,
       `<span style="background:url(${u('style-attr')})">x</span> <style>body{background:url(${u('style-tag')})} @import url(${u('import')});</style> <a href="${u('link')}" ping="${u('ping')}">a link</a>`,
+      // R1-2: CSS functions other than url(, and CSS escapes, in a style or an SVG presentation attribute
+      `<span style="background-image:image-set('${u('image-set')}' 1x)">i</span> <span style="background:\\75 rl(${u('style-escaped')})">e</span> <svg width="9" height="9"><rect width="9" height="9" fill="\\75 rl(${u('fill-escaped')})"/></svg>`,
       `<svg><image href="${u('svg-image')}"/></svg> <table background="${u('table-bg')}"><tr><td>t</td></tr></table>`,
       '| Day | Time | Event |\n|---|---|---|\n| Today | 10:00 | ![](' + u('calendar-title') + ') |',
     ].join('\n\n');

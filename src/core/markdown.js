@@ -34,9 +34,15 @@ purify.addHook('afterSanitizeAttributes', (node) => {
   node.removeAttribute?.('ping');
   // SVG pulls in other documents with href on image, use and feImage; only same-document references (#id) stay
   if (/^(image|use|feimage)$/i.test(node.nodeName)) for (const a of ['href', 'xlink:href']) { const v = node.getAttribute(a); if (v != null && !/^\s*#/.test(v)) node.removeAttribute(a); }
-  for (const a of URL_ATTRS) { const v = node.getAttribute?.(a); if (v != null && OUTSIDE_URL.test(v)) node.removeAttribute(a); } // fill="url(https://...)" and the like: only url(#id) stays
+  for (const a of URL_ATTRS) { const v = node.getAttribute?.(a); if (v != null && (OUTSIDE_URL.test(v) || v.includes('\\'))) node.removeAttribute(a); } // fill="url(https://...)" and the like: only url(#id) stays; a CSS escape could spell url
+  // A style keeps only colour and length functions; anything else with a ( (url, image-set, any image function) or a CSS escape (\75 rl)
+  // could load something, so the whole attribute goes (R1-2)
   const style = node.getAttribute?.('style');
-  if (style && /url\s*\(\s*['"]?\s*(?!#|data:)/i.test(style)) node.removeAttribute('style');
+  if (style) {
+    let rest = style;
+    for (let i = 0; i < 3; i++) rest = rest.replace(/\b(?:rgba?|hsla?|calc|var|min|max|clamp)\(\s*[-\w.,%\s#+*/]*\)/gi, '');
+    if (/[(\\]/.test(rest)) node.removeAttribute('style');
+  }
 });
 const PURIFY = { ADD_ATTR: ['target'], FORBID_TAGS: ['style', 'link', 'meta', 'base'] };
 // A diagram the model drew: the SVG profile, and nothing that runs, restyles the page or reaches another document (on* attributes are
