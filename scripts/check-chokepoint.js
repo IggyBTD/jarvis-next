@@ -43,6 +43,8 @@ export function scan(root) {
       if (/from\s+['"][^'"]*agent-client(\.js)?['"]|import\(\s*['"][^'"]*agent-client/.test(text) && r !== 'server/core/tool-router.js') add('imports agent-client; only tool-router may reach an agent');
       if (/\bbaseUrl\b/.test(text) && !MODEL_ADDRESS_OK.has(r)) add('uses the model backend address; only llm-client may call the model');
       if (/(?<![.\w$])(exec|execSync|eval)\s*\(|\bFunction\s*\(|\bshell\s*:\s*(true|['"`])|[{,]\s*shell\s*[,}]/.test(text)) add('string-built command, eval or a shell option (use runProgram with an argument array)');
+      // a file that has child_process may not call its exec or execSync either, as a method (R1-6: the rule above lets x.exec( pass)
+      if (/from\s+['"](node:)?child_process['"]|require\(\s*['"](node:)?child_process/.test(text) && /\.\s*(exec|execSync)\s*\(/.test(text)) add('calls exec or execSync of child_process (use runProgram with an argument array)');
       if (/from\s+['"](node:)?child_process['"]|require\(\s*['"](node:)?child_process/.test(text) && !CHILD_PROCESS_OK(r)) add('imports child_process outside the agent run helper, the sidecar managers and the launchers');
       if (/\.capabilities\s*\(/.test(text) && !CAPABILITIES_OK.has(r)) add('calls router.capabilities(); go through router.invoke (policy, gate, audit) instead');
     }

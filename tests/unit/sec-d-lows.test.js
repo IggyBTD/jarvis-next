@@ -233,3 +233,35 @@ test('F4-3: the pinning proxy resolves once, refuses private answers, and connec
     assert.ok(lookups.every((h) => h !== 'localhost'));
   } finally { await proxy.close(); await strict.close(); site.close(); }
 });
+
+// ---- final re-check, round 1: the Lows and the Medium that came from this run ----------------------------------------------------
+
+test('R1-5: the model proxy replaces a negative or fractional output cap', async () => {
+  const http = await import('node:http');
+  const { createLlmProxy } = await import('../../server/core/llm-proxy.js');
+  const seen = [];
+  const llm = { raw: async (body) => { seen.push(body); return { res: new Response('data: [DONE]\n\n'), arm() {}, done() {} }; } };
+  const proxy = createLlmProxy({ llm, queue: { run: (_p, fn) => fn(new AbortController().signal) }, modelId: 'local' });
+  const srv = http.createServer((req, res) => proxy.handle(req, res, { role: 'model', machine: 'pc' }));
+  await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
+  try {
+    for (const v of [-1, 0, 2.5, 1e9]) await fetch(`http://127.0.0.1:${srv.address().port}/v1/chat/completions`, { method: 'POST', body: JSON.stringify({ messages: [], max_tokens: v, max_completion_tokens: v }) });
+    for (const b of seen) for (const k of ['max_tokens', 'max_completion_tokens']) assert.ok(Number.isInteger(b[k]) && b[k] >= 1 && b[k] <= 8192, `${k}=${b[k]}`);
+  } finally { srv.close(); }
+});
+
+test('R1-6: the chokepoint check catches a child_process method call that builds a shell string', async () => {
+  const { scan: checkChokepoint } = await import('../../scripts/check-chokepoint.js');
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { tmpDir, rmDir } = await import('../helpers.js');
+  const root = tmpDir('r16');
+  try {
+    fs.mkdirSync(path.join(root, 'agent', 'sidecars'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'agent', 'sidecars', 'x.js'), "import cp from 'node:child_process';\ncp.exec('dir ' + name);\nchildProcess.execSync(cmd);\n");
+    fs.writeFileSync(path.join(root, 'agent', 'sidecars', 'ok.js'), "const m = /a/.exec(s);\n");
+    const p = checkChokepoint(root);
+    assert.ok(p.some((l) => /sidecars\/x\.js: calls exec/.test(l)), p.join('\n'));
+    assert.ok(!p.some((l) => /ok\.js/.test(l)), p.join('\n'));
+  } finally { rmDir(root); }
+});
