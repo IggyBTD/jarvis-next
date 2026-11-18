@@ -33,7 +33,7 @@ function rig({ edit = () => {}, platform = 'win32', mock = null } = {}) {
   return { ...t, root, registry, calls, cleanup() { t.cleanup(); rmDir(root); } };
 }
 
-const SAMPLE = (root) => ({ app: 'notes', url: 'https://example.com', path: root, from: path.join(root, 'a.txt'), to: path.join(root, 'b.txt'), name: 'dev', workspace: 'dev', command: 'jarvis', level: 40, minutes: 5, count: 5, pid: 4242, port: 3000, host: 'example.com', mac: 'aa:bb:cc:dd:ee:ff', enabled: true, plan: 'balanced', priority: 'high', device: 'speakers', pattern: '*.txt', query: 'hello', text: 'hi', title: 'T', launch: 'steam', dryRun: true, apply: false, args: '{}', content: 'text', append: false, overwrite: false, paths: [path.join(root, 'a.txt')] });
+const SAMPLE = (root) => ({ app: 'notes', url: 'https://example.com', path: root, from: path.join(root, 'a.txt'), to: path.join(root, 'b.txt'), name: 'dev', workspace: 'dev', command: 'jarvis', level: 40, minutes: 5, count: 5, pid: 4242, port: 3000, host: 'example.com', mac: 'aa:bb:cc:dd:ee:ff', enabled: true, plan: 'balanced', priority: 'high', device: 'speakers', pattern: '*.txt', query: 'hello', text: 'hi', title: 'T', launch: 'steam', dryRun: true, apply: false, args: '{}', content: 'text', append: false, overwrite: false, paths: [path.join(root, 'a.txt')], hash: '0'.repeat(64) });
 const sampleArgs = (c, root) => Object.fromEntries(Object.keys(c.params.properties).map((k) => [k, c.params.properties[k].enum ? c.params.properties[k].enum[0] : SAMPLE(root)[k]]));
 
 test('contract: every implementation is in actions.json; gaps per OS are exactly the documented ones', () => {

@@ -21,7 +21,7 @@ export function createRegistry({ cfg, machineId, os = process.platform, runProgr
   const background = new Map();
 
   const ctx = {
-    os, machineId, apps: cfg.apps, workspaces: cfg.workspaces, files: cfg.files, scripts: cfg.scripts, scriptsDir, workspaceDir,
+    os, machineId, dataDir: cfg.dataDir, apps: cfg.apps, workspaces: cfg.workspaces, files: cfg.files, scripts: cfg.scripts, scriptsDir, workspaceDir,
     runProgram, fetch: fetchImpl, sleep, env, background, facts: null,
     call: (name, args) => execute(name, { args }),
   };

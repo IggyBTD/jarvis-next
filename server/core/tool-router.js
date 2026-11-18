@@ -102,7 +102,7 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
     let tier = null;
 
     const refuse = async (reason, decision = 'deny', extra = {}) => {
-      await audit.append({ ...base, action: name, args: args && typeof args === 'object' ? args : { raw: clip(call.arguments, 200) }, tier, decision, outcome: 'refused', reason, durationMs: now() - started });
+      await audit.append({ ...base, action: name, args: args && typeof args === 'object' ? args : { raw: clip(call.arguments, 200) }, tier, decision, outcome: 'refused', reason, durationMs: now() - started }).catch(() => {}); // a refusal stands even if it cannot be written down
       return envelope(false, target, name, `[${tag(target)}] ${name} was not run: ${reason}`, { refused: true, ...extra });
     };
 
@@ -135,12 +135,15 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
       try { dryRun = def.dryRun ? def.dryRun(args) : def.kind === 'agent' ? (await agent.call(target, call.name, args, { dryRun: true, signal: ctx.signal, timeoutMs: 8000 })).data ?? null : null; } catch { /* the preview is a courtesy */ }
       const answer = await gate.requestApproval({ action: call.name, args, tier, target, source, taskId: ctx.taskId, summary, dryRun });
       if (!answer.approved) {
-        await audit.append({ ...base, action: call.name, args, tier, decision: answer.decision, outcome: 'not_run', reason: answer.reason, durationMs: now() - started });
+        await audit.append({ ...base, action: call.name, args, tier, decision: answer.decision, outcome: 'not_run', reason: answer.reason, durationMs: now() - started }).catch(() => {});
         return envelope(false, target, name, `[${tag(target)}] The user did not approve ${call.name} (${answer.decision}). Do not retry it or look for a way around it.`, { denied: true });
       }
       how = 'approved';
     }
-    if (tier === 'T2' || tier === 'T3') await audit.append({ ...base, action: call.name, args, tier, decision: how, outcome: 'started' });
+    // a T2 or T3 action runs only once the audit log holds the line saying it started: no line, no action (F1-5)
+    if (tier === 'T2' || tier === 'T3') {
+      try { await audit.append({ ...base, action: call.name, args, tier, decision: how, outcome: 'started' }); } catch { return envelope(false, target, name, `[${tag(target)}] ${name} was not run: the audit log could not be written, and a ${tier} action never runs unrecorded.`, { refused: true }); }
+    }
     return execute({ def, name: call.name, args, tier, how, ctx, started, base });
   }
 
@@ -166,7 +169,7 @@ export function createToolRouter({ cfg, policy, gate, audit, tokens, fetchImpl =
       if (ctx.signal?.aborted) error = 'cancelled';
     }
     const durationMs = now() - started;
-    await audit.append({ ...base, action: name, args, tier, decision: how, outcome: ok ? 'ok' : `error: ${clip(error, 120)}`, durationMs });
+    await audit.append({ ...base, action: name, args, tier, decision: how, outcome: ok ? 'ok' : `error: ${clip(error, 120)}`, durationMs }).catch(() => {}); // it already ran; the started line is on record
     const label = tag(target);
     const body = ok ? wrapUntrusted(`${name} result from ${label}`, JSON.stringify(data ?? null), { max: def.maxResultChars ?? cfg.models?.maxToolResultChars ?? MAX_RESULT_CHARS }) : wrapUntrusted(`${name} error from ${label}`, error ?? 'failed', { max: 600 });
     return envelope(ok, target, name, `[${label}] ${name} ${ok ? 'finished' : 'failed'}:\n${body}`, { data: ok ? data : undefined, error: ok ? undefined : error, durationMs });

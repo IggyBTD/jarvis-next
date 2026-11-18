@@ -55,8 +55,9 @@ export function createGate({ audit, bus, clientCount, dataDir, timeoutMs = 120_0
           if (input.signal.aborted) { finish(request.id, 'deny', null, 'cancelled'); return; }
           input.signal.addEventListener('abort', () => finish(request.id, 'deny', null, 'cancelled'), { once: true });
         }
-        bus.publish('gate.request', { request: view(request) });
-        log(request, 'asked', 'pending', request.summary);
+        // the person is asked only once the log holds the question: a request that cannot be written down is denied (F1-5)
+        audit.append({ component: 'gate', target: request.target, source: request.source, action: request.action, args: request.args, tier: request.tier, decision: 'asked', outcome: 'pending', reason: request.summary, taskId: request.taskId, id: request.id })
+          .then(() => { if (waiting.has(request.id)) bus.publish('gate.request', { request: view(request) }); }, () => finish(request.id, 'deny', null, 'the audit log could not be written, so this was not asked'));
       });
     },
 

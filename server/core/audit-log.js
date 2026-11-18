@@ -1,6 +1,7 @@
 // Append-only, hash-chained audit log: data/audit/YYYY-MM-DD.jsonl (UTC day) plus head.json, an anchor that records the
-// last hash. Each line: ts, id, component, target, source, action, args (redacted, bounded), tier, decision, outcome,
-// durationMs, prevHash, hash. hash = sha256(prevHash + canonical JSON of the line without its hash).
+// last hash. Each line: ts, id, component, target, source, action, args (redacted, bounded), argsHash (of the whole args), tier,
+// decision, outcome, durationMs, v, prevHash, hash. With the audit key (auditKeyFor) hash = HMAC-SHA256(key, prevHash + canonical
+// JSON of the line without its hash) and v = 2; without it (older lines, tests) a plain sha256.
 // Reads are logged by the caller like any other action. Files are never deleted here.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -51,21 +52,49 @@ function canonical(v) {
 }
 const hashOf = (prev, entry) => crypto.createHash('sha256').update(`${prev}\n${canonical(entry)}`).digest('hex');
 
-export function createAuditLog({ dir, now = () => new Date() }) {
+// The audit key (data/tokens/audit.key, 0600, made by the server on first use) and the mark file next to it. With the key every
+// line is an HMAC, so recomputing the chain without it is caught; the mark (outside data/audit) and the tagged head record how long
+// the log is, so cut or deleted entries are caught; anchors kept on the other machine catch a rewrite of all of them. The key is
+// readable by the same OS user: this holds against tools that edit files, not against code running as that user with the key
+// (running OpenCode as its own user is that step, HUMAN_TODO.md section 12).
+export function auditKeyFor(dataDir, { create = false } = {}) {
+  const file = path.join(dataDir, 'tokens', 'audit.key');
+  let key = null;
+  try { key = fs.readFileSync(file, 'utf8').trim() || null; } catch { /* none yet */ }
+  if (!key && create) {
+    key = crypto.randomBytes(32).toString('hex');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `${key}\n`, { mode: 0o600, flag: 'wx' });
+  }
+  return { key, markFile: path.join(dataDir, 'tokens', 'audit.mark') };
+}
+
+export function createAuditLog({ dir, key = null, markFile = null, now = () => new Date() }) {
   fs.mkdirSync(dir, { recursive: true });
   const anchorFile = path.join(dir, 'head.json');
+  const sign = (prev, entry) => crypto.createHmac('sha256', key).update(`${prev}\n${canonical(entry)}`).digest('hex');
+  const tagOf = (hash, count) => (key ? crypto.createHmac('sha256', key).update(`head:${hash}:${count}`).digest('hex') : undefined);
   let head = null; // { hash, count }
   let chain = Promise.resolve();
   const notes = [];
 
   const files = () => fs.readdirSync(dir).filter((f) => /^\d{4}-\d{2}-\d{2}\.jsonl$/.test(f)).sort();
   const readLines = (file) => fs.readFileSync(path.join(dir, file), 'utf8').split('\n');
+  const writeHead = (file) => {
+    const h = { hash: head.hash, count: head.count, file, ...(key ? { tag: tagOf(head.hash, head.count) } : {}) };
+    try { writeJsonAtomic(anchorFile, h); } catch { /* the log line is what matters; verify() reports a stale anchor */ }
+    if (markFile && key) {
+      try { fs.mkdirSync(path.dirname(markFile), { recursive: true }); writeJsonAtomic(markFile, { hash: h.hash, count: h.count, tag: h.tag }, 0o600); } catch { /* verify() reports it */ }
+    }
+  };
 
-  // Finds the last good hash. A torn last line (crash mid-write) is cut off; that is the only repair done on the log itself.
+  // Finds the last good hash. A torn last line (crash mid-write) is cut off, and the cut is written into the log as an entry of its
+  // own, so it stays visible; that is the only repair done on the log itself.
   function init() {
     if (head) return;
     let hash = GENESIS;
     let count = 0;
+    let cut = null;
     const list = files();
     for (const f of list) count += readLines(f).filter(Boolean).length;
     for (let i = list.length - 1; i >= 0; i--) {
@@ -78,6 +107,7 @@ export function createAuditLog({ dir, now = () => new Date() }) {
         const kept = lines.slice(0, lastNonEmpty[1]).filter(Boolean);
         fs.writeFileSync(path.join(dir, list[i]), kept.length ? `${kept.join('\n')}\n` : '');
         notes.push(`cut a torn last line from ${list[i]}`);
+        cut = { file: list[i], characters: lastNonEmpty[0].length };
         count -= 1;
         hash = kept.length ? JSON.parse(kept.at(-1)).hash : GENESIS;
         if (!kept.length) continue;
@@ -89,12 +119,12 @@ export function createAuditLog({ dir, now = () => new Date() }) {
     const a = readJson(anchorFile);
     if (a && a.hash !== hash) {
       const prevOfLast = (() => { for (let i = list.length - 1; i >= 0; i--) { const l = readLines(list[i]).filter(Boolean); if (l.length) return JSON.parse(l.at(-1)).prevHash; } return null; })();
-      if (a.hash === prevOfLast) { notes.push('anchor was one entry behind: repaired'); writeJsonAtomic(anchorFile, { hash, count, file: list.at(-1) }); }
+      if (a.hash === prevOfLast) { notes.push('anchor was one entry behind: repaired'); writeHead(list.at(-1)); }
     }
+    if (cut) writeLine({ component: 'audit', action: 'repair', args: cut, outcome: 'cut a torn last line (a write was interrupted)' });
   }
 
-  function write(entry) {
-    init();
+  function writeLine(entry) {
     const d = now();
     const day = d.toISOString().slice(0, 10);
     const line = {
@@ -106,13 +136,24 @@ export function createAuditLog({ dir, now = () => new Date() }) {
       decision: entry.decision ?? null, outcome: entry.outcome ?? null, durationMs: entry.durationMs ?? null,
       ...(entry.reason ? { reason: redactString(String(entry.reason)).slice(0, 300) } : {}),
       ...(entry.taskId ? { taskId: entry.taskId } : {}),
+      ...(key ? { v: 2 } : {}),
       prevHash: head.hash,
     };
-    line.hash = hashOf(line.prevHash, Object.fromEntries(Object.entries(line).filter(([k]) => k !== 'hash')));
+    const unsigned = Object.fromEntries(Object.entries(line).filter(([k]) => k !== 'hash'));
+    line.hash = key ? sign(line.prevHash, unsigned) : hashOf(line.prevHash, unsigned);
     fs.appendFileSync(path.join(dir, `${day}.jsonl`), `${JSON.stringify(line)}\n`);
     head = { hash: line.hash, count: head.count + 1 };
-    try { writeJsonAtomic(anchorFile, { hash: head.hash, count: head.count, file: `${day}.jsonl` }); } catch { /* the log line is what matters; verify() reports a stale anchor */ }
+    writeHead(`${day}.jsonl`);
     return line;
+  }
+  const write = (entry) => { init(); return writeLine(entry); };
+
+  // Every entry in order as { e, where } ("file:line"), and the places of lines that are not JSON.
+  function entries() {
+    const out = [];
+    const bad = [];
+    for (const f of files()) readLines(f).forEach((raw, i) => { if (!raw) return; try { out.push({ e: JSON.parse(raw), where: `${f}:${i + 1}` }); } catch { bad.push(`${f}:${i + 1}`); } });
+    return { out, bad };
   }
 
   return {
@@ -123,26 +164,52 @@ export function createAuditLog({ dir, now = () => new Date() }) {
       return run;
     },
     notes: () => [...notes],
+    head() { init(); return { ...head }; },
     verify() {
       const errors = [];
       let prev = GENESIS;
-      let entries = 0;
-      for (const f of files()) {
-        readLines(f).forEach((raw, i) => {
-          if (!raw) return;
-          let e;
-          try { e = JSON.parse(raw); } catch { errors.push(`${f}:${i + 1} is not valid JSON`); return; }
-          const { hash, ...rest } = e;
-          if (e.prevHash !== prev) errors.push(`${f}:${i + 1} breaks the chain (prevHash does not match the previous entry)`);
-          if (hash !== hashOf(e.prevHash, rest)) errors.push(`${f}:${i + 1} was edited (hash does not match its content)`);
-          prev = hash ?? prev;
-          entries += 1;
-        });
+      let signedSeen = false;
+      const { out, bad } = entries();
+      for (const where of bad) errors.push(`${where} is not valid JSON`);
+      for (const { e, where } of out) {
+        const { hash, ...rest } = e;
+        if (e.prevHash !== prev) errors.push(`${where} breaks the chain (prevHash does not match the previous entry)`);
+        if (e.v === 2) {
+          signedSeen = true;
+          if (!key) errors.push(`${where} is signed with the audit key, which this check was not given`);
+          else if (hash !== sign(e.prevHash, rest)) errors.push(`${where} was edited or forged (its signature does not match)`);
+        } else {
+          if (signedSeen) errors.push(`${where} is unsigned after signed entries`);
+          if (hash !== hashOf(e.prevHash, rest)) errors.push(`${where} was edited (hash does not match its content)`);
+        }
+        prev = hash ?? prev;
       }
+      const count = out.length;
       const a = readJson(anchorFile);
       if (a && a.hash !== prev) errors.push('the head anchor does not match the last entry (entries were removed or the anchor is stale)');
-      if (!a && entries) errors.push('head anchor is missing');
-      return { ok: errors.length === 0, entries, errors };
+      if (a && Number.isInteger(a.count) && a.count !== count) errors.push(`the head anchor counts ${a.count} entries but ${count} are there (entries are missing or were added)`);
+      if (!a && count) errors.push('head anchor is missing');
+      if (key && a && a.tag !== tagOf(a.hash, a.count)) errors.push('the head anchor was written without the audit key (edited by hand)');
+      if (key && markFile) {
+        const m = readJson(markFile);
+        if (m && m.tag !== tagOf(m.hash, m.count)) errors.push('the audit mark was written without the audit key');
+        else if (m && m.count > count) errors.push(`entries are missing: the log had ${m.count} and now has ${count}`);
+        else if (m && m.count > 0 && out[m.count - 1]?.e.hash !== m.hash) errors.push('the entry the audit mark points at was changed');
+        else if (!m && signedSeen) errors.push('the audit mark is missing');
+      }
+      return { ok: errors.length === 0, entries: count, errors };
+    },
+    // Anchors kept on the other machine ({ count, hash } of this log when they were sent): each must still be in the log, unchanged.
+    checkAnchors(anchors) {
+      const { out } = entries();
+      const errors = [];
+      for (const x of Array.isArray(anchors) ? anchors : []) {
+        const n = Number(x?.count);
+        if (!Number.isInteger(n) || n < 1) continue;
+        if (n > out.length) errors.push(`an anchor on the other machine has ${n} entries but the log has ${out.length} (entries are missing)`);
+        else if (out[n - 1].e.hash !== x.hash) errors.push(`entry ${n} differs from the anchor on the other machine (the log was rewritten)`);
+      }
+      return errors;
     },
     tail(n = 50) {
       const out = [];

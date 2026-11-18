@@ -33,7 +33,7 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F3-3 | C | DONE | 7bd3270 | agents take calls from the PC tailnet address only (private ranges ignored even in old configs); agent and server bind mode tailscale, never LAN |
 | F3-5 | C | DONE | d760bc6 | phone sheet shows who asked, summary, the whole request uncut with hidden characters revealed, dry run and screenshot; Approve waits until the end has been on screen; audit argsHash of the whole arguments |
 | F1-4 | C | DONE | 2c954fe (router, ws, test; committed by another session), next commit (checker) | capabilities().call system actions only; Code-page Claude task via router.invoke; check scans scripts/, forbids .capabilities( outside a named list, catches shell options and Function(, reads code lines whole |
-| F1-5 | C | TODO | | |
+| F1-5 | C | DONE | next commit | HMAC chain with data/tokens/audit.key, tagged head and an outside mark (cut, hand-fixed head and deleted folder fail verify), anchors on the Mac checked nightly, torn-line cut written into the log, T2/T3 fail closed on audit write failure (router, gate, bridge) |
 | F1-6 | C | TODO | | |
 | F2-6 | D | TODO | | |
 | F3-6 | D | TODO | | |
@@ -56,6 +56,8 @@ Browser tests after stage B, one file at a time: ui-server 19/19, mobile 17/17, 
 Note (2026-11-18): history was rewritten by another session after 2026-11-17 (commit hashes in this table from before then no longer exist; the final summary maps them by commit message).
 
 ## Unverified (runtime checks that settle them)
+
+- F1-5: npm run verify-audit on the real log after the server has run once with this change (the first signed lines and the mark appear then); the Mac keeps anchors only after its agent is updated.
 
 - F4-5: whether OpenCode 1.19.1 passes OPENCODE_SERVER_PASSWORD to the commands it runs, and whether it can get its password any other way. Check: in an approved task run Get-ChildItem env: (it now asks as T3; approve it once in a scratch session) and opencode serve --help. Also one real run each of git, npm and code through registry actions under the clean environment (apps opened by actions lose user variables such as JAVA_HOME).
 

@@ -132,8 +132,9 @@ export function createOpencodeBridge({ router, gate, audit, tasks, policyCfg, po
     const verdict = policy.decide({ name: action, tier, source: 'agent', permission: { mode, kind: p.kind, cls, armed } });
     if (verdict.mode !== 'ask') {
       const once = verdict.mode === 'auto';
-      await audit.append({ ...base, action, args, tier, decision: once ? 'auto' : 'deny', outcome: once ? 'approved' : 'rejected', reason: cls?.class === 'allow' && once ? `${verdict.reason}, ${cls.reason}` : verdict.reason });
-      await respond(machine, p, once ? 'once' : 'reject');
+      // nothing is answered 'once' unless it is on record first (F1-5): a failed audit write turns the answer into a reject
+      const recorded = await audit.append({ ...base, action, args, tier, decision: once ? 'auto' : 'deny', outcome: once ? 'approved' : 'rejected', reason: cls?.class === 'allow' && once ? `${verdict.reason}, ${cls.reason}` : verdict.reason }).then(() => true, () => false);
+      await respond(machine, p, once && recorded ? 'once' : 'reject');
       return;
     }
     const ctl = new AbortController();

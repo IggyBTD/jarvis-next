@@ -2681,6 +2681,55 @@
       "system": true
     },
     {
+      "name": "audit_anchor",
+      "description": "Keep the head of the other machine's audit chain (count and hash), appended and never removed.",
+      "category": "dev",
+      "tier": "T1",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "count",
+          "hash"
+        ],
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "system": true
+    },
+    {
+      "name": "audit_anchors",
+      "description": "The audit anchors this machine keeps for the other machine, newest last.",
+      "category": "dev",
+      "tier": "T0",
+      "platforms": [
+        "win32",
+        "darwin"
+      ],
+      "enabled": true,
+      "params": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "returns": "object",
+      "system": true
+    },
+    {
       "name": "google_calendar_events",
       "description": "List upcoming events from the user's connected Google calendars (read only). Use this, not the browser, for any question about their calendar, schedule or what is coming up.",
       "category": "google",

@@ -10,7 +10,7 @@ import path from 'node:path';
 import { loadConfig, dataPath, resolveData } from './core/config.js';
 import { createAuth, loadTokens, generateTokens, currentUiToken } from './core/auth.js';
 import { createDevices } from './core/devices.js';
-import { createAuditLog } from './core/audit-log.js';
+import { createAuditLog, auditKeyFor } from './core/audit-log.js';
 import { createPolicy } from './core/policy.js';
 import { createGate } from './core/gate.js';
 import { createBus } from './core/event-bus.js';
@@ -66,7 +66,8 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   const reload = () => { tokens = loadTokens(cfg); return tokens; };
 
   const bus = createBus();
-  const audit = createAuditLog({ dir: dataPath(cfg, 'audit') });
+  // the audit key and mark (data/tokens): every line is an HMAC and the log's length is recorded outside data/audit (F1-5)
+  const audit = createAuditLog({ dir: dataPath(cfg, 'audit'), ...auditKeyFor(cfg.dataDir, { create: true }) });
   let wsApi = null;
   const clientCount = () => wsApi?.clientCount() ?? 0;
   const gate = createGate({ audit, bus, clientCount, dataDir: cfg.dataDir, timeoutMs: cfg.policy.approvalTimeoutMs, expiryMs: cfg.policy.pendingExpiryMs });
@@ -91,11 +92,24 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   registerBrowserTools(router, { notify: (m) => bus.publish(m.type, m) });
   const bridge = createOpencodeBridge({ router, gate, audit, tasks, policyCfg: cfg.policy, policy, machines, modes, log, alert: (reason) => bus.publish('security.alert', { reason }), protect: (m) => (m === 'pc' ? [cfg.root, cfg.dataDir] : []), trusted: (m) => [...(m === 'pc' ? [projectFolder(cfg.dataDir)] : []), ...(cfg.policy.opencode.trustedFolders?.[m] ?? [])].filter(Boolean) });
 
+  // The head of the audit chain, sent to the Mac (system action audit_anchor; an old Mac agent without it is skipped). A PC-side rewrite
+  // of the whole log cannot match anchors kept on another machine.
+  const anchorOffBox = async () => { const h = audit.head(); if (h.count) await router.capabilities('mac').call('audit_anchor', { count: h.count, hash: h.hash }).catch(() => null); };
+  setTimeout(() => { anchorOffBox().catch(() => {}); }, 60_000).unref?.();
+
   const reminders = createReminders({ dataDir: cfg.dataDir, bus, clientCount, timezone: cfg.schedules.timezone });
   const jobRun = async (name) => {
     if (name === 'digest') return digest.run({});
     if (name === 'pending-approvals-expire') { gate.expire(); return reminders.tick(); }
-    if (name === 'audit-verify') { const v = audit.verify(); if (!v.ok) { bus.publish('digest.error', { reason: `audit log check failed: ${v.errors[0]}` }); throw new Error(v.errors[0]); } return undefined; }
+    if (name === 'audit-verify') {
+      // the chain itself, then the anchors kept on the Mac (a rewrite of the whole log cannot match them), then a new anchor there
+      const v = audit.verify();
+      const anchors = await router.capabilities('mac').call('audit_anchors', {}).catch(() => null);
+      const errors = [...v.errors, ...(anchors?.ok ? audit.checkAnchors(anchors.data?.anchors) : [])];
+      if (errors.length) { bus.publish('digest.error', { reason: `audit log check failed: ${errors[0]}` }); throw new Error(errors[0]); }
+      await anchorOffBox();
+      return undefined;
+    }
     if (name === 'log-rotate') return telemetry.prune();
     return undefined; // telemetry-rollup: the telemetry service already writes minute rows; this job exists so the schedule shows it
   };

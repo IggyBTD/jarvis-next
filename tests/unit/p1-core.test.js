@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { testConfig, tmpDir, rmDir } from '../helpers.js';
+import { testConfig, tmpDir, rmDir, waitFor } from '../helpers.js';
 import { loadConfig, ConfigError, ROOT } from '../../server/core/config.js';
 import { validate } from '../../shared/schema.js';
 import { createAuth, createLimiter, generateTokens, loadTokens, rotateToken, modelTokenFor } from '../../server/core/auth.js';
@@ -161,7 +161,7 @@ test('gate: first reply wins, replay is rejected, invalid replies are refused', 
   const r = gateRig();
   try {
     const p = r.gate.requestApproval(req());
-    const id = r.events.find((e) => e.type === 'gate.request').request.id;
+    const id = (await waitFor(() => r.events.find((e) => e.type === 'gate.request'))).request.id; // published once the question is in the audit log (F1-5)
     assert.deepEqual(await r.gate.reply(id, 'always'), { ok: false, error: 'decision must be approve or deny' });
     assert.equal((await r.gate.reply(id, 'approve', 'c1')).ok, true);
     assert.equal((await r.gate.reply(id, 'deny', 'c2')).ok, false);

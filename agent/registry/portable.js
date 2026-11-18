@@ -253,6 +253,9 @@ export const portable = {
   git_snapshot: action({ run: ({ path: p, name }, ctx) => gitSnapshot(p, name, ctx) }),
   git_changes: action({ run: ({ path: p, name }, ctx) => gitChanges(p, name, ctx) }),
   // system: the permission bridge asks this machine what the coding agent's paths really are (links, junctions, short names)
+  // system: anchors of the other machine's audit chain (F1-5). Appended, never rewritten or removed here.
+  audit_anchor: action({ run({ count, hash }, ctx) { fs.mkdirSync(ctx.dataDir, { recursive: true }); fs.appendFileSync(path.join(ctx.dataDir, 'audit-anchors.jsonl'), `${JSON.stringify({ at: new Date().toISOString(), count, hash })}\n`); return { kept: true }; } }),
+  audit_anchors: action({ run(_a, ctx) { let lines = []; try { lines = fs.readFileSync(path.join(ctx.dataDir, 'audit-anchors.jsonl'), 'utf8').split('\n').filter(Boolean).slice(-200); } catch { /* none yet */ } return { anchors: lines.map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) }; } }),
   resolve_paths: action({ run: ({ paths }, ctx) => ({ workspace: realPathOf(ctx.workspaceDir, ctx), paths: paths.map((p) => realPathOf(p, ctx)) }) }),
 
   // --- user scripts ------------------------------------------------------------------------------------------------------

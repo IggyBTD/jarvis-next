@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadConfig, dataPath } from '../server/core/config.js';
-import { createAuditLog } from '../server/core/audit-log.js';
+import { createAuditLog, auditKeyFor } from '../server/core/audit-log.js';
 import { isMain } from '../shared/util.js';
 
 export const KNOWN = ['audit', 'conversations', 'digests', 'telemetry', 'reminders.json', 'agent-tasks.json', 'state.json', 'scheduler-state.json', 'pending-approvals.json'];
@@ -15,7 +15,7 @@ export function backup(dataDir, { keep = 7, now = () => new Date() } = {}) {
   const dest = path.join(root, name);
   fs.mkdirSync(dest, { recursive: true });
   for (const k of KNOWN) { const src = path.join(dataDir, k); if (fs.existsSync(src)) fs.cpSync(src, path.join(dest, k), { recursive: true }); }
-  const v = fs.existsSync(path.join(dest, 'audit')) ? createAuditLog({ dir: path.join(dest, 'audit') }).verify() : { ok: true, entries: 0 };
+  const v = fs.existsSync(path.join(dest, 'audit')) ? createAuditLog({ dir: path.join(dest, 'audit'), key: auditKeyFor(dataDir).key }).verify() : { ok: true, entries: 0 };
   if (!v.ok) throw new Error(`the copied audit log does not verify: ${v.errors[0]}`);
   const all = fs.readdirSync(root).sort();
   for (const old of all.slice(0, Math.max(0, all.length - Math.max(1, keep)))) fs.rmSync(path.join(root, old), { recursive: true, force: true });

@@ -5,7 +5,7 @@ import net from 'node:net';
 import path from 'node:path';
 import { loadConfig, tokenPath, resolveData, dataPath, ConfigError } from '../server/core/config.js';
 import { loadTokens } from '../server/core/auth.js';
-import { createAuditLog } from '../server/core/audit-log.js';
+import { createAuditLog, auditKeyFor } from '../server/core/audit-log.js';
 import { createLlmClient } from '../server/core/llm-client.js';
 import { loadToken } from '../server/digest/google.js';
 import { isMain } from '../shared/util.js';
@@ -50,7 +50,7 @@ export async function runDoctor({ cfg = loadConfig(), fetchImpl = fetch, agentOn
     let googleOk = false;
     try { const t = loadToken(resolveData(cfg, cfg.digest.google.tokenFile)); googleOk = !!t?.refresh_token; if (googleOk) google = 'refresh token saved'; } catch (e) { google = `token unreadable: ${e.message}`; }
     add('Google sign-in', googleOk || !cfg.digest.enabled, google);
-    const v = createAuditLog({ dir: dataPath(cfg, 'audit') }).verify();
+    const v = createAuditLog({ dir: dataPath(cfg, 'audit'), ...auditKeyFor(cfg.dataDir) }).verify();
     add('Audit log chain', v.ok, `${v.entries} entries${v.ok ? '' : `: ${v.errors[0]}`}`);
   }
   const ts = await tailscaleName(run);
