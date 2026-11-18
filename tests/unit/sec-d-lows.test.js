@@ -180,3 +180,17 @@ test('F5-2: the model proxy takes two requests at a time per token and caps the 
     for (const b of seen) { assert.ok(b.max_tokens <= 8192, JSON.stringify(b)); assert.ok(!(b.max_completion_tokens > 8192)); }
   } finally { srv.close(); }
 });
+
+// ---- F5-3 -----------------------------------------------------------------------------------------------------------------------
+
+test('F5-3: reportBack says so when it gives up on a chat that stayed busy', async () => {
+  const { reportBack } = await import('../../server/core/orchestrator.js');
+  const note = 'Agent task done.';
+  const conversations = { get: () => ({ messages: [{ role: 'system', content: note }] }) };
+  const orchestrator = { isBusy: () => true, runTurn: async () => {} };
+  const lines = [];
+  assert.equal(await reportBack({ orchestrator, conversations, convId: 'c', note, wait: async () => {}, tries: 3, log: (l) => lines.push(l) }), false);
+  assert.equal(lines.length, 1);
+  assert.match(lines[0], /gave up/);
+  assert.match(lines[0], /\bc\b/);
+});

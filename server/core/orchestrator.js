@@ -13,7 +13,8 @@ export const repeated = (seen, c) => { const n = (seen.get(key(c)) ?? 0) + 1; se
 
 // A background task finished while the chat was idle (or still busy): once the chat is free, let the model report the result.
 // Skipped when the task note is no longer the last message: the user already moved on, or the running turn saw the note itself.
-export async function reportBack({ orchestrator, conversations, convId, note, wait = (ms) => new Promise((r) => setTimeout(r, ms)), tries = 200 }) {
+// After tries x 1.5 s of a busy chat it gives up and logs that (F5-3); the note stays in the chat for the user to see.
+export async function reportBack({ orchestrator, conversations, convId, note, wait = (ms) => new Promise((r) => setTimeout(r, ms)), tries = 200, log = () => {} }) {
   for (let i = 0; i < tries; i++) {
     const conv = conversations.get(convId);
     if (!conv || conv.messages.at(-1)?.content !== note) return false;
@@ -22,6 +23,7 @@ export async function reportBack({ orchestrator, conversations, convId, note, wa
     }
     await wait(1500);
   }
+  log(`report back gave up: chat ${convId} stayed busy, so the task note was not answered (it is still in the chat)`);
   return false;
 }
 

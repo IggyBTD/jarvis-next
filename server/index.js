@@ -88,7 +88,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
 
   const modes = createPermissionMode({ dataDir: cfg.dataDir, bus });
   const backend = createCodeBackend({ dataDir: cfg.dataDir, bus });
-  const tasks = createAgentTasks({ router, bus, audit, conversations, dataDir: cfg.dataDir, taskTimeoutMs: cfg.policy.opencode.taskTimeoutMs, modes, backend, onNote: (convId, note) => { reportBack({ orchestrator, conversations, convId, note }).catch((e) => log(`report back failed: ${e.message}`)); } });
+  const tasks = createAgentTasks({ router, bus, audit, conversations, dataDir: cfg.dataDir, taskTimeoutMs: cfg.policy.opencode.taskTimeoutMs, modes, backend, onNote: (convId, note) => { reportBack({ orchestrator, conversations, convId, note, log }).catch((e) => log(`report back failed: ${e.message}`)); } });
   registerAgentTaskTool(router, tasks);
   registerBrowserTools(router, { notify: (m) => bus.publish(m.type, m) });
   const bridge = createOpencodeBridge({ router, gate, audit, tasks, policyCfg: cfg.policy, policy, machines, modes, log, alert: (reason) => bus.publish('security.alert', { reason }), protect: (m) => (m === 'pc' ? [cfg.root, cfg.dataDir] : []), trusted: (m) => [...(m === 'pc' ? [projectFolder(cfg.dataDir)] : []), ...(cfg.policy.opencode.trustedFolders?.[m] ?? [])].filter(Boolean) });
