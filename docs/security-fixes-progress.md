@@ -32,15 +32,15 @@ Pre-run commits (not security fixes): 31fce55 (desktop UI, icons, mesh, steps), 
 | F3-2 | C | DONE | bb144be | starter binds the Tailscale address (loopback if down, never LAN or 0.0.0.0), tailnet callers only, no loopback exemption, wrong-key limiter |
 | F3-3 | C | DONE | 7bd3270 | agents take calls from the PC tailnet address only (private ranges ignored even in old configs); agent and server bind mode tailscale, never LAN |
 | F3-5 | C | DONE | d760bc6 | phone sheet shows who asked, summary, the whole request uncut with hidden characters revealed, dry run and screenshot; Approve waits until the end has been on screen; audit argsHash of the whole arguments |
-| F1-4 | C | DONE | 2c954fe (router, ws, test; committed by another session), next commit (checker) | capabilities().call system actions only; Code-page Claude task via router.invoke; check scans scripts/, forbids .capabilities( outside a named list, catches shell options and Function(, reads code lines whole |
-| F1-5 | C | DONE | next commit | HMAC chain with data/tokens/audit.key, tagged head and an outside mark (cut, hand-fixed head and deleted folder fail verify), anchors on the Mac checked nightly, torn-line cut written into the log, T2/T3 fail closed on audit write failure (router, gate, bridge) |
-| F1-6 | C | DONE | next commit | queued approvals signed with the audit key (unsigned entries ignored) and re-rated from contract and policy on approval |
-| F2-6 | D | TODO | | |
-| F3-6 | D | TODO | | |
-| F3-7 | D | TODO | | |
-| F3-8 | D | TODO | | |
+| F1-4 | C | DONE | 2c954fe (router, ws, test; committed by another session), fe363e2 (checker) | capabilities().call system actions only; Code-page Claude task via router.invoke; check scans scripts/, forbids .capabilities( outside a named list, catches shell options and Function(, reads code lines whole |
+| F1-5 | C | DONE | 3b20844 | HMAC chain with data/tokens/audit.key, tagged head and an outside mark (cut, hand-fixed head and deleted folder fail verify), anchors on the Mac checked nightly, torn-line cut written into the log, T2/T3 fail closed on audit write failure (router, gate, bridge) |
+| F1-6 | C | DONE | e5c6ee5 | queued approvals signed with the audit key (unsigned entries ignored) and re-rated from contract and policy on approval |
+| F2-6 | D | DONE | b517e02 | random 16-hex id per untrusted block on both tags; base and digest prompts say a block ends only at its own closer; spaced look-alikes still neutralised |
+| F3-6 | D | DONE | 81bc86c | client-link prints Tailscale names only; no raw-address "At home" link |
+| F3-7 | D | DONE | 655d42a | Host allowlist by kind (IP literal, localhost, *.localhost, *.ts.net) in front of every server request and upgrade, and the starter; 421 otherwise |
+| F3-8 | D | DONE | f4b3b83 | audit strips query strings and search-like values; Mac telemetry skips actions that are off (battery_status was the refusals) |
 | F4-3 | D | TODO | | |
-| F4-4 | D | TODO | | |
+| F4-4 | D | DONE | 35d9e56 | writablePath: write_file data and document types only, copy and move keep the source type, zip only .zip, no profile or startup folders, no hidden names or streams |
 | F5-1 | D | TODO | | |
 | F5-2 | D | TODO | | |
 | F5-3 | D | TODO | | |
