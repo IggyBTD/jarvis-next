@@ -1,4 +1,4 @@
-STATUS: PAUSED by the owner after FINAL round 2 (2026-11-18); resume job deleted. Not committed yet: the R2-1 and R2-2 git pins (GIT_PINS in agent/sidecars/opencode-manager.js cleanEnv), their test at the end of tests/unit/sec-d-lows.test.js, and tests/integration/p6-opencode.test.js line 54 still to accept the pins. Then: npm test, commit, final summary, FINISHED.
+STATUS: FINISHED (2026-11-18). All 30 findings worked; F1-4, F4-1 and F4-5 partial, see FINAL SUMMARY. Resume job deleted.
 
 
 
@@ -112,4 +112,90 @@ Browser tests after stage D, one file at a time: browser-guard 5/5, mobile 17/17
 
 ## Decisions made without asking
 
-All in docs/decisions.md under "2026-11-15 Security fix run" (S-01 onwards).
+All in docs/decisions.md under "2026-11-15 Security fix run" (S-01 to S-40).
+
+## FINAL SUMMARY
+
+### Commits, one per line (hash, finding, what changed)
+
+- 08e5d49 F1-1: the permission bridge goes through policy; Auto runs only the parsed read-only allowlist, everything else asks.
+- 6675ce6 F1-2: coding-agent commands are parsed and their paths resolved; git --output, UNC and provider paths are refused.
+- f6550db F1-3: the JARVIS folder, its data folder and Temp are T3 for the coding agent in every mode.
+- b47a30d F4-2: paths are resolved for real on the machine (links, junctions, short names, trailing dots) through resolve_paths.
+- 78a5d31 F4-1: one route and method allowlist for both ends of the agent proxy; permission answers limited to once or reject.
+- a1e7730 F2-1: nothing in a reply, digest or artifact loads from another host; CSP on served pages and in Tauri.
+- 0a3b4e3 F2-2, F2-5: the tainted-chat rule as a pure module.
+- 598e837 F2-2: the tainted-chat rule wired into the chokepoint; calls that can carry data out ask, with the whole request on the card.
+- 37001ba F2-4: quoted tool-call markup in data is escaped and never run.
+- 825b153 F2-5: saved notes are shown at once with Undo, ask in a tainted chat, and reach the model wrapped.
+- c1deae8 F2-3: a task's file names and failure reason stay inside its untrusted block.
+- 628154d F2-7: a Claude Code reply reaches the local model as wrapped data.
+- f58ff18 F1-7: the router refuses a tool the model was not offered in that request.
+- 1d842af F3-1, F3-4: per-device pairing as a module.
+- 4a07a91 F3-1: one token per device, scopes on every message and route, PIN step-up for T3 and admin.
+- fed87c7 F3-4: devices pair with a short code; no token in addresses, argv or zips.
+- b0e2d77 F4-5: clean child environments and a secret store, as modules.
+- cb163a4 F4-5: clean environments for every program the agent starts, an OpenCode tripwire, no key on a command line.
+- 96405e4 F3-2: the starter listens on the tailnet only and limits wrong keys.
+- 8931a27 F3-3: agents take calls from the PC only; nothing falls back to the LAN.
+- 6b87dfd F3-5: the phone shows a request whole, hidden characters revealed, before Approve works.
+- 2c954fe F1-4 (part, committed by another session): router, ws and test changes for the chokepoint.
+- fe363e2 F1-4: the chokepoint check scans more and catches what it used to miss.
+- 3b20844 F1-5: a keyed audit chain with a tagged head, an outside mark and off-box anchors; T2 and T3 writes fail closed.
+- e5c6ee5 F1-6: queued approvals are signed and rated again when approved.
+- b517e02 F2-6: every untrusted block has a random id and ends only at its own closer.
+- 81bc86c F3-6: client-link prints Tailscale names only.
+- 655d42a F3-7: a Host allowlist in front of the server and the starter.
+- f4b3b83 F3-8: no query strings or search terms in the audit; Mac telemetry no longer writes refusals.
+- 35d9e56 F4-4: write_file makes data files only; nothing becomes a script by rename; no profile or startup folders.
+- 3ff0960 F5-1: one tool runs at most 20 times in a message.
+- cc096d8 F5-2: the model proxy allows 2 requests per token and 8192 output tokens.
+- f60eff6 F5-3: reportBack logs when it gives up.
+- bb113d9 F4-3: separate browser contexts for the model and the person, Enter and Space ask, WebSockets checked.
+- b47fdec F4-3: the browser guard pins DNS through its own proxy.
+- 3d1f8df R1-1 (final re-check, High): .git and HEAD are armed, so the coding agent cannot make a repository git would load.
+- f6332e4 R1-2: no remote image through a style attribute; the pages carry an image CSP.
+- ab68136 R1-5: the model proxy replaces a negative or fractional output cap.
+- c50b54e R1-6: the chokepoint check flags exec and execSync calls of child_process.
+- 95fccfe R2-1, R2-2: git run by a coding agent loads no hooks, fsmonitor or bare repository; .githooks is armed.
+
+The "Security fix run: ..." commits only update this file, decisions.md and the re-check report. Commits 6aceed0, 4d3916b and 85b4edd in the same range are another session's feature work.
+
+### Tests
+
+- Before stage A: `npm test` 192 of 192, chokepoint check passing.
+- After: `npm test` 289 of 289, chokepoint check passing.
+- Browser tests, one file at a time, after R1-2: 80 of 80 in 11 files (browser-guard 5, mobile 17, sec-approval-phone 1, sec-browser-guard 4, sec-csp-pages 1, sec-exfil 2, sec-memory-undo 2, sec-pairing 3, ui-layout 12, ui-server 20, ui-shell 13). Run on the working tree.
+
+### Final re-check
+
+Two rounds, saved unedited in docs/security/final-recheck.md. Fable 5.2 could not start on this account (usage credits), so both rounds ran on Opus 5.5 as read-only agents (S-36; the owner agreed). Round 1 found one High (R1-1), fixed. Round 2 found no Critical or High; its two Mediums were fixed as well (95fccfe).
+
+### Partial, open or unverified, with the check that settles each
+
+Partial or open in code:
+- F1-4 PARTIAL: router.capabilities() still hands raw opencode, claude and browser handles to four files, and the browser-view and agent-task audit lines are not awaited. Settles it: a narrow audited call per sidecar route in tool-router.js, and the checker allowing capabilities() in tool-router.js only.
+- F4-1 PARTIAL: whoever holds a machine token can create an OpenCode session and answer its permission once before you do; the tripwire fires after the command ran. Settles it: OpenCode permission replies accepted only from the server's bridge (a reply key the agent checks), or the agent refusing /permission replies from the proxy.
+- F4-5 PARTIAL: the secret store is written but not wired; OpenCode runs as your own user (HUMAN_TODO.md section 12).
+- F1-1 left: Auto still answers OpenCode web fetches once, so a coding task can put workspace text into an address. Settles it: webfetch to ask in Auto, or the tainted-chat rule extended to fetches made inside a task.
+- F1-5 limits: approvals run from the queue have no "started" line, the gate's approval line and the pairing, revoke and PIN lines are not awaited, anchors are skipped when the Mac does not answer, and putting back saved copies of head.json and audit.mark hides a cut until the next anchor (R1-7). Settles it: an anchor on every T2 or T3 line, and the nightly check failing when anchors cannot be read.
+- R1-3 (another session's 4d3916b): the desktop and Mac page keeps your PIN for an hour after one T3 approval. Settles it: keep it for minutes, for the same action and target, and only after an approve.
+- R1-4: the Mac agent narrows its callers to the PC only while server.url holds a tailnet IP. Keep the IPs (What changes for you).
+- R1-8: open-mac.js and the phone's launcher page are paired with more scopes than ringing the starter needs. Settles it: a launcher kind with chat only.
+- R2-3: if OpenCode runs commands through cmd.exe, a git.js or cat.vbs written into the workspace runs instead of the allowlisted command. Settles it: the F1-2 shell check below; if it is cmd.exe, arm every allowlisted first word with any extension.
+- 4d3916b keeps a loopback OAuth listener open for 24 hours instead of 5 minutes (not this run's code).
+- Before any tunnel or wake-from-anywhere, still not done: TLS with server authentication, rate limits per token (they count per address), and removing loopback trust (desktop kind and legacy rest on proxy headers).
+
+Unverified at runtime (the list above, under "Unverified", has each check in full): F1-5 verify-audit on the real log, F4-5 OpenCode's environment, F3-1 and F3-4 pairing on the real devices, F2-4 and F2-2 and F2-6 a red-team set against the real model, F2-1 the Tauri window, F1-3 OpenCode's read tool and the Claude Code path rule, F1-2 and R2-3 which shell OpenCode uses, F4-3 real sites through the pinning proxy, F3-7 every client under the Host allowlist, F5-2 a long OpenCode task under the cap. Also from the audit's list: the bindings check (Get-NetTCPConnection on 7410, 7411 and 7421, lsof on 7422 on the Mac, and a connection attempt to 7411 from a LAN device), whether `tailscale serve` is on, and comparing dist-mac/jarvis-mac-with-tokens.zip before you delete it.
+
+### What changes for you
+
+Everything under "What changes for you" above, plus:
+- The coding agents (OpenCode and Claude Code) run git with no hooks, no fsmonitor and no bare repository they were not pointed at. Writing a file named .git or HEAD, or anything under .githooks, asks first.
+- The desktop and phone pages load images only from themselves, data: and blob:, also under the dev server.
+
+The steps that matter most, in order: set a PIN and pair each device, then revoke the legacy token (pairing steps 1 to 6 above); delete dist-mac/jarvis-mac-with-tokens.zip; update the Mac once (node scripts/update.js); restart the server, the agents and the browser sidecar so the changes load.
+
+### Decisions made without asking
+
+S-01 to S-40 in docs/decisions.md, under "2026-11-15 Security fix run". The ones that change most: Auto runs only a read-only list (S-01 onwards), the JARVIS folder is off limits to the coding agent, the tainted-chat rule, per-device pairing with a PIN, the keyed audit, the browser's two contexts (S-34), write_file data types only (S-31), the per-tool cap of 20 with your 100 and 200 guard kept (S-32), the proxy limits (S-33), Opus for the final re-check (S-36), and the git pins (S-40).
