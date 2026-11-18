@@ -39,7 +39,11 @@ export function buildConfig({ serverUrl, modelToken, contextLength = 65536 }) {
 // Only what a program needs to start; no tokens, keys or passwords from the agent's own environment reach OpenCode or its children
 // (shared/child-env.js). OpenCode's own variables (its password, its config) are the one deliberate exception, and only for OpenCode;
 // other callers pass their own allowSecret.
-export const cleanEnv = (env, extra = {}, opts = { allowSecret: [/^OPENCODE_/] }) => childEnv(env, extra, opts);
+// Git run by a coding agent (R2-1, R2-2): no hooks, no fsmonitor, no bare repository it was not pointed at, no index rewrite by a
+// read. Config from the environment outranks the repository's own, and these replace any GIT_CONFIG_* the parent had.
+const NUL = process.platform === 'win32' ? 'NUL' : '/dev/null';
+export const GIT_PINS = { GIT_CONFIG_COUNT: '3', GIT_CONFIG_KEY_0: 'safe.bareRepository', GIT_CONFIG_VALUE_0: 'explicit', GIT_CONFIG_KEY_1: 'core.fsmonitor', GIT_CONFIG_VALUE_1: 'false', GIT_CONFIG_KEY_2: 'core.hooksPath', GIT_CONFIG_VALUE_2: NUL, GIT_OPTIONAL_LOCKS: '0' };
+export const cleanEnv = (env, extra = {}, opts = { allowSecret: [/^OPENCODE_/] }) => ({ ...childEnv(Object.fromEntries(Object.entries(env ?? {}).filter(([k]) => !/^GIT_CONFIG_/i.test(k))), extra, opts), ...GIT_PINS }); // fixed values, added after the secret filter (it would drop *_KEY_*)
 
 export function agentsMd(facts) {
   return `${MARKER}

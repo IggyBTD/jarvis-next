@@ -265,3 +265,16 @@ test('R1-6: the chokepoint check catches a child_process method call that builds
     assert.ok(!p.some((l) => /ok\.js/.test(l)), p.join('\n'));
   } finally { rmDir(root); }
 });
+
+// ---- final re-check, round 2: git run by a coding agent ---------------------------------------------------------------------------
+
+test('R2-1, R2-2: the coding agents run git with no hooks, no fsmonitor and no bare repository it was not pointed at', async () => {
+  const { cleanEnv } = await import('../../agent/sidecars/opencode-manager.js');
+  const env = cleanEnv({ PATH: 'p', GIT_CONFIG_COUNT: '9', GIT_CONFIG_KEY_0: 'core.fsmonitor', GIT_CONFIG_VALUE_0: 'calc' });
+  const pins = Object.fromEntries(Array.from({ length: Number(env.GIT_CONFIG_COUNT) }, (_, i) => [env[`GIT_CONFIG_KEY_${i}`], env[`GIT_CONFIG_VALUE_${i}`]]));
+  assert.equal(pins['safe.bareRepository'], 'explicit');
+  assert.equal(pins['core.fsmonitor'], 'false');
+  assert.match(pins['core.hooksPath'], /^(NUL|\/dev\/null)$/);
+  assert.equal(env.GIT_OPTIONAL_LOCKS, '0');
+  assert.equal(env.PATH, 'p');
+});

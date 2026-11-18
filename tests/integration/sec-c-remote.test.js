@@ -144,7 +144,9 @@ test('F4-5: programs the agent starts get a clean environment: no keys or passwo
   await oc.start().catch(() => {});
   await oc.stop();
   assert.ok(spawned.length, 'OpenCode was started');
-  assert.deepEqual(Object.keys(spawned[0]).filter((k) => /KEY|SECRET|TOKEN/i.test(k)), []);
+  // GIT_CONFIG_KEY_n are the names of git settings pinned by JARVIS (R2-1), not secrets: their values are checked to be exactly the pins
+  assert.deepEqual(Object.keys(spawned[0]).filter((k) => /KEY|SECRET|TOKEN/i.test(k) && !/^GIT_CONFIG_KEY_[0-2]$/.test(k)), []);
+  assert.deepEqual([0, 1, 2].map((i) => spawned[0][`GIT_CONFIG_KEY_${i}`]), ['safe.bareRepository', 'core.fsmonitor', 'core.hooksPath']);
   assert.ok(spawned[0].OPENCODE_SERVER_PASSWORD && spawned[0].OPENCODE_CONFIG_CONTENT && spawned[0].OPENCODE_DISABLE_PROJECT_CONFIG, 'OpenCode keeps its own variables');
   // Claude Code: nothing secret at all (it signs in with its own login)
   const runs = [];
@@ -153,7 +155,8 @@ test('F4-5: programs the agent starts get a clean environment: no keys or passwo
   cm.proxy(req, { writeHead() {}, end() {} }, '/run');
   req.end(JSON.stringify({ runId: 'r1', prompt: 'x', mode: 'auto' }));
   await waitFor(() => runs.length === 1);
-  assert.deepEqual(Object.keys(runs[0]).filter((k) => /KEY|SECRET|TOKEN/i.test(k)), []);
+  assert.deepEqual(Object.keys(runs[0]).filter((k) => /KEY|SECRET|TOKEN/i.test(k) && !/^GIT_CONFIG_KEY_[0-2]$/.test(k)), []);
+  assert.equal(runs[0].GIT_CONFIG_VALUE_0, 'explicit', 'Claude Code gets the git pins too');
 });
 
 test('F4-5: a permission answer JARVIS did not send trips the alarm: running tasks stop and the person is told', async () => {
