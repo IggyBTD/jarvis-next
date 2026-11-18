@@ -86,3 +86,30 @@ test('microsoft tools: mail search and read, calendar, rotated refresh token, on
     await assert.rejects(tools.get('microsoft_mail_search')({ account: 'work' }), /No connected account matches "work"\. Connected: me@uni\.edu/);
   } finally { rmDir(dir); }
 });
+
+test('accounts: the address the Mac browser ended on, pasted, finishes a waiting sign-in (Microsoft and Google); a wrong or old one does not', async () => {
+  process.env.JARVIS_TOKEN_KEY = 'test-key-at-least-16-chars';
+  const dir = tmpDir('pasteacc');
+  try {
+    fs.mkdirSync(path.join(dir, 'tokens'));
+    const msFile = path.join(dir, 'tokens', 'ms.json');
+    const gFile = path.join(dir, 'tokens', 'g.json');
+    fs.writeFileSync(msFile, JSON.stringify({ client_id: 'cid' }));
+    fs.writeFileSync(gFile, JSON.stringify({ installed: { client_id: 'gid', client_secret: 'sec' } }));
+    const fetchImpl = async (url) => (String(url).endsWith('/token') ? ok({ access_token: 'acc', refresh_token: 'ref' }) : ok({ mail: 'me@uni.edu', emailAddress: 'me@gmail.com' }));
+    const ms = createMicrosoftAccounts({ dataDir: dir, clientFile: msFile, fetchImpl, loginBase: () => 'http://x/t' });
+    const { createGoogleAccounts } = await import('../../server/accounts/google-accounts.js');
+    const g = createGoogleAccounts({ dataDir: path.join(dir, 'g'), clientFile: gFile, fetchImpl, endpoints: { token: 'http://x/token', profile: 'http://x/profile', revoke: 'http://x/revoke' }, authUrl: 'http://x/auth' });
+    for (const [acc, email] of [[ms, 'me@uni.edu'], [g, 'me@gmail.com']]) {
+      const { url } = await acc.start({ kind: 'Personal', name: 'Mine' });
+      const state = new URL(url).searchParams.get('state');
+      await assert.rejects(acc.complete('not an address'), (e) => e.status === 400);
+      await assert.rejects(acc.complete('http://127.0.0.1:1/?state=wrong&code=c'), (e) => e.status === 400 && /No sign-in is waiting/.test(e.message));
+      // the Mac's browser ended on its own 127.0.0.1 with the code in the address
+      const out = await acc.complete(`http://127.0.0.1:55555/?state=${state}&code=abc&scope=x`);
+      assert.equal(out.ok, true);
+      assert.deepEqual([acc.list()[0].status, acc.list()[0].email], ['connected', email]);
+      await assert.rejects(acc.complete(`http://127.0.0.1:55555/?state=${state}&code=abc`), (e) => e.status === 400); // used once
+    }
+  } finally { rmDir(dir); }
+});

@@ -5,9 +5,11 @@ import { prettyModelName } from './model-name.js';
 import { currentPage } from './whiteboard-mode.js';
 
 const KEY = 'jarvis.models.shown';
-export const DEFAULT_SHOWN = ['unsloth/qwen3.8-27b', 'qwen/qwen3-14b', 'huihui-ai_qwen3-14b-abliterated'];
+export const DEFAULT_SHOWN = ['unsloth/qwen3.8-27b', 'huihui-ai_qwen3-14b-abliterated']; // the 27B and the abliterated 14B; the others are ticked in Settings
 const saved = () => { try { const v = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(v) ? v : null; } catch { return null; } };
-export const isShown = (key) => (saved() ?? DEFAULT_SHOWN).includes(key);
+// LM Studio lists the 27B as "qwen3.8-27b", the config calls it "unsloth/qwen3.8-27b": a key matches with or without its publisher
+const same = (a, b) => a === b || a.endsWith(`/${b}`) || b.endsWith(`/${a}`);
+export const isShown = (key) => (saved() ?? DEFAULT_SHOWN).some((k) => same(k, key));
 function setShown(key, on) {
   const now = new Set(saved() ?? DEFAULT_SHOWN);
   if (on) now.add(key); else now.delete(key);

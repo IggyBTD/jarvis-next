@@ -37,6 +37,13 @@
   --danger-wash: rgba(229, 72, 77, 0.14);
   --ok-wash:     rgba(86, 194, 138, 0.14);
 
+  /* diagrams the model draws in a reply (src/ui/diagram.css). Only existing colours, so they follow the theme; red is for structural accents */
+  --diagram-text: var(--text); --diagram-line: var(--text-3); --diagram-fill: var(--surface-2);
+  --diagram-teal: var(--accent); --diagram-teal-wash: var(--accent-wash);
+  --diagram-amber: var(--warm); --diagram-amber-wash: var(--warm-wash);
+  --diagram-coral: var(--danger); --diagram-coral-wash: var(--danger-wash);
+  --diagram-max-h: 480px;
+
   /* code colours inside tool steps (on --surface-1, 8.7:1 or better) */
   --syn-key: #7CC4F5; --syn-string: #8FD3A4; --syn-number: #E8B26A; --syn-literal: #C5A3F0;
 

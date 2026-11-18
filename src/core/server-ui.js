@@ -118,6 +118,12 @@ const dlg = $('gate-dialog');
 const TIER = { T0: 'Read only', T1: 'Low risk', T2: 'Changes something', T3: 'Destructive or leaves the machine' };
 const SOURCE = { user: 'You', voice: 'Voice', scheduled: 'A scheduled job', agent: 'The coding agent' };
 let shownId = null;
+// The PIN is typed once. After the server has accepted it, this window keeps it in memory only (never saved: a reload or closing the window forgets
+// it) and sends it with the next risky approvals, until an hour passes without using it or Forget is pressed. The server still checks it every time.
+const KEEP_MS = 60 * 60_000;
+let kept = null; // { pin, at }
+let trying = null; // { id, pin }: the PIN sent with the approval the server has not answered yet
+const keptPin = () => (kept && Date.now() - kept.at < KEEP_MS ? kept.pin : '');
 
 function paintGate() {
   const list = state.pending;
@@ -144,6 +150,9 @@ function paintGate() {
   if (r.screenshot) shot.src = String(r.screenshot).startsWith('data:image/') ? r.screenshot : '';
   // T3 away from the desktop on the PC needs the owner's PIN; the field is cleared for every request
   $('gate-pin-row').hidden = r.tier !== 'T3';
+  const have = !!keptPin();
+  $('gate-pin-row').querySelectorAll('label, #gate-pin').forEach((n) => { n.hidden = have; });
+  $('gate-pin-kept').hidden = !have;
   if ($('gate-pin').dataset.for !== r.id) { $('gate-pin').value = ''; $('gate-pin').dataset.for = r.id; }
   if (!dlg.open) { dlg.showModal(); $('gate-deny').focus(); }
 }
@@ -151,8 +160,18 @@ function answer(decision) {
   if (!shownId) return;
   const id = shownId;
   const r = state.pending.find((p) => p.id === id);
+  if (decision !== 'approve') trying = null; // a PIN typed and then denied is never remembered
   // a T3 approval waits for the server's answer (a wrong PIN is refused and the dialog stays); everything else closes at once
-  if (decision === 'approve' && r?.tier === 'T3') { replyGate(id, decision, $('gate-pin').value); $('gate-pin').value = ''; return; }
+  if (decision === 'approve' && r?.tier === 'T3') {
+    const typed = $('gate-pin').value;
+    const pin = typed || keptPin();
+    trying = { id, pin };
+    replyGate(id, decision, pin);
+    $('gate-pin').value = '';
+    // a remembered PIN the server refuses (it was changed) is dropped, and the field comes back
+    if (!typed && pin) setTimeout(() => { if (state.pending.some((p) => p.id === id)) { kept = null; trying = null; paintGate(); } }, 2000);
+    return;
+  }
   state.pending = state.pending.filter((p) => p.id !== id);
   replyGate(id, decision);
   shownId = null;
@@ -160,6 +179,7 @@ function answer(decision) {
   if (state.pending.length) $('gate-deny').focus();
 }
 $('gate-approve').addEventListener('click', () => answer('approve'));
+$('gate-pin-forget').addEventListener('click', () => { kept = null; paintGate(); $('gate-pin').focus(); });
 $('gate-deny').addEventListener('click', () => answer('deny'));
 dlg.addEventListener('cancel', (e) => { e.preventDefault(); answer('deny'); }); // Esc denies; it never approves
 
@@ -295,7 +315,7 @@ function showCodingTasks() {
 onLink((e) => {
   switch (e.type) {
     case 'gate.request': case 'gate.queued': case 'state': paintGate(); break;
-    case 'gate.resolved': if (e.id === shownId) { shownId = null; } paintGate(); break;
+    case 'gate.resolved': if (trying && e.id === trying.id) { if (trying.pin) kept = { pin: trying.pin, at: Date.now() }; trying = null; } if (e.id === shownId) { shownId = null; } paintGate(); break;
     case 'target': if (e.rejected) toast(`The server kept the ${label(state.target)}: ${e.reason}`); break;
     case 'reminder.fire': toast(`Reminder: ${e.text}`); beep(); break;
     case 'digest.ready': toast('Your digest is ready.'); refreshTab(); break;

@@ -292,4 +292,56 @@ test('Ctrl+L swaps the input for a maths editor: "2^" opens the exponent at once
   assert.equal(await page.isHidden('#latex-field'), true);
 });
 
+test('a svg fence is drawn as a diagram once it closes; hostile or broken SVG never reaches the page; other code blocks are unchanged', async () => {
+  const GOOD = '<svg viewBox="0 0 200 100" width="400" height="200" onload="window.__pwned=1"><title>Flow</title><defs><marker id="a" markerWidth="6" markerHeight="6"><path d="M0 0L6 3L0 6z"/></marker></defs><script>window.__pwned=1</script><foreignObject><div>x</div></foreignObject><a href="https://evil.example/"><rect class="c-teal" x="10" y="10" width="80" height="40" onclick="window.__pwned=1" fill="url(https://evil.example/x.svg#p)"/></a><image href="https://evil.example/i.png" width="10" height="10"/><text class="th" x="20" y="30">Box</text><line class="axis" x1="0" y1="90" x2="200" y2="90" marker-end="url(#a)"/></svg>';
+  const out = await page.evaluate(async (good) => {
+    const { renderBlocks } = await import('/src/core/markdown.js');
+    const host = document.createElement('div');
+    const draw = (t) => { host.innerHTML = renderBlocks(t).join(''); return host.innerHTML; };
+    const closed = draw('Here:\n\n\u0060\u0060\u0060svg\n' + good + '\n\u0060\u0060\u0060\n\nafter');
+    const svg = host.querySelector('.diagram svg');
+    const r = {
+      drawn: !!svg, width: svg?.getAttribute('width'), height: svg?.getAttribute('height'), viewBox: svg?.getAttribute('viewBox'),
+      script: !!host.querySelector('script'), fo: !!host.querySelector('foreignObject'), image: host.querySelector('image')?.getAttribute('href') ?? null,
+      onAttrs: [...host.querySelectorAll('*')].some((e) => [...e.attributes].some((a) => /^on/i.test(a.name))),
+      outsideHref: [...host.querySelectorAll('*')].some((e) => [...e.attributes].some((a) => /href/i.test(a.name) && !/^\s*#/.test(a.value))),
+      outsideUrl: /url\(\s*['"]?https?:/i.test(closed), marker: svg?.querySelector('line')?.getAttribute('marker-end'), teal: !!host.querySelector('rect.c-teal'), label: host.querySelector('figure')?.getAttribute('aria-label'),
+      after: /after/.test(closed), noCode: !host.querySelector('.code-box'),
+    };
+    r.streaming = draw('x\n\n\u0060\u0060\u0060svg\n<svg viewBox="0 0 10 10"><rect');
+    r.streamingNoSvg = !host.querySelector('svg') && !!host.querySelector('.diagram-pending');
+    r.streamingTwoTicks = (draw('\u0060\u0060\u0060svg\n<svg viewBox="0 0 10 10"></svg>\n\u0060\u0060'), !!host.querySelector('.diagram-pending'));
+    draw('\u0060\u0060\u0060svg\n<svg viewBox="0 0 10 10"><rect></svg>\n\u0060\u0060\u0060\n\nnext paragraph');
+    r.broken = { code: !!host.querySelector('.code-box'), note: /diagram failed to render/.test(host.innerHTML), svg: !!host.querySelector('svg'), next: /next paragraph/.test(host.textContent) };
+    draw('\u0060\u0060\u0060svg\n<svg width="10" height="10"><rect/></svg>\n\u0060\u0060\u0060');
+    r.noViewBoxFromSize = host.querySelector('.diagram svg')?.getAttribute('viewBox');
+    draw('\u0060\u0060\u0060svg\n<svg><rect/></svg>\n\u0060\u0060\u0060');
+    r.noBox = { note: /failed to render/.test(host.innerHTML), code: !!host.querySelector('.code-box') };
+    draw('\u0060\u0060\u0060python\nprint(1)\n\u0060\u0060\u0060');
+    r.python = { code: !!host.querySelector('.code-box'), diagram: !!host.querySelector('.diagram, .diagram-pending, .diagram-note') };
+    return r;
+  }, GOOD);
+  assert.equal(out.drawn, true, 'the closed svg fence is drawn inline');
+  assert.deepEqual([out.width, out.height, out.viewBox], ['100%', null, '0 0 200 100'], 'full width, no fixed height, the viewBox kept');
+  assert.equal(out.noCode, true, 'a drawn diagram is not shown as code');
+  assert.deepEqual([out.script, out.fo, out.onAttrs, out.outsideHref, out.outsideUrl, out.image], [false, false, false, false, false, null], 'nothing that runs or reaches outside survives');
+  assert.equal(out.marker, 'url(#a)', 'a reference inside the document stays');
+  assert.equal(out.teal, true);
+  assert.equal(out.label, 'Flow');
+  assert.equal(out.after, true);
+  assert.equal(out.streamingNoSvg, true, 'half a diagram is only a placeholder');
+  assert.equal(out.streamingTwoTicks, true, 'a closing fence that has not fully arrived is still a placeholder');
+  assert.deepEqual(out.broken, { code: true, note: true, svg: false, next: true }, 'a broken SVG falls back to code with a note and the rest of the message is intact');
+  assert.equal(out.noViewBoxFromSize, '0 0 10 10');
+  assert.deepEqual(out.noBox, { note: true, code: true });
+  assert.deepEqual(out.python, { code: true, diagram: false });
+  // and in a real reply
+  rig.model.script({ content: 'The flow:\n\n\u0060\u0060\u0060svg\n<svg viewBox="0 0 120 60"><rect class="c-amber" x="5" y="5" width="50" height="30"/><text class="t" x="10" y="25">A</text></svg>\n\u0060\u0060\u0060\n\nDone.' });
+  await send('draw a diagram');
+  await page.waitForSelector('#chat-output .chat-line.assistant .diagram svg');
+  assert.equal(await page.locator('#chat-output .chat-line.assistant .diagram-pending').count(), 0);
+  const box = await page.$eval('#chat-output .chat-line.assistant .diagram svg', (e) => { const r = e.getBoundingClientRect(); return { w: Math.round(r.width), parent: Math.round(e.parentElement.getBoundingClientRect().width) }; });
+  assert.ok(box.w > 100 && box.w <= box.parent, 'it scales to the bubble');
+});
+
 test('no script errors on the page', () => { assert.deepEqual(errors.filter((e) => !/transformCallback/.test(e)), []); });

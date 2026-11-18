@@ -134,10 +134,11 @@ export function createHttpHandler({ cfg, auth, llmProxy, models, environment, se
         return res.end(s.jpeg);
       }
       if (latex && p === '/api/latex' && req.method === 'POST') { try { return json(res, 200, await latex(String((await readBody(req)).text ?? '').slice(0, 500)), cors); } catch (e) { return json(res, e.status ?? 502, { error: 'the model could not be reached' }, cors); } }
-      const prov = p.match(/^\/api\/accounts\/(google|microsoft)(\/start|\/([0-9a-f]{10}))?$/);
+      const prov = p.match(/^\/api\/accounts\/(google|microsoft)(\/start|\/complete|\/([0-9a-f]{10}))?$/);
       const acc = prov && (prov[1] === 'google' ? accounts : msAccounts);
       if (acc && !prov[2] && req.method === 'GET') return json(res, 200, { accounts: acc.list() }, cors);
       if (acc && prov[2] === '/start' && req.method === 'POST') { try { return json(res, 200, await acc.start(await readBody(req)), cors); } catch (e) { return json(res, e.status ?? 500, { error: e.message }, cors); } }
+      if (acc && prov[2] === '/complete' && req.method === 'POST') { try { return json(res, 200, await acc.complete((await readBody(req)).url), cors); } catch (e) { return json(res, e.status ?? 500, { error: e.message }, cors); } }
       if (acc && prov[3] && req.method === 'DELETE') return json(res, 200, { removed: await acc.remove(prov[3]) }, cors);
       if (browserView && p === '/api/browser/do'&& req.method === 'POST') return json(res, 200, await browserView.act(await readBody(req)), cors);
       if (req.method === 'GET' && p === '/api/conversations') return json(res, 200, { conversations: conversations.list() }, cors);

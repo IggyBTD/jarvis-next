@@ -134,3 +134,6 @@
 .acct-form { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); padding: var(--s-3) 0; border-top: 1px solid var(--border); }
 .av-input, .av-select { height: var(--h-md); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-sm); background: var(--surface-1); color: var(--text); font: inherit; }
 .acct-form .av-input { flex: 1 1 160px; min-width: 0; }
+.acct-blocked { margin: 0; padding: var(--s-3) var(--s-4); border: 1px solid var(--warm); border-radius: var(--r-md); background: var(--warm-wash); color: var(--text); font-size: var(--fs-3); line-height: var(--lh-sm); }
+.acct-paste { display: flex; flex: 1 1 100%; gap: var(--s-2); }
+.acct-paste .av-input { flex: 1 1 auto; min-width: 0; }

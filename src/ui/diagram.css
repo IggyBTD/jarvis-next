@@ -1,0 +1,36 @@
+/* Diagrams the model draws in a reply (a ```svg fence, src/core/markdown.js). Colours come from the --diagram-* tokens in tokens.css, so a
+   diagram follows the light and dark theme. A shape or text with its own fill or stroke attribute keeps it; the rest follow the theme. */
+
+.diagram { margin: 0 0 var(--s-4); padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface-1); }
+.diagram svg { display: block; width: 100%; height: auto; max-height: var(--diagram-max-h); color: var(--diagram-line); font-family: var(--sans); }
+
+/* defaults for what the model leaves unstyled (:where keeps them weaker than the classes below) */
+.diagram svg :where(text:not([fill])) { fill: var(--diagram-text); }
+.diagram svg :where(rect, circle, ellipse, polygon):where(:not([fill])) { fill: var(--diagram-fill); }
+.diagram svg :where(rect, circle, ellipse, polygon, path, line, polyline):where(:not([stroke])) { stroke: var(--diagram-line); }
+.diagram svg :where(path, line, polyline):where(:not([fill])) { fill: none; }
+.diagram svg :where(text) { stroke: none; }
+
+/* text */
+.diagram .t { font-size: 14px; font-weight: 400; }
+.diagram .ts { font-size: 12px; font-weight: 400; }
+.diagram .th { font-size: 14px; font-weight: 600; }
+
+/* lines */
+.diagram .axis { stroke: var(--diagram-line); stroke-width: 1; fill: none; }
+.diagram .guide { stroke: var(--diagram-line); stroke-width: 1; stroke-dasharray: 4 4; fill: none; }
+
+/* colours: on a shape, or on a group (its shapes take it; its text stays readable) */
+.diagram :is(rect, circle, ellipse, polygon, path).c-teal, .diagram .c-teal :is(rect, circle, ellipse, polygon, path) { fill: var(--diagram-teal-wash); stroke: var(--diagram-teal); }
+.diagram :is(rect, circle, ellipse, polygon, path).c-amber, .diagram .c-amber :is(rect, circle, ellipse, polygon, path) { fill: var(--diagram-amber-wash); stroke: var(--diagram-amber); }
+.diagram :is(rect, circle, ellipse, polygon, path).c-coral, .diagram .c-coral :is(rect, circle, ellipse, polygon, path) { fill: var(--diagram-coral-wash); stroke: var(--diagram-coral); }
+.diagram :is(line, polyline).c-teal, .diagram .c-teal :is(line, polyline) { stroke: var(--diagram-teal); }
+.diagram :is(line, polyline).c-amber, .diagram .c-amber :is(line, polyline) { stroke: var(--diagram-amber); }
+.diagram :is(line, polyline).c-coral, .diagram .c-coral :is(line, polyline) { stroke: var(--diagram-coral); }
+.diagram text.c-teal { fill: var(--diagram-teal); }
+.diagram text.c-amber { fill: var(--diagram-amber); }
+.diagram text.c-coral { fill: var(--diagram-coral); }
+
+/* while the closing fence has not arrived, and when the SVG could not be drawn */
+.diagram-pending { margin: 0 0 var(--s-4); padding: var(--s-3) var(--s-4); border: 1px dashed var(--border-strong); border-radius: var(--r-md); color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
+.diagram-note { margin: calc(-1 * var(--s-3)) 0 var(--s-4); color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--sans); }

@@ -6,8 +6,12 @@
   <meta name="color-scheme" content="light dark">
   <title>JARVIS NEXT</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="stylesheet" href="/src/styles/tokens.css">
+  <link rel="stylesheet" href="/src/ui/diagram.css">
   <link rel="stylesheet" href="/src/ui/base.css">
   <link rel="stylesheet" href="/src/ui/shell.css">
   <link rel="stylesheet" href="/src/ui/chat.css">
@@ -330,7 +334,7 @@
     <pre id="gate-args" class="gate-pre"></pre>
     <div id="gate-dry-wrap" hidden><h3 class="gate-sub">What it would do</h3><pre id="gate-dry" class="gate-pre"></pre></div>
     <img id="gate-shot" class="gate-shot" alt="Screenshot of the page" hidden>
-    <div id="gate-pin-row" class="gate-pin" hidden><label for="gate-pin">PIN (not needed in the app on the PC itself)</label><input type="password" id="gate-pin" class="set-input" inputmode="numeric" autocomplete="off"></div>
+    <div id="gate-pin-row" class="gate-pin" hidden><label for="gate-pin">PIN (not needed in the app on the PC itself)</label><input type="password" id="gate-pin" class="set-input" inputmode="numeric" autocomplete="off"><div id="gate-pin-kept" hidden><span>PIN remembered in this window.</span> <button type="button" id="gate-pin-forget" class="av-btn">Forget</button></div></div>
     <div class="gate-actions"><button type="button" class="av-btn" id="gate-deny">Deny</button><button type="button" class="av-btn primary" id="gate-approve">Approve</button></div>
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>

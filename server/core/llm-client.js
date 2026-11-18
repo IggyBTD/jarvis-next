@@ -294,10 +294,12 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
   async function listModels() {
     const j = await native('/models', null, AbortSignal.timeout(5000));
     const models = (j.models ?? []).filter((m) => m.type === 'llm').map((m) => ({ key: m.key, name: m.display_name ?? m.key, loaded: (m.loaded_instances?.length ?? 0) > 0, loadedContext: m.loaded_instances?.[0]?.config?.context_length ?? null, sizeBytes: m.size_bytes ?? null, instanceIds: (m.loaded_instances ?? []).map((i) => i.id) }));
-    return { active: config.modelId, models };
+    return { active: models.find((m) => sameModel(m.key, config.modelId))?.key ?? config.modelId, models };
   }
   // A model without a profile gets the safe request side: thinking off by the template switch, LM Studio's own sampling.
-  const profileFor = (key) => config.profiles?.[key] ?? { thinkingMethod: 'chat_template_kwargs', thinking: { chat: false, tools: false, digest: false, agent: false } };
+  // LM Studio lists a model as "qwen3.8-27b" where the config says "unsloth/qwen3.8-27b": the same model, with or without the publisher
+  const sameModel = (a, b) => a === b || a.endsWith(`/${b}`) || b.endsWith(`/${a}`);
+  const profileFor = (key) => config.profiles?.[key] ?? Object.entries(config.profiles ?? {}).find(([k]) => sameModel(k, key))?.[1] ?? { thinkingMethod: 'chat_template_kwargs', thinking: { chat: false, tools: false, digest: false, agent: false } };
   function applyProfile(key) {
     const p = profileFor(key);
     config.modelId = key;

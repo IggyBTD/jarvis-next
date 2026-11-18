@@ -12,7 +12,7 @@ const SCOPE = 'https://www.googleapis.com/auth/gmail.readonly https://www.google
 const AUTH = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE = { token: 'https://oauth2.googleapis.com/token', profile: 'https://gmail.googleapis.com/gmail/v1/users/me/profile', revoke: 'https://oauth2.googleapis.com/revoke' };
 const KINDS = ['Personal', 'School', 'Work'];
-const WAIT_MS = 5 * 60_000; // an unfinished sign-in is dropped after this
+const WAIT_MS = 24 * 3_600_000; // an unfinished sign-in is dropped after this (a connected account never expires on our side)
 
 export function createGoogleAccounts({ dataDir, clientFile, fetchImpl = fetch, endpoints = GOOGLE, authUrl = AUTH, now = Date.now }) {
   const listFile = path.join(dataDir, 'accounts.json');
@@ -21,8 +21,9 @@ export function createGoogleAccounts({ dataDir, clientFile, fetchImpl = fetch, e
   const write = (l) => writeFileAtomic(listFile, JSON.stringify(l, null, 2), 0o600);
   const patch = (id, p) => write(read().map((a) => (a.id === id ? { ...a, ...p } : a)));
   const listeners = new Map(); // id -> server, so a restart-free retry or remove can close it
+  const flows = new Map(); // id -> { state, handle(params) }: a sign-in waiting for Google's answer, from the listener or a pasted address
 
-  function finish(id, p) { patch(id, p); listeners.get(id)?.close(); listeners.delete(id); }
+  function finish(id, p) { patch(id, p); listeners.get(id)?.close(); listeners.delete(id); flows.delete(id); }
 
   return {
     // what the model's Google tools read from: connected accounts only, with the file that holds each one's refresh token
@@ -36,12 +37,13 @@ export function createGoogleAccounts({ dataDir, clientFile, fetchImpl = fetch, e
       const id = crypto.randomBytes(5).toString('hex');
       const state = crypto.randomBytes(16).toString('hex');
       const verifier = crypto.randomBytes(32).toString('base64url');
-      const server = http.createServer(async (req, res) => {
-        const u = new URL(req.url, 'http://127.0.0.1');
-        const reply = (s, t) => { res.writeHead(s, { 'content-type': 'text/plain; charset=utf-8' }); res.end(t); };
-        if (u.searchParams.get('state') !== state) return reply(400, 'Wrong state.');
-        const code = u.searchParams.get('code');
-        if (!code) { reply(200, 'Sign-in was cancelled. You can close this tab.'); return finish(id, { status: 'error', error: 'Sign-in was cancelled.' }); }
+      let server;
+      // Google's answer (the query of the redirect), whoever brings it: -> { status, text }
+      const handle = async (params) => {
+        const reply = (s, t) => ({ status: s, text: t });
+        if (params.get('state') !== state) return reply(400, 'Wrong state.');
+        const code = params.get('code');
+        if (!code) { finish(id, { status: 'error', error: 'Sign-in was cancelled.' }); return reply(200, 'Sign-in was cancelled. You can close this tab.'); }
         try {
           const redirect = `http://127.0.0.1:${server.address().port}`;
           const t = await fetchImpl(endpoints.token, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ code, client_id: c.client_id, client_secret: c.client_secret, redirect_uri: redirect, grant_type: 'authorization_code', code_verifier: verifier }) });
@@ -50,18 +52,34 @@ export function createGoogleAccounts({ dataDir, clientFile, fetchImpl = fetch, e
           const p = await (await fetchImpl(endpoints.profile, { headers: { authorization: `Bearer ${j.access_token}` } })).json();
           saveToken(tokenFor(id), { refresh_token: j.refresh_token });
           finish(id, { status: 'connected', email: p.emailAddress ?? '' });
-          reply(200, 'JARVIS is connected. You can close this tab.');
+          return reply(200, 'JARVIS is connected. You can close this tab.');
         } catch (e) {
           finish(id, { status: 'error', error: e.message });
-          reply(200, `Sign-in failed: ${e.message}`);
+          return reply(200, `Sign-in failed: ${e.message}`);
         }
+      };
+      server = http.createServer(async (req, res) => {
+        const out = await handle(new URL(req.url, 'http://127.0.0.1').searchParams);
+        res.writeHead(out.status, { 'content-type': 'text/plain; charset=utf-8' });
+        res.end(out.text);
       });
+      flows.set(id, { state, handle });
       await new Promise((ok, no) => { server.once('error', no); server.listen(0, '127.0.0.1', ok); });
       listeners.set(id, server);
       setTimeout(() => { if (listeners.get(id) === server) finish(id, { status: 'error', error: 'Sign-in was not finished. Try again.' }); }, WAIT_MS).unref();
       const q = new URLSearchParams({ client_id: c.client_id, redirect_uri: `http://127.0.0.1:${server.address().port}`, response_type: 'code', access_type: 'offline', prompt: 'consent', state, scope: SCOPE, code_challenge: crypto.createHash('sha256').update(verifier).digest('base64url'), code_challenge_method: 'S256' });
       write([...read(), { id, provider: 'google', kind: KINDS.includes(kind) ? kind : 'Personal', name: String(name ?? '').trim().slice(0, 40) || kind || 'Personal', email: '', status: 'pending', added: now() }]);
       return { id, url: `${authUrl}?${q}` };
+    },
+    // The browser that signed in is not always on this PC (the Mac's is not): Google's redirect then lands on the Mac's own localhost and
+    // fails. The address the Mac's browser shows is pasted here instead; it only works for a sign-in that is waiting (the state is secret).
+    async complete(pasted) {
+      let u;
+      try { u = new URL(String(pasted ?? '').trim()); } catch { throw Object.assign(new Error('That is not an address. Copy the whole address from the browser bar.'), { status: 400 }); }
+      const flow = [...flows.values()].find((f) => f.state === u.searchParams.get('state'));
+      if (!flow) throw Object.assign(new Error('No sign-in is waiting for this address. It may have timed out: connect again.'), { status: 400 });
+      const out = await flow.handle(u.searchParams);
+      return { ok: out.status === 200 && /connected/.test(out.text), message: out.text };
     },
     async remove(id) {
       const a = read().find((x) => x.id === id);
