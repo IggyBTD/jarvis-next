@@ -150,3 +150,33 @@ test('F5-1: one tool runs at most maxCallsPerTool times in a message, even with 
     assert.ok(r.model.requests.length <= 23, String(r.model.requests.length));
   } finally { await r.close(); }
 });
+
+// ---- F5-2 -----------------------------------------------------------------------------------------------------------------------
+
+test('F5-2: the model proxy takes two requests at a time per token and caps the output at 8192 tokens', async () => {
+  const http = await import('node:http');
+  const { createLlmProxy } = await import('../../server/core/llm-proxy.js');
+  const seen = [];
+  let release;
+  const hold = new Promise((ok) => { release = ok; });
+  const llm = { raw: async (body) => { seen.push(body); await hold; return { res: new Response('data: [DONE]\n\n', { headers: { 'content-type': 'text/event-stream' } }), arm() {}, done() {} }; } };
+  const queue = { run: (_p, fn) => fn(new AbortController().signal) };
+  const proxy = createLlmProxy({ llm, queue, modelId: 'local' });
+  const who = { a: { role: 'model', machine: 'pc' }, b: { role: 'model', machine: 'mac' } };
+  const srv = http.createServer((req, res) => proxy.handle(req, res, who[req.headers['x-who']]));
+  await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
+  const url = `http://127.0.0.1:${srv.address().port}/v1/chat/completions`;
+  const post = (w, extra = {}) => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', 'x-who': w }, body: JSON.stringify({ messages: [{ role: 'user', content: 'x' }], ...extra }) });
+  try {
+    const first = [post('a', { max_tokens: 32_000 }), post('a', { max_completion_tokens: 32_000 })];
+    while (seen.length < 2) await new Promise((r) => setTimeout(r, 10));
+    const third = await Promise.race([post('a').then((r) => r.status), new Promise((r) => setTimeout(() => r('held the slot'), 1000))]);
+    if (third !== 429) release();
+    assert.equal(third, 429, 'a third at once from the same token is refused');
+    const other = post('b');
+    while (seen.length < 3) await new Promise((r) => setTimeout(r, 10));
+    release();
+    for (const r of [...first, other]) assert.equal((await r).status, 200);
+    for (const b of seen) { assert.ok(b.max_tokens <= 8192, JSON.stringify(b)); assert.ok(!(b.max_completion_tokens > 8192)); }
+  } finally { srv.close(); }
+});

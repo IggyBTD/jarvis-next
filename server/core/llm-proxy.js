@@ -17,11 +17,21 @@ function readBody(req) {
 }
 const send = (res, status, obj) => { if (!res.headersSent) res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(obj)); };
 
-export function createLlmProxy({ llm, queue, audit, modelId }) {
+// F5-2: one token (a machine's or its model token) may have perToken requests in flight, and each asks for at most maxTokens of output,
+// so no token can hold the single model slot for long or fill the queue ahead of chat.
+export function createLlmProxy({ llm, queue, audit, modelId, perToken = 2, maxTokens = 8192 }) {
+  const inFlight = new Map(); // `${role}:${machine}` -> requests running or queued
   async function chatCompletions(req, res, principal) {
+    const who = `${principal?.role}:${principal?.machine}`;
+    if ((inFlight.get(who) ?? 0) >= perToken) return send(res, 429, { error: { message: `at most ${perToken} model requests at a time per token` } });
+    inFlight.set(who, (inFlight.get(who) ?? 0) + 1);
+    try { return await completions(req, res, principal); } finally { inFlight.set(who, inFlight.get(who) - 1); if (!inFlight.get(who)) inFlight.delete(who); }
+  }
+  async function completions(req, res, principal) {
     let body;
     try { body = JSON.parse(await readBody(req)); } catch (e) { return send(res, e.status ?? 400, { error: { message: e.status ? e.message : 'body must be JSON' } }); }
     if (!body || !Array.isArray(body.messages)) return send(res, 400, { error: { message: 'messages is required' } });
+    for (const k of ['max_tokens', 'max_completion_tokens']) if (!Number.isFinite(body[k]) || body[k] > maxTokens) body[k] = maxTokens;
 
     const ctl = new AbortController();
     res.on('close', () => { if (!res.writableEnded) ctl.abort(new Error('client left')); });
