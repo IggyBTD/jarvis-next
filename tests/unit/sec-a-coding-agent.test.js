@@ -320,3 +320,21 @@ test('F1-3: a web fetch of a local file is T3', async () => {
   await t.ask({ permission: 'webfetch', patterns: ['file:///C:/Users/bethe/Jarvis-Next/data/tokens/ui.token'] });
   assert.deepEqual(t.asked, ['opencode_webfetch:T3']);
 });
+
+// ---- R1-1 (final re-check): a fake git folder ------------------------------------------------------------------------------------
+
+test('R1-1: making a git folder git would load (a .git file, a HEAD file) asks in Auto, so allowlisted git runs only trusted config', async () => {
+  const { isArming } = await import('../../shared/opencode-arming.js');
+  for (const f of ['.git', 'proj/.git', 'g/HEAD', 'HEAD', 'deep/x/HEAD', 'C:/Users/bethe/jarvis-workspace/.git']) assert.ok(isArming(f), f);
+  for (const f of ['head.js', 'src/header.md', '.gitignore', 'notes/HEADER']) assert.ok(!isArming(f), f);
+  const w = bridge({ mode: 'auto' });
+  await w.ask({ permission: 'edit', patterns: ['.git'] }); // gitdir: g
+  await w.ask({ permission: 'edit', patterns: ['g/HEAD'] }); // ref: refs/heads/main
+  await w.ask({ permission: 'edit', patterns: ['g/config'] }); // core.fsmonitor = ...
+  await w.bash('git status');
+  assert.deepEqual(w.asked.slice(0, 2).map((a) => a.split(':')[0]), ['opencode_edit', 'opencode_edit'], 'neither the .git file nor a HEAD file is answered by the mode');
+  const { claudeArgs } = await import('../../shared/claude-args.js');
+  const a = claudeArgs('auto', oc());
+  const denied = a.slice(a.indexOf('--disallowedTools') + 1);
+  assert.ok(denied.includes('Edit(**/.git)') && denied.includes('Edit(**/HEAD)'), 'Claude Code cannot make them either');
+});
