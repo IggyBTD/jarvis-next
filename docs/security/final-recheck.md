@@ -153,3 +153,58 @@ HEAD moved twice while this review ran: c45bbf1 updated the progress file, and 4
   - the hash comparison of dist-mac/jarvis-mac-with-tokens.zip.
 - **"What changes for you"** now advises switching machines.json to MagicDNS names, which conflicts with the F3-3 narrowing (R1-4).
 - **4d3916b** (another session, committed after stage D) is not in the progress file. It changes the PIN step-up (R1-3), changes the sanitizer for SVG diagrams (R1-2), and keeps a loopback OAuth listener open for 24 hours instead of 5 minutes.
+
+# Final re-check, round 2
+
+Scope: commits 3d1f8df, f6332e4, ab68136 and c50b54e. They are the only commits after 990f3fc. I ran tests/unit/sec-a-coding-agent.test.js (19 pass), tests/unit/sec-d-lows.test.js (13 pass) and tests/unit/sec-c-chokepoint.test.js (3 pass). I also called the real isArming, resolveLexical and classifyCommand on the edge cases below.
+
+## New findings
+
+### R2-1 Medium: a bare repository brought in by an approved clone still turns allowlisted git into any command
+- **Where:**
+  - shared/opencode-arming.js:2-6 and docs/decisions.md S-37. Both assume git can only find a repository through a `.git` or `HEAD` that the agent writes.
+  - shared/opencode-routes.js:26-31 and server/core/opencode-bridge.js:97-108. The bash permission is rated on `command` alone. The folder the command runs in is never read.
+  - agent/sidecars/opencode-manager.js:42 and :138, agent/sidecars/claude-manager.js:31. The coding agents' environment pins nothing about git.
+- **What is wrong:** git treats a folder as a bare repository when the folder itself holds HEAD, objects/ and refs/. A `config` there with `core.worktree=..` and `core.fsmonitor=<cmd>` makes `git status` run `<cmd>`. HEAD is now armed for edits. But files that arrive through an approved command are never edited, so nothing arms them. S-37 says clone and init are safe because git writes the files itself. That holds for the clone's own `.git`, not for the tree it checks out. Git refuses `.git` paths in a tree, but it does not refuse an embedded bare repository (`safe.bareRepository` defaults to `all`).
+- **Trigger:**
+  1. A coding task in Auto says "clone github.com/x/y and fix issue 3".
+  2. The owner approves the T2 card `git clone https://github.com/x/y`. Nothing on the card hints at code.
+  3. The repo contains `y/evil/HEAD`, `objects/`, `refs/` and a `config` with core.fsmonitor.
+  4. The agent runs `git status` with OpenCode's bash `workdir` set to `y/evil`. The bridge sees only `git status`, which is allow/T0, so it answers `once`.
+
+  Whether OpenCode 1.19.1 passes a working folder is already on the progress file's unverified list (docs/security-fixes-progress.md:79). If it does not, `cd y/evil && git status` asks as T2, and the card looks harmless.
+
+  An `Expand-Archive` or `tar` the owner approves has the same effect. The Claude Code backend cannot clone in Auto. It is exposed only when the trusted project folder already holds such a tree and Claude Code auto-allows `cd x && git status`, which is unverified.
+- **Fix:** take one root-cause step instead of arming more names. Pin git in the environment of both coding agents through cleanEnv: `GIT_CONFIG_COUNT=3`, with `safe.bareRepository=explicit`, `core.fsmonitor=false` and `core.hooksPath=NUL` (`/dev/null` on the Mac). Optionally add `GIT_OPTIONAL_LOCKS=0`. Command-line config outranks repository config, and `safe.bareRepository` is honoured from that scope. agent/registry/git.js:20-21 already does this for JARVIS's own git. Add a unit test that cleanEnv output carries the pins.
+
+### R2-2 Medium: a project's own hooksPath folder is editable in Auto, and allowlisted git status can run its hooks
+- **Where:**
+  - shared/opencode-arming.js:6. Only `.git/**`, `.husky/**` and `.github/**` are armed.
+  - server/core/opencode-bridge.js:63-67. An edit inside a trusted folder is T2 and not armed, so Auto answers `once`.
+- **What is wrong:** many repositories set `core.hooksPath` to a working-tree folder. This repo uses `.githooks`; `git config --local core.hookspath` prints `.githooks`. Files there have no extension and match no arming pattern. `git status` refreshes and rewrites the index when the agent has just changed files, because the agent's environment does not set GIT_OPTIONAL_LOCKS=0. Writing the index runs `post-index-change`. Separately, the owner's next own `git commit` runs a `pre-commit` the agent planted without a card. Jarvis-Next itself is safe because it is protected as T3. The exposure is any other project of the owner's that follows the same convention and is chosen as the project folder.
+- **Trigger:** in Auto, with such a project as the trusted folder:
+  1. the agent edits `.githooks/post-index-change` (answered `once`);
+  2. it edits any source file;
+  3. it runs `git status` (T0).
+- **Fix:** the R2-1 environment pin (`core.hooksPath=NUL`, `GIT_OPTIONAL_LOCKS=0`) closes the agent-run part. For the owner's own later commits, arm `.githooks/**`. Better, have resolve_paths report the repository's `core.hooksPath` and arm that folder.
+
+### R2-3 Low (High if OpenCode runs bash through cmd.exe on Windows): a script named after an allowlisted command runs instead of it
+- **Where:**
+  - shared/command-scope.js:124-131. The first word is matched by name only.
+  - shared/opencode-arming.js:6. Arming covers `*.bat` and `*.cmd`, not `*.js`, `*.vbs`, `*.wsf`, `*.exe` or `*.com`.
+- **What is wrong:** cmd.exe looks in the current folder before PATH and tries every PATHEXT extension. The default PATHEXT includes .JS, .VBS and .WSF, which run through Windows Script Host. If OpenCode runs bash commands through cmd.exe, two steps run any code with no card: an Auto-approved edit writes `git.js` (or `npm.js`, `cat.vbs`), then the allowlisted `git status` (or `npm --version`) runs it. PowerShell and Git Bash do not search the current folder, so this is harmless if the shell is one of those. The progress file assumes PowerShell but has not checked (:79). Claude Code uses Git Bash.
+- **Fix:** verify OpenCode's shell on the PC. If it is, or can fall back to, cmd.exe, arm by name every allowlisted first word with any extension (`git.*`, `ls.*`, `cat.*`, `npm.*` and so on).
+
+## Round 1 fixes
+
+- **R1-1 PARTLY:** the edit route is closed. The arming regex ignores case (`.GIT`, `g/head` armed). Trailing dots and spaces are armed after resolution (opencode-bridge.js:38; `.git.`, `HEAD `, `x/.git .` all resolve to an armed name). ADS (`.git::$DATA`) and 8.3 names do not resolve, so they become T3 and ask (command-scope.js:42 and :47). `GIT_DIR=g git status`, `env GIT_DIR=...`, `git -c ...` and `git --git-dir=...` are all off the allowlist (T2 or T3, asked). No allowlisted command can copy, move or link a file, and existing junctions go through realCheck. I found no `.git` above the workspace (checked C:\, C:\Users and C:\Users\bethe), so includeIf in an existing config cannot apply, and safe.directory does not matter for a single owner. Still open: repository files that arrive through an approved command (R2-1) and hooksPath folders (R2-2). Claude Code's own matching of `Edit(**/.git)` against `.GIT` or `.git::$DATA` through Write is unverified; the R2-1 pin makes that moot. Arming `HEAD` breaks no normal workflow: only a file literally named HEAD asks, and git's own writes to .git/HEAD come from commands that already ask.
+- **R1-2 CLOSED:** I found no way through the style rule. The leftover text may contain only rgb, hsl, calc, var, min, max and clamp, with no parentheses, quotes or backslash inside them. Any other `(` or `\` removes the attribute, entities are decoded before the check, and a CSS escape in an SVG presentation attribute removes it (src/core/markdown.js:37-45). The meta CSP in index.html:6 and mobile.html:6 has the same img-src, media-src and object-src as the header CSP (server/api/http.js:16) and the Tauri CSP (src-tauri/tauri.conf.json:28). So it narrows nothing that works today, and it covers the `tauri dev` page on localhost:5174. The UI loads no remote image (server-ui.js:150 accepts data:image only).
+- **R1-5 CLOSED:** server/core/llm-proxy.js:34 replaces any value that is not an integer from 1 to the cap, and the test covers -1, 0, 2.5 and 1e9.
+- **R1-6 CLOSED:** scripts/check-chokepoint.js:46-47 flags `.exec(` and `.execSync(` in any file that imports child_process, and the repo still passes. `cp['exec'](` and `spawn('cmd', ['/c', s])` would still pass. That is acceptable for a lint heuristic.
+
+## Other
+
+- None of the four fixes opens a new hole. All three test files pass.
+- `GIT_DIR=g git status` asks as T2 with no warning that it names a repository. The card shows the whole command, which is enough.
+- A `.git` written with an HFS+-ignorable character (`.git` plus U+200C) is not armed. That matters only on HFS+, not APFS. Negligible.
+- I found nothing else Critical or High. The R2 items all sit in one class: anything git or the shell loads by itself when an allowlisted command runs. Pinning git's config in the coding agents' environment, and checking which shell OpenCode uses, would end the class instead of extending the name list again.

@@ -1,4 +1,4 @@
-STATUS: IN PROGRESS, FINAL re-check (stages A, B, C and D done). Resume job: 43a3da9b.
+STATUS: PAUSED by the owner after FINAL round 2 (2026-11-18); resume job deleted. Not committed yet: the R2-1 and R2-2 git pins (GIT_PINS in agent/sidecars/opencode-manager.js cleanEnv), their test at the end of tests/unit/sec-d-lows.test.js, and tests/integration/p6-opencode.test.js line 54 still to accept the pins. Then: npm test, commit, final summary, FINISHED.
 
 
 
