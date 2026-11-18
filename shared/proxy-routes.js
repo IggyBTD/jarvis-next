@@ -9,8 +9,8 @@ export const PROXY_ROUTES = {
   ],
   claude: [['GET', /^\/status$/], ['POST', /^\/(run|abort)$/]],
   browser: [
-    ['GET', /^\/(health|read|screenshot|state)$/], ['POST', /^\/(navigate|click|type|press|back|close|resume|confirm)$/],
-    ['POST', /^\/view_(navigate|click|type|press|scroll|back|forward|reload)$/],
+    ['GET', /^\/(health|read|screenshot|state|view_state|view_screenshot)$/], ['POST', /^\/(navigate|click|type|press|back|close|resume|confirm)$/],
+    ['POST', /^\/view_(navigate|click|type|press|scroll|back|forward|reload|close)$/],
   ],
 };
 

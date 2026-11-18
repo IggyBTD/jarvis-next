@@ -82,20 +82,25 @@ test('a CAPTCHA pauses everything until resume', async () => {
   assert.ok(['ok', 'captcha'].includes(back.status));
 });
 
-test('the person driving the view is not challenged, can type anywhere, and can solve a CAPTCHA that blocks the model', async () => {
-  assert.equal((await svc.handle('view_navigate', { url: `${base}/abs` })).status, 'ok'); // the person's navigation also clears the pause left by the test before
+test('the person driving the view is not challenged and can type anywhere, on a page of their own', async () => {
+  assert.equal((await svc.handle('view_navigate', { url: `${base}/abs` })).status, 'ok'); // the model is still paused by the test before: the view is apart
   hits.length = 0;
   // a click at coordinates on a submit button goes through: the person is the approver
   assert.equal((await svc.handle('view_click', { x: 150, y: 40 })).status, 'ok');
   assert.equal((await svc.handle('view_type', { text: 'hunter2' })).status, 'ok');
   assert.equal((await svc.handle('view_press', { key: 'Delete; rm' })).status, 'refused');
   assert.equal((await svc.handle('view_click', { x: 150, y: 130 })).status, 'ok');
+  for (let i = 0; i < 60 && !hits.some((h) => h.startsWith('POST /done')); i++) await new Promise((r) => setTimeout(r, 50)); // the post can land just after the click returns
   assert.ok(hits.some((h) => h.startsWith('POST /done')));
   assert.equal((await svc.handle('view_scroll', { dy: 99999 })).status, 'ok');
   assert.equal((await svc.handle('view_navigate', { url: 'http://10.0.0.1/' })).status, 'refused'); // private networks stay blocked for people too
   assert.equal((await svc.handle('view_navigate', { url: `${base}/captcha` })).status, 'captcha');
-  assert.equal((await svc.handle('click', { text: 'x' })).status, 'captcha'); // the model stays blocked
+  // since F4-3 the view is its own context: the person's CAPTCHA pauses nothing of the model's, and the person cannot act in the
+  // model's page; the model's own pause (left by the test before) ends with resume or close
+  assert.equal((await svc.handle('click', { text: 'x' })).status, 'captcha');
   assert.equal((await svc.handle('screenshot')).status, 'ok'); // looking is always allowed
-  assert.equal((await svc.handle('view_navigate', { url: `${base}/` })).status, 'ok'); // the person moved on: unpaused
+  assert.equal((await svc.handle('close')).status, 'ok');
+  assert.equal((await svc.handle('navigate', { url: `${base}/` })).status, 'ok');
   assert.equal((await svc.handle('click', { text: 'Show more' })).status, 'ok');
+  assert.equal((await svc.handle('view_state')).url, `${base}/captcha`, 'the page of the person is where they left it');
 });

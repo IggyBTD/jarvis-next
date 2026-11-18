@@ -137,16 +137,16 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   const health = createHealth({ llm, queue, router, machines, contextLength: cfg.models.contextLength });
   const server = http.createServer();
   wsApi = attachWs({ server, cfg, auth, bus, gate, orchestrator, targetState, prompts, router, conversations, telemetry, health, digest, agentTasks: tasks, modes, backend, reminders, voice, devices, log });
-  // The Intel page's browser view: the guarded browser of whichever computer is the active target, driven by the person. Reaches the
+  // The Intel page's browser view: the person's own page in the guarded browser of the active target (its own context, apart from the model's, F4-3). Reaches the
   // agent only through router.capabilities (allowlisted routes). Everything but looking is audited; typed text is never logged.
-  const VIEW = { navigate: 'view_navigate', click: 'view_click', type: 'view_type', press: 'view_press', scroll: 'view_scroll', back: 'view_back', forward: 'view_forward', reload: 'view_reload', close: 'close' };
+  const VIEW = { navigate: 'view_navigate', click: 'view_click', type: 'view_type', press: 'view_press', scroll: 'view_scroll', back: 'view_back', forward: 'view_forward', reload: 'view_reload', close: 'view_close' };
   const browserView = {
     async shot(ifNoneMatch) {
       const target = targetState.get();
       const caps = router.capabilities(target);
-      const st = await caps.browser('GET', '/state').catch(() => null);
+      const st = await caps.browser('GET', '/view_state').catch(() => null);
       if (!st?.json?.running) return null;
-      const r = await caps.browser('GET', '/screenshot');
+      const r = await caps.browser('GET', '/view_screenshot');
       if (!r.json?.jpeg) return null;
       const jpeg = Buffer.from(r.json.jpeg, 'base64');
       const etag = `"${target}-${crypto.createHash('sha1').update(jpeg).digest('hex')}"`;

@@ -2,7 +2,9 @@
 // type, press, read, screenshot, back, close. The sidecar enforces the rules itself (guard.js): private networks are blocked for
 // every request the page makes, password and payment fields are never typed into, anything that would submit/pay/send/delete
 // needs a single-use confirmation bound to the element and the page address, typing asks once per site, and a CAPTCHA pauses
-// everything until the user says done. It never solves or bypasses one.
+// the model's side until the user says done. It never solves or bypasses one. The model's tools and the person's Intel view each
+// have their own browser context (own cookies, storage and pages): a site the person signs in to in the view is never driven by the
+// model (F4-3). WebSockets are checked like every other request.
 //   node sidecars/browser-guard/server.js --port 4001 [--headed]
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -15,31 +17,37 @@ const MAX_TEXT = 8000;
 
 export function createBrowserService({ token, policy, headed = false, allowLoopback = false, launch = async () => { let last; for (const channel of [...new Set([process.env.JARVIS_BROWSER_CHANNEL, 'chrome', 'msedge', undefined])]) { try { return await chromium.launch({ headless: !headed, channel: channel || undefined }); } catch (e) { last = e; } } throw new Error(`no browser could be started (${String(last?.message).split('\n')[0]}). Install Google Chrome or run: npx playwright install chromium`); }, now = Date.now }) {
   let browser = null;
-  let context = null;
-  let page = null;
-  let paused = false;
+  const sides = { model: { context: null, page: null }, view: { context: null, page: null } };
+  let paused = false; // the model's side only
   const typedSites = new Set();
   const challenges = new Map();
   const hostCache = new Map();
   const opts = { allow: policy.allowDomains, deny: policy.denyDomains, allowLoopback };
 
-  async function ensure() {
-    if (page && !page.isClosed()) return page;
+  const allowed = async (url) => {
+    if (/^(data|blob|about):/.test(url)) return true;
+    const host = (() => { try { return new URL(url).host; } catch { return url; } })();
+    let v = hostCache.get(host);
+    if (!v || now() - v.at > 30_000) { v = { at: now(), r: await checkUrl(url, opts) }; hostCache.set(host, v); }
+    return v.r.ok;
+  };
+
+  async function ensure(side = 'model') {
+    const s = sides[side];
+    if (s.page && !s.page.isClosed()) return s.page;
     browser ??= await launch();
-    context = await browser.newContext({ acceptDownloads: false, serviceWorkers: 'block', permissions: [], viewport: { width: 1280, height: 800 } });
-    // Every request the page makes, redirects and subresources included, is checked; a blocked one is aborted.
-    // ponytail: DNS is resolved again by the browser after this check, so a rebinding host could slip between them; pin through a proxy if that threat matters.
-    await context.route('**/*', async (route) => {
-      const url = route.request().url();
-      if (/^(data|blob|about):/.test(url)) return route.continue();
-      const host = (() => { try { return new URL(url).host; } catch { return url; } })();
-      let v = hostCache.get(host);
-      if (!v || now() - v.at > 30_000) { v = { at: now(), r: await checkUrl(url, opts) }; hostCache.set(host, v); }
-      return v.r.ok ? route.continue() : route.abort('blockedbyclient');
-    });
-    page = await context.newPage();
-    return page;
+    if (!s.context) {
+      s.context = await browser.newContext({ acceptDownloads: false, serviceWorkers: 'block', permissions: [], viewport: { width: 1280, height: 800 } });
+      // Every request the page makes, redirects and subresources included, is checked; a blocked one is aborted.
+      await s.context.route('**/*', async (route) => (await allowed(route.request().url()) ? route.continue() : route.abort('blockedbyclient')));
+      // route() does not see WebSockets: ws: and wss: are checked here as http: and https:, and a refused one is closed unopened
+      await s.context.routeWebSocket(/.*/, async (ws) => { if (await allowed(ws.url().replace(/^ws/i, 'http'))) ws.connectToServer(); else ws.close(); });
+    }
+    s.page = await s.context.newPage();
+    return s.page;
   }
+  const viewState = () => { const p = sides.view.page; return { running: !!p && !p.isClosed(), url: p && !p.isClosed() ? p.url() : null }; };
+  async function closeSide(side) { await sides[side].context?.close().catch(() => {}); sides[side] = { context: null, page: null }; }
 
   const shot = async (p) => (await p.screenshot({ type: 'jpeg', quality: 60 })).toString('base64');
 
@@ -59,12 +67,12 @@ export function createBrowserService({ token, policy, headed = false, allowLoopb
     challenges.set(id, c);
     return { status: 'needs_approval', id, kind, element, url: c.url, reason, screenshot: await shot(p) };
   }
-  const captcha = async (p) => {
+  const captcha = async (p, side = 'model') => {
     const text = await p.locator('body').innerText({ timeout: 2000 }).catch(() => '');
-    if (looksLikeCaptcha({ frameUrls: p.frames().map((f) => f.url()), text })) { paused = true; return { status: 'captcha', message: 'A CAPTCHA or bot check is showing. Ask the user to solve it in the browser window, then call resume.' }; }
+    if (looksLikeCaptcha({ frameUrls: p.frames().map((f) => f.url()), text })) { if (side === 'model') paused = true; return { status: 'captcha', message: 'A CAPTCHA or bot check is showing. Ask the user to solve it in the browser window, then call resume.' }; }
     return null;
   };
-  const done = async (p) => (await captcha(p)) ?? { status: 'ok', url: p.url(), title: await p.title().catch(() => '') };
+  const done = async (p, side = 'model') => (await captcha(p, side)) ?? { status: 'ok', url: p.url(), title: await p.title().catch(() => '') };
 
   const actions = {
     async navigate({ url }) {
@@ -100,9 +108,11 @@ export function createBrowserService({ token, policy, headed = false, allowLoopb
       const p = await ensure();
       if (!KEYS.has(key)) return { status: 'refused', reason: 'key not allowed' };
       const act = async () => { await p.keyboard.press(key); await p.waitForLoadState('domcontentloaded', { timeout: 5000 }).catch(() => {}); return done(p); };
-      if (key === 'Enter') {
-        const d = await p.evaluate(() => { const el = document.activeElement; return el && el !== document.body ? { tag: el.tagName.toLowerCase(), type: el.getAttribute('type') ?? '', text: (el.innerText || el.value || '').slice(0, 120), insideForm: !!el.closest('form') } : null; });
-        if (d && (d.insideForm || isSubmitLike({ ...d, patterns: policy.submitPatterns }))) return challenge(p, 'submit', `Enter in ${label(d)}`, 'Enter may submit a form', act);
+      // Enter or Space on any focused control may submit, send or confirm (a button, a link, a div acting as one, a field in a form),
+      // so both ask whatever the control says; with nothing focused they only scroll or do nothing
+      if (key === 'Enter' || key === 'Space') {
+        const d = await p.evaluate(() => { const el = document.activeElement; return el && el !== document.body && el !== document.documentElement ? { tag: el.tagName.toLowerCase(), type: el.getAttribute('type') ?? '', text: (el.innerText || el.value || '').slice(0, 120), insideForm: !!el.closest('form') } : null; });
+        if (d) return challenge(p, 'submit', `${key} on ${label(d)}`, `${key} on a focused control may submit, send or confirm`, act);
       }
       return act();
     },
@@ -115,22 +125,26 @@ export function createBrowserService({ token, policy, headed = false, allowLoopb
     },
     async screenshot() { const p = await ensure(); return { status: 'ok', jpeg: await shot(p) }; },
     async back() { const p = await ensure(); await p.goBack({ timeout: 10_000 }).catch(() => null); return done(p); },
-    // --- the person driving the page from the Intel view (these names are not model tools; only the UI token reaches them) ---
+    // --- the person driving their own page from the Intel view (not model tools; only the UI token reaches them). Its own context:
+    // cookies and sign-ins made here are never seen by the model's side, and a CAPTCHA here pauses nothing of the model's ---
     async view_navigate({ url }) {
       const v = await checkUrl(String(url ?? ''), opts);
       if (!v.ok) return { status: 'refused', reason: v.reason };
-      const p = await ensure();
+      const p = await ensure('view');
       await p.goto(url, { timeout: 30_000 });
-      return done(p);
+      return done(p, 'view');
     },
-    async view_click({ x, y }) { const p = await ensure(); await p.mouse.click(Number(x), Number(y)); await p.waitForLoadState('domcontentloaded', { timeout: 3000 }).catch(() => {}); return done(p); },
-    async view_type({ text }) { const p = await ensure(); await p.keyboard.type(String(text ?? '').slice(0, 500)); return { status: 'ok' }; },
-    async view_press({ key }) { if (!KEYS.has(key)) return { status: 'refused', reason: 'key not allowed' }; const p = await ensure(); await p.keyboard.press(key); await p.waitForLoadState('domcontentloaded', { timeout: 3000 }).catch(() => {}); return done(p); },
-    async view_scroll({ dy }) { const p = await ensure(); await p.mouse.wheel(0, Math.max(-3000, Math.min(3000, Number(dy) || 0))); return { status: 'ok' }; },
-    async view_back() { const p = await ensure(); await p.goBack({ timeout: 10_000 }).catch(() => null); return done(p); },
-    async view_forward() { const p = await ensure(); await p.goForward({ timeout: 10_000 }).catch(() => null); return done(p); },
-    async view_reload() { const p = await ensure(); await p.reload({ timeout: 30_000 }).catch(() => null); return done(p); },
-    async close() { await context?.close().catch(() => {}); page = null; context = null; typedSites.clear(); challenges.clear(); return { status: 'ok' }; },
+    async view_click({ x, y }) { const p = await ensure('view'); await p.mouse.click(Number(x), Number(y)); await p.waitForLoadState('domcontentloaded', { timeout: 3000 }).catch(() => {}); return done(p, 'view'); },
+    async view_type({ text }) { const p = await ensure('view'); await p.keyboard.type(String(text ?? '').slice(0, 500)); return { status: 'ok' }; },
+    async view_press({ key }) { if (!KEYS.has(key)) return { status: 'refused', reason: 'key not allowed' }; const p = await ensure('view'); await p.keyboard.press(key); await p.waitForLoadState('domcontentloaded', { timeout: 3000 }).catch(() => {}); return done(p, 'view'); },
+    async view_scroll({ dy }) { const p = await ensure('view'); await p.mouse.wheel(0, Math.max(-3000, Math.min(3000, Number(dy) || 0))); return { status: 'ok' }; },
+    async view_back() { const p = await ensure('view'); await p.goBack({ timeout: 10_000 }).catch(() => null); return done(p, 'view'); },
+    async view_forward() { const p = await ensure('view'); await p.goForward({ timeout: 10_000 }).catch(() => null); return done(p, 'view'); },
+    async view_reload() { const p = await ensure('view'); await p.reload({ timeout: 30_000 }).catch(() => null); return done(p, 'view'); },
+    async view_state() { return { status: 'ok', ...viewState() }; },
+    async view_screenshot() { const s = viewState(); return s.running ? { status: 'ok', jpeg: await shot(sides.view.page) } : { status: 'error', reason: 'no page open' }; },
+    async view_close() { await closeSide('view'); return { status: 'ok' }; },
+    async close() { await closeSide('model'); typedSites.clear(); challenges.clear(); paused = false; return { status: 'ok' }; },
     async resume() { paused = false; const p = await ensure(); return done(p); },
     // Runs a stored action once, only if it is the same element on the same page and has not expired.
     async confirm({ id }) {
@@ -144,11 +158,11 @@ export function createBrowserService({ token, policy, headed = false, allowLoopb
   };
 
   async function handle(name, args) {
-    if (name.startsWith('view_')) paused = false; // a person is acting; done() pauses again if a CAPTCHA is still showing
-    if (paused && !['resume', 'close', 'read', 'screenshot'].includes(name)) return { status: 'captcha', message: 'Paused for a CAPTCHA. Ask the user to solve it, then resume.' };
+    if (paused && !name.startsWith('view_') && !['resume', 'close', 'read', 'screenshot'].includes(name)) return { status: 'captcha', message: 'Paused for a CAPTCHA. Ask the user to solve it, then resume.' };
     return actions[name](args ?? {});
   }
-  return { handle, names: Object.keys(actions), state: () => ({ running: !!page && !page.isClosed(), url: page && !page.isClosed() ? page.url() : null, paused }), async stop() { await context?.close().catch(() => {}); await browser?.close().catch(() => {}); browser = null; page = null; } };
+  const modelPage = () => (sides.model.page && !sides.model.page.isClosed() ? sides.model.page : null);
+  return { handle, names: Object.keys(actions), state: () => ({ running: !!modelPage(), url: modelPage()?.url() ?? null, paused, view: viewState() }), async stop() { await closeSide('model'); await closeSide('view'); await browser?.close().catch(() => {}); browser = null; } };
 }
 
 export function createBrowserServer({ token, service }) {
@@ -161,7 +175,7 @@ export function createBrowserServer({ token, service }) {
     req.on('data', (c) => { chunks.push(c); if (Buffer.concat(chunks).length > 100_000) req.destroy(); });
     req.on('end', async () => {
       if (name === 'health' || name === 'state') return send(200, service.state());
-      if (!service.names.includes(name) || (req.method !== 'POST' && name !== 'read' && name !== 'screenshot')) return send(404, { error: 'not found' });
+      if (!service.names.includes(name) || (req.method !== 'POST' && !['read', 'screenshot', 'view_state', 'view_screenshot'].includes(name))) return send(404, { error: 'not found' });
       let body = {};
       try { body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {}; } catch { return send(400, { error: 'body must be JSON' }); }
       try { send(200, await service.handle(name, body)); } catch (e) { send(200, { status: 'error', reason: String(e.message).slice(0, 300) }); }
