@@ -19,3 +19,13 @@ test('F2-6: a block ends only at its own closer, with a random id; look-alike cl
   const inside = a.slice(a.indexOf('\n') + 1, a.lastIndexOf('\n'));
   assert.ok(!/<\s*\/\s*untrusted/i.test(inside), inside);
 });
+
+// ---- F3-6 -----------------------------------------------------------------------------------------------------------------------
+
+test('F3-6: client-link gives tailnet names only, never a raw address that whatever answers there would get a token for', async () => {
+  const { links } = await import('../../scripts/client-link.js');
+  assert.deepEqual(links({ host: '192.168.1.32', port: 7410 }), [], 'no Tailscale, no link');
+  const l = links({ host: '192.168.1.32', port: 7410, tsName: 'pc.tail1234.ts.net' });
+  assert.ok(l.length >= 2);
+  for (const x of l) assert.equal(new URL(x.url).hostname, 'pc.tail1234.ts.net', x.url);
+});

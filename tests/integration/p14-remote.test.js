@@ -37,18 +37,18 @@ test('behind tailscale serve: https pages may open the socket, other origins may
   } finally { await r.close(); }
 });
 
-test('client links: home link always, Tailscale links only when it is running; the name is read from its status', async () => {
+test('client links: Tailscale names only, and only when it is running; the name is read from its status', async () => {
   assert.equal(await tailscaleName(async () => running), 'pc.tail1234.ts.net');
   assert.equal(await tailscaleName(async () => ({ code: 1, stdout: '', stderr: 'stopped' })), null);
   assert.equal(await tailscaleName(async () => { throw new Error('ENOENT'); }), null);
   assert.equal(await tailscaleName(async () => ({ code: 0, stdout: JSON.stringify({ BackendState: 'Stopped', Self: { DNSName: 'x.' } }), stderr: '' })), null);
   // plain addresses since the security fixes (F3-4): a device is paired with a code, never with a key in a link
-  const home = links({ host: '192.168.1.32', port: 7410 });
-  assert.deepEqual(home.map((l) => l.url), ['http://192.168.1.32:7410/', 'http://192.168.1.32:7411/']); // the second is the iPhone link, through the starter
+  // tailnet names only since F3-6: no Tailscale, no link
+  assert.deepEqual(links({ host: '192.168.1.32', port: 7410 }), []);
   const away = links({ host: '192.168.1.32', port: 7410, tsName: 'pc.tail1234.ts.net' });
-  assert.deepEqual(away.map((l) => l.url), ['http://192.168.1.32:7410/', 'http://pc.tail1234.ts.net:7411/', 'https://pc.tail1234.ts.net/', 'http://pc.tail1234.ts.net:7410/']);
-  assert.match(away[1].label, /iPhone/);
-  assert.match(away[2].label, /tailscale serve --bg 7410/);
+  assert.deepEqual(away.map((l) => l.url), ['http://pc.tail1234.ts.net:7411/', 'https://pc.tail1234.ts.net/', 'http://pc.tail1234.ts.net:7410/']);
+  assert.match(away[0].label, /iPhone/);
+  assert.match(away[1].label, /tailscale serve --bg 7410/);
 });
 
 test('doctor reports Tailscale as information, never as a failure', async () => {
