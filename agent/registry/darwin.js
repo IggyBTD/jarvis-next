@@ -3,7 +3,7 @@
 // run is a human step on the Mac (HUMAN_TODO.md sections 5 and 7). UI scripting needs Accessibility/Automation permission.
 import path from 'node:path';
 import fs from 'node:fs';
-import { action, safePath, writablePath, dirPath, resolveApp, tryJson, asList, clipText, spawnTracked } from './common.js';
+import { action, safePath, writablePath, dirPath, resolveApp, tryJson, asList, clipText, clipboardText, spawnTracked } from './common.js';
 import { gitRun } from './git.js';
 
 const osa = (script, ...argv) => ({ file: 'osascript', args: ['-e', script, ...argv.map(String)] });
@@ -90,8 +90,9 @@ export const darwin = {
   trash_file: action({ plan: ({ path: p }, ctx) => osa('on run argv\ntell application "Finder" to delete POSIX file (item 1 of argv)\nend run', safePath(p, ctx)), parse: (_r, { path: p }) => ({ trashed: p }) }),
   zip_folder: action({ plan: ({ path: p, to }, ctx) => { const src = dirPath(p, ctx); const dst = to ? writablePath(to, ctx, { also: '.zip' }) : `${src}.zip`; if (fs.existsSync(dst)) throw new Error('destination exists'); return { file: 'ditto', args: ['-c', '-k', '--sequesterRsrc', '--keepParent', src, dst], timeoutMs: 300_000 }; }, parse: (_r, a) => ({ zipped: a.path }) }),
 
-  get_clipboard: simple({ file: 'pbpaste', args: [] }, (r) => ({ text: clipText(r.at(-1).stdout, 4000) })),
-  set_clipboard: action({ plan: ({ text: t }) => ({ file: 'pbcopy', args: [], stdin: t }), parse: () => ({ set: true }) }),
+  // LANG: without a UTF-8 locale (the clean child environment has none) pbpaste and pbcopy turn accents and emoji into question marks
+  get_clipboard: simple({ file: 'pbpaste', args: [], env: { LANG: 'en_US.UTF-8' } }, (r) => clipboardText(r.at(-1).stdout)),
+  set_clipboard: action({ plan: ({ text: t }) => ({ file: 'pbcopy', args: [], stdin: t, env: { LANG: 'en_US.UTF-8' } }), parse: () => ({ set: true }) }),
   screenshot: action({ plan: (_a, ctx) => { const dir = path.join(ctx.workspaceDir, 'screenshots'); fs.mkdirSync(dir, { recursive: true }); return { file: 'screencapture', args: ['-x', path.join(dir, `shot-${Date.now()}.png`)] }; }, parse: () => ({ saved: 'screenshots folder in the workspace', note: 'the image stays on this computer; macOS may ask for Screen Recording permission' }) }),
   show_notification: action({ plan: ({ title, text: t }) => osa('on run argv\ndisplay notification (item 1 of argv) with title (item 2 of argv)\nend run', t, title), parse: () => ({ shown: true }) }),
 

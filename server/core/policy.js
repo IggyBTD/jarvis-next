@@ -34,7 +34,7 @@ export function createPolicy(cfg) {
   const override = (name) => (Object.hasOwn(cfg.actions ?? {}, name) ? cfg.actions[name] : null);
   const allowedScheduled = (job, name) => Object.hasOwn(cfg.scheduled_allow ?? {}, job) && cfg.scheduled_allow[job].includes(name);
 
-  // { name, tier, source: 'user'|'voice'|'scheduled'|'agent', job?, taintAsk?, permission? } -> { mode, queueable, reason }
+  // { name, tier, source: 'user'|'voice'|'scheduled'|'agent'|'click', job?, taintAsk?, permission? } -> { mode, queueable, reason }
   // taintAsk: set (server/core/taint.js askWhenTainted) when the chat has read outside content and this call can carry data out,
   //   store text for later or start something. It turns auto into ask whatever the tier or a policy.json override says, and is a
   //   deny for a scheduled source (nobody is there to answer). Only a policy.json deny is stronger.
@@ -61,6 +61,10 @@ export function createPolicy(cfg) {
       if (answer === 'once' && t !== 'T3' && forced !== 'ask') return { mode: 'auto', queueable: false, reason: `permission mode ${permission.mode}` };
       return { mode: 'ask', queueable: false, reason: forced === 'ask' ? 'policy.json action override' : `permission mode ${permission.mode}` };
     }
+
+    // click: the person pressed a button in the app that names this one action and its computer (ws.js clipboard.copy), with no
+    // model in between, so the press is the approval for T0 to T2. T3 and a policy.json ask still ask.
+    if (source === 'click') return t === 'T3' || forced === 'ask' ? { mode: 'ask', queueable: false, reason: forced === 'ask' ? 'policy.json action override' : 'T3 always asks' } : { mode: 'auto', queueable: false, reason: 'pressed by the person' };
 
     let mode = forced ?? modes.chat[t];
     let reason = forced ? 'policy.json action override' : `${t} default`;

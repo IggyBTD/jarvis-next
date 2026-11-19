@@ -5,7 +5,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
-import { action, safePath, writablePath, dirPath, resolveApp, tryJson, asList, clipText, spawnTracked } from './common.js';
+import { action, safePath, writablePath, dirPath, resolveApp, tryJson, asList, clipText, clipboardText, spawnTracked } from './common.js';
 import { gitRun } from './git.js';
 
 const envA = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [`JARVIS_A_${k}`, String(v)]));
@@ -143,7 +143,7 @@ export const win32 = {
   trash_file: action({ plan: ({ path: p }, ctx) => ps("Add-Type -AssemblyName Microsoft.VisualBasic; $p = $env:JARVIS_A_path; if (Test-Path -LiteralPath $p -PathType Container) { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($p, 'OnlyErrorDialogs', 'SendToRecycleBin') } else { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($p, 'OnlyErrorDialogs', 'SendToRecycleBin') }; 'trashed'", { path: safePath(p, ctx) }), parse: (_r, { path: p }) => ({ trashed: p }) }),
   zip_folder: action({ plan: ({ path: p, to }, ctx) => { const src = dirPath(p, ctx); const dst = to ? writablePath(to, ctx, { also: '.zip' }) : `${src}.zip`; if (fs.existsSync(dst)) throw new Error('destination exists'); return ps('Compress-Archive -LiteralPath $env:JARVIS_A_src -DestinationPath $env:JARVIS_A_dst; "zipped"', { src, dst }, { timeoutMs: 300_000 }); }, parse: (_r, a) => ({ zipped: a.path }) }),
 
-  get_clipboard: simple(ps('Get-Clipboard -Raw'), (r) => ({ text: clipText(r.at(-1).stdout, 4000) })),
+  get_clipboard: simple(ps('[Console]::Out.Write((Get-Clipboard -Raw))'), (r) => clipboardText(r.at(-1).stdout)), // Write: no newline added
   set_clipboard: action({ plan: ({ text: t }) => ps('Set-Clipboard -Value $env:JARVIS_A_text; "ok"', { text: t }), parse: () => ({ set: true }) }),
   screenshot: action({ plan: (_a, ctx) => { const dir = path.join(ctx.workspaceDir, 'screenshots'); fs.mkdirSync(dir, { recursive: true }); const file = path.join(dir, `shot-${Date.now()}.png`); return ps("Add-Type -AssemblyName System.Windows.Forms, System.Drawing; $b = [Windows.Forms.SystemInformation]::VirtualScreen; $bmp = New-Object Drawing.Bitmap $b.Width, $b.Height; $g = [Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($b.Location, [Drawing.Point]::Empty, $b.Size); $bmp.Save($env:JARVIS_A_file); $g.Dispose(); $bmp.Dispose(); 'ok'", { file }); }, parse: (_r, _a, ctx) => ({ saved: 'screenshots folder in the workspace', note: 'the image stays on this computer' }) }),
   show_notification: action({ plan: ({ title, text: t }) => ps("[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null; $x = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent('ToastText02'); $n = $x.GetElementsByTagName('text'); [void]$n.Item(0).AppendChild($x.CreateTextNode($env:JARVIS_A_title)); [void]$n.Item(1).AppendChild($x.CreateTextNode($env:JARVIS_A_text)); [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('JARVIS').Show([Windows.UI.Notifications.ToastNotification]::new($x)); 'shown'", { title, text: t }), parse: () => ({ shown: true }) }),

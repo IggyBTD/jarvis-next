@@ -1925,7 +1925,7 @@
         "win32",
         "darwin"
       ],
-      "enabled": false,
+      "enabled": true,
       "params": {
         "type": "object",
         "properties": {},
@@ -1943,13 +1943,13 @@
         "win32",
         "darwin"
       ],
-      "enabled": false,
+      "enabled": true,
       "params": {
         "type": "object",
         "properties": {
           "text": {
             "type": "string",
-            "maxLength": 2000
+            "maxLength": 12000
           }
         },
         "required": [

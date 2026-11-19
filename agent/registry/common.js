@@ -133,6 +133,10 @@ export function dirPath(raw, ctx) {
 
 export const ok = (data) => ({ ok: true, data });
 export const fail = (error) => ({ ok: false, error });
+// Clipboard text for the PC-Mac copy (server/api/ws.js clipboard.copy): whole up to CLIP_MAX, else marked so the server refuses it
+// instead of pasting a cut copy. set_clipboard's maxLength in actions.json is the same number.
+export const CLIP_MAX = 12_000;
+export const clipboardText = (s) => { const t = String(s ?? ''); return t.length > CLIP_MAX ? { text: t.slice(0, CLIP_MAX), truncated: true, chars: t.length } : { text: t }; };
 export const clipText = (s, n = 6000) => { const t = String(s ?? ''); return t.length > n ? `${t.slice(0, n)}\n[truncated ${t.length - n} characters]` : t; };
 export const tryJson = (s, fallback = null) => { try { return JSON.parse(s); } catch { return fallback; } };
 // ConvertTo-Json gives an object for one item and an array for several; callers want a list.

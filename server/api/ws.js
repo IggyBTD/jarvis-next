@@ -24,6 +24,7 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
     if (m.type === 'hello') return may(c, 'chat');
     if (m.type === 'ping') return { ok: true };
     if (m.type === 'mode.set') return may(c, m.mode === 'bypass' || m.mode === 'accept-edits' ? 'admin' : 'settings', { pin: m.pin }); // both run any command that is not T3 (2026-11-18)
+    if (m.type === 'clipboard.copy') return may(c, 'approve', { tier: 'T2' }); // it answers its own T2 read (get_clipboard)
     if (m.type === 'gate.reply') return m.decision === 'deny' ? may(c, 'deny') : may(c, 'approve', { tier: gate.pending().find((p) => p.id === m.id)?.tier, pin: m.pin });
     return Object.hasOwn(NEED, m.type) ? may(c, NEED[m.type]) : { ok: false, reason: 'unknown message' };
   };
@@ -95,6 +96,22 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
     async 'action.invoke'(c, m) {
       const out = await router.invoke({ name: m.name, args: m.args ?? {} }, { target: targetState.bind().target, source: 'user' });
       send(c, { type: 'action.result', id: m.id, name: m.name, ok: out.ok, target: out.target, content: out.content });
+    },
+    // One computer's clipboard onto the other's (the app's "Copy PC clipboard to Mac" commands). Both halves go through the router as
+    // the person's own press (source 'click': policy, audit; set_clipboard's text is kept out of the log). The text reaches neither
+    // this client nor the model.
+    async 'clipboard.copy'(c, m) {
+      const reply = (ok, message) => send(c, { type: 'clipboard.result', id: m.id, ok, message });
+      const name = (id) => machines[id]?.label ?? id;
+      const why = (out) => out.error ?? String(out.content ?? '').replace(/^\[[^\]]*\]\s*/, '');
+      if (m.from === m.to) return reply(false, 'Pick two different computers.');
+      const got = await router.invoke({ name: 'get_clipboard', args: {} }, { target: m.from, source: 'click' });
+      if (!got.ok) return reply(false, `Could not read the ${name(m.from)} clipboard: ${why(got)}`);
+      const text = typeof got.data?.text === 'string' ? got.data.text : '';
+      if (got.data?.truncated) return reply(false, `The ${name(m.from)} clipboard is too long to copy (${got.data.chars ?? 'over 12000'} characters; the limit is 12000).`);
+      if (!text) return reply(false, `The ${name(m.from)} clipboard has no text.`);
+      const put = await router.invoke({ name: 'set_clipboard', args: { text } }, { target: m.to, source: 'click' });
+      reply(put.ok, put.ok ? `Copied ${text.length} characters from the ${name(m.from)} to the ${name(m.to)}.` : `Could not write the ${name(m.to)} clipboard: ${why(put)}`);
     },
     async 'wake.pc'(c, m) { const r = await wake?.(); send(c, { type: 'wake.result', id: m.id, ok: !!r?.ok, message: r?.message ?? 'Wake-on-LAN is not configured' }); },
     'reminder.dismiss'(c, m) { reminders?.dismiss?.(m.reminderId); },

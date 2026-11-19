@@ -27,6 +27,7 @@ export const CLIENT_MESSAGES = {
   'voice.barge_in': msg({}),
   'action.invoke': msg({ name: str(48), args: { type: 'object' } }, ['name']),
   'wake.pc': msg({}),
+  'clipboard.copy': msg({ from: { enum: ['pc', 'mac'] }, to: { enum: ['pc', 'mac'] } }, ['from', 'to']),
   'reminder.dismiss': msg({ reminderId: str(80) }, ['reminderId']),
 };
 

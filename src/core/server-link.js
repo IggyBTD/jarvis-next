@@ -14,11 +14,15 @@ const read = () => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getI
 let settings = read();
 // Served by the JARVIS server itself (a browser on the Mac): the address is this page's own, and a token in the #fragment
 // (http://pc:7410/#token=...) is taken once, saved, and removed from the address bar. The fragment is never sent anywhere.
-if (!window.__TAURI_INTERNALS__ && /^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname) || location.port === '7410') {
+// The page's CSP (server/api/http.js) only lets it reach its own host, so a page the server served always talks to that host,
+// whatever address was saved before (a saved Tailscale or LAN address here is blocked and the app stays offline).
+const servedHere = !window.__TAURI_INTERNALS__ && /^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname) || location.port === '7410';
+const ownUrl = () => `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
+if (servedHere) {
   const hash = new URLSearchParams(location.hash.slice(1));
   const fromHash = hash.get('token');
-  if (fromHash || !settings.url || settings.url === DEFAULTS.url) {
-    settings = { ...settings, url: `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`, ...(fromHash ? { token: fromHash, enabled: true } : {}) };
+  if (fromHash || settings.url !== ownUrl()) {
+    settings = { ...settings, url: ownUrl(), ...(fromHash ? { token: fromHash, enabled: true } : {}) };
     try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch { /* storage blocked */ }
     if (fromHash) history.replaceState(null, '', location.pathname + location.search);
   }
@@ -83,6 +87,7 @@ let wanted = false;
 let viaLoopback = !!window.__TAURI_INTERNALS__;
 const isLoopback = (url) => { try { return ['127.0.0.1', 'localhost', '[::1]'].includes(new URL(url.trim().replace(/^ws/i, 'http')).hostname); } catch { return false; } };
 const savedOrLocal = () => {
+  if (servedHere) return ownUrl();
   if (!viaLoopback) return settings.url;
   try { return `ws://127.0.0.1:${new URL(settings.url.trim().replace(/^ws/i, 'http')).port || 7410}`; } catch { return settings.url; }
 };
@@ -180,7 +185,8 @@ function handle(m) {
       if (m.convId === convId) emit(m);
       else if (m.type === 'chat.done') { unseen.add(m.convId); emit({ type: 'chat-states' }); } // finished in a chat that is not open
       return;
-    case 'error': emit({ type: 'server-error', reason: m.reason }); return;
+    case 'clipboard.result': answer(m.id, m); return;
+    case 'error': if (answer(m.id, { ok: false, message: m.reason })) return; emit({ type: 'server-error', reason: m.reason }); return;
     default: emit(m);
   }
 }
@@ -207,6 +213,18 @@ export const voiceStart = (mode = 'push_to_talk') => send({ type: 'voice.start',
 export const voiceStop = () => send({ type: 'voice.stop' });
 export const voiceBargeIn = () => send({ type: 'voice.barge_in' });
 export const replyGate = (id, decision, pin = '') => send({ type: 'gate.reply', id, decision, ...(pin ? { pin } : {}) }); // the PIN: only for a T3 approval
+// Replies that answer one request (clipboard.copy): request id -> resolve.
+const waiting = new Map();
+function answer(id, reply) { const r = waiting.get(id); if (!r) return false; waiting.delete(id); r(reply); return true; }
+// One computer's clipboard onto the other's, through the server (ws.js clipboard.copy). Resolves { ok, message }; the text never comes here.
+export function copyClipboard(from, to) {
+  const id = reqId();
+  return new Promise((resolve) => {
+    waiting.set(id, resolve);
+    if (!send({ type: 'clipboard.copy', id, from, to })) answer(id, { ok: false, message: 'Not connected to the JARVIS server.' });
+    setTimeout(() => answer(id, { ok: false, message: 'The server did not answer in time.' }), 30_000);
+  });
+}
 export const runAction = (name, args = {}) => send({ type: 'action.invoke', id: reqId(), name, args });
 export const requestDigest = () => send({ type: 'digest.run' });
 export const sendAgentTask = (prompt) => send({ type: 'agent.task', id: reqId(), prompt });

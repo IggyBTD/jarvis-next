@@ -136,6 +136,7 @@ export async function initTelemetry() {
     if (quiet) showUnavailable('Sensors offline');
   }, 1000);
 
+  if (!window.__TAURI_INTERNALS__) return; // a browser window gets its readings from the server (ingestTelemetry)
   try {
     const { invoke } = await import('@tauri-apps/api/core');
     const { listen } = await import('@tauri-apps/api/event');

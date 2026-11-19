@@ -127,6 +127,8 @@ export function createAuditLog({ dir, key = null, markFile = null, now = () => n
   }
 
   function writeLine(entry) {
+    // clipboard text is often a password: neither the text nor a hash of it (a short one can be guessed back) goes in the log
+    if (entry.action === 'set_clipboard' && entry.args?.text !== undefined) entry = { ...entry, args: { ...entry.args, text: `[clipboard, ${String(entry.args.text).length} chars]` } };
     const d = now();
     const day = d.toISOString().slice(0, 10);
     const line = {
