@@ -91,8 +91,8 @@ export function createCore(canvas, { atoms = 48, neighbours = 3, size = 200, int
   }
 
   function project(t) {
-    const breathe = reduced.matches ? 0 : 0.012 * Math.sin(t * 1.1);
-    const R = px * 0.34 * (1 + breathe + (reduced.matches ? 0 : level * 0.16));
+    // level (mesh-state.js) already carries the slow breath while thinking and the swell of speech
+    const R = px * 0.34 * (1 + (reduced.matches ? 0 : level * 0.16));
     const [cy, sy, cp, sp] = [Math.cos(yaw), Math.sin(yaw), Math.cos(pitch), Math.sin(pitch)];
     return pts.map(([x, y, z], i) => {
       const wobble = reduced.matches ? 0 : level * 0.05 * Math.sin(t * 6 + i * 1.7);

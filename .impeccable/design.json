@@ -1,0 +1,1194 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-19T13:57:45+00:00",
+  "title": "Design System: JARVIS",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Lab white",
+        "canonical": "#f2f5f4",
+        "oklch": "oklch(96.8% 0.003 174.5)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#242525",
+          "#414242",
+          "#5f6261",
+          "#808382",
+          "#a3a5a5",
+          "#c8c9c9",
+          "#eeefee"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Specimen white",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "sunk": {
+        "role": "neutral",
+        "displayName": "Bench grey",
+        "canonical": "#e6ecea",
+        "oklch": "oklch(93.8% 0.007 174.4)",
+        "tonalRamp": [
+          "#0a0b0b",
+          "#242625",
+          "#404342",
+          "#5e6261",
+          "#7f8482",
+          "#a2a6a5",
+          "#c7cac9",
+          "#edefee"
+        ]
+      },
+      "sunk-2": {
+        "role": "neutral",
+        "displayName": "Bench grey, selected",
+        "canonical": "#dbe3e1",
+        "oklch": "oklch(90.9% 0.009 179.6)",
+        "tonalRamp": [
+          "#0a0b0b",
+          "#232625",
+          "#3f4342",
+          "#5d6361",
+          "#7d8482",
+          "#a1a6a5",
+          "#c6cac9",
+          "#edefee"
+        ]
+      },
+      "bubble": {
+        "role": "neutral",
+        "displayName": "Bubble grey",
+        "canonical": "#e2e9e7",
+        "oklch": "oklch(92.8% 0.008 177.3)",
+        "tonalRamp": [
+          "#0a0b0b",
+          "#232625",
+          "#3f4342",
+          "#5d6361",
+          "#7e8482",
+          "#a2a6a5",
+          "#c7cac9",
+          "#edefee"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#dbe2e0",
+        "oklch": "oklch(90.7% 0.008 177.3)",
+        "tonalRamp": [
+          "#0a0b0b",
+          "#232625",
+          "#3f4342",
+          "#5d6361",
+          "#7e8482",
+          "#a2a6a5",
+          "#c7cac9",
+          "#edefee"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Strong hairline",
+        "canonical": "#bfcac8",
+        "oklch": "oklch(83.0% 0.012 184.0)",
+        "tonalRamp": [
+          "#0a0c0b",
+          "#222625",
+          "#3d4342",
+          "#5b6362",
+          "#7b8583",
+          "#a0a7a5",
+          "#c5cac9",
+          "#ecefef"
+        ]
+      },
+      "ink-1": {
+        "role": "neutral",
+        "displayName": "Carbon ink",
+        "canonical": "#131819",
+        "oklch": "oklch(20.4% 0.008 211.1)",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#232626",
+          "#3f4344",
+          "#5d6263",
+          "#7e8385",
+          "#a1a6a7",
+          "#c7caca",
+          "#edefef"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Carbon ink, secondary",
+        "canonical": "#3b4648",
+        "oklch": "oklch(38.5% 0.015 209.8)",
+        "tonalRamp": [
+          "#090c0c",
+          "#212627",
+          "#3c4445",
+          "#596365",
+          "#7a8587",
+          "#9ea7a8",
+          "#c4cacb",
+          "#eceff0"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Carbon ink, quiet",
+        "canonical": "#566365",
+        "oklch": "oklch(48.9% 0.016 207.8)",
+        "tonalRamp": [
+          "#090c0c",
+          "#212627",
+          "#3c4445",
+          "#586465",
+          "#798587",
+          "#9ea7a9",
+          "#c4cbcc",
+          "#eceff0"
+        ]
+      },
+      "rod": {
+        "role": "neutral",
+        "displayName": "Rod grey",
+        "canonical": "#9aa8a6",
+        "oklch": "oklch(72.0% 0.016 186.5)",
+        "tonalRamp": [
+          "#090c0b",
+          "#212626",
+          "#3c4443",
+          "#596462",
+          "#798584",
+          "#9ea7a6",
+          "#c4cbca",
+          "#ecefef"
+        ]
+      },
+      "rod-atom": {
+        "role": "neutral",
+        "displayName": "Grey atom",
+        "canonical": "#b5c0be",
+        "oklch": "oklch(79.9% 0.012 184.0)",
+        "tonalRamp": [
+          "#0a0c0b",
+          "#222625",
+          "#3d4342",
+          "#5b6362",
+          "#7b8583",
+          "#a0a7a5",
+          "#c5cac9",
+          "#ecefef"
+        ]
+      },
+      "rod-rim": {
+        "role": "neutral",
+        "displayName": "Grey atom rim",
+        "canonical": "#7f8e8c",
+        "oklch": "oklch(63.4% 0.018 187.1)",
+        "tonalRamp": [
+          "#090c0b",
+          "#212626",
+          "#3b4443",
+          "#586463",
+          "#788684",
+          "#9da8a6",
+          "#c4cbca",
+          "#ebefef"
+        ]
+      },
+      "teal": {
+        "role": "primary",
+        "displayName": "Model-kit teal",
+        "canonical": "#0a8a7c",
+        "oklch": "oklch(56.9% 0.100 182.4)",
+        "tonalRamp": [
+          "#010e0c",
+          "#012c27",
+          "#004d45",
+          "#007165",
+          "#379487",
+          "#74b3a8",
+          "#a9d3cb",
+          "#def4f0"
+        ]
+      },
+      "teal-strong": {
+        "role": "primary",
+        "displayName": "Pressed teal",
+        "canonical": "#087567",
+        "oklch": "oklch(50.5% 0.089 180.5)",
+        "tonalRamp": [
+          "#020e0c",
+          "#082c26",
+          "#124c43",
+          "#1c7063",
+          "#449284",
+          "#7ab2a7",
+          "#add2ca",
+          "#e0f4ef"
+        ]
+      },
+      "teal-text": {
+        "role": "primary",
+        "displayName": "Teal ink",
+        "canonical": "#076b60",
+        "oklch": "oklch(47.5% 0.083 182.5)",
+        "tonalRamp": [
+          "#030e0c",
+          "#0b2b27",
+          "#174c44",
+          "#256f65",
+          "#4a9186",
+          "#7db1a8",
+          "#afd2cb",
+          "#e1f3ef"
+        ]
+      },
+      "teal-soft": {
+        "role": "primary",
+        "displayName": "Teal wash",
+        "canonical": "#dcefeb",
+        "oklch": "oklch(93.7% 0.021 181.9)",
+        "tonalRamp": [
+          "#090c0b",
+          "#202725",
+          "#3a4542",
+          "#566562",
+          "#778683",
+          "#9ca8a5",
+          "#c3cbc9",
+          "#ebf0ef"
+        ]
+      },
+      "teal-rim": {
+        "role": "primary",
+        "displayName": "Teal rim",
+        "canonical": "#06594f",
+        "oklch": "oklch(41.7% 0.073 181.7)",
+        "tonalRamp": [
+          "#040e0c",
+          "#102a26",
+          "#204b44",
+          "#316d64",
+          "#538f85",
+          "#83b0a7",
+          "#b2d1ca",
+          "#e2f3ef"
+        ]
+      },
+      "on-teal": {
+        "role": "primary",
+        "displayName": "On teal",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Fault red",
+        "canonical": "#b3302a",
+        "oklch": "oklch(51.1% 0.169 27.5)",
+        "tonalRamp": [
+          "#190403",
+          "#43120e",
+          "#73221d",
+          "#a6342d",
+          "#cd584e",
+          "#e4887d",
+          "#f8b6ae",
+          "#ffe5df"
+        ]
+      },
+      "danger-soft": {
+        "role": "secondary",
+        "displayName": "Fault wash",
+        "canonical": "#f7e1de",
+        "oklch": "oklch(92.7% 0.025 26.9)",
+        "tonalRamp": [
+          "#0e0a0a",
+          "#2a2322",
+          "#4b3f3d",
+          "#6d5d5b",
+          "#8f7e7b",
+          "#afa19f",
+          "#d0c6c5",
+          "#f2edec"
+        ]
+      },
+      "danger-rim": {
+        "role": "secondary",
+        "displayName": "Fault rim",
+        "canonical": "#82221e",
+        "oklch": "oklch(40.7% 0.132 27.1)",
+        "tonalRamp": [
+          "#170605",
+          "#3e1814",
+          "#692c27",
+          "#99423b",
+          "#be645b",
+          "#d78f87",
+          "#eebbb4",
+          "#ffe7e3"
+        ]
+      },
+      "ok-soft": {
+        "role": "neutral",
+        "displayName": "Added green",
+        "canonical": "#e0f0e6",
+        "oklch": "oklch(94.0% 0.022 158.6)",
+        "tonalRamp": [
+          "#090c0a",
+          "#212723",
+          "#3c443f",
+          "#58655d",
+          "#79867e",
+          "#9ea8a2",
+          "#c4cbc7",
+          "#ecf0ed"
+        ]
+      },
+      "rail": {
+        "role": "neutral",
+        "displayName": "Carbon rail",
+        "canonical": "#151b1c",
+        "oklch": "oklch(21.6% 0.009 208.8)",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#232626",
+          "#3e4344",
+          "#5c6364",
+          "#7d8485",
+          "#a1a6a7",
+          "#c6caca",
+          "#edefef"
+        ]
+      },
+      "rail-hover": {
+        "role": "neutral",
+        "displayName": "Rail hover",
+        "canonical": "#202829",
+        "oklch": "oklch(27.0% 0.011 205.8)",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#222626",
+          "#3d4344",
+          "#5b6364",
+          "#7c8485",
+          "#a0a6a7",
+          "#c5cacb",
+          "#ecefef"
+        ]
+      },
+      "rail-active": {
+        "role": "neutral",
+        "displayName": "Rail current",
+        "canonical": "#263032",
+        "oklch": "oklch(30.1% 0.014 211.1)",
+        "tonalRamp": [
+          "#0a0c0c",
+          "#222627",
+          "#3c4345",
+          "#596365",
+          "#7a8487",
+          "#9fa7a8",
+          "#c5cacb",
+          "#eceff0"
+        ]
+      },
+      "rail-line": {
+        "role": "neutral",
+        "displayName": "Rail hairline",
+        "canonical": "#2a3436",
+        "oklch": "oklch(31.7% 0.014 211.1)",
+        "tonalRamp": [
+          "#0a0c0c",
+          "#222627",
+          "#3c4345",
+          "#596365",
+          "#7a8487",
+          "#9fa7a8",
+          "#c5cacb",
+          "#eceff0"
+        ]
+      },
+      "rail-ink-1": {
+        "role": "neutral",
+        "displayName": "Rail ink",
+        "canonical": "#e9efed",
+        "oklch": "oklch(94.7% 0.007 174.4)",
+        "tonalRamp": [
+          "#0a0b0b",
+          "#242625",
+          "#404342",
+          "#5e6261",
+          "#7f8482",
+          "#a2a6a5",
+          "#c7cac9",
+          "#edefee"
+        ]
+      },
+      "rail-ink-2": {
+        "role": "neutral",
+        "displayName": "Rail ink, secondary",
+        "canonical": "#a9b8b6",
+        "oklch": "oklch(77.0% 0.017 187.2)",
+        "tonalRamp": [
+          "#090c0b",
+          "#212626",
+          "#3b4443",
+          "#586463",
+          "#798584",
+          "#9ea7a6",
+          "#c4cbca",
+          "#ebefef"
+        ]
+      },
+      "rail-ink-3": {
+        "role": "neutral",
+        "displayName": "Rail ink, quiet",
+        "canonical": "#8a9a98",
+        "oklch": "oklch(67.3% 0.018 187.7)",
+        "tonalRamp": [
+          "#090c0b",
+          "#212626",
+          "#3b4443",
+          "#576463",
+          "#788684",
+          "#9da8a6",
+          "#c3cbca",
+          "#ebefef"
+        ]
+      },
+      "rail-teal": {
+        "role": "primary",
+        "displayName": "Rail teal ink",
+        "canonical": "#5fd6c6",
+        "oklch": "oklch(80.4% 0.110 183.4)",
+        "tonalRamp": [
+          "#000f0c",
+          "#002d28",
+          "#004e46",
+          "#007367",
+          "#269588",
+          "#6db5aa",
+          "#a5d4cc",
+          "#dcf5f0"
+        ]
+      },
+      "rail-atom": {
+        "role": "primary",
+        "displayName": "Rail teal atom",
+        "canonical": "#3fc1b0",
+        "oklch": "oklch(73.7% 0.114 182.7)",
+        "tonalRamp": [
+          "#000f0c",
+          "#002d27",
+          "#004f46",
+          "#007366",
+          "#1d9688",
+          "#6ab5a9",
+          "#a4d5cc",
+          "#dbf5f0"
+        ]
+      },
+      "rail-atom-rim": {
+        "role": "primary",
+        "displayName": "Rail teal rim",
+        "canonical": "#1f7d71",
+        "oklch": "oklch(53.4% 0.086 182.4)",
+        "tonalRamp": [
+          "#020e0c",
+          "#092b27",
+          "#144c45",
+          "#206f65",
+          "#479286",
+          "#7cb1a8",
+          "#aed2cb",
+          "#e0f3ef"
+        ]
+      },
+      "rail-rod": {
+        "role": "neutral",
+        "displayName": "Rail rod",
+        "canonical": "#4a5856",
+        "oklch": "oklch(44.8% 0.018 186.1)",
+        "tonalRamp": [
+          "#090c0b",
+          "#212626",
+          "#3b4443",
+          "#586462",
+          "#788684",
+          "#9da8a6",
+          "#c4cbca",
+          "#ebefef"
+        ]
+      },
+      "rail-danger": {
+        "role": "secondary",
+        "displayName": "Rail fault red",
+        "canonical": "#f07a6e",
+        "oklch": "oklch(71.2% 0.147 27.4)",
+        "tonalRamp": [
+          "#180504",
+          "#401512",
+          "#6d2823",
+          "#9e3d35",
+          "#c55f55",
+          "#dd8c83",
+          "#f2b9b1",
+          "#ffe6e1"
+        ]
+      },
+      "ground-dark": {
+        "role": "neutral",
+        "displayName": "Lab white (dark)",
+        "canonical": "#121718",
+        "oklch": "oklch(20.0% 0.008 211.1)",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#232626",
+          "#3f4344",
+          "#5d6263",
+          "#7e8385",
+          "#a1a6a7",
+          "#c6caca",
+          "#edefef"
+        ]
+      },
+      "surface-dark": {
+        "role": "neutral",
+        "displayName": "Specimen white (dark)",
+        "canonical": "#1a2122",
+        "oklch": "oklch(24.1% 0.010 207.0)",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#222626",
+          "#3e4344",
+          "#5b6364",
+          "#7c8485",
+          "#a0a6a7",
+          "#c6cacb",
+          "#edefef"
+        ]
+      },
+      "sunk-dark": {
+        "role": "neutral",
+        "displayName": "Bench grey (dark)",
+        "canonical": "#222a2c",
+        "oklch": "oklch(27.8% 0.012 214.5)",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#222627",
+          "#3d4345",
+          "#5b6365",
+          "#7c8486",
+          "#a0a6a8",
+          "#c5cacb",
+          "#eceff0"
+        ]
+      },
+      "sunk-2-dark": {
+        "role": "neutral",
+        "displayName": "Bench grey, selected (dark)",
+        "canonical": "#2a3436",
+        "oklch": "oklch(31.7% 0.014 211.1)",
+        "tonalRamp": [
+          "#0a0c0c",
+          "#222627",
+          "#3c4345",
+          "#596365",
+          "#7a8487",
+          "#9fa7a8",
+          "#c5cacb",
+          "#eceff0"
+        ]
+      },
+      "line-dark": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "canonical": "#273133",
+        "oklch": "oklch(30.5% 0.014 211.1)",
+        "tonalRamp": [
+          "#0a0c0c",
+          "#222627",
+          "#3c4345",
+          "#596365",
+          "#7a8487",
+          "#9fa7a8",
+          "#c5cacb",
+          "#eceff0"
+        ]
+      },
+      "line-strong-dark": {
+        "role": "neutral",
+        "displayName": "Strong hairline (dark)",
+        "canonical": "#364244",
+        "oklch": "oklch(36.9% 0.016 208.8)",
+        "tonalRamp": [
+          "#090c0c",
+          "#212627",
+          "#3c4445",
+          "#586466",
+          "#798587",
+          "#9ea7a9",
+          "#c4cacc",
+          "#eceff0"
+        ]
+      },
+      "ink-1-dark": {
+        "role": "neutral",
+        "displayName": "Carbon ink (dark)",
+        "canonical": "#e9efed",
+        "oklch": "oklch(94.7% 0.007 174.4)",
+        "tonalRamp": [
+          "#0a0b0b",
+          "#242625",
+          "#404342",
+          "#5e6261",
+          "#7f8482",
+          "#a2a6a5",
+          "#c7cac9",
+          "#edefee"
+        ]
+      },
+      "ink-2-dark": {
+        "role": "neutral",
+        "displayName": "Carbon ink, secondary (dark)",
+        "canonical": "#b3c0be",
+        "oklch": "oklch(79.7% 0.015 185.9)",
+        "tonalRamp": [
+          "#0a0c0b",
+          "#222625",
+          "#3c4443",
+          "#596462",
+          "#7a8583",
+          "#9fa7a6",
+          "#c5cbca",
+          "#ecefef"
+        ]
+      },
+      "ink-3-dark": {
+        "role": "neutral",
+        "displayName": "Carbon ink, quiet (dark)",
+        "canonical": "#94a3a1",
+        "oklch": "oklch(70.3% 0.017 187.1)",
+        "tonalRamp": [
+          "#090c0b",
+          "#212626",
+          "#3b4443",
+          "#586463",
+          "#798584",
+          "#9da7a6",
+          "#c4cbca",
+          "#ebefef"
+        ]
+      },
+      "rod-dark": {
+        "role": "neutral",
+        "displayName": "Rod grey (dark)",
+        "canonical": "#4f5e5c",
+        "oklch": "oklch(46.9% 0.019 186.7)",
+        "tonalRamp": [
+          "#090c0b",
+          "#212626",
+          "#3b4443",
+          "#576463",
+          "#788684",
+          "#9da8a6",
+          "#c3cbca",
+          "#ebefef"
+        ]
+      },
+      "teal-dark": {
+        "role": "primary",
+        "displayName": "Model-kit teal (dark)",
+        "canonical": "#3fc1b0",
+        "oklch": "oklch(73.7% 0.114 182.7)",
+        "tonalRamp": [
+          "#000f0c",
+          "#002d27",
+          "#004f46",
+          "#007366",
+          "#1d9688",
+          "#6ab5a9",
+          "#a4d5cc",
+          "#dbf5f0"
+        ]
+      },
+      "teal-text-dark": {
+        "role": "primary",
+        "displayName": "Teal ink (dark)",
+        "canonical": "#5fd6c6",
+        "oklch": "oklch(80.4% 0.110 183.4)",
+        "tonalRamp": [
+          "#000f0c",
+          "#002d28",
+          "#004e46",
+          "#007367",
+          "#269588",
+          "#6db5aa",
+          "#a5d4cc",
+          "#dcf5f0"
+        ]
+      },
+      "teal-soft-dark": {
+        "role": "primary",
+        "displayName": "Teal wash (dark)",
+        "canonical": "#173835",
+        "oklch": "oklch(31.5% 0.039 187.5)",
+        "tonalRamp": [
+          "#070c0c",
+          "#1b2827",
+          "#324744",
+          "#4a6865",
+          "#6b8986",
+          "#93aba8",
+          "#bdcdcb",
+          "#e8f1ef"
+        ]
+      },
+      "teal-rim-dark": {
+        "role": "primary",
+        "displayName": "Teal rim (dark)",
+        "canonical": "#2a8f82",
+        "oklch": "oklch(59.0% 0.093 182.7)",
+        "tonalRamp": [
+          "#020e0c",
+          "#052c27",
+          "#0c4d45",
+          "#137065",
+          "#409387",
+          "#78b2a8",
+          "#abd3cb",
+          "#dff4f0"
+        ]
+      },
+      "on-teal-dark": {
+        "role": "primary",
+        "displayName": "On teal (dark)",
+        "canonical": "#06201c",
+        "oklch": "oklch(22.2% 0.033 181.5)",
+        "tonalRamp": [
+          "#080c0b",
+          "#1d2825",
+          "#354643",
+          "#4f6762",
+          "#708883",
+          "#97aaa6",
+          "#bfcdca",
+          "#e9f0ef"
+        ]
+      },
+      "danger-dark": {
+        "role": "secondary",
+        "displayName": "Fault red (dark)",
+        "canonical": "#f07a6e",
+        "oklch": "oklch(71.2% 0.147 27.4)",
+        "tonalRamp": [
+          "#180504",
+          "#401512",
+          "#6d2823",
+          "#9e3d35",
+          "#c55f55",
+          "#dd8c83",
+          "#f2b9b1",
+          "#ffe6e1"
+        ]
+      },
+      "danger-soft-dark": {
+        "role": "secondary",
+        "displayName": "Fault wash (dark)",
+        "canonical": "#3a1f1c",
+        "oklch": "oklch(27.5% 0.043 27.0)",
+        "tonalRamp": [
+          "#0f0a09",
+          "#2e2120",
+          "#503c3a",
+          "#765956",
+          "#987a76",
+          "#b79f9b",
+          "#d6c5c2",
+          "#f5eceb"
+        ]
+      },
+      "ok-soft-dark": {
+        "role": "neutral",
+        "displayName": "Added green (dark)",
+        "canonical": "#1b3325",
+        "oklch": "oklch(29.7% 0.040 157.3)",
+        "tonalRamp": [
+          "#080c0a",
+          "#1e2822",
+          "#36463c",
+          "#516859",
+          "#71897a",
+          "#98aa9e",
+          "#c0cdc4",
+          "#e9f0ec"
+        ]
+      },
+      "rail-dark": {
+        "role": "neutral",
+        "displayName": "Carbon rail (dark)",
+        "canonical": "#0b0f10",
+        "oklch": "oklch(16.4% 0.007 214.5)",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#232526",
+          "#3f4343",
+          "#5e6263",
+          "#7e8384",
+          "#a2a6a7",
+          "#c7caca",
+          "#edefef"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The greeting under the core and page titles; 24px when the window is 700px tall or less."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Second-level headings in replies (first-level is 22px)."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section heads, artifact titles; 14px/600 for the column title and System heads, 13px/600 for code page panel heads."
+      },
+      "body-reply": {
+        "displayName": "Reply body",
+        "purpose": "Assistant replies and documents; transcript at most 760px wide, documents 72ch."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Interface default."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons, chips, tabs, tool card heads."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Meta, snippets, tile subtitles, the Recents heading at 600."
+      },
+      "mono-data": {
+        "displayName": "Mono data",
+        "purpose": "Numbers, paths, model ids, file types, diffs, readouts; 12 to 13px, tabular."
+      },
+      "mono-figure": {
+        "displayName": "Mono figure",
+        "purpose": "Large system readings."
+      },
+      "brand": {
+        "displayName": "Wordmark",
+        "purpose": "JARVIS in the rail, beside the atom mark."
+      }
+    },
+    "shadows": [
+      {
+        "name": "rest",
+        "value": "0 1px 2px rgba(19,24,25,0.06)",
+        "dark": "0 1px 2px rgba(0,0,0,0.4)",
+        "purpose": "Composer at rest, selected segment."
+      },
+      {
+        "name": "float",
+        "value": "0 2px 6px rgba(19,24,25,0.06), 0 12px 32px rgba(19,24,25,0.1)",
+        "dark": "0 2px 8px rgba(0,0,0,0.4), 0 16px 40px rgba(0,0,0,0.45)",
+        "purpose": "Menus, palette, floating panels, rail sheet, focused composer."
+      },
+      {
+        "name": "atom-teal",
+        "value": "inset 1.5px 1.5px 0 var(--shine), inset 0 0 0 1.5px var(--teal-rim)",
+        "purpose": "Not a shadow: the flat atom recipe (crescent and rim) on a teal disc; 1px / 1.25px on atoms of 10px or less."
+      },
+      {
+        "name": "atom-grey",
+        "value": "inset 1px 1px 0 var(--shine), inset 0 0 0 1.25px var(--rod-rim)",
+        "purpose": "Tool-step atom."
+      },
+      {
+        "name": "atom-hollow",
+        "value": "inset 0 0 0 2px var(--teal)",
+        "purpose": "Pending reply or approval awaiting an answer (fill: ground); rod ring for system notes and unknown services."
+      },
+      {
+        "name": "focus-ring",
+        "value": "outline: 2px solid var(--teal); outline-offset: 2px",
+        "purpose": "Keyboard focus everywhere; rail search uses a rail-teal border instead."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Default for every transition and entrance."
+      },
+      {
+        "name": "ease-in-out",
+        "value": "cubic-bezier(0.65, 0, 0.35, 1)",
+        "purpose": "Rail sheet closing."
+      },
+      {
+        "name": "fast",
+        "value": "120ms",
+        "purpose": "Hover and press colour, opacity and scale."
+      },
+      {
+        "name": "mid",
+        "value": "200ms",
+        "purpose": "Border/shadow changes, chevrons, atom tone changes."
+      },
+      {
+        "name": "atom-in",
+        "value": "280ms ease-out, scale 0.4 to 1 with fade",
+        "purpose": "An atom arriving in the step chain."
+      },
+      {
+        "name": "bond-in",
+        "value": "320ms ease-out, 60ms delay, scaleY 0 to 1 from the top",
+        "purpose": "The bond drawing in after its atom."
+      },
+      {
+        "name": "pop-in",
+        "value": "140 to 200ms ease-out, scale 0.96 with fade",
+        "purpose": "Menus, palette, chips, tabs, floating panels."
+      },
+      {
+        "name": "rise-in",
+        "value": "240 to 480ms ease-out, translateY 8px with fade",
+        "purpose": "User messages, tool cards, the empty-state group (staggered 0/80/140ms)."
+      },
+      {
+        "name": "page-in",
+        "value": "240ms ease-out fade",
+        "purpose": "Artifacts and Settings pages."
+      },
+      {
+        "name": "meter",
+        "value": "600ms ease-out scaleX",
+        "purpose": "Load and temperature bar fills."
+      },
+      {
+        "name": "first-message",
+        "value": "core snapshot flies into the first reply's atom over 560ms; composer slides to the foot over 420ms",
+        "purpose": "The moment the core becomes the first atom of a conversation (src/nodes/ui.js)."
+      },
+      {
+        "name": "core",
+        "value": "idle yaw 0.14 rad/s, breathe 1.2% at 1.1 rad/s, swell up to 16% with speech level, drag momentum decays at e^-2.2t, click spring k=60 c=8",
+        "purpose": "The 48-atom core (src/nodes/core.js)."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "all animation and transition durations 0.01ms; core: no spin, swell or breathe, drag still turns it; no first-message flight",
+        "purpose": "prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "rail-sheet",
+        "value": "max-width: 1023px",
+        "purpose": "Rail hidden by default, opens as a sheet."
+      },
+      {
+        "name": "code-right",
+        "value": "max-width: 1280px",
+        "purpose": "Code page hides the tasks and changes column."
+      },
+      {
+        "name": "short",
+        "value": "max-height: 700px",
+        "purpose": "Core 120px, greeting 24px."
+      },
+      {
+        "name": "composer-narrow",
+        "value": "container composer max-width: 520px / 420px",
+        "purpose": "Drop the token meter, then shorten the model name."
+      }
+    ],
+    "layout": {
+      "railWidth": "256px",
+      "titlebar": "48px",
+      "workspaceWidth": "46%",
+      "splitHandle": "9px",
+      "transcriptMax": "760px",
+      "composerMax": "720px",
+      "codeLeft": "248px",
+      "codeRight": "304px",
+      "pageMax": "880px",
+      "core": "168px (120px short), 48 atoms, 3 neighbours; live core 26px, 18 atoms"
+    }
+  },
+  "components": [
+    {
+      "name": "Send button",
+      "kind": "button",
+      "refersTo": "button-send",
+      "description": "The composer's primary action: a pressed-teal circle.",
+      "html": "<button class=\"ds-send\" aria-label=\"Send\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 19V5M5 12l7-7 7 7\"/></svg></button>",
+      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-send{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:50%;background:var(--teal-strong);color:var(--on-teal);cursor:pointer;transition:background-color var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}.ds-send:hover{background:var(--teal-rim)}.ds-send:active{transform:scale(.92)}.ds-send:focus-visible{outline:2px solid var(--teal);outline-offset:2px}"
+    },
+    {
+      "name": "Approval actions",
+      "kind": "button",
+      "refersTo": "button-approve",
+      "description": "Allow once (primary), a secondary, and Deny in fault red, as on an approval card.",
+      "html": "<div class=\"ds-bar\"><button class=\"ds-btn ds-primary\">Allow once</button><button class=\"ds-btn\">Always allow</button><button class=\"ds-btn ds-deny\">Deny</button></div>",
+      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-bar{display:flex;gap:8px;font:14px/1.5 var(--sans)}.ds-btn{height:30px;padding:0 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink-1);font:500 13px var(--sans);cursor:pointer;transition:background-color var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}.ds-btn:hover{background:var(--sunk)}.ds-btn:active{transform:scale(.97)}.ds-btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px}.ds-primary{background:var(--teal-strong);border-color:transparent;color:var(--on-teal)}.ds-primary:hover{background:var(--teal-rim)}.ds-deny{color:var(--danger)}"
+    },
+    {
+      "name": "Starter chips",
+      "kind": "chip",
+      "refersTo": "starter",
+      "description": "Pill outlines under the composer on an empty chat.",
+      "html": "<div class=\"ds-starters\"><button class=\"ds-starter\">Make a chart</button><button class=\"ds-starter\">Work in a folder</button><button class=\"ds-starter\">Explain something</button></div>",
+      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-starters{display:flex;flex-wrap:wrap;gap:8px;padding:12px;background:var(--ground)}.ds-starter{height:32px;padding:0 14px;border:1px solid var(--line-strong);border-radius:999px;background:transparent;color:var(--ink-2);font:13px var(--sans);cursor:pointer;transition:background-color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out),color var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}.ds-starter:hover{background:var(--surface);border-color:var(--rod);color:var(--ink-1)}.ds-starter:active{transform:scale(.97)}.ds-starter:focus-visible{outline:2px solid var(--teal);outline-offset:2px}"
+    },
+    {
+      "name": "Composer",
+      "kind": "input",
+      "refersTo": "composer",
+      "description": "The message card: 22 px corners, rest shadow, rod border and float shadow on focus.",
+      "html": "<div class=\"ds-composer\"><textarea class=\"ds-input\" rows=\"1\" placeholder=\"Ask JARVIS anything\" aria-label=\"Message\"></textarea><div class=\"ds-cbar\"><span class=\"ds-model\">General</span><button class=\"ds-send\" aria-label=\"Send\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 19V5M5 12l7-7 7 7\"/></svg></button></div></div>",
+      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-composer{width:min(520px,100%);padding:12px 10px 8px 16px;border:1px solid var(--line-strong);border-radius:22px;background:var(--surface);box-shadow:var(--shadow-1);transition:border-color var(--mid) var(--ease-out),box-shadow var(--mid) var(--ease-out)}.ds-composer:focus-within{border-color:var(--rod);box-shadow:var(--shadow-2)}.ds-input{display:block;width:100%;min-height:28px;border:0;outline:none;resize:none;background:transparent;color:var(--ink-1);font:15px/1.6 var(--sans)}.ds-input::placeholder{color:var(--ink-3)}.ds-cbar{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:6px}.ds-model{font:13px var(--sans);color:var(--ink-2);padding:0 8px}.ds-send{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:50%;background:var(--teal-strong);color:var(--on-teal);cursor:pointer}.ds-send:hover{background:var(--teal-rim)}"
+    },
+    {
+      "name": "Rail navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "The carbon rail: new chat in an atom, nav rows, the current chat's atom.",
+      "html": "<nav class=\"ds-rail\"><button class=\"ds-nav ds-new\"><span class=\"ds-plus\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg></span>New chat</button><button class=\"ds-nav\" aria-pressed=\"true\">Chat</button><button class=\"ds-nav\">Code</button><button class=\"ds-nav\">Artifacts</button><div class=\"ds-label\">Recents</div><div class=\"ds-row ds-current\">Rugby conditioning plan</div><div class=\"ds-row\">Rekordbox library tool</div></nav>",
+      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-rail{width:256px;padding:12px;background:var(--rail);color:var(--rail-ink-1);font:14px/1.5 var(--sans);display:flex;flex-direction:column;gap:2px}.ds-nav{display:flex;align-items:center;gap:10px;height:36px;padding:0 8px;border:0;border-radius:10px;background:transparent;color:var(--rail-ink-1);font:14px var(--sans);text-align:left;cursor:pointer;transition:background-color var(--fast) var(--ease-out)}.ds-nav:hover{background:var(--rail-hover)}.ds-nav[aria-pressed=true]{background:var(--rail-active)}.ds-nav:focus-visible{outline:2px solid var(--rail-teal);outline-offset:2px}.ds-new{font-weight:600}.ds-plus{width:24px;height:24px;display:grid;place-items:center;border-radius:50%;background:var(--rail-atom);color:#fff;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45),inset 0 0 0 1.5px var(--rail-atom-rim)}.ds-label{padding:20px 8px 6px;font-size:12px;font-weight:600;color:var(--rail-ink-3)}.ds-row{position:relative;padding:6px 8px 6px 20px;border-radius:8px;font-size:13px;color:var(--rail-ink-2)}.ds-row:hover{background:var(--rail-hover);color:var(--rail-ink-1)}.ds-row::before{content:'';position:absolute;left:8px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:var(--rail-line)}.ds-current{background:var(--rail-active);color:var(--rail-ink-1)}.ds-current::before{background:var(--rail-atom);transform:scale(1.35)}"
+    },
+    {
+      "name": "Step chain",
+      "kind": "custom",
+      "refersTo": "card-tool",
+      "description": "Signature: a reply atom bonded to tool-step atoms, ending in an approval awaiting an answer (hollow atom).",
+      "html": "<div class=\"ds-chain\"><div class=\"ds-line ds-reply\"><p>I will run the tests and read the result.</p></div><div class=\"ds-line ds-tool\"><div class=\"ds-card\"><b>Read</b> <code>src/main.js</code><span>lines 1-3</span></div></div><div class=\"ds-line ds-tool ds-wait\"><div class=\"ds-card ds-appr\"><b>Run</b> <code>npm test</code><span class=\"ds-need\">Needs approval</span></div></div></div>",
+      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-chain{display:flex;flex-direction:column;gap:20px;padding:16px;background:var(--ground);font:14px/1.5 var(--sans);color:var(--ink-1)}.ds-line{position:relative;padding-left:36px}.ds-line::before{content:'';position:absolute;z-index:1;left:4px;top:4px;width:16px;height:16px;border-radius:50%;background:var(--teal);box-shadow:inset 1.5px 1.5px 0 var(--shine),inset 0 0 0 1.5px var(--teal-rim);animation:ds-atom 280ms var(--ease-out) both}.ds-line:not(:last-child)::after{content:'';position:absolute;left:11px;width:2px;top:12px;bottom:-32px;border-radius:1px;background:var(--rod);transform-origin:top;animation:ds-bond 320ms 60ms var(--ease-out) both}.ds-reply p{font-size:15px;line-height:1.7}.ds-tool::before{left:7px;top:11px;width:10px;height:10px;background:var(--rod-atom);box-shadow:inset 1px 1px 0 var(--shine),inset 0 0 0 1.25px var(--rod-rim)}.ds-wait::before{left:5px;top:9px;width:14px;height:14px;background:var(--ground);box-shadow:inset 0 0 0 2px var(--teal)}.ds-card{display:flex;align-items:center;gap:10px;min-height:34px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:13px}.ds-card b{font-weight:600;color:var(--ink-2)}.ds-card code{flex:1;font:13px var(--mono)}.ds-card span{font:12px var(--mono);color:var(--ink-3)}.ds-appr{border:1.5px solid var(--teal);background:var(--teal-soft);min-height:40px}.ds-appr .ds-need{font:600 12px var(--sans);color:var(--teal-text)}@keyframes ds-atom{from{opacity:0;transform:scale(.4)}}@keyframes ds-bond{from{transform:scaleY(0)}}@media (prefers-reduced-motion:reduce){.ds-line::before,.ds-line::after{animation:none}}"
+    },
+    {
+      "name": "Workspace tabs",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Tabs beside the chat, each with an atom that turns teal when selected.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><div class=\"ds-tab\"><button class=\"ds-tl\">Speed by model</button><button class=\"ds-x\" aria-label=\"Close\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"><path d=\"M3 3l6 6M9 3l-6 6\"/></svg></button></div><div class=\"ds-tab\" aria-selected=\"true\"><button class=\"ds-tl\">System</button><button class=\"ds-x\" aria-label=\"Close\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"><path d=\"M3 3l6 6M9 3l-6 6\"/></svg></button></div></div>",
+      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-tabs{display:flex;align-items:center;gap:4px;height:44px;padding:0 8px;border-bottom:1px solid var(--line);background:var(--surface);font:13px var(--sans)}.ds-tab{display:flex;align-items:center;height:30px;border-radius:8px;color:var(--ink-2);transition:background-color var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}.ds-tab:hover{background:var(--sunk);color:var(--ink-1)}.ds-tab[aria-selected=true]{background:var(--sunk-2);color:var(--ink-1)}.ds-tl{display:flex;align-items:center;gap:8px;height:100%;padding:0 4px 0 10px;border:0;background:none;color:inherit;font:inherit;cursor:pointer}.ds-tl::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--rod-atom);box-shadow:inset 0 0 0 1px var(--rod-rim)}.ds-tab[aria-selected=true] .ds-tl::before{background:var(--teal);box-shadow:inset 0 0 0 1px var(--teal-rim)}.ds-x{width:24px;height:24px;margin-right:3px;display:grid;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--ink-3);cursor:pointer}.ds-x:hover{background:var(--line);color:var(--ink-1)}.ds-tl:focus-visible,.ds-x:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:6px}"
+    },
+    {
+      "name": "System tile",
+      "kind": "card",
+      "refersTo": "card-artifact",
+      "description": "A readout tile: Cascadia figure, sparkline grey until the middle level.",
+      "html": "<div class=\"ds-tiles\"><div class=\"ds-tile\"><span class=\"ds-n\">Processor</span><span class=\"ds-v\">41.9%</span><span class=\"ds-s\">last minute</span><i class=\"ds-spark\"></i></div><div class=\"ds-tile\" data-level=\"mid\"><span class=\"ds-n\">Graphics</span><span class=\"ds-v\">81.0%</span><span class=\"ds-s\">last minute</span><i class=\"ds-spark\"></i></div></div>",
+      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-tiles{display:grid;grid-template-columns:repeat(2,160px);gap:12px;padding:16px;background:var(--surface);font:14px/1.5 var(--sans)}.ds-tile{position:relative;display:flex;flex-direction:column;gap:2px;min-height:128px;padding:14px 14px 60px;border:1px solid var(--line);border-radius:14px;background:var(--ground);overflow:hidden}.ds-n{font-size:13px;font-weight:600;color:var(--ink-2)}.ds-v{font:400 24px/1.2 var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-1)}.ds-s{font-size:12px;color:var(--ink-3)}.ds-spark{position:absolute;left:0;right:0;bottom:0;height:24px;background:var(--sunk);border-top:1.5px solid var(--ink-3)}.ds-tile[data-level=mid] .ds-spark{background:var(--teal-soft);border-top-color:var(--teal)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Molecular Model Kit",
+    "overview": "JARVIS's work is a structure being assembled in front of its owner. The ground is lab-white with a cool teal cast, the sidebar rail is carbon in both themes, JARVIS itself is teal plastic, and everything that connects one thing to another is a pale grey rod. The signature object is the core: a 48-atom ball-and-stick cage on a Fibonacci sphere that turns slowly, swells with streamed speech, breathes while thinking and spins when dragged. The same vocabulary carries into the conversation: every reply, action and system note of a turn is an atom, and consecutive ones are bonded by a vertical rod into a step chain. Services at the foot of the rail are atoms on one horizontal bond.\n\nThe system is calm and dense in the way a desktop tool is dense: 14 px interface text, 15 px reading text, quiet 1 px lines, flat surfaces, one colour that means \"JARVIS\" and one that means \"wrong\". Depth comes from tone (ground, surface, sunk) rather than from shadows; only things that float over content cast one. Atoms are flat discs, never shaded spheres: a fill, a darker rim and a small white crescent on the upper left.\n\nIt rejects the grey chat column with a logo on top, and the cyan hologram on black that the old HUD used.",
+    "keyCharacteristics": [
+      "Lab-white ground (light) or deep carbon-teal ground (dark); the rail is carbon in both.",
+      "One voice colour, teal, for JARVIS's atoms, the primary action, focus, the current item and the middle load level.",
+      "Red only for errors, denials and the high load level.",
+      "Flat atoms (fill, rim, crescent) and round-capped grey rods as the recurring motif.",
+      "Segoe UI Variable for text, Cascadia Code for every number, path, model id and short element-style label.",
+      "Motion is \"arrive and bond\": a scale-in for the atom, a draw-in for its rod, nothing else moves by itself except the core."
+    ],
+    "rules": [
+      {
+        "name": "The One Plastic Rule",
+        "body": "Teal means JARVIS, the action you are about to take, or where you are. It never decorates a section, a heading or a chart series that carries no state.",
+        "section": "colors"
+      },
+      {
+        "name": "The Red Atom Rule",
+        "body": "Red is for something that went wrong or was refused, and for the high load level. A warning that is only \"busy\" is teal, not red.",
+        "section": "colors"
+      },
+      {
+        "name": "The Grey Rod Rule",
+        "body": "Bonds, idle bars and sparklines are grey. A bar or sparkline turns teal at the middle level and red at the high level; below that it stays grey.",
+        "section": "colors"
+      },
+      {
+        "name": "The Carbon Rail Rule",
+        "body": "The rail is carbon in light and dark alike and uses its own rail-* tokens; main-area tokens are never used on the rail.",
+        "section": "colors"
+      },
+      {
+        "name": "The Element Symbol Rule",
+        "body": "Every number, path, command, model id and file type is set in Cascadia Code with tabular figures; prose and controls never are.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sentence Case Rule",
+        "body": "All labels, headings and buttons are sentence case. No uppercase labels, no letter-spaced small caps. The JARVIS wordmark is the one name set in capitals.",
+        "section": "typography"
+      },
+      {
+        "name": "The Float Only Rule",
+        "body": "A shadow means \"this is above the page\": a menu, a sheet, a floating panel, the focused composer. Resting cards, tiles and tool steps have a border and no shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Flat Atom Rule",
+        "body": "Atoms are fill, rim and crescent; never a radial gradient, a drop shadow or a glow.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Straight Bond Rule",
+        "body": "Outside the core, a bond is straight and axis-aligned: vertical between steps, horizontal between services.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "**Do** draw every atom with the flat recipe: fill, a 1.25 to 1.5 px inset rim in the darker shade, and a 1 to 1.5 px white crescent on the upper left (45 to 60 % white).",
+      "**Do** use teal-text, never teal, for teal text smaller than 18 px; keep teal for fills, rings, atoms and icons.",
+      "**Do** make every text colour reach 4.5:1 on ground, surface, sunk, sunk-2, bubble and teal-soft (and on rail, rail-hover and rail-active for rail text).",
+      "**Do** set numbers, paths, model ids and file types in Cascadia Code with tabular figures.",
+      "**Do** animate an arriving atom with a 280 ms ease-out scale from 0.4, and draw its bond in after it (320 ms, 60 ms later).",
+      "**Do** keep motion within 120 to 320 ms for state changes on the ease-out curve (cubic-bezier(0.16, 1, 0.3, 1)), and remove it entirely under reduced motion; the core then stops spinning and swelling but still turns when dragged.",
+      "**Do** use inline SVG line icons from the shared icon set."
+    ],
+    "donts": [
+      "**Don't** use gradients anywhere, including radial shading on atoms or a ramp across the core; depth is stepped flat tones.",
+      "**Don't** add glow, coloured shadows or blur halos; the only shadows are the neutral rest and float shadows.",
+      "**Don't** colour a section, a heading or an idle chart: no per-section hues, no teal bars below the middle level.",
+      "**Don't** use green anywhere except the background of added diff lines.",
+      "**Don't** use uppercase labels or letter-spaced small caps; everything is sentence case.",
+      "**Don't** load web fonts; Segoe UI Variable and Cascadia Code are system faces.",
+      "**Don't** give resting cards, tiles or tool steps a shadow.",
+      "**Don't** describe the classic warm-grey interface (classic.html) as this system; it is a separate, frozen layout."
+    ]
+  }
+}

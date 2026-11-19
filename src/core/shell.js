@@ -10,6 +10,7 @@ import { getServices } from './service-status.js';
 import { listSessions, loadSession, saveSession, deleteSession, searchSessions } from './sessions.js';
 import { SHORTCUTS } from './shortcuts.js';
 import { getPreset } from './llm-client.js';
+import { elementSymbol, typeName } from './artifact-symbols.js';
 
 const $ = (id) => document.getElementById(id);
 const input = $('hud-chat-input');
@@ -195,10 +196,14 @@ function renderArtifacts() {
   all.slice().reverse().forEach((a) => {
     const b = Object.assign(document.createElement('button'), { type: 'button', className: 'art-tile' });
     b.append(
-      Object.assign(document.createElement('span'), { className: 'a-type', textContent: a.type === 'code' && a.lang ? a.lang : a.type }),
+      Object.assign(document.createElement('span'), { className: 'a-type', innerHTML: '<span class="a-word"></span>' }),
       Object.assign(document.createElement('span'), { className: 'a-title', textContent: a.title }),
       Object.assign(document.createElement('span'), { className: 'a-sub', textContent: `${a.versions.length} version${a.versions.length === 1 ? '' : 's'}` }),
     );
+    const kind = a.type === 'code' && a.lang ? a.lang : a.type;
+    b.querySelector('.a-word').textContent = kind;
+    b.querySelector('.a-type').dataset.sym = elementSymbol(kind); // drawn as an element tile by the nodes interface
+    b.querySelector('.a-sub').dataset.type = typeName(kind);
     b.addEventListener('click', () => openArtifact(a.id));
     grid.append(b);
   });

@@ -27,7 +27,7 @@ addEventListener('resize', () => { if (coreSize() !== Number.parseInt(coreCanvas
 // --- the live core: rides on the newest reply while JARVIS works ---------------------------------
 const liveCanvas = Object.assign(document.createElement('canvas'), { className: 'live-core' });
 liveCanvas.setAttribute('aria-hidden', 'true');
-createCore(liveCanvas, { atoms: 18, neighbours: 3, size: 26, interactive: false, atomScale: 2.4 });
+createCore(liveCanvas, { size: 26, interactive: false, atomScale: 1.8 }); // the same 48-atom cage as the big core, so what lands is what flew
 
 const working = () => !stopBtn.hidden;
 function placeLive() {
@@ -81,13 +81,15 @@ function coreToAtom() {
   ghost.setAttribute('aria-hidden', 'true');
   document.body.append(ghost);
   const s = to.width / from.width;
-  liveCanvas.style.opacity = '0';
+  const end = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${s})`;
   const anim = ghost.animate([
     { transform: 'none', opacity: 1 },
-    { transform: `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${s})`, opacity: 1, offset: 0.85 },
-    { transform: `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${s})`, opacity: 0 },
+    { transform: end, opacity: 1, offset: 0.6 },
+    { transform: end, opacity: 0 },
   ], { duration: 560, easing: EASE });
-  const done = () => { ghost.remove(); liveCanvas.style.opacity = ''; };
+  // the live core fades in over the same span the ghost fades out: one object, handed over
+  const fade = liveCanvas.isConnected ? liveCanvas.animate([{ opacity: 0 }, { opacity: 0, offset: 0.6 }, { opacity: 1 }], { duration: 560 }) : null;
+  const done = () => { ghost.remove(); fade?.cancel(); };
   setTimeout(done, 700); // a backgrounded window may never finish the animation
   anim.onfinish = done;
   anim.oncancel = done;
@@ -104,6 +106,12 @@ new MutationObserver(() => {
   hadLines = has;
   before = null;
 }).observe(out, { childList: true });
+
+// --- narrow windows: Escape closes the rail sheet (a click on the scrim already does, shell.js) ---
+const narrow = matchMedia('(max-width: 1023px)');
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && narrow.matches && !document.body.classList.contains('side-off')) document.dispatchEvent(new CustomEvent('jarvis:sidebar'));
+});
 
 // --- starters ------------------------------------------------------------------------------
 document.querySelectorAll('.starter').forEach((b) => b.addEventListener('click', () => {

@@ -6,6 +6,7 @@
 import { getArtifact, onArtifactsChange } from './artifacts.js';
 import { buildSrcdoc } from './artifact-renderer.js';
 import { renderMarkdown, highlightCode } from './markdown.js';
+import { icon } from './icons.js';
 import { currentPage, setPage, setWorkspaceShown, isWhiteboardMode } from './whiteboard-mode.js';
 
 const $ = (id) => document.getElementById(id);
@@ -191,7 +192,7 @@ function paint() {
     tab.setAttribute('aria-selected', String(t.id === active));
     const label = Object.assign(document.createElement('button'), { type: 'button', className: 't-label', textContent: t.label });
     label.addEventListener('click', () => activate(t.id));
-    const x = Object.assign(document.createElement('button'), { type: 'button', className: 't-x', innerHTML: '×', title: `Close ${t.label}` });
+    const x = Object.assign(document.createElement('button'), { type: 'button', className: 't-x', innerHTML: icon('close', 14), title: `Close ${t.label}` });
     x.setAttribute('aria-label', `Close ${t.label}`);
     x.addEventListener('click', () => closeTab(t.id));
     tab.append(label, x);

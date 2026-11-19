@@ -4,6 +4,7 @@
 // (8 px steps) and hide with the FILES / CHANGES buttons. Only real data is shown; see
 // .md Files/JARVIS_CLI_Brief.md.
 import { getProject, listDir } from './agent-client.js';
+import { icon } from './icons.js';
 import { getModelHealth, onModelHealth } from './model-panel.js';
 import { getPreset } from './llm-client.js';
 import { diffBody } from './tool-cards.js';
@@ -150,7 +151,7 @@ function openFloat(id, title, { x, y, w = 560, h = 360, cls = '', sub = '' } = {
   const el = document.createElement('section');
   el.className = `cli-float-panel ${cls}`;
   el.setAttribute('aria-label', title);
-  el.innerHTML = '<div class="panel-head" tabindex="0" role="group" aria-label="Panel title bar. Alt and arrow keys move it, Alt Shift and arrow keys resize it."><span class="title-main"></span><span class="title-sub sub"></span><button type="button" class="wb-btn" title="Close panel" aria-label="Close panel">×</button></div><div class="cli-body"></div><i class="cli-rz"></i>';
+  el.innerHTML = `<div class="panel-head" tabindex="0" role="group" aria-label="Panel title bar. Alt and arrow keys move it, Alt Shift and arrow keys resize it."><span class="title-main"></span><span class="title-sub sub"></span><button type="button" class="wb-btn" title="Close panel" aria-label="Close panel">${icon('close', 14)}</button></div><div class="cli-body"></div><i class="cli-rz"></i>`;
   const head = el.firstElementChild;
   head.querySelector('.title-main').textContent = title;
   head.querySelector('.title-sub').textContent = sub;

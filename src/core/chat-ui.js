@@ -3,6 +3,8 @@
 import { chat, setMode, getMode, getPreset, syncModel, onEvent } from './llm-client.js';
 import { hasImages, takeAsContent } from './attachments.js';
 import { pulse, setThinking } from './mesh-state.js';
+import { icon } from './icons.js';
+import { elementSymbol, typeName } from './artifact-symbols.js';
 import { renderMarkdown, highlightCode } from './markdown.js';
 import { parseReply } from './tool-router.js';
 import { upsertArtifact } from './artifacts.js';
@@ -121,8 +123,9 @@ function artifactCard(p, done) {
   const title = p.opening ? 'Writing artifact...' : escapeHtml(p.title);
   const state = p.complete ? 'Open' : done ? 'Incomplete' : `Writing... ${fmtChars(p.content.length)}`;
   const type = p.opening ? '...' : p.type === 'code' && p.lang ? p.lang : p.type;
+  const sym = p.opening ? '' : elementSymbol(type);
   return `<button type="button" class="artifact-card${usable ? '' : ' busy'}" data-artifact="${escapeHtml(p.id)}"${usable ? '' : ' disabled'}>`
-    + `<span class="ac-type">${escapeHtml(type)}</span><span class="ac-title">${title}</span><span class="ac-state">${state}</span></button>`
+    + `<span class="ac-type" data-sym="${escapeHtml(sym)}"><span class="ac-word">${escapeHtml(type)}</span></span><span class="ac-title">${title}</span><span class="ac-state" data-type="${escapeHtml(p.opening ? '' : typeName(type))}">${state}</span></button>`
     + artifactSource(p);
 }
 
@@ -665,7 +668,8 @@ function btw(question) {
   const close = document.createElement('button');
   close.type = 'button';
   close.className = 'chat-edit btw-x';
-  close.textContent = '×';
+  close.innerHTML = icon('close', 14);
+  close.setAttribute('aria-label', 'Dismiss this answer');
   close.title = 'Dismiss this answer';
   close.addEventListener('click', () => line.remove());
   line.replaceChildren(head, body, close);
