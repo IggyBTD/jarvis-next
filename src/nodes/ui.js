@@ -3,6 +3,7 @@
 // rest of the page are the shared modules' own (node-mesh.js in kit mode, chat-ui.js, shell.js).
 import { getSwitches, onSwitchChange } from '../core/switches.js';
 import { getTelemetry, onTelemetry } from '../core/telemetry-view.js';
+import { serverMode, onLink } from '../core/server-link.js';
 
 const $ = (id) => document.getElementById(id);
 const input = $('hud-chat-input');
@@ -46,6 +47,17 @@ function paintMini() {
 }
 onTelemetry(paintMini);
 paintMini();
+
+// --- the line under the greeting says where JARVIS runs: here, or on the PC through the JARVIS server ---------------------
+const greetSub = $('greet-sub');
+const paintWhere = () => {
+  if (!greetSub) return;
+  greetSub.textContent = serverMode()
+    ? 'Talking to JARVIS on your PC through the JARVIS server.'
+    : 'Running on this PC. Nothing leaves it unless you switch the internet on.';
+};
+onLink(paintWhere);
+paintWhere();
 
 // --- interface switch --------------------------------------------------------------------------
 document.querySelectorAll('[data-ui]').forEach((b) => b.addEventListener('click', () => {

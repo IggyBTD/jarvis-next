@@ -7,3 +7,4 @@
 .m-field { border-color: var(--border-strong); }
 .m-field:focus-within { border-color: var(--accent-mid); box-shadow: none; } /* focus is a teal line, not a glow */
 .m-send::before { background: var(--accent-mid); }
+.m-list-head, .m-group-head { text-transform: none; letter-spacing: 0; } /* sentence case, no tracked capitals */

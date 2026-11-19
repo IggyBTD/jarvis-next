@@ -229,3 +229,7 @@ input[type="checkbox"] { width: 24px; height: 24px; margin: 0; accent-color: var
   #sidebar #mini-services::before { top: 10px; }
   #sidebar #mini-services .svc { font-size: 0; line-height: 0; gap: 0; }
 }
+
+/* ---- sentence case: the kit has no tracked capitals ---------------------------------------------------------------------- */
+.gate-meta dt { text-transform: none; letter-spacing: 0; font-size: var(--fs-2); }
+.target-pill { text-transform: none; letter-spacing: 0; background: var(--accent-mid); }
