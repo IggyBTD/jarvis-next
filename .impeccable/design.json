@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-19T13:57:45+00:00",
+  "generatedAt": "2026-11-19T14:30:00+00:00",
   "title": "Design System: JARVIS",
   "extensions": {
     "colorMeta": {
@@ -867,6 +867,38 @@
           "#c7caca",
           "#edefef"
         ]
+      },
+      "scrim": {
+        "role": "neutral",
+        "displayName": "Scrim",
+        "canonical": "rgba(19, 24, 25, 0.28)",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#232626",
+          "#3f4344",
+          "#5d6263",
+          "#7e8385",
+          "#a1a6a7",
+          "#c7caca",
+          "#edefef"
+        ],
+        "note": "Carbon ink at 28 % alpha; the dimming layer behind the narrow rail sheet only."
+      },
+      "scrim-dark": {
+        "role": "neutral",
+        "displayName": "Scrim (dark)",
+        "canonical": "rgba(0, 0, 0, 0.5)",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#232526",
+          "#3f4343",
+          "#5e6263",
+          "#7e8384",
+          "#a2a6a7",
+          "#c7caca",
+          "#edefef"
+        ],
+        "note": "Black at 50 % alpha; the dimming layer behind the narrow rail sheet only."
       }
     },
     "typographyMeta": {
@@ -904,11 +936,15 @@
       },
       "mono-figure": {
         "displayName": "Mono figure",
-        "purpose": "Large system readings."
+        "purpose": "The three headline system readings; never wraps."
       },
       "brand": {
         "displayName": "Wordmark",
         "purpose": "JARVIS in the rail, beside the atom mark."
+      },
+      "mono-symbol": {
+        "displayName": "Mono symbol",
+        "purpose": "The two-letter symbol on an element tile (artifact type)."
       }
     },
     "shadows": [
@@ -943,6 +979,11 @@
         "name": "focus-ring",
         "value": "outline: 2px solid var(--teal); outline-offset: 2px",
         "purpose": "Keyboard focus everywhere; rail search uses a rail-teal border instead."
+      },
+      {
+        "name": "scrim",
+        "value": "background: var(--scrim)",
+        "purpose": "Not a shadow: the dimming layer behind the rail sheet under 1024px; a click on it closes the sheet."
       }
     ],
     "motion": [
@@ -983,8 +1024,8 @@
       },
       {
         "name": "rise-in",
-        "value": "240 to 480ms ease-out, translateY 8px with fade",
-        "purpose": "User messages, tool cards, the empty-state group (staggered 0/80/140ms)."
+        "value": "240 to 260ms ease-out, translateY 8px with fade",
+        "purpose": "User messages and tool cards. Not used on the empty page: there only the core moves."
       },
       {
         "name": "page-in",
@@ -998,25 +1039,30 @@
       },
       {
         "name": "first-message",
-        "value": "core snapshot flies into the first reply's atom over 560ms; composer slides to the foot over 420ms",
-        "purpose": "The moment the core becomes the first atom of a conversation (src/nodes/ui.js)."
+        "value": "core snapshot flies into the first reply's atom over 560ms (moves by 60%, then fades) while the live core fades in over the same span; composer slides to the foot over 420ms",
+        "purpose": "The moment the core becomes the first atom of a conversation: one object handed over (src/nodes/ui.js)."
       },
       {
         "name": "core",
-        "value": "idle yaw 0.14 rad/s, breathe 1.2% at 1.1 rad/s, swell up to 16% with speech level, drag momentum decays at e^-2.2t, click spring k=60 c=8",
+        "value": "idle yaw 0.14 rad/s; swell (up to 16%), wobble and breath come only from the shared speech/thinking level (mesh-state.js), so an idle core holds its size; drag momentum decays at e^-2.2t; click knocks the 4 nearest atoms on a spring k=60 c=8",
         "purpose": "The 48-atom core (src/nodes/core.js)."
       },
       {
         "name": "reduced-motion",
         "value": "all animation and transition durations 0.01ms; core: no spin, swell or breathe, drag still turns it; no first-message flight",
         "purpose": "prefers-reduced-motion: reduce."
+      },
+      {
+        "name": "scrim",
+        "value": "200ms ease-out fade in (@starting-style)",
+        "purpose": "The scrim behind the narrow rail sheet."
       }
     ],
     "breakpoints": [
       {
         "name": "rail-sheet",
         "value": "max-width: 1023px",
-        "purpose": "Rail hidden by default, opens as a sheet."
+        "purpose": "Rail hidden by default, opens as a sheet over a scrim; scrim click or Escape closes it."
       },
       {
         "name": "code-right",
@@ -1044,7 +1090,8 @@
       "codeLeft": "248px",
       "codeRight": "304px",
       "pageMax": "880px",
-      "core": "168px (120px short), 48 atoms, 3 neighbours; live core 26px, 18 atoms"
+      "core": "168px (120px short), 48 atoms, 3 neighbours; live core 26px, the same 48-atom cage with atoms drawn 1.8x",
+      "elementTile": "40px square, 8px corners"
     }
   },
   "components": [
@@ -1100,29 +1147,37 @@
       "name": "Workspace tabs",
       "kind": "nav",
       "refersTo": "tab",
-      "description": "Tabs beside the chat, each with an atom that turns teal when selected.",
-      "html": "<div class=\"ds-tabs\" role=\"tablist\"><div class=\"ds-tab\"><button class=\"ds-tl\">Speed by model</button><button class=\"ds-x\" aria-label=\"Close\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"><path d=\"M3 3l6 6M9 3l-6 6\"/></svg></button></div><div class=\"ds-tab\" aria-selected=\"true\"><button class=\"ds-tl\">System</button><button class=\"ds-x\" aria-label=\"Close\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"><path d=\"M3 3l6 6M9 3l-6 6\"/></svg></button></div></div>",
+      "description": "Tabs beside the chat, each with an atom that turns teal when selected and a close button with the icon set's close mark at 14 px.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><div class=\"ds-tab\"><button class=\"ds-tl\">Speed by model</button><button class=\"ds-x\" aria-label=\"Close Speed by model\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6.75827 17.2426L12.0009 12M17.2435 6.75736L12.0009 12M12.0009 12L6.75827 6.75736M12.0009 12L17.2435 17.2426\"/></svg></button></div><div class=\"ds-tab\" aria-selected=\"true\"><button class=\"ds-tl\">System</button><button class=\"ds-x\" aria-label=\"Close System\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6.75827 17.2426L12.0009 12M17.2435 6.75736L12.0009 12M12.0009 12L6.75827 6.75736M12.0009 12L17.2435 17.2426\"/></svg></button></div></div>",
       "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-tabs{display:flex;align-items:center;gap:4px;height:44px;padding:0 8px;border-bottom:1px solid var(--line);background:var(--surface);font:13px var(--sans)}.ds-tab{display:flex;align-items:center;height:30px;border-radius:8px;color:var(--ink-2);transition:background-color var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}.ds-tab:hover{background:var(--sunk);color:var(--ink-1)}.ds-tab[aria-selected=true]{background:var(--sunk-2);color:var(--ink-1)}.ds-tl{display:flex;align-items:center;gap:8px;height:100%;padding:0 4px 0 10px;border:0;background:none;color:inherit;font:inherit;cursor:pointer}.ds-tl::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--rod-atom);box-shadow:inset 0 0 0 1px var(--rod-rim)}.ds-tab[aria-selected=true] .ds-tl::before{background:var(--teal);box-shadow:inset 0 0 0 1px var(--teal-rim)}.ds-x{width:24px;height:24px;margin-right:3px;display:grid;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--ink-3);cursor:pointer}.ds-x:hover{background:var(--line);color:var(--ink-1)}.ds-tl:focus-visible,.ds-x:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:6px}"
     },
     {
-      "name": "System tile",
+      "name": "System readings",
+      "kind": "custom",
+      "refersTo": "readout",
+      "description": "One unboxed row of three readings divided by hairlines: Cascadia figure that never wraps, a 24 px trace drawn as a line only, grey until the middle level.",
+      "html": "<div class=\"ds-hero\"><div class=\"ds-tile\"><span class=\"ds-n\">Processor</span><span class=\"ds-v\">41.9%</span><span class=\"ds-s\">8 cores, 52 °C</span><svg class=\"ds-spark\" viewBox=\"0 0 100 24\" preserveAspectRatio=\"none\"><path d=\"M0 16 L12 14 L25 17 L37 12 L50 13 L62 9 L75 11 L87 8 L100 10\"/></svg></div><div class=\"ds-tile\" data-level=\"mid\"><span class=\"ds-n\">Graphics</span><span class=\"ds-v\">81.0%</span><span class=\"ds-s\">9.6 of 12.0 GB</span><svg class=\"ds-spark\" viewBox=\"0 0 100 24\" preserveAspectRatio=\"none\"><path d=\"M0 16 L12 14 L25 17 L37 12 L50 13 L62 9 L75 11 L87 8 L100 10\"/></svg></div><div class=\"ds-tile\"><span class=\"ds-n\">Memory</span><span class=\"ds-v\">22.4 GB</span><span class=\"ds-s\">of 64 GB</span><svg class=\"ds-spark\" viewBox=\"0 0 100 24\" preserveAspectRatio=\"none\"><path d=\"M0 16 L12 14 L25 17 L37 12 L50 13 L62 9 L75 11 L87 8 L100 10\"/></svg></div></div>",
+      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:480px;padding:20px 20px 20px;border-bottom:1px solid var(--line);background:var(--surface);font:14px/1.5 var(--sans)}.ds-tile{display:flex;flex-direction:column;gap:2px;min-width:0;padding:0 16px}.ds-tile:first-child{padding-left:0}.ds-tile+.ds-tile{border-left:1px solid var(--line)}.ds-n{font-size:13px;font-weight:600;color:var(--ink-2)}.ds-v{font:400 24px/1.2 var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-1);white-space:nowrap}.ds-s{font-size:12px;color:var(--ink-3)}.ds-spark{display:block;width:100%;height:24px;margin-top:8px}.ds-spark path{fill:none;stroke:var(--ink-3);stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}.ds-tile[data-level=mid] .ds-spark path{stroke:var(--teal)}"
+    },
+    {
+      "name": "Artifact card",
       "kind": "card",
       "refersTo": "card-artifact",
-      "description": "A readout tile: Cascadia figure, sparkline grey until the middle level.",
-      "html": "<div class=\"ds-tiles\"><div class=\"ds-tile\"><span class=\"ds-n\">Processor</span><span class=\"ds-v\">41.9%</span><span class=\"ds-s\">last minute</span><i class=\"ds-spark\"></i></div><div class=\"ds-tile\" data-level=\"mid\"><span class=\"ds-n\">Graphics</span><span class=\"ds-v\">81.0%</span><span class=\"ds-s\">last minute</span><i class=\"ds-spark\"></i></div></div>",
-      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-tiles{display:grid;grid-template-columns:repeat(2,160px);gap:12px;padding:16px;background:var(--surface);font:14px/1.5 var(--sans)}.ds-tile{position:relative;display:flex;flex-direction:column;gap:2px;min-height:128px;padding:14px 14px 60px;border:1px solid var(--line);border-radius:14px;background:var(--ground);overflow:hidden}.ds-n{font-size:13px;font-weight:600;color:var(--ink-2)}.ds-v{font:400 24px/1.2 var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-1)}.ds-s{font-size:12px;color:var(--ink-3)}.ds-spark{position:absolute;left:0;right:0;bottom:0;height:24px;background:var(--sunk);border-top:1.5px solid var(--ink-3)}.ds-tile[data-level=mid] .ds-spark{background:var(--teal-soft);border-top-color:var(--teal)}"
+      "description": "Signature: an artifact in a reply. The type is an element tile (two-letter symbol, the word visually hidden for screen readers); the type word leads the state line.",
+      "html": "<div class=\"ds-wrap\"><button class=\"ds-card\"><span class=\"ds-tile\">Ch<span class=\"ds-sr\">Chart</span></span><span class=\"ds-title\">Speed by model</span><span class=\"ds-state\"><b>Chart</b>Opened beside the chat</span></button><button class=\"ds-card\"><span class=\"ds-tile\">Pg<span class=\"ds-sr\">Page</span></span><span class=\"ds-title\">Release notes draft</span><span class=\"ds-state\"><b>Page</b>v2</span></button></div>",
+      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--ground);font:14px/1.5 var(--sans)}.ds-card{display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:12px;align-items:center;width:min(100%,440px);padding:10px 14px 10px 10px;border:1px solid var(--line-strong);border-radius:14px;background:var(--surface);text-align:left;font:inherit;color:var(--ink-1);cursor:pointer;transition:border-color var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}.ds-card:hover{border-color:var(--teal)}.ds-card:active{transform:scale(.99)}.ds-card:focus-visible{outline:2px solid var(--teal);outline-offset:2px}.ds-tile{grid-row:span 2;position:relative;display:grid;place-items:center;width:40px;height:40px;border-radius:8px;background:var(--teal-soft);box-shadow:inset 0 0 0 1px var(--teal);font:600 15px/1 var(--mono);color:var(--teal-text)}.ds-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.ds-title{min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-state{font-size:12px;color:var(--ink-3)}.ds-state b{margin-right:8px;font-weight:400;color:var(--ink-2)}"
     }
   ],
   "narrative": {
     "northStar": "The Molecular Model Kit",
-    "overview": "JARVIS's work is a structure being assembled in front of its owner. The ground is lab-white with a cool teal cast, the sidebar rail is carbon in both themes, JARVIS itself is teal plastic, and everything that connects one thing to another is a pale grey rod. The signature object is the core: a 48-atom ball-and-stick cage on a Fibonacci sphere that turns slowly, swells with streamed speech, breathes while thinking and spins when dragged. The same vocabulary carries into the conversation: every reply, action and system note of a turn is an atom, and consecutive ones are bonded by a vertical rod into a step chain. Services at the foot of the rail are atoms on one horizontal bond.\n\nThe system is calm and dense in the way a desktop tool is dense: 14 px interface text, 15 px reading text, quiet 1 px lines, flat surfaces, one colour that means \"JARVIS\" and one that means \"wrong\". Depth comes from tone (ground, surface, sunk) rather than from shadows; only things that float over content cast one. Atoms are flat discs, never shaded spheres: a fill, a darker rim and a small white crescent on the upper left.\n\nIt rejects the grey chat column with a logo on top, and the cyan hologram on black that the old HUD used.",
+    "overview": "JARVIS's work is a structure being assembled in front of its owner. The ground is lab-white with a cool teal cast, the sidebar rail is carbon in both themes, JARVIS itself is teal plastic, and everything that connects one thing to another is a pale grey rod. The signature object is the core: a 48-atom ball-and-stick cage on a Fibonacci sphere that turns slowly, swells with streamed speech, breathes while thinking and spins when dragged. The kit also has a periodic table: each artifact type is an element tile with a two-letter symbol. The same vocabulary carries into the conversation: every reply, action and system note of a turn is an atom, and consecutive ones are bonded by a vertical rod into a step chain. Services at the foot of the rail are atoms on one horizontal bond.\n\nThe system is calm and dense in the way a desktop tool is dense: 14 px interface text, 15 px reading text, quiet 1 px lines, flat surfaces, one colour that means \"JARVIS\" and one that means \"wrong\". Depth comes from tone (ground, surface, sunk) rather than from shadows; only things that float over content cast one. Atoms are flat discs, never shaded spheres: a fill, a darker rim and a small white crescent on the upper left.\n\nIt rejects the grey chat column with a logo on top, and the cyan hologram on black that the old HUD used.",
     "keyCharacteristics": [
       "Lab-white ground (light) or deep carbon-teal ground (dark); the rail is carbon in both.",
       "One voice colour, teal, for JARVIS's atoms, the primary action, focus, the current item and the middle load level.",
       "Red only for errors, denials and the high load level.",
       "Flat atoms (fill, rim, crescent) and round-capped grey rods as the recurring motif.",
-      "Segoe UI Variable for text, Cascadia Code for every number, path, model id and short element-style label.",
-      "Motion is \"arrive and bond\": a scale-in for the atom, a draw-in for its rod, nothing else moves by itself except the core."
+      "Segoe UI Variable for text, Cascadia Code for every number, path, model id and element symbol.",
+      "Motion is \"arrive and bond\": a scale-in for the atom, a draw-in for its rod. On the empty page only the core moves by itself; greeting, starters and machine line are still."
     ],
     "rules": [
       {
@@ -1147,7 +1202,7 @@
       },
       {
         "name": "The Element Symbol Rule",
-        "body": "Every number, path, command, model id and file type is set in Cascadia Code with tabular figures; prose and controls never are.",
+        "body": "Every number, path, command, model id and element symbol is set in Cascadia Code with tabular figures; prose and controls never are. A type's readable word (Chart, Page, Document) is set in Segoe on the line under the title.",
         "section": "typography"
       },
       {
@@ -1178,7 +1233,9 @@
       "**Do** set numbers, paths, model ids and file types in Cascadia Code with tabular figures.",
       "**Do** animate an arriving atom with a 280 ms ease-out scale from 0.4, and draw its bond in after it (320 ms, 60 ms later).",
       "**Do** keep motion within 120 to 320 ms for state changes on the ease-out curve (cubic-bezier(0.16, 1, 0.3, 1)), and remove it entirely under reduced motion; the core then stops spinning and swelling but still turns when dragged.",
-      "**Do** use inline SVG line icons from the shared icon set."
+      "**Do** hand the core over in one piece on the first message: its snapshot flies into the first reply's atom (560 ms) while the live core fades in over the same span.",
+      "**Do** use inline SVG line icons from the shared icon set, including the close mark at 14 px; never a text glyph.",
+      "**Do** draw an artifact's type as an element tile with its symbol from the shared helper, and keep the type word readable to screen readers."
     ],
     "donts": [
       "**Don't** use gradients anywhere, including radial shading on atoms or a ramp across the core; depth is stepped flat tones.",
@@ -1188,6 +1245,7 @@
       "**Don't** use uppercase labels or letter-spaced small caps; everything is sentence case.",
       "**Don't** load web fonts; Segoe UI Variable and Cascadia Code are system faces.",
       "**Don't** give resting cards, tiles or tool steps a shadow.",
+      "**Don't** box the System readings in tiles or fill a trace with an area; one hairline-divided row and a line are enough.",
       "**Don't** describe the classic warm-grey interface (classic.html) as this system; it is a separate, frozen layout."
     ]
   }
