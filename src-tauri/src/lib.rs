@@ -66,6 +66,7 @@ pub fn run() {
       sessions::session_list,
       sessions::session_load,
       sessions::session_delete,
+      sessions::session_search,
       sessions::session_export,
       sessions::skills_list,
     ])

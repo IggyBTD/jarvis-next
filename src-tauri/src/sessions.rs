@@ -67,6 +67,43 @@ pub fn load_in(dir: &Path, id: &str) -> Result<String, String> {
     text.lines().nth(1).map(str::to_string).ok_or_else(|| "session file is damaged".to_string())
 }
 
+/// Saved chats whose name or message text contains `query` (any case), newest first, with a
+/// snippet around the first hit. A plain scan: fine for hundreds of chats.
+pub fn search_in(dir: &Path, query: &str, limit: usize) -> Vec<serde_json::Value> {
+    let q = query.trim().to_lowercase();
+    if q.is_empty() {
+        return Vec::new();
+    }
+    let text_of = |m: &serde_json::Value| match &m["content"] {
+        serde_json::Value::String(s) => s.clone(),
+        serde_json::Value::Array(parts) => parts.iter().filter_map(|p| p["text"].as_str()).collect::<Vec<_>>().join("\n"),
+        _ => String::new(),
+    };
+    let mut out = Vec::new();
+    for meta in list_in(dir) {
+        let Some(id) = meta["id"].as_str() else { continue };
+        let name = meta["name"].as_str().unwrap_or("").to_string();
+        let history: Vec<serde_json::Value> = load_in(dir, id).ok().and_then(|h| serde_json::from_str(&h).ok()).unwrap_or_default();
+        let hit = history.iter().filter(|m| m["role"] == "user" || m["role"] == "assistant").map(text_of).find_map(|t| {
+            let lower = t.to_lowercase();
+            let at = lower.find(&q)?;
+            // Byte offsets of the lowercased text can differ from the original's, so cut on chars.
+            let chars: Vec<char> = t.chars().collect();
+            let at_char = lower[..at].chars().count().min(chars.len());
+            let start = at_char.saturating_sub(40);
+            let end = (at_char + q.chars().count() + 80).min(chars.len());
+            Some(chars[start..end].iter().collect::<String>().split_whitespace().collect::<Vec<_>>().join(" "))
+        });
+        if hit.is_some() || name.to_lowercase().contains(&q) {
+            out.push(serde_json::json!({ "id": id, "name": name, "updated": meta["updated"], "snippet": hit.unwrap_or_default() }));
+            if out.len() >= limit {
+                break;
+            }
+        }
+    }
+    out
+}
+
 pub fn delete_in(dir: &Path, id: &str) -> Result<(), String> {
     check_id(id)?;
     fs::remove_file(dir.join(format!("{id}.jsonl"))).map_err(|e| e.to_string())
@@ -120,6 +157,11 @@ pub fn session_load(id: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+pub fn session_search(query: String) -> Vec<serde_json::Value> {
+    search_in(&sessions_dir(), &query, 30)
+}
+
+#[tauri::command]
 pub fn session_delete(id: String) -> Result<(), String> {
     delete_in(&sessions_dir(), &id)
 }
@@ -165,6 +207,21 @@ mod tests {
         delete_in(&dir, "a1").unwrap();
         assert!(load_in(&dir, "a1").is_err());
         assert!(!dir.join("a1.jsonl.tmp").exists());
+        fs::remove_dir_all(dir).ok();
+    }
+
+    #[test]
+    fn search_finds_text_and_names_case_blind() {
+        let dir = temp("search");
+        save_in(&dir, "a1", r#"{"id":"a1","name":"Physics","updated":1}"#, r#"[{"role":"user","content":"What is the Ångström unit?"},{"role":"assistant","content":"A tenth of a nanometre."}]"#).unwrap();
+        save_in(&dir, "b2", r#"{"id":"b2","name":"Other","updated":2}"#, r#"[{"role":"tool","content":"nanometre in tool output only"}]"#).unwrap();
+        let hits = search_in(&dir, "NANOMETRE", 10);
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0]["id"], "a1");
+        assert!(hits[0]["snippet"].as_str().unwrap().contains("nanometre"));
+        assert_eq!(search_in(&dir, "ångström", 10).len(), 1);
+        assert_eq!(search_in(&dir, "other", 10)[0]["id"], "b2");
+        assert!(search_in(&dir, "  ", 10).is_empty());
         fs::remove_dir_all(dir).ok();
     }
 

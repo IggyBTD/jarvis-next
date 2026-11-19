@@ -298,11 +298,13 @@ async function send() {
     renderThought(pending, latest.reasoning, { startedAt: thinkStart ?? performance.now(), answered: !!latest.content || done });
     if (latest.content) renderAssistant(pending, latest.content, { done });
   };
-  const stamp = () => {
+  const stamp = (stats, final = false) => {
     const m = document.createElement('span');
     m.className = 'chat-meta';
-    m.textContent = `${clock()}  ${getPreset().model}`;
+    m.textContent = `${clock()}  ${getPreset().model}${stats?.tps ? `  ${stats.tps.toFixed(1)} t/s` : ''}`;
+    m.title = stats ? `First token after ${stats.ttft?.toFixed(1) ?? '?'} s, ${stats.promptTokens ?? '?'} prompt and ${stats.completionTokens ?? '?'} reply tokens` : '';
     pending.append(m);
+    replyButtons(pending, latest.content, final);
   };
 
   const speech = beginTurn(); // null unless the reply is to be spoken (voice.js)
@@ -355,7 +357,7 @@ async function send() {
       if (!toolCalls.length) {
         history.push({ role: 'assistant', content: reply || (result.toolCalls.length ? `(Stopped after ${MAX_TOOL_ROUNDS} rounds of actions.)` : '') });
         speech?.end(spoken + reply);
-        stamp();
+        stamp(result.stats, true);
         follow(stick);
         break;
       }
@@ -364,7 +366,7 @@ async function send() {
       // history (the model must see its own calls and their results), then let it continue.
       history.push(assistantToolMessage(reply, toolCalls));
       if (!reply && !latest.reasoning) { pending.remove(); mine.lines.splice(mine.lines.indexOf(pending), 1); }
-      else stamp();
+      else stamp(result.stats);
       if (reply) spoken += `${reply}\n\n`;
       for (const call of toolCalls) {
         const r = await runToolCall(call);
@@ -457,6 +459,30 @@ function contextReport() {
   ].join('\n');
 }
 
+// --- reply buttons: copy, and regenerate on the latest reply ---------------
+const replyTexts = new WeakMap(); // assistant line -> its markdown
+function replyButtons(line, text, regen) {
+  if (!text) return;
+  replyTexts.set(line, text);
+  const bar = line.querySelector(':scope > .chat-meta') ?? line.appendChild(Object.assign(document.createElement('span'), { className: 'chat-meta' }));
+  const btn = (cls, label, title) => bar.appendChild(Object.assign(document.createElement('button'), { type: 'button', className: `chat-edit ${cls}`, textContent: label, title }));
+  btn('chat-copy', 'Copy', 'Copy this reply as Markdown');
+  if (regen) {
+    output.querySelectorAll('.chat-regen').forEach((b) => b.remove()); // only the newest reply can be asked again
+    btn('chat-regen', 'Retry', 'Ask the last message again (same model; pick another in the model menu first to compare)');
+  }
+}
+
+function retryLast() {
+  if (working) return 'JARVIS is busy. Use /stop first.';
+  if (!lastSent) return 'Nothing to retry yet.';
+  const at = history.map((m) => m.role).lastIndexOf('user');
+  if (at >= 0) history.length = at; // the old question and everything it led to, so the model sees it once
+  const again = lastSent;
+  setTimeout(() => { input.value = again; send(); }, 0); // after this command has released the field
+  return 'Asking again.';
+}
+
 // --- rewind and edit from here -------------------------------------------
 // Every user line remembers its history message. EDIT puts the conversation back to just before
 // that message and the message back in the field; the files the agent changed since then are put
@@ -529,10 +555,28 @@ function saveSoon() {
   saveTimer = setTimeout(() => {
     if (!history.length) return;
     session.name ||= sessionTitle(history);
-    saveSession({ ...session, updated: Date.now(), messages: history.length }, history).catch(() => { /* a plain browser cannot save */ });
+    saveSession({ ...session, updated: Date.now(), messages: history.length }, history)
+      .then(() => document.dispatchEvent(new CustomEvent('jarvis:saved', { detail: { id: session.id } })))
+      .catch(() => { /* a plain browser cannot save */ });
   }, 400);
 }
 const startSession = () => { session = { id: newSessionId(), name: '', created: Date.now() }; };
+// The sidebar renamed or deleted a saved chat (shell.js). A deleted current chat is cleared, and a
+// new id keeps the next save from bringing it back.
+document.addEventListener('jarvis:session-renamed', (e) => { if (e.detail.id === session.id) session.name = e.detail.name; });
+document.addEventListener('jarvis:session-deleted', (e) => {
+  if (e.detail.id !== session.id) return;
+  if (working) { startSession(); return; }
+  history.length = 0;
+  turn = null;
+  lastSent = '';
+  lastUsed = 0;
+  turnEdits.clear();
+  userLines.clear();
+  startSession();
+  output.replaceChildren();
+  workspace.classList.remove('has-output');
+});
 const ago = (ms) => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
 let lastListing = [];
 
@@ -551,7 +595,7 @@ function renderHistory() {
     if (m.role === 'user') markUser(addLine('user', m.shown ?? messageText(m.content), { meta: '' }), m);
     else if (m.role === 'assistant') {
       const text = messageText(m.content);
-      if (text) renderAssistant(addLine('assistant', '', { meta: '' }), text, { done: true, quiet: true });
+      if (text) { const line = addLine('assistant', '', { meta: '' }); renderAssistant(line, text, { done: true, quiet: true }); replyButtons(line, text, false); }
       if (m.tool_calls) addLine('system', `Action  ${m.tool_calls.map((c) => c.function.name).join(', ')}`, { meta: '' });
     } else if (m.role === 'tool') addLine('system', `Result  ${String(m.content).split('\n')[0].slice(0, 140)}`, { meta: '' });
   }
@@ -628,6 +672,14 @@ async function copyText(text) {
 }
 
 output.addEventListener('click', async (e) => {
+  const copyReply = e.target.closest('.chat-copy');
+  if (copyReply) {
+    const ok = await copyText(replyTexts.get(copyReply.closest('.chat-line')) ?? '');
+    copyReply.textContent = ok ? 'Copied' : 'Failed';
+    setTimeout(() => { copyReply.textContent = 'Copy'; }, 1200);
+    return;
+  }
+  if (e.target.closest('.chat-regen')) { const why = retryLast(); if (why !== 'Asking again.') addLine('system', why, { meta: '' }); return; }
   const edit = e.target.closest('.chat-edit:not(.btw-x)');
   if (edit) {
     const msg = lineMsgs.get(edit.closest('.chat-line'));
@@ -753,15 +805,7 @@ registerCommandHost({
     const list = getSkills();
     return list.length ? `${list.map((s) => `${s.name}  ${s.description}`).join('\n')}\n/<skill name> <task> runs one; the model can load them too.` : 'No skills. Add skills/<name>/SKILL.md (name and description in the first lines) and type /skills reload.';
   },
-  retry: () => {
-    if (working) return 'JARVIS is busy. Use /stop first.';
-    if (!lastSent) return 'Nothing to retry yet.';
-    const at = history.map((m) => m.role).lastIndexOf('user');
-    if (at >= 0) history.length = at; // the old question and everything it led to, so the model sees it once
-    const again = lastSent;
-    setTimeout(() => { input.value = again; send(); }, 0); // after this command has released the field
-    return 'Asking again.';
-  },
+  retry: retryLast,
   transcript: (all) => {
     const talk = history.filter((m) => (m.role === 'user' || m.role === 'assistant') && textOf(m.content));
     if (!all) return textOf(talk.filter((m) => m.role === 'assistant').pop()?.content);

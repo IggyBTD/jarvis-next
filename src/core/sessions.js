@@ -41,4 +41,5 @@ export const saveSession = (meta, history) => call('session_save', { id: meta.id
 export const listSessions = () => call('session_list');
 export const loadSession = async (id) => JSON.parse(await call('session_load', { id }));
 export const deleteSession = (id) => call('session_delete', { id });
+export const searchSessions = (query) => call('session_search', { query });
 export const exportSession = (id, text) => call('session_export', { id, text });

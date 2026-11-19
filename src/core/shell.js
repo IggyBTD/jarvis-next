@@ -7,7 +7,7 @@ import { listArtifacts, onArtifactsChange } from './artifacts.js';
 import { getTelemetry, onTelemetry } from './telemetry-view.js';
 import { getModelHealth, onModelHealth } from './model-panel.js';
 import { getServices } from './service-status.js';
-import { listSessions } from './sessions.js';
+import { listSessions, loadSession, saveSession, deleteSession, searchSessions } from './sessions.js';
 import { SHORTCUTS } from './shortcuts.js';
 import { getPreset } from './llm-client.js';
 
@@ -66,19 +66,68 @@ onModelHealth(paintCtx);
 
 // --- chat list and title ---------------------------------------------------------------------
 const list = $('chat-list');
+const search = $('chat-search');
 let current = '';
-async function refreshChats() {
-  let sessions = [];
-  try { sessions = (await listSessions()) ?? []; } catch { /* a plain browser has no session store */ }
-  sessions.sort((a, b) => b.updated - a.updated);
-  if (!sessions.length) { list.replaceChildren(Object.assign(document.createElement('div'), { className: 'chat-list-empty', textContent: 'No saved chats yet.' })); return; }
-  list.replaceChildren(...sessions.slice(0, 40).map((s) => {
-    const b = Object.assign(document.createElement('button'), { type: 'button', className: `chat-item${s.id === current ? ' current' : ''}`, textContent: s.name || 'Untitled' });
-    b.title = s.name;
-    b.addEventListener('click', () => { current = s.id; setPage('chat'); run(`/resume ${s.id}`); });
-    return b;
-  }));
+const el = (tag, props) => Object.assign(document.createElement(tag), props);
+
+// One row: the chat (click resumes it), and on hover Rename and Delete. Delete asks once more on the
+// same button instead of a browser dialog.
+function chatRow(s, snippet = '') {
+  const row = el('div', { className: `chat-row${s.id === current ? ' current' : ''}`, role: 'listitem' });
+  const open = el('button', { type: 'button', className: 'chat-item', textContent: s.name || 'Untitled', title: s.name || 'Untitled' });
+  if (snippet) open.append(el('span', { className: 'chat-snippet', textContent: snippet }));
+  open.addEventListener('click', () => { current = s.id; setPage('chat'); run(`/resume ${s.id}`); });
+  const rename = el('button', { type: 'button', className: 'chat-act', textContent: 'Rename', title: 'Rename this chat' });
+  const del = el('button', { type: 'button', className: 'chat-act', textContent: 'Delete', title: 'Delete this chat' });
+  rename.addEventListener('click', () => {
+    const field = el('input', { type: 'text', className: 'chat-rename', value: s.name || '', ariaLabel: 'New name' });
+    row.replaceChildren(field);
+    field.focus();
+    field.select();
+    let done = false;
+    const finish = async (keep) => {
+      if (done) return;
+      done = true;
+      const name = field.value.trim().slice(0, 80);
+      if (keep && name && name !== s.name) {
+        try { await saveSession({ ...s, name }, await loadSession(s.id)); } catch (e) { console.warn('[jarvis] rename failed:', e); }
+        document.dispatchEvent(new CustomEvent('jarvis:session-renamed', { detail: { id: s.id, name } }));
+      }
+      field.remove(); // before refreshing, which skips while a rename field is open
+      refreshChats();
+    };
+    field.addEventListener('keydown', (e) => { if (e.key === 'Enter') finish(true); if (e.key === 'Escape') finish(false); });
+    field.addEventListener('blur', () => finish(true));
+  });
+  del.addEventListener('click', async () => {
+    if (!del.classList.contains('confirm')) {
+      del.classList.add('confirm');
+      del.textContent = 'Sure?';
+      setTimeout(() => { del.classList.remove('confirm'); del.textContent = 'Delete'; }, 3000);
+      return;
+    }
+    try { await deleteSession(s.id); } catch (e) { console.warn('[jarvis] delete failed:', e); return; }
+    document.dispatchEvent(new CustomEvent('jarvis:session-deleted', { detail: { id: s.id } }));
+    if (current === s.id) current = '';
+    refreshChats();
+  });
+  row.append(open, rename, del);
+  return row;
 }
+
+async function refreshChats() {
+  const q = search.value.trim();
+  let sessions = [];
+  try { sessions = (await (q ? searchSessions(q) : listSessions())) ?? []; } catch { /* a plain browser has no session store */ }
+  if (!q) sessions.sort((a, b) => b.updated - a.updated);
+  if (!sessions.length) { list.replaceChildren(el('div', { className: 'chat-list-empty', textContent: q ? 'No chat matches.' : 'No saved chats yet.' })); return; }
+  if (list.querySelector('.chat-rename')) return; // do not throw away a name being typed
+  list.replaceChildren(...sessions.slice(0, 40).map((s) => chatRow(s, q ? s.snippet : '')));
+}
+let searchTimer = 0;
+search.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(refreshChats, 200); });
+search.addEventListener('keydown', (e) => { if (e.key === 'Escape') { search.value = ''; refreshChats(); } });
+document.addEventListener('jarvis:saved', (e) => { current = e.detail.id; refreshChats(); });
 // Slash commands go through the message field, the one door chat-ui.js guards.
 function run(text) {
   input.value = text;
