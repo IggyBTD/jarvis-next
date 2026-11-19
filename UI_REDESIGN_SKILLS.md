@@ -1,6 +1,6 @@
 # JARVIS Next: UI skills for a full redesign
 
-Researched 2026-11-19. Read before installing anything. Nothing here has been installed.
+Researched 2026-11-19. Sections 1 to 9 are the research as written (when it was written nothing was installed). Section 10 records what was then installed into `.claude/skills/` so any Claude session on this repo can use it.
 
 ---
 
@@ -211,6 +211,58 @@ A caution from one roundup (a Medium comparison I could only see in a search sum
 **Seen only in search summaries or roundups:** star counts (they conflict between sources, so none are used), the Snyk risk rating, the Medium and UX Planet comparisons, and everything under "seen only in roundups".
 
 **Could not open:** a Pasquale Pillitteri guide (host blocked by the session proxy). The Medium, Snyk and UX Planet roundups were not fetched either.
+
+---
+
+## 10. Installed in this repo (manifest, 2026-11-19)
+
+37 skills in `.claude/skills/` (24 auto-invocable, 13 manual-only), 3 sub-agents in `.claude/agents/`, licences in `.claude/third-party-licenses/`. Every file was cloned fresh, read for hooks, `allowed-tools`, shell pipes, encoded blobs and injection phrases (none found; the only hits are Emil's own defensive notes), then copied. YAML frontmatter and cross-skill references were validated.
+
+| Source @ commit | Skills installed | Mode |
+|---|---|---|
+| [pbakaus/impeccable](https://github.com/pbakaus/impeccable) @ `b49177d`, skill 4.10.0, engine 0.1.27 | `impeccable` (63 files); agents `impeccable-documenter`, `-finish-reviewer`, `-motion-reviewer` | auto |
+| [emilkowalski/skills](https://github.com/emilkowalski/skills) @ `64eb3de` | `animate`, `animation-performance`, `animation-vocabulary`, `break-ui`, `choreograph`, `find-animation-opportunities`, `improve-animations`, `remove-animations`, `gestures` | auto |
+| same | `ask-emil`, `learn-taste`, `pick-ui-library`, `review-animations` (manual in the author's own frontmatter); `animate-expo`, `mobile-native`, `write-swift`, `ask-sonner` (marked manual here: React Native, Swift and Sonner are off-stack) | manual |
+| Emil, **pinned copies from `.agents/skills/`**, older than `64eb3de` | `apple-design`, `emil-design-eng` (auto), `prototype` (manual) | as pinned in `skills-lock.json` |
+| [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) @ `1a2c79d` | `web-design-guidelines` (fetches its rules from GitHub on every run) | auto |
+| [ibelick/ui-skills](https://github.com/ibelick/ui-skills) @ `347d318` | `fixing-accessibility`, `fixing-motion-performance` | auto |
+| [kylezantos/design-motion-principles](https://github.com/kylezantos/design-motion-principles) @ `4a9ca87` | `design-motion-principles` | auto |
+| [tommyjepsen/awesome-ux-skills](https://github.com/tommyjepsen/awesome-ux-skills) @ `4e5d092` | `ai-governors`, `ai-trust-builders`, `ai-tuners`, `ai-wayfinders`, `craft`, `ux-heuristics-review`, `accessibility`, `dieter-rams-principles` | auto |
+| [Eid0lon/zero-slop](https://github.com/Eid0lon/zero-slop) @ `1479c72` | `no-slop`, `reality-skill` | manual |
+| [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) `plugins/frontend-design`, main on 2026-11-19 | `frontend-design` | manual |
+| [Ilm-Alan/frontend-design](https://github.com/Ilm-Alan/frontend-design) @ `f8966e6` | `frontend-design-anchors` (renamed from `frontend-design` to avoid a name clash) | manual |
+
+**Manual** means `disable-model-invocation: true`: it runs only when invoked by name, so competing design skills do not trigger together and fight. A Claude can still read any of them with the Read tool.
+
+### Changes made to third-party files
+
+- Added `disable-model-invocation: true` to `no-slop`, `reality-skill`, `frontend-design`, `frontend-design-anchors`, `animate-expo`, `mobile-native`, `write-swift`, `ask-sonner`.
+- Renamed Ilm-Alan's skill to `frontend-design-anchors`.
+- Rewrote the `description` of `ai-trust-builders`, `ai-tuners` and `ai-wayfinders` as folded YAML blocks. The originals contained unquoted colons and were invalid YAML, which a strict loader could reject. Text is unchanged.
+- Everything else is byte-for-byte from the source.
+
+### Deliberately not installed
+
+| Skill | Reason |
+|---|---|
+| Taste Skill | 40 MB of assets, builds marketing sites, deals Google Fonts (breaks "no web fonts") |
+| Hallmark | 7 MB, marketing-site builder with 50 page themes, competes with Impeccable |
+| UI UX Pro Max | 11 MB of data and Python, stack list has no vanilla JS or Tauri |
+| ux-skill (Laith0003) | An engine with 18 commands, agents and a CLI, not a plain skill; 14 stars by its own table |
+| `baseline-ui` and the canvas skills in ibelick | Tailwind and `motion/react` required, or unrelated |
+| Impeccable `settings.json` hooks | Run a binary at session start and on every edit. Enable only after reading `.claude/skills/impeccable/reference/hooks.md` |
+| Impeccable agents `asset-producer`, `manual-edit-applier` | Image generation and live mode; Impeccable has fallbacks when they are absent |
+| Roundup-only items | Never read; see section 3 |
+
+Install commands for all of these are in section 3 if you change your mind.
+
+### Not verified
+
+- Skills load at session start, so this was **not** tested in a fresh session. The next Claude session should show them in its skill list; if it does not, check `.claude/skills/` first.
+- The Impeccable launcher (`scripts/impeccable`) was **not run**. On first use it downloads a platform binary from `github.com/pbakaus/impeccable/releases` and checks it against `scripts/engine-checksums.txt`. The checksum file ships in the same repo, so it proves the download matches the repo, not that the binary is safe. Windows uses `impeccable.cmd`.
+- `disable-model-invocation` is used by Emil's own skills, but I did not confirm its behaviour against the Claude Code docs.
+- `awesome-ux-skills` has no licence. It is copied here for private use; confirm terms before making the repo public. See `.claude/third-party-licenses/awesome-ux-skills.NOTE`.
+- `skills-lock.json` still lists only the three Emil skills and was not updated. It does not know about the rest.
 
 ---
 

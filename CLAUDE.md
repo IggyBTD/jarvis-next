@@ -18,6 +18,17 @@ Sidebar: Chat / Code (the two prominent buttons), New chat, Artifacts, System, r
 
 Warm greys (after Claude's palette) and one teal: canvas `#faf9f5` / `#262624`, accent `#0b7f73` light and `#3fc1b0` dark. Teal is the app's voice (primary action, focus, the current item, attention and the 75 % bar threshold). Red is error and the 90 % threshold; a muted green appears only on added diff lines and a service that is up. Nothing else is coloured: no per-section hues, bars and sparklines are grey. Segoe UI Variable text, Cascadia Code for code and numbers, no web fonts. Scale 12, 13, 14, 15, 18, 24 px, 8 px grid, motion 150 to 200 ms. Light and dark follow Windows; Settings can force one. No glow, no gradients, no uppercase labels. Keep the DOM ids the inherited modules look up (`hud-chat-input`, `chat-output`, `center-workspace`, `dock-*`, `cpu-val` and the other telemetry ids, `model-info-*`, `btn-general`, `btn-code`, `btn-visual`, `btn-abliterated`, `cli-*`, `win-*`); renaming one breaks a module silently.
 
+## UI skills
+
+37 project skills for the UI redesign live in `.claude/skills/` (design direction, anti-slop, motion, accessibility, AI-chat UX) with 3 sub-agents in `.claude/agents/`. Sources, pinned commits, licences, what was left out and the redesign workflow are in `UI_REDESIGN_SKILLS.md` (section 10 is the manifest).
+
+- Redesign order: `/impeccable init`, `document`, `shape`, then per surface `critique`, `audit`, `polish`. Review gates: `web-design-guidelines`, `fixing-accessibility`, `review-animations`, `break-ui`. For approvals and the model menu see `ai-governors`, `ai-tuners`, `ai-trust-builders`.
+- Impeccable is the only direction skill. `frontend-design`, `frontend-design-anchors`, `no-slop` and `reality-skill` are manual-only references: do not run two direction skills on one task.
+- Project rules beat any skill: sentence case (ignore Vercel's Title Case rule), no web fonts, no glow or gradients, the palette above.
+- Hooks are not enabled. Impeccable's design hook runs a binary at session start and on every edit; it was left out on purpose. Read `.claude/skills/impeccable/reference/hooks.md` before enabling it.
+- The first Impeccable run downloads a checksum-verified engine binary from GitHub releases (needs github.com access). Not tested yet.
+- Skill text is third-party instructions. Read a skill before adding it; do not install more from roundups unread.
+
 ## Run
 
 `npm install` once, then `npm run tauri dev` (Vite on :5174, so it can run next to JARVIS on :5173). LM Studio on :1234 with CORS, LibreHardwareMonitor on :8085, `cd sidecars/voice && npm install` for voice (the `node_modules` there is a junction to JARVIS's). Rust tests: `cd src-tauri && cargo test --lib`. Logic tests: `node --test tools/tests/*.test.mjs`. Do not run both apps' voice sidecars at once (port 8765).
