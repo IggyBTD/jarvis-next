@@ -2,62 +2,79 @@
 name: JARVIS
 description: A local AI assistant drawn as a molecular model kit; every reply, step and service is an atom bonded into the conversation.
 colors:
-  ground: "#f2f5f4"
-  surface: "#ffffff"
-  sunk: "#e6ecea"
-  sunk-2: "#dbe3e1"
-  bubble: "#e2e9e7"
-  line: "#dbe2e0"
-  line-strong: "#bfcac8"
-  ink-1: "#131819"
-  ink-2: "#3b4648"
-  ink-3: "#566365"
-  rod: "#9aa8a6"
-  rod-atom: "#b5c0be"
-  rod-rim: "#7f8e8c"
-  teal: "#0a8a7c"
-  teal-strong: "#087567"
-  teal-text: "#076b60"
-  teal-soft: "#dcefeb"
-  teal-rim: "#06594f"
-  on-teal: "#ffffff"
-  danger: "#b3302a"
-  danger-soft: "#f7e1de"
-  danger-rim: "#82221e"
-  ok-soft: "#e0f0e6"
+  bg: "#F2F5F4"
+  surface-1: "#E9EEEC"
+  surface-2: "#FFFFFF"
+  surface-3: "#E3E9E7"
+  surface-4: "#D6DFDC"
+  border: "#DBE2E0"
+  border-strong: "#BFCAC8"
+  text: "#131819"
+  text-2: "#3B4648"
+  text-3: "#566365"
+  accent: "#087567"
+  accent-mid: "#0A8A7C"
+  accent-dim: "#6FA69F"
+  accent-wash: "rgba(10, 138, 124, 0.12)"
+  on-accent: "#FFFFFF"
+  warm: "#076B60"
+  atom-rim: "#06594F"
+  atom-shine: "rgba(255, 255, 255, 0.6)"
+  danger: "#B3302A"
+  danger-wash: "rgba(179, 48, 42, 0.12)"
+  on-danger: "#FFFFFF"
+  ok: "#2F7A4C"
+  ok-wash: "rgba(47, 122, 76, 0.12)"
+  rod: "#9AA8A6"
+  rod-atom: "#B5C0BE"
+  rod-rim: "#7F8E8C"
+  bubble: "#E2E9E7"
   scrim: "rgba(19, 24, 25, 0.28)"
-  rail: "#151b1c"
+  core-back: "#B9C4C2"
+  core-rod: "#8F9E9C"
+  rail: "#151B1C"
   rail-hover: "#202829"
   rail-active: "#263032"
-  rail-line: "#2a3436"
-  rail-ink-1: "#e9efed"
-  rail-ink-2: "#a9b8b6"
-  rail-ink-3: "#8a9a98"
-  rail-teal: "#5fd6c6"
-  rail-atom: "#3fc1b0"
-  rail-atom-rim: "#1f7d71"
-  rail-rod: "#4a5856"
-  rail-danger: "#f07a6e"
-  ground-dark: "#121718"
-  surface-dark: "#1a2122"
-  sunk-dark: "#222a2c"
-  sunk-2-dark: "#2a3436"
-  line-dark: "#273133"
-  line-strong-dark: "#364244"
-  ink-1-dark: "#e9efed"
-  ink-2-dark: "#b3c0be"
-  ink-3-dark: "#94a3a1"
-  rod-dark: "#4f5e5c"
-  teal-dark: "#3fc1b0"
-  teal-text-dark: "#5fd6c6"
-  teal-soft-dark: "#173835"
-  teal-rim-dark: "#2a8f82"
-  on-teal-dark: "#06201c"
-  danger-dark: "#f07a6e"
-  danger-soft-dark: "#3a1f1c"
-  ok-soft-dark: "#1b3325"
-  rail-dark: "#0b0f10"
+  rail-line: "#2A3436"
+  rail-ink-1: "#E9EFED"
+  rail-ink-2: "#A9B8B6"
+  rail-ink-3: "#8A9A98"
+  rail-teal: "#5FD6C6"
+  rail-atom: "#3FC1B0"
+  rail-atom-rim: "#1F7D71"
+  rail-rod: "#4A5856"
+  rail-danger: "#F07A6E"
+  rail-danger-rim: "#8E2F27"
+  rail-on-atom: "#06201C"
+  bg-dark: "#121718"
+  surface-1-dark: "#161C1D"
+  surface-2-dark: "#1A2122"
+  surface-3-dark: "#222A2C"
+  surface-4-dark: "#2A3436"
+  border-dark: "#273133"
+  border-strong-dark: "#364244"
+  text-dark: "#E9EFED"
+  text-2-dark: "#B3C0BE"
+  text-3-dark: "#94A3A1"
+  accent-dark: "#5FD6C6"
+  accent-mid-dark: "#3FC1B0"
+  accent-dim-dark: "#2A7F75"
+  accent-wash-dark: "rgba(63, 193, 176, 0.14)"
+  on-accent-dark: "#06201C"
+  atom-rim-dark: "#2A8F82"
+  danger-dark: "#F07A6E"
+  on-danger-dark: "#1A0A08"
+  ok-dark: "#7FC596"
+  rod-dark: "#4F5E5C"
+  rod-atom-dark: "#56645F"
+  rod-rim-dark: "#6D7D7A"
+  bubble-dark: "#222A2C"
+  core-back-dark: "#33403F"
   scrim-dark: "rgba(0, 0, 0, 0.5)"
+  rail-dark: "#0B0F10"
+  rail-hover-dark: "#161C1D"
+  rail-active-dark: "#1D2526"
+  rail-line-dark: "#1F2729"
 typography:
   display:
     fontFamily: "'Segoe UI Variable Display', 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif"
@@ -66,43 +83,47 @@ typography:
     lineHeight: 1.15
     letterSpacing: "-0.015em"
   headline:
-    fontFamily: "'Segoe UI Variable Display', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "18px"
+    fontFamily: "'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif"
+    fontSize: "20px"
     fontWeight: 600
-    lineHeight: 1.3
+    lineHeight: "28px"
   title:
-    fontFamily: "'Segoe UI Variable Display', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "15px"
+    fontFamily: "'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif"
+    fontSize: "16px"
     fontWeight: 600
-    lineHeight: 1.2
+    lineHeight: "24px"
   body-reply:
     fontFamily: "'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif"
-    fontSize: "15px"
+    fontSize: "16px"
     fontWeight: 400
-    lineHeight: 1.7
+    lineHeight: "27px"
   body:
     fontFamily: "'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif"
     fontSize: "14px"
     fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: "20px"
   label:
-    fontFamily: "'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif"
+    fontFamily: "'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif"
     fontSize: "13px"
-    fontWeight: 500
+    fontWeight: 400
+    lineHeight: "20px"
   caption:
-    fontFamily: "'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif"
+    fontFamily: "'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif"
     fontSize: "12px"
     fontWeight: 400
+    lineHeight: "16px"
   mono-data:
     fontFamily: "'Cascadia Code', 'Cascadia Mono', Consolas, ui-monospace, 'SF Mono', monospace"
     fontSize: "12px"
     fontWeight: 400
+    lineHeight: "16px"
     fontFeature: "tnum"
   mono-figure:
     fontFamily: "'Cascadia Code', 'Cascadia Mono', Consolas, ui-monospace, 'SF Mono', monospace"
-    fontSize: "24px"
+    fontSize: "20px"
     fontWeight: 400
-    lineHeight: 1.2
+    lineHeight: "28px"
+    letterSpacing: "-0.02em"
     fontFeature: "tnum"
   mono-symbol:
     fontFamily: "'Cascadia Code', 'Cascadia Mono', Consolas, ui-monospace, 'SF Mono', monospace"
@@ -110,146 +131,160 @@ typography:
     fontWeight: 600
     lineHeight: 1
   brand:
-    fontFamily: "'Segoe UI Variable Display', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif"
-    fontSize: "15px"
+    fontFamily: "'Segoe UI Variable Display', 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif"
+    fontSize: "16px"
     fontWeight: 600
-    lineHeight: 1
+    lineHeight: "24px"
     letterSpacing: "0.04em"
 rounded:
-  xs: "6px"
+  rod: "1px"
   sm: "8px"
-  md: "10px"
-  lg: "12px"
-  card: "14px"
-  bubble: "20px"
-  composer: "22px"
+  md: "12px"
+  lg: "20px"
+  tail: "6px"
   pill: "999px"
   atom: "50%"
 spacing:
-  2xs: "2px"
-  xs: "4px"
-  sm: "8px"
-  md: "12px"
-  lg: "16px"
-  gap: "20px"
-  xl: "24px"
-  2xl: "32px"
+  s-1: "4px"
+  s-2: "8px"
+  s-3: "12px"
+  s-4: "16px"
+  s-5: "24px"
+  s-6: "32px"
+  s-7: "48px"
+  s-8: "64px"
 components:
   button-send:
-    backgroundColor: "{colors.teal-strong}"
-    textColor: "{colors.on-teal}"
+    backgroundColor: "{colors.accent-mid}"
+    textColor: "{colors.on-accent}"
     rounded: "{rounded.atom}"
-    size: "34px"
-  button-send-hover:
-    backgroundColor: "{colors.teal-rim}"
-  button-approve:
-    backgroundColor: "{colors.teal-strong}"
-    textColor: "{colors.on-teal}"
-    rounded: "{rounded.sm}"
-    height: "30px"
-    padding: "0 12px"
-    typography: "{typography.label}"
-  button-secondary:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-1}"
-    rounded: "{rounded.sm}"
-    height: "30px"
-    padding: "0 12px"
-    typography: "{typography.label}"
-  button-secondary-hover:
-    backgroundColor: "{colors.sunk}"
-  button-deny:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.danger}"
-    rounded: "{rounded.sm}"
-    height: "30px"
-    padding: "0 12px"
-  button-ghost:
-    textColor: "{colors.ink-2}"
-    rounded: "{rounded.md}"
-    height: "30px"
-    padding: "0 12px"
-  tool-button:
-    textColor: "{colors.ink-3}"
-    rounded: "{rounded.md}"
     size: "32px"
+  button-send-hover:
+    backgroundColor: "{colors.accent}"
+  button-stop:
+    backgroundColor: "{colors.text}"
+    textColor: "{colors.bg}"
+    rounded: "{rounded.atom}"
+    size: "32px"
+  button-primary:
+    backgroundColor: "{colors.accent}"
+    textColor: "{colors.on-accent}"
+    rounded: "{rounded.sm}"
+    height: "32px"
+    padding: "0 24px"
+  button-primary-hover:
+    backgroundColor: "{colors.accent-mid}"
+  button-card:
+    backgroundColor: "{colors.surface-2}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.sm}"
+    height: "28px"
+    padding: "0 12px"
+    typography: "{typography.caption}"
+  button-card-hover:
+    backgroundColor: "{colors.surface-3}"
+  tool-button:
+    textColor: "{colors.text-3}"
+    rounded: "{rounded.sm}"
+    size: "32px"
+  tool-button-hover:
+    backgroundColor: "{colors.surface-3}"
+    textColor: "{colors.text-2}"
   tool-button-on:
-    backgroundColor: "{colors.teal-soft}"
-    textColor: "{colors.teal-text}"
+    backgroundColor: "{colors.accent-wash}"
+    textColor: "{colors.accent}"
   starter:
-    textColor: "{colors.ink-2}"
+    textColor: "{colors.text-2}"
+    typography: "{typography.label}"
     rounded: "{rounded.pill}"
     height: "32px"
     padding: "0 14px"
   starter-hover:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-1}"
+    backgroundColor: "{colors.surface-2}"
+    textColor: "{colors.text}"
   composer:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-1}"
-    rounded: "{rounded.composer}"
-    padding: "12px 10px 8px 16px"
-    width: "min(720px, calc(100% - 48px))"
+    backgroundColor: "{colors.surface-2}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.lg}"
+    padding: "12px"
   bubble-user:
     backgroundColor: "{colors.bubble}"
-    textColor: "{colors.ink-1}"
-    padding: "10px 16px"
+    textColor: "{colors.text}"
+    typography: "{typography.body-reply}"
+    padding: "8px 16px"
   card-tool:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-1}"
-    rounded: "{rounded.lg}"
-  card-approval-head:
-    backgroundColor: "{colors.teal-soft}"
-    textColor: "{colors.ink-1}"
-    height: "40px"
+    backgroundColor: "{colors.surface-1}"
+    textColor: "{colors.text-2}"
+    rounded: "{rounded.md}"
+  card-approval:
+    backgroundColor: "{colors.accent-wash}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.md}"
   card-artifact:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-1}"
-    rounded: "{rounded.card}"
-    padding: "10px 14px 10px 10px"
+    backgroundColor: "{colors.surface-2}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.md}"
+    padding: "8px 16px 8px 8px"
   element-tile:
-    backgroundColor: "{colors.teal-soft}"
-    textColor: "{colors.teal-text}"
+    backgroundColor: "{colors.accent-wash}"
+    textColor: "{colors.accent}"
     typography: "{typography.mono-symbol}"
     rounded: "{rounded.sm}"
     size: "40px"
-  readout:
-    textColor: "{colors.ink-1}"
-    typography: "{typography.mono-figure}"
-    padding: "0 16px"
-  button-close:
-    textColor: "{colors.ink-3}"
-    rounded: "{rounded.xs}"
-    size: "24px"
-  button-close-hover:
-    backgroundColor: "{colors.line}"
-    textColor: "{colors.ink-1}"
-  nav-item:
-    textColor: "{colors.rail-ink-1}"
+  dialog-gate:
+    backgroundColor: "{colors.surface-2}"
+    textColor: "{colors.text}"
     rounded: "{rounded.md}"
-    height: "36px"
+    padding: "24px"
+    width: "min(560px, calc(100vw - 32px))"
+  menu:
+    backgroundColor: "{colors.surface-2}"
+    rounded: "{rounded.md}"
+    padding: "4px"
+    width: "320px"
+  nav-item:
+    textColor: "{colors.rail-ink-2}"
+    typography: "{typography.body}"
+    rounded: "{rounded.sm}"
+    height: "32px"
     padding: "0 8px"
   nav-item-hover:
     backgroundColor: "{colors.rail-hover}"
+    textColor: "{colors.rail-ink-1}"
   nav-item-active:
     backgroundColor: "{colors.rail-active}"
-  tab:
-    textColor: "{colors.ink-2}"
-    rounded: "{rounded.sm}"
-    height: "30px"
-  tab-selected:
-    backgroundColor: "{colors.sunk-2}"
-    textColor: "{colors.ink-1}"
-  menu:
-    backgroundColor: "{colors.surface}"
-    rounded: "{rounded.card}"
-    padding: "6px"
+    textColor: "{colors.rail-ink-1}"
   input-search-rail:
     backgroundColor: "{colors.rail-hover}"
     textColor: "{colors.rail-ink-1}"
     rounded: "{rounded.md}"
-    height: "34px"
-    padding: "0 10px"
+    height: "32px"
+    padding: "0 12px"
+  target-switch-on:
+    backgroundColor: "{colors.rail-atom}"
+    textColor: "{colors.rail-on-atom}"
+    rounded: "{rounded.sm}"
+  tab:
+    textColor: "{colors.text-2}"
+    typography: "{typography.label}"
+    rounded: "{rounded.sm}"
+    height: "32px"
+  tab-selected:
+    backgroundColor: "{colors.surface-3}"
+    textColor: "{colors.text}"
+  button-close:
+    textColor: "{colors.text-3}"
+    rounded: "{rounded.sm}"
+    size: "28px"
+  button-close-hover:
+    backgroundColor: "{colors.surface-4}"
+    textColor: "{colors.text}"
+  machine-fact:
+    textColor: "{colors.text-2}"
+    typography: "{typography.caption}"
+    rounded: "{rounded.pill}"
+    height: "24px"
+    padding: "0 12px"
 ---
 
 # Design System: JARVIS
@@ -258,53 +293,55 @@ components:
 
 **Creative North Star: "The Molecular Model Kit"**
 
-JARVIS's work is a structure being assembled in front of its owner. The ground is lab-white with a cool teal cast, the sidebar rail is carbon in both themes, JARVIS itself is teal plastic, and everything that connects one thing to another is a pale grey rod. The signature object is the core: a 48-atom ball-and-stick cage on a Fibonacci sphere that turns slowly, swells with streamed speech, breathes while thinking and spins when dragged. The kit also has a periodic table: each artifact type is an element tile with a two-letter symbol. The same vocabulary carries into the conversation: every reply, action and system note of a turn is an atom, and consecutive ones are bonded by a vertical rod into a step chain. Services at the foot of the rail are atoms on one horizontal bond.
+JARVIS's work is a structure being assembled in front of its owner. The ground is lab-white with a cool teal cast, the sidebar rail is carbon in both themes, JARVIS itself is teal plastic, and everything that connects one thing to another is a pale grey rod. The signature object is the node mesh in kit mode: 48 atoms on a Fibonacci sphere, each bonded to its three nearest neighbours, drawn as flat discs and round-capped rods. It is the hero on the empty chat, the brand mark in the rail, and the small atom that sits on the newest reply and spins while a reply or a step runs. The kit also has a periodic table: each artifact type is an element tile with a two-letter symbol. The same vocabulary carries into the conversation: every reply, step row, action and error of a turn is an atom, and consecutive ones are bonded by a vertical rod into a step chain. Services at the foot of the rail are atoms on one horizontal bond.
 
-The system is calm and dense in the way a desktop tool is dense: 14 px interface text, 15 px reading text, quiet 1 px lines, flat surfaces, one colour that means "JARVIS" and one that means "wrong". Depth comes from tone (ground, surface, sunk) rather than from shadows; only things that float over content cast one. Atoms are flat discs, never shaded spheres: a fill, a darker rim and a small white crescent on the upper left.
+The system is calm and dense the way a desktop tool is dense: 14 px interface text, 16 px reading text, quiet 1 px lines, flat surfaces, one colour that means "JARVIS" and one that means "wrong". Depth comes from tone (ground, the four surface steps) rather than from shadows; only things that float over content cast one. Atoms are flat discs, never shaded spheres: a fill, a darker rim and a small white crescent on the upper left.
 
-It rejects the grey chat column with a logo on top, and the cyan hologram on black that the old HUD used.
+The nodes design is a skin over a shared component layer: its own token values (`src/nodes/tokens.css`) under the same names the shared styles read (`src/ui/*.css`), then one layer (`src/nodes/nodes.css`) that adds the kit's parts and removes what the kit refuses. The phone app (`mobile.html`) uses the same tokens. It rejects the grey chat column with a logo on top, and the cyan hologram on black that the old HUD used.
 
 **Key Characteristics:**
 - Lab-white ground (light) or deep carbon-teal ground (dark); the rail is carbon in both.
-- One voice colour, teal, for JARVIS's atoms, the primary action, focus, the current item and the middle load level.
-- Red only for errors, denials and the high load level.
+- One voice colour, teal, in three steps, for JARVIS's atoms, the primary action, focus, the current item and the busy level.
+- Red only for errors, denials, a service that is down and the high load level.
 - Flat atoms (fill, rim, crescent) and round-capped grey rods as the recurring motif.
 - Segoe UI Variable for text, Cascadia Code for every number, path, model id and element symbol.
-- Motion is "arrive and bond": a scale-in for the atom, a draw-in for its rod. On the empty page only the core moves by itself; greeting, starters and machine line are still.
+- Motion is "arrive and bond": a scale-in for the atom, a draw-in for its rod. On the empty page only the mesh moves.
 
 ## Colors
 
 A cool, near-neutral lab palette with teal plastic for JARVIS and red plastic for faults; everything else is grey.
 
 ### Primary
-- **Model-kit teal** (teal / teal-dark): JARVIS's atoms in the step chain and the core's front atoms, the 1 px inset ring of an element tile, the focus ring, the selected tab's atom, the active model's atom, borders of an approval card and a hovered artifact card, the middle level (`data-level="mid"`) of bars and sparklines, the resize handle under the pointer.
-- **Pressed teal** (teal-strong): filled controls that carry white text: send, approve, the recording mic, badges. On dark it equals teal-dark and takes dark ink (on-teal-dark).
-- **Teal ink** (teal-text / teal-text-dark): every piece of small teal text (links, keyword highlighting, "Needs approval", task in progress, palette match, the side-question label). Reaches 4.9:1 or better on every light surface.
-- **Teal wash** (teal-soft): the fill of an element tile, the pressed state of composer toggles, the approval card's head, the highlighted palette row, the permission chip, the active voice wave.
-- **Teal rim** (teal-rim): the darker ring of a teal atom, and the hover state of filled teal buttons.
-- **Rail teal** (rail-teal, rail-atom, rail-atom-rim): the same plastic tuned for the carbon rail: the new-chat atom, the current chat's atom, a service that is up, the icon of the active nav item, the rail search focus border.
+- **Teal ink** (accent / accent-dark): the step that carries small teal text (5.1:1 on the ground): links, the element symbol, the pressed tool button's icon, the selected nav or tab mark in shared styles, the focus outline, the filled primary button in the approval dialog and the phone app. In dark it brightens to the lightest teal.
+- **Model-kit teal** (accent-mid / accent-mid-dark): the plastic itself. Reply atoms, a finished step's atom, the hero mesh's front atoms (`--core-atom`), the send button, the inset ring of an element tile, the focused composer border, the selected tab's atom, the approval dialog border, a hovered artifact card's border, the recording mic, the context ring at the busy level, checkboxes.
+- **Idle teal** (accent-dim): the track of a running chat's spinner, and idle strokes; never text.
+- **Teal wash** (accent-wash): the fill of an element tile, a pressed tool button, a waiting approval card, text selection.
+- **Atom rim** (atom-rim): the darker ring of every teal atom, and the hero mesh's rim (`--core-rim`).
+- **Busy teal** (warm): the kit has no amber, so the shared "warm" role maps to a deeper teal: an approval card's border and "Needs approval" state, a queued step, a waiting chat, the mic while listening, bars and traces past 70 %.
+- **Rail teal** (rail-teal, rail-atom, rail-atom-rim, rail-on-atom): the same plastic tuned for the carbon rail: the new-chat atom, the current chat's atom, a running or unseen chat, a service that is up, the icon of the active nav item, the pressed PC/Mac segment (with rail-on-atom ink), the rail search focus border and the rail's focus outline.
 
 ### Secondary
-- **Fault red** (danger / danger-dark, danger-soft, danger-rim, rail-danger): error lines and their atoms, a failed or denied action's atom and card border, the Deny button text, a cut network link, a service that is down, deleted diff lines (danger-soft), and the high load level.
+- **Fault red** (danger / danger-dark, danger-wash, rail-danger, rail-danger-rim): error lines and their atoms, a failed or denied step, a denied approval card's border, Deny on hover, a cut network link, a service that is down (drawn as a diamond, not only a colour), deleted diff lines, and the high load level (past 90 %).
+
+### Tertiary
+- **Done green** (ok / ok-dark, ok-wash): finished and added things only: added diff lines and their counts, new or written files, a loaded model's dot, a finished background job, an approved card's border. Muted, never a fill larger than a row tint.
 
 ### Neutral
-- **Lab white** (ground): the page ground, the inside of hollow atoms, tool output wells, system tiles and model cards.
-- **Specimen white** (surface): cards, composer, menus, the workspace, code blocks, the code page columns.
-- **Bench grey** (sunk, sunk-2): hover fills, inline code, reasoning bodies, segmented-control tracks, bar tracks; sunk-2 is the selected tab.
-- **Bubble grey** (bubble): the owner's own messages.
-- **Hairline** (line, line-strong): 1 px dividers and card borders; line-strong for interactive outlines (composer, starters, secondary buttons, menus).
-- **Carbon ink** (ink-1, ink-2, ink-3): primary text, secondary text and quiet text (meta, placeholders, empty states). ink-3 still reaches 4.78:1 on the darkest light surface.
-- **Rod grey** (rod, rod-atom, rod-rim): bonds of the step chain, blockquote rules, the hovered starter border, the focused composer border, and the grey atom of a tool step.
-- **Added green** (ok-soft): the background of added diff lines, and nowhere else.
-- **Carbon rail** (rail, rail-hover, rail-active, rail-line, rail-ink-1..3, rail-rod): the sidebar, in both themes; dark mode deepens it to rail-dark.
-- **Scrim** (scrim / scrim-dark): the dimming layer behind the rail when it opens as a sheet in a narrow window, and nowhere else.
+- **Lab white** (bg): the page ground, the inside of hollow atoms, tool output wells.
+- **Surface steps** (surface-1 to surface-4): surface-2 is specimen white (composer, cards, menus, dialogs); surface-1 is the sunk well (tool cards, code blocks, reasoning, blockquotes); surface-3 is hover and the selected tab; surface-4 is segmented-control tracks, inline code and badges.
+- **Bubble grey** (bubble): the owner's own messages, on desktop and phone.
+- **Hairline** (border, border-strong): 1 px dividers and card borders; border-strong for interactive outlines (composer, starters, card buttons, menus, artifact and tool cards).
+- **Carbon ink** (text, text-2, text-3): primary, secondary and quiet text (meta, placeholders, empty states). Each reaches 4.5:1 on bg and surface-1 to surface-3.
+- **Rod grey** (rod, rod-atom, rod-rim): bonds of the step chain and step lists, the grey atom of a step row or action, an idle tab's atom, the context ring at rest, a hovered starter's border; the hero mesh's back atoms and rods (`--core-back`, `--core-rod`) step from these towards the ground.
+- **Carbon rail** (rail, rail-hover, rail-active, rail-line, rail-ink-1..3, rail-rod): the sidebar, in both themes; dark mode deepens it.
+- **Scrim** (scrim / scrim-dark): the backdrop behind the approval dialog, and nowhere else.
 
 ### Named Rules
-**The One Plastic Rule.** Teal means JARVIS, the action you are about to take, or where you are. It never decorates a section, a heading or a chart series that carries no state.
+**The One Plastic Rule.** Teal means JARVIS, the action you are about to take, where you are, or that something is busy. It never decorates a section, a heading or a title (page titles carry no accent bar).
 
-**The Red Atom Rule.** Red is for something that went wrong or was refused, and for the high load level. A warning that is only "busy" is teal, not red.
+**The Red Atom Rule.** Red is for something that went wrong or was refused, and for the high load level. A state that is only "busy" or "waiting" is teal, not red, and never amber.
 
-**The Grey Rod Rule.** Bonds, idle bars and sparklines are grey. A bar or sparkline turns teal at the middle level and red at the high level; below that it stays grey.
+**The Grey Rod Rule.** Bonds are grey. The rail's live readout bars are grey until 70 %, teal past it and red past 90 %.
 
 **The Carbon Rail Rule.** The rail is carbon in light and dark alike and uses its own rail-* tokens; main-area tokens are never used on the rail.
 
@@ -314,135 +351,139 @@ A cool, near-neutral lab palette with teal plastic for JARVIS and red plastic fo
 **Body Font:** Segoe UI Variable Text (with Segoe UI, system-ui, -apple-system, Helvetica Neue)
 **Label/Mono Font:** Cascadia Code (with Cascadia Mono, Consolas, ui-monospace, SF Mono)
 
-**Character:** Windows' own system faces, so the window feels native and nothing is downloaded. Cascadia is the "element symbol" voice of the kit: numbers, paths, model ids, element symbols and timings, always with tabular figures.
+**Character:** Windows' own system faces, so the window feels native and nothing is downloaded. Replies read in the interface face too (the shared serif slot is pointed at Segoe). Cascadia is the "element symbol" voice of the kit: numbers, paths, model ids, element symbols and timings, always with tabular figures.
 
 ### Hierarchy
-- **Display** (400, 32 px, 1.15, -0.015em): the greeting under the core and page titles (Artifacts, Settings). Drops to 24 px when the window is 700 px tall or less.
-- **Headline** (600, 18 px, 1.3): second-level headings inside replies; first-level reply headings are 22 px.
-- **Title** (600, 15 px): settings section heads, artifact titles, the artifact viewer title; 14 px at 600 for the column title, System section heads and a settings row's label; 13 px at 600 for code page panel heads and System reading names.
-- **Body reply** (400, 15 px, 1.7): assistant replies and documents, at most 760 px wide in the transcript and 72ch in documents. The owner's own messages are 15 px at 1.55.
-- **Body** (400, 14 px, 1.5): the interface default: nav items, card titles, menus.
-- **Label** (500, 13 px): buttons, chips, tabs, tool card heads, search, palette rows.
-- **Caption** (400, 12 px): meta under replies, chat snippets, tile subtitles, the rail's "Recents" heading (600, sentence case).
-- **Mono data** (Cascadia, 12 to 13 px, tabular): timestamps, token meters, diff and output text, file trees, readouts. **Mono figure** (Cascadia, 24 px, never wraps) for the three big system readings. **Mono symbol** (Cascadia 600, 15 px, line-height 1) for the two-letter symbol on an element tile.
+The scale is 12, 13, 14, 16 and 20 px from the tokens, plus 32 px for the greeting and page titles; nothing is smaller than 12 px.
+- **Display** (400, 32 px, 1.15, -0.015em, Display face): the greeting under the hero mesh and page titles (Artifacts, Settings, Projects and the rest).
+- **Headline** (600, 20 px, 28 px): first- and second-level headings inside replies.
+- **Title** (600, 16 px, 24 px): settings card heads, third-level reply headings, the phone app's bar title; 14 px at 600 for the column title, card titles and the usage card title.
+- **Body reply** (400, 16 px, 27 px): assistant replies, at most 760 px wide. The owner's own messages are 16 px at 24 px.
+- **Body** (400, 14 px, 20 px): the interface default: nav items, settings rows, menus.
+- **Label** (400, 13 px, 20 px): starters, tabs, tool cards, step lines, explanations under settings.
+- **Caption** (12 px, 16 px): meta under replies, card buttons (600), rail list heads (600), service names, readout labels.
+- **Mono data** (Cascadia, 12 to 13 px, tabular): timestamps, token meters, diff and output text, code, readouts. **Mono figure** (Cascadia, 20 px, -0.02em, never wraps) for System readings and usage figures. **Mono symbol** (Cascadia 600, 15 px, line-height 1) for the two-letter symbol on an element tile.
+- **Brand** (Display 600, 16 px, 0.04em): the JARVIS wordmark beside the mesh logo in the rail.
 
 ### Named Rules
 **The Element Symbol Rule.** Every number, path, command, model id and element symbol is set in Cascadia Code with tabular figures; prose and controls never are. A type's readable word (Chart, Page, Document) is set in Segoe on the line under the title.
 
-**The Sentence Case Rule.** All labels, headings and buttons are sentence case. No uppercase labels, no letter-spaced small caps. The JARVIS wordmark is the one name set in capitals.
+**The Sentence Case Rule.** All labels, headings and buttons are sentence case. No uppercase labels, no letter-spaced small caps; the nodes layer resets the shared styles that had them (dialog field names, usage labels, phone list heads). The JARVIS wordmark is the one name set in capitals.
 
 ## Layout
 
-A two-column frame: a 256 px carbon rail and a main column with a 48 px title bar. The chat page splits into the conversation and an optional workspace (46 % wide by default) separated by a 9 px drag handle; the workspace stays closed until something opens in it. The code page is five tracks: files (248 px), handle, the same conversation, handle, tasks and changes (304 px); the right column hides under 1280 px.
+A two-column frame: a 272 px carbon rail (hidden with Ctrl+\) and a main column under a 40 px strip. The chat page splits into the conversation and an optional workspace (44 % wide by default, at least 400 px each side) separated by an 8 px drag track; the workspace stays closed until something opens in it, and under 1100 px wide it covers the conversation instead of sharing the row. The Code page reuses the same conversation, with its usage card and changes beside it.
 
-When the conversation is empty, the core, greeting, composer, starters and one machine line stack together in the vertical middle; only the core moves, and nothing in the group rises or fades in. Once the first message lands, the transcript fills the column (gap 20 px between lines, content at most 760 px wide, centred) and the composer sits at the foot, 720 px wide at most with a 24 px margin each side.
+When the conversation is empty, the hero mesh, greeting, one line about the machine, the composer, its control row, the starters and the machine facts stack in the vertical middle. Once the first message lands, the transcript fills the column (760 px measure, 32 px gutter) and the composer sits at the foot.
 
-Spacing runs on a 4 px base with 2 px half steps for tight insides (2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32). Page content (Artifacts, Settings) sits in an 880 px column with 32 px padding.
+Spacing runs on a 4 px base (4, 8, 12, 16, 24, 32, 48, 64); control heights are 28, 32 and 40 px, and 44 px on the phone. Pages (Settings, Artifacts, Projects, Accounts, Scheduled) sit in a 760 px column; cards pad 16 px; the workspace pads 24 px.
 
-Responsive: under 1024 px wide the rail starts hidden and opens as a sheet over the content with the floating shadow and the scrim behind it; a click on the scrim or Escape closes it. At 700 px tall or less the core shrinks to 120 px and the greeting to 24 px. The composer is a size container: under 520 px it drops the token meter, under 420 px it shortens the model name and drops the separator.
+Responsive: the composer is a size container (under 560 px it drops the context meter and the target tag, under 420 px the link and web toggles). Under 780 px tall the rail drops its live readout; under 660 px tall the services shrink to their atoms (names stay in the tooltip and for screen readers); under 640 px tall nav rows drop to 28 px. The System panel reflows from one to two to twelve columns with its container. The phone app is one fixed screen that follows the visual viewport, with 44 px targets and the composer riding the keyboard.
 
 ## Elevation & Depth
 
-Flat by default; depth is tonal. Ground, surface and sunk do the layering, and 1 px hairlines separate regions. Two shadows exist, both soft and neutral, never coloured. The one dimming layer is the scrim behind the narrow rail sheet.
+Flat by default; depth is tonal. The ground and the four surface steps do the layering, and 1 px hairlines separate regions. Shadows are soft and neutral, never coloured. The one dimming layer is the scrim behind the approval dialog.
 
 ### Shadow Vocabulary
-- **Rest** (`0 1px 2px rgba(19,24,25,.06)`; dark `0 1px 2px rgba(0,0,0,.4)`): the composer at rest and the selected segment of a segmented control.
-- **Float** (`0 2px 6px rgba(19,24,25,.06), 0 12px 32px rgba(19,24,25,.1)`; dark `0 2px 8px rgba(0,0,0,.4), 0 16px 40px rgba(0,0,0,.45)`): menus, the command palette, floating code-page panels, the context menu, the rail as a sheet, and the composer while focused.
+- **Rest** (`0 1px 2px rgba(19, 24, 25, 0.05)`): the composer, at rest and while focused (focus changes its border, not its shadow).
+- **Segment** (`0 1px 2px rgba(0, 0, 0, 0.15)`): the chosen segment of a segmented control on the main surface.
+- **Float** (`0 2px 6px rgba(19,24,25,.06), 0 12px 32px rgba(19,24,25,.1)`; dark `0 2px 8px rgba(0,0,0,.4), 0 16px 40px rgba(0,0,0,.45)`): menus, the command palette, the context menu, floating code-page panels, the toast and the approval dialog.
 
 ### Named Rules
-**The Float Only Rule.** A shadow means "this is above the page": a menu, a sheet, a floating panel, the focused composer. Resting cards, tiles and tool steps have a border and no shadow.
+**The Float Only Rule.** A large shadow means "this is above the page": a menu, a dialog, a floating panel, a toast. Resting cards, tiles, tool steps and the rail's controls have a border or a tone and no shadow.
 
 ## Shapes
 
-Gently rounded rectangles for containers and perfect circles for everything that is an atom. Corners step with size: 6 px for small inline buttons, close buttons and the focus ring, 8 px for tabs, rows, action buttons and element tiles, 10 px for nav items, tool buttons and inset wells, 12 px for code blocks and tool cards, 14 px for cards, menus and tiles, 22 px for the composer. Starters, chips and badges are pills. The owner's bubble is 20 px with a 6 px tail corner at the bottom right.
+Gently rounded rectangles for containers and perfect circles for everything that is an atom. Three corner steps carry almost everything: 8 px for buttons, rows, tabs, nav items and element tiles; 12 px for cards, tool cards, code blocks, menus, the dialog and the rail search; 20 px for the composer and the owner's bubble, whose bottom-right corner is a 6 px tail. Starters, machine facts and the target pill are pills. Corners of 1 or 2 px exist only on the 2 px bond rods (and the 4 px bar tracks they echo).
 
-The atom recipe is the recurring silhouette: a circle filled with the plastic colour, an inset ring 1.25 to 1.5 px in the darker rim colour, and an inset 1 to 1.5 px offset of translucent white on the upper left for the crescent. A hollow atom (ground fill, 2 px ring) means pending or waiting: the reply being written, an approval not yet answered, a system note, a service of unknown state.
+The atom recipe is the recurring silhouette: a circle in the plastic colour, an inset ring 1 to 1.5 px in the darker rim colour, and an inset 1 to 1.5 px offset of translucent white on the upper left for the crescent. A hollow atom (ground fill, 2 px teal ring) means pending: an approval not yet answered, a queued or running step, a waiting chat. A grey ring on the rail's ground means a service of unknown state; a down service is a small red diamond.
 
-Bonds are 2 px rods with round caps: vertical in the step chain (from atom centre to the next atom), horizontal in the services strip. Inside the core bonds follow the sphere; outside it they run straight.
+Bonds are 2 px rods with round caps: vertical in the step chain (from atom centre to the next atom) and inside a step list, horizontal in the services strip. Inside the mesh, bonds follow the sphere; outside it they run straight.
 
 ### Named Rules
-**The Flat Atom Rule.** Atoms are fill, rim and crescent; never a radial gradient, a drop shadow or a glow.
+**The Flat Atom Rule.** Atoms are fill, rim and crescent; never a radial gradient, a drop shadow or a glow. The mesh shows depth in four flat tone steps.
 
-**The Straight Bond Rule.** Outside the core, a bond is straight and axis-aligned: vertical between steps, horizontal between services.
+**The Straight Bond Rule.** Outside the mesh, a bond is straight and axis-aligned: vertical between steps, horizontal between services.
 
 ## Components
 
 ### Buttons
 Quiet, compact, and filled only when they are the next action.
-- **Shape:** 8 px corners for action buttons (30 px tall), 10 px for tool and ghost buttons, a full circle for send and stop (34 px).
-- **Primary:** send and approve are pressed teal with white text (dark ink on dark); hover darkens to the teal rim; press scales to 0.92 (send) or 0.97 (approve).
-- **Secondary:** specimen white with a line-strong border and ink-1 text; hover fills bench grey.
-- **Deny:** the secondary button with fault-red text.
-- **Ghost / tool:** transparent, ink-3 icon or ink-2 text, bench-grey hover; a toggled tool button turns teal wash with teal ink.
-- **Stop:** replaces send while JARVIS works; ink-1 fill with ground-coloured icon.
-- **Close:** a 24 px transparent square with 6 px corners holding the icon set's close mark at 14 px in ink-3; hover fills hairline grey and turns ink-1. Used on workspace tabs, the artifact viewer and floating panels; never a text glyph.
+- **Send:** a 32 px model-kit teal circle with a white arrow; hover deepens to teal ink; press scales to 0.94.
+- **Stop:** replaces send while JARVIS works: an ink circle with a ground-coloured icon and no looping ring.
+- **Primary (dialog, phone):** teal ink fill with white text, 8 px corners (12 px on the phone), 32 px tall with 24 px sides in the approval dialog; hover goes to model-kit teal.
+- **Card buttons:** the approval card's Allow and Deny are equal 28 px outline buttons (specimen white, border-strong, 12 px at 600); hover fills surface-3, and Deny turns red on hover.
+- **Tool buttons:** 32 px transparent squares with an 18 px line icon in text-3; hover surface-3; pressed teal wash with a teal-ink icon; a cut link turns danger wash with a red icon; the Think toggle is one of them.
+- **Close:** a 28 px transparent square with the icon set's close mark in text-3; hover surface-4 and text. Never a text glyph.
 
 ### Chips
-- **Starters:** pill outlines in line-strong with ink-2 text; hover lifts to specimen white with a rod border.
-- **Model chip:** a transparent 32 px button with the model name and a chevron that turns 180 degrees when open.
-- **Permission chip:** a teal-wash pill with teal ink, shown only outside normal mode.
-- **Attachment chips:** ground-filled pills with a line-strong border; red border and wash on error.
+- **Starters:** pill outlines in border-strong with text-2, 32 px tall; hover lifts to specimen white with a rod border; press scales to 0.97. Hidden once the chat has lines and on the Code page.
+- **Machine facts:** 24 px pill outlines in border on a transparent ground, quiet text with the value in text.
+- **Model chip:** a transparent 32 px button with the model name after a small dot (green when loaded, busy teal while loading).
 
 ### Cards / Containers
-- **Corner Style:** 12 px (tool cards, code blocks), 14 px (artifact cards, tiles, menus).
-- **Background:** specimen white; system tiles and model cards use lab white so they sit on the workspace.
+- **Corner Style:** 12 px.
+- **Background:** specimen white for artifact cards, settings cards, menus and the dialog; the sunk well for tool cards and code blocks.
 - **Shadow Strategy:** none at rest (see The Float Only Rule).
-- **Border:** 1 px line; 1 px line-strong on the artifact card, which turns teal on hover.
-- **Internal Padding:** 10 to 14 px.
-- **Artifact card and tile:** a 40 px element tile on the left spanning two lines; the title (14 px card, 15 px tile, 600) on the first, the type word in ink-2 followed by the state or date in ink-3 (12 px) on the second.
+- **Border:** 1 px border or border-strong.
+- **Internal Padding:** 8 to 16 px; settings cards 16 px.
+- **Artifact card and tile:** a 40 px element tile on the left spanning two lines; the title (14 px, 600) on the first, the type word in text-2 followed by the state or date in text-3 (12 px) on the second. Hover keeps specimen white and turns the border model-kit teal.
 
 ### Inputs / Fields
-- **Composer:** a 22 px rounded card in specimen white with a line-strong border and the rest shadow; on focus the border goes rod grey and the shadow floats. The textarea itself has no outline; the focus is the card.
-- **Rail search:** 34 px, 10 px corners, rail-hover fill, rail-line border that turns rail teal on focus.
-- **Focus ring (everywhere else):** 2 px solid teal, 2 px offset, 6 px corners.
+- **Composer:** a 20 px rounded specimen-white card with a border-strong edge and the rest shadow; on focus the border turns model-kit teal and nothing glows. The textarea itself has no outline; the focus is the card. Its control row sits under it.
+- **Context meter:** a 12 px ring: rod grey at rest, model-kit teal past 70 %, red past 90 %. No conic fill.
+- **Rail search:** 32 px, 12 px corners, rail-hover fill, rail-line border that turns rail teal on focus.
+- **Focus outline (everywhere else):** 2 px solid teal ink, 2 px offset; rail teal on the rail.
 
 ### Navigation
-- **Rail:** carbon, 12 px side padding. Nav items are 36 px rows with 18 px line icons in rail-ink-2; hover rail-hover, current rail-active with the icon in rail teal. Press scales to 0.985.
-- **New chat:** a nav row whose plus sits inside a rail-teal atom.
-- **Recents:** 32 px rows in rail-ink-2, one line each, titles ellipsized; each carries a 6 px dot on the left that becomes a rail-teal atom (scaled 1.35) for the current chat. Rename and Delete appear only on hover or focus.
-- **Workspace tabs:** 30 px, 8 px corners, each with an 8 px atom that is grey at rest and teal when selected; the selected tab fills sunk-2. Each ends in a close button (see Buttons).
+- **Rail:** carbon. The top row holds the sidebar toggle, the mesh logo (24 px) with the wordmark, and a chat/code segmented switch whose pressed icon is rail teal. Nav items are 32 px rows with 18 px line icons in rail-ink-3; hover rail-hover; current rail-active with the icon in rail teal; press scales to 0.985.
+- **New chat:** a nav row in rail-ink-1 at 600 whose plus sits inside a 24 px rail-teal atom.
+- **PC / Mac:** a segmented switch shown with the server on; the chosen computer is a rail-teal segment with carbon ink.
+- **Chats and folders:** 32 px rows in rail-ink-2; the current chat fills rail-active and carries an 8 px rail-teal atom. A running chat shows a stepped spinning ring (800 ms, eight steps), a waiting one a hollow teal ring, an unseen reply a filled atom.
+- **Foot:** the live readout (CPU, GPU, RAM: 12 px names, a 4 px bar, a mono value), the services molecule, then Settings.
+- **Workspace tabs:** 32 px, 8 px corners, 13 px; each carries an 8 px atom that is grey at rest and teal when selected; the selected tab fills surface-3. Each ends in a close button.
 
 ### Element tile (signature)
-An artifact's type drawn as a cell of the kit's periodic table: a 40 px square with 8 px corners, teal-wash fill, a 1 px inset teal ring, and a two-letter symbol (Ch chart, Tb table, Pg page, Dc document, Sv image, Dg diagram, Js, Ts, Py, Rs, Jn, Cs, Sh; otherwise the type's first two letters) in teal ink. The type word stays in the tile for screen readers but is visually hidden; sighted readers get it on the line under the title. A tile with no type yet shows an ink-3 ellipsis. The symbols come from one shared helper (src/core/artifact-symbols.js) so every surface draws the same table.
+An artifact's type drawn as a cell of the kit's periodic table: a 40 px square with 8 px corners, teal-wash fill, a 1 px inset model-kit teal ring, and a two-letter symbol in teal ink (Ch chart, Tb table, Pg page, Dc document and so on, from `src/core/artifact-symbols.js`). The type word stays in the tile for screen readers but is visually hidden; sighted readers get it on the line under the title. A tile with no type yet shows a quiet ellipsis.
 
 ### Step chain (signature)
-Every assistant reply, tool step, error and system note is a line with a 36 px left indent holding its atom: 16 px teal for a reply, 10 px grey for a tool step, red for an error or a failed or denied step, hollow teal for a reply being written or an approval awaiting an answer, hollow grey for a system note. When the next line is also part of the turn, a 2 px rod-grey bond runs from this atom to the next one. While JARVIS works, a 26 px live core replaces the newest reply's atom: the same 48-atom cage as the big core with its atoms drawn 1.8 times larger, so the object that lands is the object that flew.
+Every assistant reply, step row, action and error is a line with a 36 px left indent holding its atom: a 16 px teal atom for a reply, a 10 px grey one for a step row or action, red for an error or a failed or denied step, a 14 px hollow teal ring for an approval awaiting an answer or a queued step. When the next line is also part of the turn, a 2 px rod-grey bond runs from this atom down to the next one. Inside a step row, each step is an 8 px atom on its own vertical rod: grey while listed, hollow teal while running or queued, teal when done, red when failed or denied. The 24 px mesh replaces the atom of the newest reply (and of a running step row) and spins while it works, so JARVIS's mark sits on the end of the chain.
 
-### Approval card
-A tool card with a 1.5 px teal border and a 40 px teal-wash head showing "Needs approval" in teal ink; its first button (Allow once) is the pressed-teal primary, then a secondary, then Deny in red. Once answered it settles to a plain 1 px card.
+### Services molecule (signature)
+At the foot of the rail, one 12 px atom per service (LM Studio, Sensors, Voice, JARVIS server) on a single 2 px horizontal rod, the name under each in 12 px: a rail-teal atom when up, a grey ring when unknown, a small red diamond with red text when down. Settings lists the same services with the main-area atoms.
 
-### The core
-A canvas of 48 atoms on a Fibonacci sphere, each bonded to its three nearest neighbours, drawn at 168 px (120 px in short windows) above the greeting. Depth is shown in four flat tone steps: front atoms are teal with a teal rim and a crescent, back atoms and rods fade towards the ground in grey. It turns at 0.14 rad/s. Its swell and breath come only from the shared speech and thinking level: it breathes slowly while JARVIS thinks, swells up to 16 % and wobbles with speech, and holds its size while idle. It spins with momentum when dragged, and knocks the four atoms nearest a click outward on a spring. Colours come from the --core-* custom properties so the theme owns them.
+### The node mesh (kit mode)
+`<html data-mesh="kit">` makes `src/core/node-mesh.js` draw its shared simulation as the kit: 48 atoms on a Fibonacci sphere, each bonded to its three nearest neighbours, sorted by depth and shown in four flat tone steps; front atoms are teal with a rim and a short white highlight arc, back atoms and rods fade towards the ground in grey. Under 40 px it draws every other atom. Colours come from the `--core-*` tokens and repaint with the theme. The hero sits above the greeting at `clamp(48px, 24vh, 192px)`, turns about a tilted axis while on screen, opens with the letters typed in the composer, sends thin rod-grey rings from a click, and spins with a fling when dragged. The brand logo is a still picture of it; the reply mesh moves only while a reply or step runs, then rests as a picture.
 
-### System readouts
-The three headline readings (processor, graphics, memory) sit in one unboxed row of three equal columns, divided by 1 px hairlines and closed by a hairline below; no tile, no fill. Each column is a 13 px name in ink-2, a 24 px Cascadia figure that never wraps, a 12 px subtitle in ink-3, and a 24 px trace: a 1.5 px line only, no area, ink-3 until the middle level (teal) and the high level (red). Bars are 6 px (4 px on the rail) with rounded ends on a bench-grey track, coloured by the same levels. Fills animate with a 600 ms ease-out scale. Model cards stay lab-white 14 px cards.
+### Approval
+In the conversation, an approval is a tool card with a busy-teal border and teal-wash fill, "Needs approval" in busy teal at 600, and equal card buttons; once answered it settles to the sunk well with a green (approved) or red (denied) border. Through the server it is a 560 px dialog: specimen white, 1.5 px model-kit teal border, 12 px corners, the float shadow, the scrim behind, and a teal-ink primary button.
 
-### Settings rows
-Each setting is a row with its label block on the left and its control on the right, wrapping onto two lines when narrow. The label block is a primary label (14 px, 600, ink-1) over a one-line explanation (13 px, ink-3). Choices are segmented controls: a bench-grey track with 3 px padding, the chosen segment in specimen white with the rest shadow.
+### System readings and usage
+Panel cards are specimen-white 12 px cards with 12 px quiet heads; figures are 20 px Cascadia; traces are a 1.5 px line with no area; bars are 4 px with rounded ends on a surface-3 track. The Code page's usage card uses sentence-case labels and draws its activity map as a grid of atoms.
 
-### Window controls
-46 px wide Windows buttons in the title bar; the close button's hover is Windows' own red (#c42b1c) with white, the one red outside the palette, kept to match the operating system.
+### Phone app
+`mobile.html` with `src/ui/mobile.css` and `src/nodes/mobile.css`: the same tokens, the hero mesh on the empty chat, the bubble with its tail, a teal-ink primary, a field whose focus is a model-kit teal border, sentence-case list heads, and a single press-in (0.97) for everything pressable.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** draw every atom with the flat recipe: fill, a 1.25 to 1.5 px inset rim in the darker shade, and a 1 to 1.5 px white crescent on the upper left (45 to 60 % white).
-- **Do** use teal-text, never teal, for teal text smaller than 18 px; keep teal for fills, rings, atoms and icons.
-- **Do** make every text colour reach 4.5:1 on ground, surface, sunk, sunk-2, bubble and teal-soft (and on rail, rail-hover and rail-active for rail text).
-- **Do** set numbers, paths, model ids and file types in Cascadia Code with tabular figures.
+- **Do** draw every atom with the flat recipe: fill, a 1 to 1.5 px inset rim in the darker shade, and a 1 to 1.5 px white crescent on the upper left.
+- **Do** use accent (teal ink), never accent-mid, for teal text; keep accent-mid for atoms, fills, borders and icons.
+- **Do** make every text colour reach 4.5:1 on bg, surface-1, surface-2 and surface-3 (and on rail, rail-hover and rail-active for rail text).
+- **Do** set numbers, paths, model ids and element symbols in Cascadia Code with tabular figures.
 - **Do** animate an arriving atom with a 280 ms ease-out scale from 0.4, and draw its bond in after it (320 ms, 60 ms later).
-- **Do** keep motion within 120 to 320 ms for state changes on the ease-out curve (cubic-bezier(0.16, 1, 0.3, 1)), and remove it entirely under reduced motion; the core then stops spinning and swelling but still turns when dragged.
-- **Do** hand the core over in one piece on the first message: its snapshot flies into the first reply's atom (560 ms) while the live core fades in over the same span.
-- **Do** use inline SVG line icons from the shared icon set, including the close mark at 14 px; never a text glyph.
+- **Do** keep state changes at 150 to 200 ms on the ease-out curve (cubic-bezier(0.16, 1, 0.3, 1)) and readout bars at 600 ms; under reduced motion remove the atom and bond animations and show the mesh as a still picture.
+- **Do** use inline SVG line icons from the shared icon set, including the close mark; never a text glyph.
 - **Do** draw an artifact's type as an element tile with its symbol from the shared helper, and keep the type word readable to screen readers.
+- **Do** keep the shared DOM ids and class names when styling the nodes design; change it through `src/nodes/tokens.css` and `src/nodes/nodes.css`, not the shared styles.
 
 ### Don't:
-- **Don't** use gradients anywhere, including radial shading on atoms or a ramp across the core; depth is stepped flat tones.
-- **Don't** add glow, coloured shadows or blur halos; the only shadows are the neutral rest and float shadows.
-- **Don't** colour a section, a heading or an idle chart: no per-section hues, no teal bars below the middle level.
-- **Don't** use green anywhere except the background of added diff lines.
+- **Don't** use gradients anywhere, including conic fills, radial shading on atoms or a ramp across the mesh; depth is stepped flat tones.
+- **Don't** add glow, focus halos, coloured shadows, blur or looping rings; focus is a teal line.
+- **Don't** colour a section, a heading or a page title: no per-section hues, no accent bar under a title.
+- **Don't** use amber; the busy and warning role is teal in this kit.
+- **Don't** use green except for finished and added things.
 - **Don't** use uppercase labels or letter-spaced small caps; everything is sentence case.
 - **Don't** load web fonts; Segoe UI Variable and Cascadia Code are system faces.
 - **Don't** give resting cards, tiles or tool steps a shadow.
-- **Don't** box the System readings in tiles or fill a trace with an area; one hairline-divided row and a line are enough.
-- **Don't** describe the classic warm-grey interface (classic.html) as this system; it is a separate, frozen layout.
+- **Don't** describe the classic interface (classic.html, mobile-classic.html, src/styles/tokens.css) as this system; it is a separate layout.
