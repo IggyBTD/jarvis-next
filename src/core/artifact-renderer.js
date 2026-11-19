@@ -40,7 +40,13 @@ const PAL = {
   dark: { bg: '#262624', fg: '#faf9f5', muted: '#c2c0b6', line: '#3a3936', ctl: '#30302e', ctlLine: '#54524d', accent: '#3fc1b0', err: '#ef7d78', sel: 'rgba(63,193,176,0.3)' },
   light: { bg: '#faf9f5', fg: '#141413', muted: '#4d4c46', line: '#e6e3d9', ctl: '#f0eee6', ctlLine: '#cfcbbe', accent: '#0b7f73', err: '#b3342f', sel: 'rgba(11,127,115,0.25)' },
 };
-const pal = () => PAL[isDark() ? 'dark' : 'light'];
+// An interface can restyle artifacts with --art-<key> custom properties on :root (the nodes
+// interface does); without them the palette above applies.
+const pal = () => {
+  const base = { ...PAL[isDark() ? 'dark' : 'light'], series: '#8b897f' };
+  const css = getComputedStyle(document.documentElement);
+  return Object.fromEntries(Object.entries(base).map(([k, v]) => [k, css.getPropertyValue(`--art-${k}`).trim() || v]));
+};
 const baseCss = () => {
   const p = pal();
   return `
@@ -137,9 +143,9 @@ export async function buildSrcdoc(type, content) {
             Chart.defaults.borderColor = '${pal().line}';
             // Datasets without their own colour use the app's bar grey (at least 3:1 on both themes);
             // Chart.js's own default, 10% black, all but disappears on the dark canvas.
-            Chart.defaults.backgroundColor = '#8b897f';
-            Chart.defaults.elements.line.borderColor = '#8b897f';
-            Chart.defaults.elements.point.backgroundColor = '#8b897f';
+            Chart.defaults.backgroundColor = '${pal().series}';
+            Chart.defaults.elements.line.borderColor = '${pal().series}';
+            Chart.defaults.elements.point.backgroundColor = '${pal().series}';
             Chart.defaults.font.family = 'Segoe UI, system-ui, sans-serif';
             spec.options = Object.assign({ responsive: true, maintainAspectRatio: false }, spec.options || {});
             new Chart(document.getElementById('c'), spec);

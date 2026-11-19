@@ -52,7 +52,7 @@ function checks() {
     await ctx.addInitScript(STUB);
     const p = await ctx.newPage();
     const errors = []; p.on('pageerror', (e) => errors.push(e.message));
-    await p.goto('http://localhost:5174/'); await p.waitForTimeout(1800);
+    await p.goto(process.env.URL || 'http://localhost:5174/'); await p.waitForTimeout(1800);
     const tag = `${theme}-${w}`;
     const shot = async (screen) => { await p.waitForTimeout(250); await p.screenshot({ path: `${OUT}/${tag}-${screen}.png` }); report[`${tag}-${screen}`] = await p.evaluate(checks); };
     const side = async (sel) => { if (await p.evaluate(() => document.body.classList.contains('side-off'))) { await p.click('#side-toggle'); await p.waitForTimeout(300); } await p.click(sel); };
@@ -65,10 +65,10 @@ function checks() {
     await send('do this agent job', 3500); await shot('06-agent-approval');
     const allow = p.locator('.tool-card.approval button', { hasText: 'Allow once' }).last(); if (await allow.count()) { await allow.click(); await p.waitForTimeout(1500); }
     await p.locator('.chat-line.user').last().hover(); await shot('07-agent-done');
-    await side('.mode-btn[data-page="code"]'); await p.waitForTimeout(600); await shot('08-code');
+    await side('button[data-page="code"]'); await p.waitForTimeout(600); await shot('08-code');
     await side('.nav-item[data-page="artifacts"]'); await shot('09-artifacts');
     await side('.nav-item[data-page="settings"]'); await shot('10-settings');
-    await side('.mode-btn[data-page="chat"]'); await p.waitForTimeout(300);
+    await side('button[data-page="chat"]'); await p.waitForTimeout(300);
     await p.focus('#hud-chat-input'); await p.keyboard.press('Shift+Tab'); await p.click('#think-btn');
     if (w >= 1024) await p.locator('.chat-row').nth(1).hover(); await shot('11-composer-states-and-list-hover');
     await p.keyboard.press('Shift+Tab'); await p.keyboard.press('Shift+Tab');

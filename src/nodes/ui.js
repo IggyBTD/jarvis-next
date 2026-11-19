@@ -60,9 +60,18 @@ function slideComposer() {
   if (Math.abs(dy) < 2) return;
   composer.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 420, easing: EASE });
 }
+// Where the first reply's atom is: the live core when it is there, else the reply line's own atom.
+function atomRect() {
+  if (liveCanvas.isConnected) return liveCanvas.getBoundingClientRect();
+  const line = out.querySelector(':scope > .chat-line.assistant');
+  if (!line) return null;
+  const r = line.getBoundingClientRect();
+  return { left: r.left + 4, top: r.top + 4, width: 16, height: 16 };
+}
 function coreToAtom() {
-  if (!before?.core?.width || !liveCanvas.isConnected) return;
-  const to = liveCanvas.getBoundingClientRect();
+  if (!before?.core?.width) return;
+  const to = atomRect();
+  if (!to || to.top < 0 || to.top > innerHeight - to.height) return; // already scrolled away: no flight
   const from = before.core;
   const ghost = document.createElement('canvas');
   ghost.width = coreCanvas.width;
@@ -79,6 +88,7 @@ function coreToAtom() {
     { transform: `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${s})`, opacity: 0 },
   ], { duration: 560, easing: EASE });
   const done = () => { ghost.remove(); liveCanvas.style.opacity = ''; };
+  setTimeout(done, 700); // a backgrounded window may never finish the animation
   anim.onfinish = done;
   anim.oncancel = done;
 }
