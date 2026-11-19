@@ -8,7 +8,8 @@ import registry from '../../config/actions.json';
 import permissions from '../../config/permissions.json';
 import blockedCommands from '../../config/blocked-commands.json';
 import hooksConfig from '../../config/hooks.json';
-import { listModes, getMode } from './llm-client.js';
+import { listModes, getMode, unloadAll } from './llm-client.js';
+import routinesConfig from '../../config/routines.json';
 import { upsertArtifact, getArtifact } from './artifacts.js';
 import { openArtifact, openWidget, closePanelById, openPanelIds } from './whiteboard.js';
 import { enterWhiteboardMode, exitWhiteboardMode, isWhiteboardMode } from './whiteboard-mode.js';
@@ -16,7 +17,7 @@ import { createActionRunner } from './action-runner.js';
 import { compileBlocked } from './permissions.js';
 import { appendAudit, setAuditSink } from './audit.js';
 import * as agent from './agent-client.js';
-import { setTasks, parseTasks, formatTasks, taskSummary, isPlanMode, setPlanMode, planRefusal } from './work-state.js';
+import { setTasks, parseTasks, formatTasks, taskSummary, isPlanMode, setPlanMode, planRefusal, getPermMode } from './work-state.js';
 import { findSkill, getSkills } from './skills.js';
 import { matchHooks, buildCommand } from './hooks.js';
 
@@ -85,8 +86,12 @@ export function removeLocalRule(rule) {
 
 // The enum of switch_model is the preset list in config/models.json, so the two cannot drift.
 const modes = listModes();
-const actions = registry.actions.map((a) => (a.name === 'switch_model'
-  ? { ...a, parameters: { ...a.parameters, properties: { mode: { ...a.parameters.properties.mode, enum: modes } } } }
+// Same for run_routine and config/routines.json.
+const routines = routinesConfig.routines;
+export const getRoutines = () => routines;
+const withEnum = (a, key, values) => ({ ...a, parameters: { ...a.parameters, properties: { ...a.parameters.properties, [key]: { ...a.parameters.properties[key], enum: values } } } });
+const actions = registry.actions.map((a) => (a.name === 'switch_model' ? withEnum(a, 'mode', modes)
+  : a.name === 'run_routine' ? withEnum(a, 'name', routines.map((r) => r.name))
   : a));
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -195,6 +200,20 @@ const handlers = {
     return { content: skill.body, display: { kind: 'read', title: `SKILL  ${skill.name}`, meta: '', body: skill.body } };
   },
 
+  async run_routine({ name }) {
+    const routine = routines.find((r) => r.name === name);
+    const done = [];
+    for (const step of routine.steps) {
+      try {
+        if (step.do === 'unload_model') done.push(`Unloaded ${await unloadAll()} model(s).`);
+        else done.push(await agent.runOsStep(step));
+      } catch (e) {
+        throw new Error(`${done.join(' ')} Step ${step.do} failed: ${e?.message ?? e}`.trim());
+      }
+    }
+    return `Routine ${name}: ${done.join(' ')}`;
+  },
+
   async run_command({ command, timeout_secs }) {
     const r = await agent.runCommand(command, timeout_secs);
     const status = r.timed_out ? 'timed out and was stopped' : `exit code ${r.exit_code ?? 'unknown'}`;
@@ -234,6 +253,7 @@ const runner = createActionRunner({
   audit: appendAudit,
   onEvent: (e) => document.dispatchEvent(new CustomEvent('jarvis:action', { detail: e })),
   gate: (name) => planRefusal(name),
+  getMode: getPermMode,
   hooks: {
     before: async (name, args, primary) => (await runHooks('before', name, args, primary)).block ?? null,
     after: async (name, args, primary) => (await runHooks('after', name, args, primary)).text,
@@ -245,6 +265,7 @@ const runner = createActionRunner({
 // prompt prefix stays cacheable between turns.
 const FILE_TOOLS = new Set(['list_dir', 'read_file', 'search_files', 'edit_file', 'write_file', 'run_command']);
 const offered = (name) => (FILE_TOOLS.has(name) ? !!agent.currentProject()
+  : name === 'run_routine' ? routines.length > 0
   : name === 'submit_plan' ? isPlanMode()
   : name === 'use_skill' ? getSkills().length > 0
   : true);

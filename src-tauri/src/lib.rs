@@ -1,6 +1,7 @@
 mod agent;
 mod instincts;
 mod memory;
+mod os_actions;
 mod sessions;
 mod telemetry;
 mod voice;
@@ -67,6 +68,7 @@ pub fn run() {
       sessions::session_load,
       sessions::session_delete,
       sessions::session_search,
+      os_actions::os_run_step,
       sessions::session_export,
       sessions::skills_list,
     ])

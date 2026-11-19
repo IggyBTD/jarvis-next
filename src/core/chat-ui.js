@@ -17,7 +17,8 @@ import { handleCommandKey } from './command-palette.js';
 import { buildContext } from './memory-client.js';
 import { openArtifact, applyBoardSpec } from './whiteboard.js';
 import { bindChat, beginTurn } from './voice.js';
-import { toolDefinitions, runToolCall, registerActionHost, undoEdit, loadLocalRules } from './actions.js';
+import { toolDefinitions, runToolCall, registerActionHost, undoEdit, loadLocalRules, getRoutines } from './actions.js';
+import { matchRoutine } from './routines.js';
 import { restoreProject } from './agent-client.js';
 import { actionCard, approvalCard, planCard } from './tool-cards.js';
 import { assistantToolMessage, toolResultMessage } from './tool-calls.js';
@@ -239,6 +240,21 @@ async function send() {
       const reply = await runCommand(text);
       addLine('user', text, { meta: '' });
       if (reply) addLine('system', reply, { meta: '' });
+      output.scrollTop = output.scrollHeight;
+    } finally {
+      busy = false;
+    }
+    return;
+  }
+
+  // A routine phrase typed on its own ("lock screen") runs at once, without the model; it still goes
+  // through the action gate and the audit log.
+  const routine = !skill && matchRoutine(text, getRoutines());
+  if (routine) {
+    try {
+      addLine('user', text, { meta: '' });
+      const r = await runToolCall({ id: `typed-${Date.now()}`, name: 'run_routine', arguments: JSON.stringify({ name: routine.name }) }, { userAsked: true });
+      addLine(r.ok ? 'system' : 'error', r.content, { meta: '' });
       output.scrollTop = output.scrollHeight;
     } finally {
       busy = false;

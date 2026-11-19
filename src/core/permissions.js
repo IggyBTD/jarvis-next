@@ -128,6 +128,15 @@ export function decide({ name, primary, tier = 'ask', rules = {}, kind = null, b
     : { decision: 'ask', reason: 'needs approval' };
 }
 
+// Effect classes ("effect" in config/actions.json): what an action can do outside the chat. The class
+// is a floor under the rules above: publish and money always ask, and careful mode asks before
+// anything that changes files, processes or settings. A missing or unknown class asks.
+export const EFFECTS = ['read', 'local-write', 'local-mutate', 'publish', 'money'];
+export function effectFloor(effect, mode = 'normal') {
+  if (!EFFECTS.includes(effect) || effect === 'publish' || effect === 'money') return 'ask';
+  return mode === 'careful' && effect === 'local-mutate' ? 'ask' : null;
+}
+
 // The rule text for a call, kept for callers that do not know the action kind.
 export function ruleFor(name, primary) {
   return primary == null || primary === '' ? name : `${name}(${primary})`;

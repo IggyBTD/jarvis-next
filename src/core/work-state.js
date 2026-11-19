@@ -46,6 +46,22 @@ const MARK = { todo: '[ ]', doing: '[~]', done: '[x]' };
 export const formatTasks = (list = tasks) => list.map((t, i) => `${i + 1}. ${MARK[t.status]} ${t.text}`).join('\n');
 export const taskSummary = (list = tasks) => `${list.filter((t) => t.status === 'done').length} of ${list.length} done`;
 
+// Permission mode: normal follows the rules; careful asks before every change (permissions.js
+// effectFloor). Plan mode is the third stop of the composer's cycle (Shift+Tab).
+let permMode = 'normal';
+const modeListeners = new Set();
+export const getPermMode = () => permMode;
+export const onPermMode = (cb) => { modeListeners.add(cb); return () => modeListeners.delete(cb); };
+export function setPermMode(mode) {
+  if (permMode === mode || !['normal', 'careful'].includes(mode)) return;
+  permMode = mode;
+  modeListeners.forEach((cb) => cb(mode));
+}
+// normal -> careful -> plan -> normal
+export function cycleMode() {
+  if (planMode) { setPlanMode(false); setPermMode('normal'); } else if (permMode === 'careful') setPlanMode(true); else setPermMode('careful');
+}
+
 export function setPlanMode(on) {
   if (planMode === on) return;
   planMode = on;

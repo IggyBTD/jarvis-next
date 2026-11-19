@@ -3,6 +3,7 @@ import { getSwitches, onSwitchChange, setMic, setInternet, setLink } from './swi
 import { addFile, removeAttachment, onAttachmentsChange } from './attachments.js';
 import { icon } from './icons.js';
 import { getThink, setThink, onEvent } from './llm-client.js';
+import { getPermMode, onPermMode, isPlanMode, onPlanMode, cycleMode } from './work-state.js';
 
 const $ = (id) => document.getElementById(id);
 const micBtn = $('dock-mic');
@@ -45,7 +46,26 @@ const paintThink = () => {
   thinkBtn.title = getThink() ? 'Thinking on: JARVIS reasons first, up to a budget (click to turn off)' : 'Thinking off: fast answers (click to let JARVIS think first)';
 };
 thinkBtn.addEventListener('click', () => setThink(!getThink()));
-onEvent((e) => { if (e.type === 'think') paintThink(); });
+onEvent((e) => { if (e.type === 'think') paintThink();
+
+// Permission mode chip: hidden in normal mode; Careful or Plan otherwise. Click or Shift+Tab cycles.
+const permChip = $('perm-chip');
+const paintPerm = () => {
+  const label = isPlanMode() ? 'Plan' : getPermMode() === 'careful' ? 'Careful' : '';
+  permChip.hidden = !label;
+  permChip.textContent = label;
+  permChip.title = isPlanMode() ? 'Plan mode: JARVIS only reads until you approve a plan (Shift+Tab: normal)'
+    : 'Careful mode: JARVIS asks before every change (Shift+Tab: plan)';
+};
+permChip.addEventListener('click', cycleMode);
+onPermMode(paintPerm);
+onPlanMode(paintPerm);
+$('hud-chat-input').addEventListener('keydown', (e) => {
+  if (e.key !== 'Tab' || !e.shiftKey || e.ctrlKey || e.altKey) return;
+  e.preventDefault();
+  cycleMode();
+});
+paintPerm(); });
 paintThink();
 
 // --- attachments ---------------------------------------------------------

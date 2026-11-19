@@ -145,8 +145,8 @@ test('history is saved without images; titles and markdown read well', () => {
 
 // --- the runner's gate and hooks ---
 const actions = [
-  { name: 'edit_file', tier: 'auto', primary: 'path', parameters: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
-  { name: 'read_file', tier: 'auto', primary: 'path', parameters: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
+  { name: 'edit_file', tier: 'auto', effect: 'local-mutate', primary: 'path', parameters: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
+  { name: 'read_file', tier: 'auto', effect: 'read', primary: 'path', parameters: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
 ];
 const call = (name, args = { path: 'a.js' }) => ({ id: 'c', name, arguments: JSON.stringify(args) });
 

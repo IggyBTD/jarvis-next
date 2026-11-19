@@ -128,6 +128,19 @@ export function syncModel() {
   return run;
 }
 
+// Unloads every chat model (game mode frees the GPU). Queued with the swaps; the next message loads
+// its model again.
+export function unloadAll() {
+  const run = swapQueue.then(async () => {
+    const loaded = loadedInstances(await listModels());
+    for (const inst of loaded) await native('/models/unload', { instance_id: inst.id });
+    seen = null;
+    return loaded.length;
+  });
+  swapQueue = run.catch(() => {});
+  return run;
+}
+
 // --- chat ----------------------------------------------------------------
 // Hides <think> blocks (closed or still open) that some Qwen3 builds inline.
 const visibleText = (text) => text.replace(/<think>[\s\S]*?(<\/think>|$)/g, '').trim();

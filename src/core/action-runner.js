@@ -2,7 +2,7 @@
 // permission rules, ask the user when needed, run the handler, write the audit entry. Nothing the
 // model can do reaches the app except through run(). No DOM and no JSON imports here, so node can
 // test it; actions.js wires in the real registry, handlers and storage.
-import { decide, suggestRule } from './permissions.js';
+import { decide, suggestRule, effectFloor } from './permissions.js';
 import { parseArguments } from './tool-calls.js';
 
 // Checks args against the small JSON-schema subset the registry uses (object of typed properties,
@@ -40,7 +40,8 @@ const auditArgs = (args) => Object.fromEntries(Object.entries(args).map(([k, v])
 
 // gate(name, args) returns a reason to refuse the call (plan mode), or null. hooks.before(name, args, primary)
 // returns a reason to refuse, hooks.after(name, args, primary) returns text to append to the result.
-export function createActionRunner({ actions, handlers, getRules, blocked = [], approve, onAlways, audit, onEvent, gate = null, hooks = null }) {
+// getMode() returns the permission mode ('normal' | 'careful'), which effectFloor reads.
+export function createActionRunner({ actions, handlers, getRules, blocked = [], approve, onAlways, audit, onEvent, gate = null, hooks = null, getMode = () => 'normal' }) {
   const byName = new Map(actions.map((a) => [a.name, a]));
 
   const tools = () => actions.map((a) => ({
@@ -49,13 +50,15 @@ export function createActionRunner({ actions, handlers, getRules, blocked = [], 
   }));
 
   async function finish(call, action, args, decision, ok, result, display = null) {
-    try { await audit?.({ action: call.name, args: auditArgs(args), decision, ok, result: String(result).slice(0, 300) }); } catch { /* logging must not break the action */ }
+    try { await audit?.({ action: call.name, effect: action?.effect ?? null, args: auditArgs(args), decision, ok, result: String(result).slice(0, 300) }); } catch { /* logging must not break the action */ }
     onEvent?.({ type: 'action', name: call.name, args, decision, ok, result, display });
     return { ok, content: result, decision, display };
   }
 
   // Resolves { ok, content, decision }; content is what the model reads back. Never throws.
-  async function run(call) {
+  // userAsked: the user typed this exact request (a routine phrase), so a plain "ask" needs no card;
+  // publish and money still ask.
+  async function run(call, { userAsked = false } = {}) {
     const action = byName.get(call.name);
     if (!action || !handlers[call.name]) return finish(call, null, {}, 'deny', false, `Unknown action "${call.name}". Available: ${[...byName.keys()].join(', ')}.`);
 
@@ -68,17 +71,23 @@ export function createActionRunner({ actions, handlers, getRules, blocked = [], 
     const primary = action.primary ? args[action.primary] ?? null : null;
     const refusal = gate?.(action.name, args);
     if (refusal) return finish(call, action, args, 'deny', false, `Refused: ${refusal}.`);
-    const verdict = decide({ name: action.name, primary, tier: action.tier, kind: action.kind ?? null, rules: getRules(), blocked });
+    let verdict = decide({ name: action.name, primary, tier: action.tier, kind: action.kind ?? null, rules: getRules(), blocked });
+    if (verdict.decision === 'allow' && effectFloor(action.effect, getMode()) === 'ask') {
+      verdict = { decision: 'ask', reason: getMode() === 'careful' && action.effect === 'local-mutate' ? 'careful mode asks before changes' : `a ${action.effect ?? 'unclassified'} action always asks` };
+    }
 
     if (verdict.decision === 'deny') return finish(call, action, args, 'deny', false, `Refused: ${verdict.reason}.`);
 
     let how = 'allow';
-    if (verdict.decision === 'ask') {
+    const outward = action.effect === 'publish' || action.effect === 'money';
+    if (verdict.decision === 'ask' && userAsked && !outward) how = 'user';
+    else if (verdict.decision === 'ask') {
       const suggestedRule = suggestRule(action.name, primary, action.kind ?? null);
       const answer = approve ? await approve({ name: action.name, args, primary, reason: verdict.reason, suggestedRule }) : 'deny';
       if (answer === 'deny') return finish(call, action, args, 'deny', false, 'The user did not approve this action.');
-      how = answer === 'always' ? 'always' : 'once';
-      if (answer === 'always') onAlways?.(suggestedRule);
+      const always = answer === 'always' && action.effect !== 'money'; // money is never made automatic
+      how = always ? 'always' : 'once';
+      if (always) onAlways?.(suggestedRule);
     }
 
     try {

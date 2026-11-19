@@ -1,0 +1,65 @@
+{
+  "_readme": "Routines: named OS actions. Typing a phrase exactly (\"lock screen\", \"jarvis, game mode please\") runs the routine at once, without the model and without an approval card, because you asked for it in so many words. The model can also run one by name with run_routine, which asks first (Always allow per routine adds run_routine(<name>) to your rules). Steps, run in order: {\"do\": \"lock_screen\"}; {\"do\": \"open\", \"target\": \"C:\\\\path\\\\app.exe\" or a URI like \"steam://open/main\"}; {\"do\": \"close\", \"process\": \"app.exe\"} (asks it to close, never forces; Windows' own processes are refused); {\"do\": \"power_plan\", \"plan\": \"high\" | \"balanced\" | \"saver\"}; {\"do\": \"unload_model\"} (frees the GPU memory LM Studio holds). Windows only for now. Edit this file to add your own; the app reloads it in dev.",
+  "routines": [
+    {
+      "name": "lock-screen",
+      "description": "Lock the PC",
+      "phrases": [
+        "lock screen",
+        "lock the screen",
+        "lock my pc",
+        "lock the pc"
+      ],
+      "steps": [
+        {
+          "do": "lock_screen"
+        }
+      ]
+    },
+    {
+      "name": "game-mode",
+      "description": "Free the GPU for a game: unload the model and switch to the high performance power plan",
+      "phrases": [
+        "game mode",
+        "gaming mode"
+      ],
+      "steps": [
+        {
+          "do": "unload_model"
+        },
+        {
+          "do": "power_plan",
+          "plan": "high"
+        }
+      ]
+    },
+    {
+      "name": "end-game-mode",
+      "description": "Back to the balanced power plan (the model loads again with the next message)",
+      "phrases": [
+        "end game mode",
+        "stop game mode",
+        "balanced mode"
+      ],
+      "steps": [
+        {
+          "do": "power_plan",
+          "plan": "balanced"
+        }
+      ]
+    },
+    {
+      "name": "open-steam",
+      "description": "Open Steam",
+      "phrases": [
+        "open steam"
+      ],
+      "steps": [
+        {
+          "do": "open",
+          "target": "steam://open/main"
+        }
+      ]
+    }
+  ]
+}

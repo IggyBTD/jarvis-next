@@ -20,6 +20,7 @@ export const SHORTCUTS = [
   { keys: 'F8 (hold)', does: 'Talk while held, release to send (keys are in config/voice.json)' },
   { keys: 'F9', does: 'Press to start talking, press again to send' },
   { keys: 'Ctrl+Shift+1 to 4', does: 'Mode: general, coding / finance, visual, abliterated' },
+  { keys: 'Shift+Tab (in the message field)', does: 'Permission mode: normal, careful (asks before every change), plan' },
   ];
 
 function togglePanelNumber(n) {

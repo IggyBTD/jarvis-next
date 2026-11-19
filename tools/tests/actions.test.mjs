@@ -2,7 +2,7 @@
 // and the audit chain. Run: node --test tools/tests
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decide, ruleMatches, ruleFor } from '../../src/core/permissions.js';
+import { effectFloor, EFFECTS, decide, ruleMatches, ruleFor } from '../../src/core/permissions.js';
 import { createToolCallAccumulator, parseArguments, assistantToolMessage, toolResultMessage } from '../../src/core/tool-calls.js';
 import { createActionRunner, validateArgs } from '../../src/core/action-runner.js';
 import { appendAudit, readAudit, verifyAudit } from '../../src/core/audit.js';
@@ -84,10 +84,10 @@ test('history messages for a tool round follow the OpenAI shape', () => {
 
 // --- runner ---
 const ACTIONS = [
-  { name: 'switch_model', description: 'd', tier: 'auto', primary: 'mode', parameters: { type: 'object', properties: { mode: { type: 'string', enum: ['general', 'coding'] } }, required: ['mode'] } },
-  { name: 'open_whiteboard', description: 'd', tier: 'auto', parameters: { type: 'object', properties: {} } },
-  { name: 'delete_it', description: 'd', tier: 'ask', primary: 'path', parameters: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
-  { name: 'nuke', description: 'd', tier: 'blocked', parameters: { type: 'object', properties: {} } },
+  { name: 'switch_model', description: 'd', tier: 'auto', effect: 'local-write', primary: 'mode', parameters: { type: 'object', properties: { mode: { type: 'string', enum: ['general', 'coding'] } }, required: ['mode'] } },
+  { name: 'open_whiteboard', description: 'd', tier: 'auto', effect: 'local-write', parameters: { type: 'object', properties: {} } },
+  { name: 'delete_it', description: 'd', tier: 'ask', effect: 'local-mutate', primary: 'path', parameters: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
+  { name: 'nuke', description: 'd', tier: 'blocked', effect: 'local-mutate', parameters: { type: 'object', properties: {} } },
 ];
 
 function makeRunner(over = {}) {
@@ -225,4 +225,75 @@ test('the audit log is hash-chained and notices tampering', async () => {
   assert.deepEqual(await verifyAudit(forged), { ok: false, at: 1 });
   assert.equal((await verifyAudit([list[0], list[2]])).ok, false); // a removed entry
   assert.ok(mem['jarvis.audit']);
+});
+
+// --- effect classes and permission modes ---
+const EFFECT_ACTIONS = [
+  { name: 'edit', description: 'd', tier: 'auto', effect: 'local-mutate', parameters: { type: 'object', properties: {} } },
+  { name: 'send', description: 'd', tier: 'auto', effect: 'publish', parameters: { type: 'object', properties: {} } },
+  { name: 'pay', description: 'd', tier: 'ask', effect: 'money', parameters: { type: 'object', properties: {} } },
+  { name: 'odd', description: 'd', tier: 'auto', parameters: { type: 'object', properties: {} } },
+];
+function effectRunner(mode, answer) {
+  const asked = [];
+  const always = [];
+  const runner = createActionRunner({
+    actions: EFFECT_ACTIONS,
+    handlers: { edit: async () => 'e', send: async () => 's', pay: async () => 'p', odd: async () => 'o' },
+    getRules: () => ({ allow: ['send', 'pay'] }),
+    approve: async (r) => { asked.push(r.name); return answer; },
+    onAlways: (r) => always.push(r),
+    getMode: () => mode,
+  });
+  return { runner, asked, always };
+}
+
+test('effectFloor: outward and unknown classes ask, careful mode asks before changes', () => {
+  assert.equal(effectFloor('read'), null);
+  assert.equal(effectFloor('local-mutate'), null);
+  assert.equal(effectFloor('local-mutate', 'careful'), 'ask');
+  assert.equal(effectFloor('local-write', 'careful'), null);
+  assert.equal(effectFloor('publish'), 'ask');
+  assert.equal(effectFloor('money'), 'ask');
+  assert.equal(effectFloor(undefined), 'ask');
+});
+
+test('publish asks even when a rule allows it; careful mode asks before an automatic edit', async () => {
+  const normal = effectRunner('normal', 'once');
+  await normal.runner.run({ id: '1', name: 'edit', arguments: '{}' });
+  await normal.runner.run({ id: '2', name: 'send', arguments: '{}' });
+  await normal.runner.run({ id: '3', name: 'odd', arguments: '{}' });
+  assert.deepEqual(normal.asked, ['send', 'odd']);
+  const careful = effectRunner('careful', 'once');
+  await careful.runner.run({ id: '1', name: 'edit', arguments: '{}' });
+  assert.deepEqual(careful.asked, ['edit']);
+});
+
+test('money never becomes an always-allow rule; a typed request skips the card except outward ones', async () => {
+  const r = effectRunner('careful', 'always');
+  const paid = await r.runner.run({ id: '1', name: 'pay', arguments: '{}' });
+  assert.equal(paid.decision, 'once');
+  assert.deepEqual(r.always, []);
+  const typed = effectRunner('careful', 'deny');
+  assert.equal((await typed.runner.run({ id: '2', name: 'edit', arguments: '{}' }, { userAsked: true })).decision, 'user');
+  assert.equal((await typed.runner.run({ id: '3', name: 'send', arguments: '{}' }, { userAsked: true })).ok, false);
+  assert.deepEqual(typed.asked, ['send']);
+});
+
+test('every action in config/actions.json declares a known effect class', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const registry = JSON.parse(await readFile(new URL('../../config/actions.json', import.meta.url), 'utf8'));
+  for (const a of registry.actions) assert.ok(EFFECTS.includes(a.effect), `${a.name} has effect ${a.effect}`);
+});
+
+// --- routines ---
+test('a routine runs only on its exact phrase, with filler words ignored', async () => {
+  const { matchRoutine } = await import('../../src/core/routines.js');
+  const { readFile } = await import('node:fs/promises');
+  const { routines } = JSON.parse(await readFile(new URL('../../config/routines.json', import.meta.url), 'utf8'));
+  assert.equal(matchRoutine('Lock screen', routines)?.name, 'lock-screen');
+  assert.equal(matchRoutine('Jarvis, game mode please!', routines)?.name, 'game-mode');
+  assert.equal(matchRoutine('how do I lock screen on windows?', routines), null);
+  assert.equal(matchRoutine('please', routines), null);
+  for (const r of routines) assert.ok(r.name && r.phrases.length && r.steps.length, r.name);
 });

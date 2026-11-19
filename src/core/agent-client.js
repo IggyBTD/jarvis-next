@@ -5,7 +5,7 @@ let current = null; // the project folder, or null: the file tools are only offe
 export const currentProject = () => current;
 
 async function call(command, args) {
-  if (!window.__TAURI_INTERNALS__) throw new Error('The coding tools need the JARVIS desktop app (no Tauri backend here).');
+  if (!window.__TAURI_INTERNALS__) throw new Error('This needs the JARVIS desktop app (no Tauri backend here).');
   const { invoke } = await import('@tauri-apps/api/core');
   return invoke(command, args);
 }
@@ -42,6 +42,7 @@ export async function pickFolder() {
 }
 
 export const listDir = (path, depth) => call('agent_list_dir', { path, depth });
+export const runOsStep = (step) => call('os_run_step', { step }); // os_actions/mod.rs, for routines
 export const readFile = (path, offset, limit) => call('agent_read_file', { path, offset, limit });
 export const searchFiles = (pattern, path, glob) => call('agent_search', { pattern, path, glob });
 export const writeFile = (path, content) => call('agent_write_file', { path, content });
