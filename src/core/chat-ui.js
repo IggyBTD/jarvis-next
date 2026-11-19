@@ -3,6 +3,7 @@
 import { chat, setMode, getMode, getPreset, syncModel, onEvent } from './llm-client.js';
 import { hasImages, takeAsContent } from './attachments.js';
 import { pulse, setThinking } from './mesh-state.js';
+import { feedMeshTotal, resetMeshFeed } from './node-mesh.js';
 import { renderMarkdown, highlightCode } from './markdown.js';
 import { parseReply } from './tool-router.js';
 import { upsertArtifact } from './artifacts.js';
@@ -250,6 +251,7 @@ async function send() {
   if (hasImages() && getMode() !== 'visual') selectMode('visual');
   const { content, names } = takeAsContent(skillText ?? text);
   lastSent = text;
+  resetMeshFeed();
 
   setWorking(true);
   try { await maybeCompact(); } catch (e) { console.warn('[jarvis] compaction failed:', e); } // between turns, so no index shifts mid-turn
@@ -330,6 +332,7 @@ async function send() {
           if (thinkStart === null) thinkStart = performance.now();
           if (thinking) speech?.thinking();
           if (!thinking) { pulse(); speech?.push(spoken + visible); }
+          feedMeshTotal('reply', visible); feedMeshTotal('thought', reasoning ?? '', 0.5); // every streamed letter nudges a node
           if (thinking && !reasoning) setText(pending, 'Thinking...');
           latest = { content: visible, reasoning };
           if (!frame) frame = requestAnimationFrame(paintStreaming);

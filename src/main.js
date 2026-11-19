@@ -12,3 +12,6 @@ import './core/native-chrome.js';
 import './core/shortcuts.js';
 import './core/sysview.js';
 import './core/shell.js';
+import { mountLogos } from './core/node-mesh.js';
+
+mountLogos(); // the node mesh: the big orb on the empty chat, the small one in the chat header

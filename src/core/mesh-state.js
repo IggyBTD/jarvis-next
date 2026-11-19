@@ -20,16 +20,25 @@ let external = null;  // real level from a future TTS volume tracker
 let thinking = false;
 let level = 0;        // smoothed value the renderer reads
 
+// The renderer (node-mesh.js) registers here so a resting orb wakes when a reply starts.
+let onWake = null;
+export function setWakeListener(fn) {
+  onWake = fn;
+}
+
 export function pulse() {
   holdLeft = HOLD;
+  onWake?.();
 }
 
 export function setThinking(value) {
   thinking = value;
+  if (value) onWake?.();
 }
 
 export function setSpeechLevel(value) {
   external = value == null ? null : Math.min(1, Math.max(0, value));
+  if (external) onWake?.();
 }
 
 export function updateLevel(dt, t) {

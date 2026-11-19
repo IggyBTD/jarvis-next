@@ -650,3 +650,10 @@ div.tc-head { cursor: default; }
 .side-top { justify-content: space-between; }
 #side-toggle { top: 4px; }
 body:has(#dock-stop:not([hidden])) #send-btn { display: none; }
+
+/* ---- node mesh (node-mesh.js): the old HUD sphere, flat and teal, no glow. Big on the empty chat, small in the header once a chat has started. ---- */
+canvas.orb { --orb-size: 24px; display: block; flex: none; width: var(--orb-size); height: var(--orb-size); }
+.head-orb { --orb-size: 32px; }
+#center-workspace:not(:has(.chat-line)) .head-orb { display: none; }
+#chat-empty canvas.hero-orb { --orb-size: 176px; margin: calc(var(--s-3) * -1) 0 calc(var(--s-1) * -1) -44px; pointer-events: auto; touch-action: none; cursor: grab; }
+#chat-empty canvas.hero-orb:active { cursor: grabbing; }
