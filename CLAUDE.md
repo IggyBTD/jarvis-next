@@ -22,6 +22,19 @@ Warm greys (after Claude's palette) and one teal: canvas `#faf9f5` / `#262624`, 
 
 `npm install` once, then `npm run tauri dev` (Vite on :5174, so it can run next to JARVIS on :5173). LM Studio on :1234 with CORS, LibreHardwareMonitor on :8085, `cd sidecars/voice && npm install` for voice (the `node_modules` there is a junction to JARVIS's). Rust tests: `cd src-tauri && cargo test --lib`. Logic tests: `node --test tools/tests/*.test.mjs`. Do not run both apps' voice sidecars at once (port 8765).
 
+## Added 2026-11-19 (branch claude/happy-davinci-9bjdd4)
+
+- Prompt cache: the system message is now identical every turn; per-turn context (recalled memory, habits, tasks, plan mode, voice mode, `/think` or `/no_think`) rides on the newest user message (`context-manager.js` `withReminder`). Tools are offered only when usable (file tools need `/project`, `submit_plan` needs plan mode, web tools need the internet switch).
+- Think: off by default; the bulb in the composer or `/think` turns it on. Reasoning past `think_budget` (models.json) is cut and answered from the notes with thinking off. models.json also holds `sampling` (Qwen3's recommended values) and `load.context_length`.
+- Replies: Copy, a t/s readout, Retry on the newest. Sidebar: chat search (Rust `session_search`), Rename, Delete.
+- Effect classes on every action (`effect` in actions.json, audited); publish and money always ask. Shift+Tab in the composer cycles normal, careful (asks before every change), plan.
+- Routines (`config/routines.json`, `os_actions/mod.rs`): an exact phrase ("lock screen", "game mode") runs without the model; the model's `run_routine` asks first. Windows only.
+- Web (`web.rs`, `config/web.json`): `web_search` (DuckDuckGo HTML or SearXNG) and `web_fetch`. Rust refuses until the window reports the internet switch on, and never fetches local or private addresses. Addresses not from a search result or your message ask first.
+
 ## Not verified yet
+
+New on 2026-11-19, checked only in a browser with a fake LM Studio and stubbed Tauri calls (Rust unit tests pass on Linux): whether LM Studio actually reuses its prompt cache now (compare time to first token on turn 1 and turn 8); whether your Qwen build honours `/no_think` and `chat_template_kwargs`; the `load` and `sampling` fields against your LM Studio version; the routine steps on Windows (lock, powercfg, explorer, taskkill); DuckDuckGo's live page (this container's network blocked it, so the parser is tested against a hand-written sample only).
+
+Older:
 
 Only checked in a browser pane with a scripted fake LM Studio and a stubbed telemetry event: chat streaming, markdown and code, a chart artifact in a tab, tab close and reopen, model menu, Code page layout, approval and diff cards, light and dark, settings, artifacts page. Not checked in the real Tauri window: real telemetry values, window controls and drag region, the Rust agent (files, commands, approvals), voice, session save and `/resume` from the chat list, LM Studio model swap. After a theme change an open artifact keeps its old colours until it is reopened.
