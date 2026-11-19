@@ -8,4 +8,10 @@ export default defineConfig({
       ignored: ['**/src-tauri/**'],
     },
   },
+  build: {
+    rollupOptions: {
+      // index.html is the nodes interface; classic.html is the earlier layout, kept as it was.
+      input: { main: 'index.html', classic: 'classic.html' },
+    },
+  },
 })
