@@ -233,15 +233,25 @@ $('open-commands').addEventListener('click', () => {
 
 // --- sidebar: Apple HIG asks that it can be hidden; Ctrl+\ and the button do it -------------------------
 const sideToggle = $('side-toggle');
-function setSidebar(open) {
+// Under 1024 px the sidebar would squeeze the chat, so it starts hidden and opens as a sheet over
+// the content (app.css); a click outside closes it. Only a choice made in a wide window is saved.
+const narrow = matchMedia('(max-width: 1023px)');
+function setSidebar(open, { save = !narrow.matches } = {}) {
   document.body.classList.toggle('side-off', !open);
   sideToggle.setAttribute('aria-label', open ? 'Hide sidebar' : 'Show sidebar');
   sideToggle.title = `${open ? 'Hide' : 'Show'} sidebar (Ctrl+\\)`;
-  try { localStorage.setItem('jarvis.side', open ? 'on' : 'off'); } catch { /* storage blocked */ }
+  if (save) try { localStorage.setItem('jarvis.side', open ? 'on' : 'off'); } catch { /* storage blocked */ }
 }
+const savedSide = () => { try { return localStorage.getItem('jarvis.side') !== 'off'; } catch { return true; } };
+narrow.addEventListener('change', () => setSidebar(!narrow.matches && savedSide(), { save: false }));
+document.addEventListener('pointerdown', (e) => {
+  if (narrow.matches && !document.body.classList.contains('side-off') && !e.target.closest('#sidebar, #side-toggle')) setSidebar(false);
+});
+// In the sheet, choosing somewhere to go closes it (search and Rename / Delete keep it open).
+$('sidebar').addEventListener('click', (e) => { if (narrow.matches && e.target.closest('.nav-item, .chat-item, #new-chat, .mode-btn')) setSidebar(false); });
 sideToggle.addEventListener('click', () => setSidebar(document.body.classList.contains('side-off')));
 document.addEventListener('jarvis:sidebar', () => setSidebar(document.body.classList.contains('side-off')));
-try { if (localStorage.getItem('jarvis.side') === 'off') setSidebar(false); } catch { /* storage blocked */ }
+if (narrow.matches || !savedSide()) setSidebar(false, { save: false });
 
 // --- empty state: a greeting and what this machine is doing right now -------------------------------------
 const greet = $('greet');

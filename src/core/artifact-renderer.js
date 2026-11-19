@@ -135,6 +135,11 @@ export async function buildSrcdoc(type, content) {
             Chart.defaults.animation = false; // draw immediately; does not depend on animation frames
             Chart.defaults.color = '${pal().muted}';
             Chart.defaults.borderColor = '${pal().line}';
+            // Datasets without their own colour use the app's bar grey (at least 3:1 on both themes);
+            // Chart.js's own default, 10% black, all but disappears on the dark canvas.
+            Chart.defaults.backgroundColor = '#8b897f';
+            Chart.defaults.elements.line.borderColor = '#8b897f';
+            Chart.defaults.elements.point.backgroundColor = '#8b897f';
             Chart.defaults.font.family = 'Segoe UI, system-ui, sans-serif';
             spec.options = Object.assign({ responsive: true, maintainAspectRatio: false }, spec.options || {});
             new Chart(document.getElementById('c'), spec);

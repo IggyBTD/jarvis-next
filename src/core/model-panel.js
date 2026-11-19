@@ -75,7 +75,7 @@ function modelCard({ model, instance }) {
     statCell('First token', stats ? `${fmt(stats.ttft, 2)} s` : dash),
     statCell('Context', `${fmtK(ctxUsed)} / ${fmtK(ctxMax)}`),
     statCell('Tokens out', stats ? fmtK(stats.completionTokens) : dash),
-    statCell('Size', `${(model.size_bytes / 1e9).toFixed(1)} GB`),
+    statCell('Size', Number.isFinite(model.size_bytes) ? `${(model.size_bytes / 1e9).toFixed(1)} GB` : dash),
     statCell('Parameters', model.params_string ?? dash),
     statCell('Unloads in', fmtTtl(instance.remaining_ttl_seconds)),
   );

@@ -21,6 +21,8 @@
     </div>
   </header>
 
+  <!-- outside the sidebar: it stays put (and visible) while the sidebar hides or slides -->
+  <button type="button" id="side-toggle" title="Hide sidebar (Ctrl+\)" aria-label="Hide sidebar"><span class="ico" data-icon="sidebar" data-size="18"></span></button>
   <nav id="sidebar" aria-label="Main">
     <div class="side-top" data-tauri-drag-region>
       <span class="brand"><span class="mark" aria-hidden="true"></span>JARVIS</span>
@@ -30,7 +32,6 @@
         <button type="button" class="mode-btn" data-page="code" aria-pressed="false" title="Code" aria-label="Code"><span class="ico" data-icon="code" data-size="18"></span></button>
       </div>
     </div>
-    <button type="button" id="side-toggle" title="Hide sidebar (Ctrl+\)" aria-label="Hide sidebar"><span class="ico" data-icon="sidebar" data-size="18"></span></button>
     <button type="button" id="new-chat" class="side-btn primary"><span class="ico" data-icon="plus"></span>New chat</button>
     <div class="nav-group">
       <button type="button" class="nav-item" data-page="artifacts" aria-pressed="false"><span class="ico" data-icon="artifacts"></span>Artifacts</button>

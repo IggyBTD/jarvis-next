@@ -153,21 +153,21 @@ const handlers = {
     const r = await agent.listDir(path, depth);
     const lines = r.entries.map((e) => (e.kind === 'file' ? `${e.path}  (${sizeText(e.size)})` : e.path));
     const content = `${r.path}: ${plural(r.entries.length, 'entry').replace('entrys', 'entries')}${r.truncated ? ' (list cut short, ask for a subfolder)' : ''}\n${lines.join('\n')}`;
-    return { content, display: { kind: 'read', title: `LIST  ${r.path}`, meta: `${r.entries.length} entries`, body: lines.join('\n') } };
+    return { content, display: { kind: 'read', title: `List  ${r.path}`, meta: `${r.entries.length} entries`, body: lines.join('\n') } };
   },
 
   async read_file({ path, offset, limit }) {
     const r = await agent.readFile(path, offset, limit);
     const more = r.truncated ? `\n[more: continue with offset ${r.end + 1}]` : '';
     const range = r.total === 0 ? 'empty file' : `lines ${r.start}-${r.end} of ${r.total}`;
-    return { content: `${r.path} (${range})\n${r.content}${more}`, display: { kind: 'read', title: `READ  ${r.path}`, meta: range, body: r.content } };
+    return { content: `${r.path} (${range})\n${r.content}${more}`, display: { kind: 'read', title: `Read  ${r.path}`, meta: range, body: r.content } };
   },
 
   async search_files({ pattern, path = '.', glob }) {
     const r = await agent.searchFiles(pattern, path, glob);
     const lines = r.matches.map((m) => `${m.path}:${m.line}: ${m.text}`);
     const head = `${plural(r.matches.length, 'match').replace('matchs', 'matches')} in ${plural(r.files_scanned, 'file')}${r.truncated ? ' (cut short, narrow the search)' : ''}`;
-    return { content: `${head}\n${lines.join('\n')}`.trim(), display: { kind: 'read', title: `SEARCH  ${pattern}`, meta: head, body: lines.join('\n') } };
+    return { content: `${head}\n${lines.join('\n')}`.trim(), display: { kind: 'read', title: `Search  ${pattern}`, meta: head, body: lines.join('\n') } };
   },
 
   async edit_file({ path, old_text, new_text, replace_all = false }) {
@@ -182,7 +182,7 @@ const handlers = {
     const r = setTasks(tasks);
     if (r.error) throw new Error(r.error);
     const list = formatTasks();
-    return { content: `Task list updated (${taskSummary()}).\n${list}`, display: { kind: 'read', title: `TASKS  ${taskSummary()}`, meta: '', body: list } };
+    return { content: `Task list updated (${taskSummary()}).\n${list}`, display: { kind: 'read', title: `Tasks  ${taskSummary()}`, meta: '', body: list } };
   },
 
   async submit_plan({ summary, steps }) {
@@ -199,7 +199,7 @@ const handlers = {
   async use_skill({ name }) {
     const skill = findSkill(name);
     if (!skill) throw new Error(`No skill "${name}". Available: ${getSkills().map((s) => s.name).join(', ') || 'none'}.`);
-    return { content: skill.body, display: { kind: 'read', title: `SKILL  ${skill.name}`, meta: '', body: skill.body } };
+    return { content: skill.body, display: { kind: 'read', title: `Skill  ${skill.name}`, meta: '', body: skill.body } };
   },
 
   async run_routine({ name }) {
@@ -221,7 +221,7 @@ const handlers = {
     hits.forEach((h) => knownUrls.add(h.url));
     const lines = hits.map((h, i) => `${i + 1}. ${inert(h.title)}\n   ${h.url}\n   ${inert(h.snippet)}`);
     const body = hits.length ? lines.join('\n') : 'No results.';
-    return { content: `${UNTRUSTED}\n<search-results query="${inert(query)}">\n${body}\n</search-results>`, display: { kind: 'read', title: `SEARCH WEB  ${query}`, meta: `${hits.length} results`, body } };
+    return { content: `${UNTRUSTED}\n<search-results query="${inert(query)}">\n${body}\n</search-results>`, display: { kind: 'read', title: `Web search  ${query}`, meta: `${hits.length} results`, body } };
   },
 
   async web_fetch({ url, start = 0 }) {
@@ -229,7 +229,7 @@ const handlers = {
     knownUrls.add(p.url);
     const end = p.start + p.text.length;
     const more = end < p.total ? `\n[more: characters ${end} of ${p.total}; continue with start ${end}]` : '';
-    return { content: `${UNTRUSTED}\n<web-page url="${p.url}" title="${inert(p.title)}">\n${inert(p.text)}${more}\n</web-page>`, display: { kind: 'read', title: `FETCH  ${p.url}`, meta: p.title || `${p.total} characters`, body: p.text } };
+    return { content: `${UNTRUSTED}\n<web-page url="${p.url}" title="${inert(p.title)}">\n${inert(p.text)}${more}\n</web-page>`, display: { kind: 'read', title: `Fetch  ${p.url}`, meta: p.title || `${p.total} characters`, body: p.text } };
   },
 
   async run_command({ command, timeout_secs }) {

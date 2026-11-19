@@ -98,7 +98,7 @@ export function actionCard(display, { onUndo } = {}) {
 function describe(request) {
   const a = request.args;
   switch (request.name) {
-    case 'run_command': return { type: 'RUN', title: a.command };
+    case 'run_command': return { type: 'Run', title: a.command };
     case 'write_file': return { type: 'Write', title: a.path };
     case 'edit_file': return { type: 'Edit', title: a.path };
     case 'read_file': return { type: 'Read', title: a.path };

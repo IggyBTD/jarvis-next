@@ -664,3 +664,64 @@ div.tc-head { cursor: default; }
 .side-top { justify-content: space-between; }
 #side-toggle { top: 4px; }
 body:has(#dock-stop:not([hidden])) #send-btn { display: none; }
+
+/* ===== UI audit pass (2026-11-19): contrast, targets, type scale, press feedback, narrow windows ===== */
+/* Secondary grey and small teal text reach 4.5:1 on every surface they sit on (canvas, sidebar, card,
+   hover, active). --accent stays the brand teal for fills, focus rings and icons; --accent-text is the
+   same hue darkened (light) or lightened (dark) for small text. */
+:root { --text-3: #5f5e57; --accent-text: #096b61; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --text-3: #acaaa2; --accent-text: #5fd6c6; } }
+:root[data-theme="dark"] { --text-3: #acaaa2; --accent-text: #5fd6c6; }
+.btw-q, .ac-state, .md a, .hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-built_in, .hljs-number, .hljs-symbol, .hljs-bullet,
+#command-palette .cp-name b, .cli-row .cli-tag, #cli-tasks .cli-row.doing, .tool-card.approval .tc-state, .perm-chip { color: var(--accent-text); }
+.tc-row .tc-no, .tc-row.ctx { color: var(--text-2); } /* line numbers sit on tinted diff rows */
+.tool-card.approval .tc-note, .tool-card.approval .tc-rule { color: var(--text-2); }
+@media (prefers-contrast: more) { :root { --text-3: var(--text-2); --line: var(--line-strong); } }
+
+/* Type: nothing under the 12 px floor of the scale */
+.core-num, .model-stat-label, .dock-badge { font-size: var(--fs-xs); }
+.core-node { width: 48px; height: 48px; }
+.cores-grid { grid-template-columns: repeat(2, 48px); }
+
+/* Targets: at least 24 px, and toolbar buttons never shrink when the composer gets narrow */
+.tool-btn, .send-btn, .stop-btn, .perm-chip { flex: none; }
+#ctx-meter { white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.copy-btn { min-height: 24px; padding: 0 var(--s-2); margin-right: calc(var(--s-2) * -1); border-radius: var(--r-1); }
+.copy-btn:hover { background: var(--hover); }
+.chat-edit, .chat-act { min-height: 24px; }
+.av-btn { min-width: 28px; }
+
+/* The user's line: time and Edit share one row (Edit no longer adds an empty row under every message) */
+.chat-line.user { display: grid; grid-template-columns: auto auto; grid-auto-flow: row dense; justify-content: end; justify-items: end; align-items: center; column-gap: var(--s-2); row-gap: 4px; }
+.chat-line.user > .chat-text, .chat-line.user > .chat-attach { grid-column: 1 / -1; }
+.chat-line.user > .chat-meta { grid-column: 2; }
+.chat-line.user > .chat-edit { grid-column: 1; }
+/* A run of actions reads as one group, not a column of separate messages */
+.chat-line.tool + .chat-line.tool { margin-top: calc(var(--s-1) - var(--s-5)); }
+.md blockquote > :last-child { margin-bottom: 0; }
+
+/* Scroll edge: text fades under the header instead of being cut by it */
+#chat-output.fade-top { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--s-4)); mask-image: linear-gradient(to bottom, transparent 0, #000 var(--s-4)); }
+
+/* Press feedback on pointer-down (Apple: respond at once, not on release) */
+.tool-btn, .send-btn, .stop-btn, .side-btn, .nav-item, .ghost-btn, .chip-btn, .tc-btn, .cli-act, .av-btn, .wb-btn, .chat-edit, .chat-act, .perm-chip, .artifact-card, .art-tile, .matrix-btn {
+  transition-property: background-color, border-color, color, opacity, transform; transition-duration: var(--dur-fast); transition-timing-function: var(--ease-out);
+}
+:is(.tool-btn, .send-btn, .stop-btn, .side-btn, .nav-item, .ghost-btn, .tc-btn, .cli-act, .av-btn, .wb-btn, .chat-edit, .chat-act, .perm-chip):active:not(:disabled) { transform: scale(0.96); transition-duration: 80ms; }
+:is(.artifact-card, .art-tile, .matrix-btn):active:not(:disabled) { transform: scale(0.99); transition-duration: 80ms; }
+
+/* Popovers grow out of the control that opened them */
+#model-menu { transform-origin: top right; animation: pop-in var(--dur-fast) var(--ease-out); }
+#command-palette { transform-origin: bottom left; animation: pop-in var(--dur-fast) var(--ease-out); }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+
+/* Narrow windows: the sidebar is a sheet over the content, entering and leaving from the left */
+@media (max-width: 1023px) {
+  #app, body.side-off #app { grid-template-columns: 0 minmax(0, 1fr); }
+  #sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 80; width: var(--sidebar-w); box-shadow: var(--shadow); transition: transform var(--dur) var(--ease-out), visibility 0s; }
+  body.side-off #sidebar { transform: translateX(-100%); box-shadow: none; transition: transform var(--dur) var(--ease-out), visibility 0s linear var(--dur); }
+  #titlebar { padding-left: 52px; }
+  #side-toggle { z-index: 90; }
+}
+.tc-row.add .tc-sign, .tc-row.del .tc-sign { color: var(--text-1); font-weight: 600; } /* the row tint carries the colour */
+.matrix-btn.active-mode .m-sub { color: var(--text-2); }

@@ -55,7 +55,7 @@ const marked = new Marked(
     renderer: {
       code({ text, lang }) {
         const name = escapeHtml((lang || '').split(/\s/)[0]);
-        return `<div class="code-box"><div class="code-head"><span>${name || 'code'}</span><button type="button" class="copy-btn">COPY</button></div><pre><code class="hljs language-${name}">${text}</code></pre></div>`;
+        return `<div class="code-box"><div class="code-head"><span>${name || 'code'}</span><button type="button" class="copy-btn">Copy</button></div><pre><code class="hljs language-${name}">${text}</code></pre></div>`;
       },
     },
   },

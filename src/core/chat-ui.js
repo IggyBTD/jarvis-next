@@ -318,7 +318,7 @@ async function send() {
   const stamp = (stats, final = false) => {
     const m = document.createElement('span');
     m.className = 'chat-meta';
-    m.textContent = `${clock()}  ${getPreset().model}${stats?.tps ? `  ${stats.tps.toFixed(1)} t/s` : ''}`;
+    m.textContent = [clock(), getPreset().model, stats?.tps ? `${stats.tps.toFixed(1)} t/s` : ''].filter(Boolean).join(' · ');
     m.title = stats ? `First token after ${stats.ttft?.toFixed(1) ?? '?'} s, ${stats.promptTokens ?? '?'} prompt and ${stats.completionTokens ?? '?'} reply tokens` : '';
     pending.append(m);
     replyButtons(pending, latest.content, final);

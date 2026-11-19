@@ -231,7 +231,7 @@ document.addEventListener('jarvis:action', (e) => {
   const prev = changed.get(args.path);
   changed.delete(args.path); // re-insert so the latest change is last
   changed.set(args.path, {
-    kind: prev?.kind ?? (display?.created ? 'NEW' : name === 'write_file' ? 'WRITE' : 'EDIT'),
+    kind: prev?.kind ?? (display?.created ? 'New' : name === 'write_file' ? 'Write' : 'Edit'),
     count: (prev?.count ?? 0) + 1,
     before: prev ? prev.before : display?.before ?? '',
     after: display?.after ?? prev?.after ?? '',

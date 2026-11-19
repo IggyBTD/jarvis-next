@@ -36,6 +36,7 @@ installed Chrome via `channel: 'chrome'`). `node_modules` is git-ignored. The ap
 | `first-token.cjs` | Enter to first reply words with a stand-in LM Studio that answers its model list in 200 ms. |
 | `sidecar-start.mjs` | Speech sidecar: time until the recognizer and the synthesizer are ready. |
 | `page-nav.cjs` | Clicks each header page button and checks state, view, Esc and notch overlap (21 checks). |
+| `ui-audit/audit.cjs` | Full UI audit: 15 screens (chat empty and busy, model menu, palette, System tab, agent cards and approval, Code, Artifacts, Settings, composer states, chat search, hidden sidebar or sheet, context menu, tooltip) in light and dark at 1600, 1200 and 900 px, with a Tauri stub (`stub.js`) and a scripted LM Studio (`mock.mjs`). Reports contrast, small text, small targets, clipping and overflow; saves screenshots. Result on 2026-11-19 after the fixes: no findings. |
 
 Notes: the pages have no Tauri backend in plain Chrome (`window.__TAURI_INTERNALS__` is missing), so
 the "Cannot read properties of undefined (reading 'transformCallback')" page error is expected.

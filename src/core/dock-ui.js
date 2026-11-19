@@ -46,7 +46,7 @@ const paintThink = () => {
   thinkBtn.title = getThink() ? 'Thinking on: JARVIS reasons first, up to a budget (click to turn off)' : 'Thinking off: fast answers (click to let JARVIS think first)';
 };
 thinkBtn.addEventListener('click', () => setThink(!getThink()));
-onEvent((e) => { if (e.type === 'think') paintThink();
+onEvent((e) => { if (e.type === 'think') paintThink(); });
 
 // Permission mode chip: hidden in normal mode; Careful or Plan otherwise. Click or Shift+Tab cycles.
 const permChip = $('perm-chip');
@@ -65,7 +65,7 @@ $('hud-chat-input').addEventListener('keydown', (e) => {
   e.preventDefault();
   cycleMode();
 });
-paintPerm(); });
+paintPerm();
 paintThink();
 
 // --- attachments ---------------------------------------------------------
