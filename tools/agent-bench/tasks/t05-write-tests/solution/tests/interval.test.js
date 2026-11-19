@@ -1,0 +1,20 @@
+const test = require("node:test"); const assert = require("node:assert"); const { merge, totalLength, gaps } = require("../src/interval");
+test("merge empty", () => assert.deepStrictEqual(merge([]), []));
+test("merge sorts", () => assert.deepStrictEqual(merge([[5, 6], [1, 2]]), [[1, 2], [5, 6]]));
+test("merge overlap", () => assert.deepStrictEqual(merge([[1, 4], [3, 6]]), [[1, 6]]));
+test("merge touching", () => assert.deepStrictEqual(merge([[1, 2], [2, 3]]), [[1, 3]]));
+test("merge nested keeps outer end", () => assert.deepStrictEqual(merge([[1, 10], [2, 3]]), [[1, 10]]));
+test("merge does not mutate input", () => { const a = [[5, 6], [1, 2], [2, 4]]; const copy = JSON.parse(JSON.stringify(a)); merge(a); assert.deepStrictEqual(a, copy); });
+test("merge zero length valid", () => assert.deepStrictEqual(merge([[3, 3]]), [[3, 3]]));
+test("merge validation", () => {
+  assert.throws(() => merge("x"), TypeError); assert.throws(() => merge([[1]]), TypeError); assert.throws(() => merge([[1, 2, 3]]), TypeError);
+  assert.throws(() => merge([[NaN, 2]]), TypeError); assert.throws(() => merge([[1, Infinity]]), TypeError); assert.throws(() => merge([[3, 1]]), RangeError);
+});
+test("totalLength", () => { assert.strictEqual(totalLength([]), 0); assert.strictEqual(totalLength([[1, 3], [2, 6], [10, 11]]), 6); assert.strictEqual(totalLength([[2, 2]]), 0); });
+test("gaps basic", () => assert.deepStrictEqual(gaps([[2, 3], [5, 6]], 0, 10), [[0, 2], [3, 5], [6, 10]]));
+test("gaps lo not zero", () => assert.deepStrictEqual(gaps([[2, 3]], 1, 5), [[1, 2], [3, 5]]));
+test("gaps trailing", () => assert.deepStrictEqual(gaps([[0, 4]], 0, 10), [[4, 10]]));
+test("gaps no empty gaps when touching start", () => assert.deepStrictEqual(gaps([[0, 5]], 0, 10), [[5, 10]]));
+test("gaps fully covered and empty list", () => { assert.deepStrictEqual(gaps([[0, 10]], 2, 8), []); assert.deepStrictEqual(gaps([], 1, 2), [[1, 2]]); });
+test("gaps clips outside", () => assert.deepStrictEqual(gaps([[-5, 1], [9, 20]], 0, 10), [[1, 9]]));
+test("gaps lo after hi", () => assert.throws(() => gaps([], 5, 1), RangeError));

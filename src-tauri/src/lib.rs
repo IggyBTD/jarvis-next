@@ -6,22 +6,40 @@ mod sessions;
 mod telemetry;
 mod voice;
 mod web;
+mod browser;
+mod wol;
+mod open;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  // Draw the interface on the integrated GPU, not the discrete one, so the LLM keeps the VRAM.
+  // Keep the big GPU free for the LLM: the interface is drawn by the integrated GPU, not the discrete one
+  // (`--force_low_power_gpu`). The integrated GPU is idle anyway; the cost is a few tens of MB that Windows still
+  // puts on the discrete GPU, because the window is shown through it. JARVIS_GPU picks another way:
+  // `hybrid` draws the interface on the CPU and only WebGL (the OSINT globe) on the integrated GPU, with nothing at
+  // all on the discrete one; `off` draws everything on the CPU; `any` leaves WebView2 alone.
   // WebView2 reads this variable when it creates its environment, which happens after this line.
-  // The switch is Chromium's own: the browser engine inside WebView2 picks the low-power adapter.
-  let switches = std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").unwrap_or_default();
-  if !switches.contains("--force_low_power_gpu") {
-    let joined = if switches.trim().is_empty() { "--force_low_power_gpu".to_string() } else { format!("{switches} --force_low_power_gpu") };
-    std::env::set_var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", joined);
+  let flags: &[&str] = match std::env::var("JARVIS_GPU").as_deref() {
+    Ok("any") => &[],
+    Ok("off") => &["--disable-gpu"],
+    Ok("hybrid") => &["--disable-gpu-compositing", "--disable-gpu-rasterization", "--force_low_power_gpu"],
+    _ => &["--force_low_power_gpu"],
+  };
+  let mut switches = std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").unwrap_or_default();
+  for flag in flags {
+    if !switches.contains(flag) {
+      if !switches.trim().is_empty() { switches.push(' '); }
+      switches.push_str(flag);
+    }
+  }
+  if !switches.trim().is_empty() {
+    std::env::set_var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", switches);
   }
   tauri::Builder::default()
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_fs::init())
     .manage(telemetry::TelemetryState(std::sync::Arc::new(std::sync::Mutex::new(None))))
     .manage(voice::VoiceState(std::sync::Mutex::new(None)))
+    .manage(browser::BrowserState(std::sync::Mutex::new(None)))
     .manage(agent::AgentState(std::sync::Mutex::new(None)))
     .setup(|app| {
       if cfg!(debug_assertions) {
@@ -52,6 +70,10 @@ pub fn run() {
       instincts::instinct_promote,
       voice::voice_start,
       voice::voice_stop,
+      browser::browser_start,
+      browser::browser_stop,
+      wol::wake_on_lan,
+      open::open_signin,
       agent::agent_set_root,
       agent::agent_get_root,
       agent::agent_list_dir,

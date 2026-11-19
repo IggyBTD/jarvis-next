@@ -38,7 +38,9 @@ function showTip(el) {
   const r = el.getBoundingClientRect();
   const t = tip.getBoundingClientRect();
   const x = Math.min(Math.max(8, r.left + r.width / 2 - t.width / 2), window.innerWidth - t.width - 8);
-  const above = r.top - t.height - 8;
+  // Inside the composer the tip sits above the whole box, so it can never cover the text being typed.
+  const box = el.closest('.composer-bar') ? document.getElementById('composer').getBoundingClientRect() : null;
+  const above = (box ? box.top : r.top) - t.height - 8;
   const y = above >= 8 ? above : r.bottom + 8;
   tip.style.translate = `${Math.round(x)}px ${Math.round(y)}px`;
 }
@@ -84,15 +86,27 @@ let returnFocus = null;
 const isField = (el) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement;
 const copy = (text) => navigator.clipboard.writeText(text).catch(() => {});
 
-// What the menu offers depends on what was clicked. Each entry: [label, action, enabled].
+// Other modules say what a right-click on their things offers: registerContext('.chat-item', (el) => [[label, action, enabled, 'danger'?], 'sep', ...]).
+// The first match wins (the most specific thing under the pointer); the generic window items only show on empty space.
+const providers = [];
+export const registerContext = (selector, build) => providers.push([selector, build]);
+
+// What the menu offers depends on what was clicked. Each entry: [label, action, enabled, tone] or 'sep'.
 function itemsFor(target) {
+  for (const [selector, build] of providers) {
+    const el = target.closest(selector);
+    if (el) {
+      const own = build(el, target);
+      if (own.length) return own;
+    }
+  }
   const items = [];
   const selection = String(window.getSelection() || '');
   const field = isField(target) ? target : null;
 
   if (field) {
     const picked = field.value.slice(field.selectionStart, field.selectionEnd);
-    items.push(['CUT', () => { copy(picked); field.setRangeText('', field.selectionStart, field.selectionEnd, 'end'); field.dispatchEvent(new Event('input', { bubbles: true })); }, !!picked]);
+    items.push(['Cut', () => { copy(picked); field.setRangeText('', field.selectionStart, field.selectionEnd, 'end'); field.dispatchEvent(new Event('input', { bubbles: true })); }, !!picked]);
     items.push(['Copy', () => copy(picked), !!picked]);
     items.push(['Paste', async () => {
       try {
@@ -130,8 +144,11 @@ function itemsFor(target) {
 function openMenu(x, y, target) {
   hideTip();
   returnFocus = document.activeElement;
-  menu.replaceChildren(...itemsFor(target).map(([label, action, enabled]) => {
+  menu.replaceChildren(...itemsFor(target).map((item) => {
+    if (item === 'sep') return Object.assign(document.createElement('div'), { className: 'menu-sep', role: 'separator' });
+    const [label, action, enabled, tone] = item;
     const b = document.createElement('button');
+    if (tone) b.dataset.tone = tone;
     b.type = 'button';
     b.setAttribute('role', 'menuitem');
     b.textContent = label;

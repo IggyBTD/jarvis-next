@@ -1,0 +1,1 @@
+Target changed from {{from}} to {{to}} at {{time}}. {{to}} is a {{os}} computer. Previous tool results, paths, open apps and working directories refer to {{from}} and do not carry over. Re-check state before acting.

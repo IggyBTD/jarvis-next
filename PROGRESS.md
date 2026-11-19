@@ -1,0 +1,79 @@
+STATUS: BLOCKED_ON_HUMAN
+LAST_ITERATION: 2
+
+Branch `jarvis-build`. Spec: `docs/JARVIS_BUILD_SPEC.md`. Judgment calls: `docs/decisions.md`. Human steps: `HUMAN_TODO.md`.
+Legend: `[ ]` todo, `[x]` done and tested, `[~]` built and mock-tested, waiting on a human step, `[!]` failed three times.
+Commits are per phase (see decisions.md D-01), not per step.
+
+## P0 Bootstrap
+- [x] P0.1 Inspect existing files, branch, package scripts, test runner, ignore rules, spec copied to docs/
+- [x] P0.2 PROGRESS.md, HUMAN_TODO.md, docs/decisions.md, project CLAUDE.md section
+- [x] P0.3 Mocks and `npm test` green
+
+## P1 Chokepoint
+- [x] P1.1 Config loader and schemas
+- [x] P1.2 Auth, token generation, rotation
+- [x] P1.3 Audit log with hash chain and verify-audit
+- [x] P1.4 Policy and gate
+- [x] P1.5 Static chokepoint test
+
+## P2 Model path
+- [x] P2.1 llm-client
+- [x] P2.2 llm-queue
+- [x] P2.3 llm-proxy
+- [~] P2.4 bench-model harness (real numbers are a human step)
+
+## P3 Agent and registry
+- [x] P3.1 Agent skeleton
+- [x] P3.2 Registry loader, run helper, app aliases, dry run
+- [~] P3.3 MVP actions on win32 (mock-tested; real-machine check is a human step)
+- [~] P3.4 Same on darwin (mock-tested; Mac check is a human step)
+- [x] P3.5 Unsupported actions hidden per OS
+
+## P4 Target and routing
+- [x] P4.1 target-state
+- [x] P4.2 prompt-builder
+- [x] P4.3 tool-router and agent-client
+- [x] P4.4 orchestrator
+
+## P5 API and frontend
+- [x] P5.1 WS and HTTP API
+- [x] P5.2 Telemetry
+- [x] P5.3 Frontend integration (target switcher, gate popup, chat over the server, panels)
+- [~] P5.4 Tauri: wake_on_lan command added; keychain and global shortcut left as human steps (see decisions D-11)
+
+## P6 OpenCode
+- [ ] P6.1 Verification tests (shell-route bypass)
+- [x] P6.2 opencode-manager
+- [x] P6.3 Permission bridge
+- [x] P6.4 agent_task tool and task records
+- [~] P6.5 Acceptance on the real install
+
+## P7 Digest and scheduler
+- [x] P7.1 Scheduler
+- [x] P7.2 Calendar and Gmail clients
+- [x] P7.3 Telemetry summary
+- [x] P7.4 Digest pipeline
+- [~] P7.5 Real OAuth setup
+
+## P8 Browser
+- [x] P8.1 Sidecar and tools
+- [x] P8.2 Guardrails, gate integration, CAPTCHA handoff
+
+## P9 Voice
+- [~] P9.1 Client capture, playback, barge-in
+- [x] P9.2 Server VAD, STT, TTS, turn detection
+- [x] P9.3 Voice target-switch matcher
+
+## P10 Action library
+- [~] P10.1 Categories implemented (all disabled except MVP)
+- [x] P10.2 Tool exposure cap
+- [x] P10.3 User scripts
+
+## P11 Ship
+- [x] P11.1 Installers, autostart, doctor
+- [x] P11.2 Docs
+- [x] P11.3 Expiry, rotation, backup
+
+## P12 Scan
+- [~] P12.1 Self review done (docs/scan/round1-self.md); an independent scan is still to be run

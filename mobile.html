@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- R1-2: images and media from this page or data: and blob: only, also when the dev server (which sends no CSP) serves it -->
+  <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: blob:; media-src 'self' data: blob:; object-src 'none'">
+  <!-- viewport-fit=cover: the app draws edge to edge and keeps clear of the notch and the home indicator itself (safe-area insets).
+       No maximum-scale: pinch zoom stays available; inputs are 16 pt so Safari never zooms by itself. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="JARVIS">
+  <meta name="format-detection" content="telephone=no">
+  <title>JARVIS</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest-mobile.webmanifest">
+  <link rel="stylesheet" href="/src/styles/tokens.css">
+  <link rel="stylesheet" href="/src/ui/diagram.css">
+  <link rel="stylesheet" href="/src/ui/base.css">
+  <link rel="stylesheet" href="/src/ui/mobile.css">
+</head>
+<body>
+<div id="m-app" data-state="connecting">
+  <header class="m-bar">
+    <button type="button" id="m-chats" class="m-icon-btn" aria-label="Chats"><span class="icon" data-icon="sidebar" aria-hidden="true"></span></button>
+    <button type="button" id="m-title" class="m-title" aria-haspopup="dialog">
+      <span class="m-title-row"><span class="m-title-main" id="m-title-main">JARVIS</span><span class="icon" data-icon="chevron-down" aria-hidden="true"></span></span>
+      <span class="m-title-sub" id="m-title-sub"></span>
+    </button>
+    <button type="button" id="m-new" class="m-icon-btn" aria-label="New chat"><span class="icon" data-icon="edit" aria-hidden="true"></span></button>
+  </header>
+
+  <div id="m-banner" class="m-banner" role="status" hidden>
+    <span id="m-banner-text"></span>
+    <button type="button" id="m-banner-act" class="m-banner-act" hidden></button>
+  </div>
+
+  <main id="m-scroll" class="m-scroll">
+    <section id="m-empty" class="m-empty">
+      <span class="logo logo-hero" data-mesh-logo="hero" data-mesh-input="m-input" aria-label="JARVIS"></span>
+      <h1 class="m-greet"><span id="m-greet">Hello</span><b>.</b></h1>
+      <p class="m-greet-sub" id="m-greet-sub">Running on your PC.</p>
+    </section>
+    <div id="m-log" class="m-log" role="log" aria-live="polite" aria-label="Conversation"></div>
+    <button type="button" id="m-jump" class="m-jump" aria-label="Jump to the latest message" hidden><span class="icon" data-icon="chevron-down" aria-hidden="true"></span></button>
+  </main>
+
+  <form id="m-composer" class="m-composer" autocomplete="off">
+    <div class="m-field">
+      <!-- A plain textarea: the iPhone's own keyboard, autocorrect, predictive text and dictation all work. Return makes a new line. -->
+      <textarea id="m-input" rows="1" placeholder="Message JARVIS" aria-label="Message" enterkeyhint="enter" autocapitalize="sentences" autocorrect="on" spellcheck="true" autocomplete="off"></textarea>
+      <button type="submit" id="m-send" class="m-send" aria-label="Send" aria-disabled="true"><span class="icon" data-icon="send" aria-hidden="true"></span></button>
+    </div>
+  </form>
+</div>
+<div id="m-sheets"></div>
+<script type="module" src="/src/mobile/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+[
+  {
+    "key": "iconoir",
+    "set": "iconoir:regular",
+    "port": 5181
+  },
+  {
+    "key": "phosphor",
+    "set": "phosphor:light",
+    "port": 5182
+  },
+  {
+    "key": "tabler",
+    "set": "tabler:outline",
+    "port": 5183
+  },
+  {
+    "key": "solar",
+    "set": "solar:linear",
+    "port": 5184
+  }
+]

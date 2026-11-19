@@ -1,11 +1,13 @@
 // Wires the chat input, mode buttons and transcript to llm-client.
 // A reply is rendered as blocks: optional reasoning, then text and artifact cards in order.
-import { chat, setMode, getMode, getPreset, syncModel, onEvent } from './llm-client.js';
+import { hydrateIcons } from '../icons/index.js';
+import { chat, setMode, getMode, getPreset, onEvent } from './llm-client.js';
 import { hasImages, takeAsContent } from './attachments.js';
 import { pulse, setThinking } from './mesh-state.js';
-import { icon } from './icons.js';
-import { elementSymbol, typeName } from './artifact-symbols.js';
-import { renderMarkdown, highlightCode } from './markdown.js';
+import { describeCall, summarizeSaved, summarizeKinds } from '../../shared/steps.js';
+import { meshIcon, feedMesh, feedMeshTotal, resetMeshFeed, restMesh } from './node-mesh.js';
+import { renderBlocks, highlightCode } from './markdown.js';
+import { setMathText } from './inline-math.js';
 import { parseReply } from './tool-router.js';
 import { upsertArtifact } from './artifacts.js';
 import { runCommand, registerCommandHost, hasCommand } from './commands.js';
@@ -14,16 +16,23 @@ import { estimateTokens, shouldCompact, trimToolResults, findCut, summaryRequest
 import { workContext, setPlanMode, isPlanMode, getTasks, setTasks, formatTasks, taskSummary } from './work-state.js';
 import { projectInstructionsContext } from './project-instructions.js';
 import { loadSkills, skillsContext, findSkill, skillPrompt, getSkills } from './skills.js';
-import { newSessionId, sessionTitle, saveSession, listSessions, loadSession, toMarkdown, exportSession, textOf as messageText } from './sessions.js';
+import { newSessionId, sessionTitle, saveSession, listSessions, loadSession, deleteSession, patchSession, copySession, toMarkdown, exportSession, textOf as messageText } from './sessions.js';
+import { projectContext } from './projects.js';
+import { currentPage } from './whiteboard-mode.js';
 import { handleCommandKey } from './command-palette.js';
 import { buildContext } from './memory-client.js';
-import { openArtifact, applyBoardSpec } from './whiteboard.js';
+import { openArtifact, applyBoardSpec, isArtifactOpen, syncCards } from './whiteboard.js';
 import { bindChat, beginTurn } from './voice.js';
 import { toolDefinitions, runToolCall, registerActionHost, undoEdit, loadLocalRules, getRoutines, noteUserUrls } from './actions.js';
 import { matchRoutine } from './routines.js';
+import { elementSymbol, typeName } from './artifact-symbols.js';
+import { effortNote } from '../../shared/effort.js';
+import { getEffort } from './effort-ui.js';
 import { restoreProject } from './agent-client.js';
 import { actionCard, approvalCard, planCard } from './tool-cards.js';
 import { assistantToolMessage, toolResultMessage } from './tool-calls.js';
+import { recordReply, statsLine } from './reply-stats.js';
+import { serverMode, sendChat, abortChat, onLink, state as link, setConvId, runAction } from './server-link.js';
 
 const input = document.getElementById('hud-chat-input');
 const output = document.getElementById('chat-output');
@@ -51,13 +60,6 @@ function selectMode(name) {
     b.classList.toggle('active-mode', active);
     b.setAttribute('aria-pressed', String(active));
   });
-}
-
-// Load the newly selected model right away (after a short pause so rapid
-// clicking doesn't trigger a load for every button passed over).
-function scheduleSwap() {
-  clearTimeout(swapTimer);
-  swapTimer = setTimeout(() => syncModel().catch((e) => console.warn('[jarvis] model swap failed:', e)), 500);
 }
 
 // Keep the newest text in view until the reader scrolls up themselves; then leave them alone
@@ -97,7 +99,7 @@ function addLine(role, text, { files = [], meta = clock() } = {}) {
   el.className = `chat-line ${role}`;
   const body = document.createElement('div');
   body.className = 'chat-text';
-  body.textContent = text;
+  if (role === 'user') setMathText(body, text); else body.textContent = text; // what you sent can hold maths between $ signs
   el.append(body);
   files.forEach((name) => {
     const f = document.createElement('span');
@@ -115,7 +117,145 @@ function addLine(role, text, { files = [], meta = clock() } = {}) {
   return el;
 }
 
-const setText = (el, text) => { el.querySelector('.chat-text').textContent = text; };
+// A line that is still waiting has the orb beside its label; the label is the part that changes. Once the line is no longer
+// pending (an error replaced it) the orb goes with the text.
+const setText = (el, text) => {
+  const box = el.querySelector('.chat-text');
+  const label = el.classList.contains('pending') ? box.querySelector('.think-label') : null;
+  (label ?? box).textContent = text;
+};
+
+// The loading icon is the node mesh from the old HUD (node-mesh.js). It opens and closes with the letters being written (feedMesh).
+const orb = () => meshIcon();
+// The stamp: ONE logo that rests under the newest reply. When you send a message it glides down into the new reply (and is that
+// reply's loading icon while it is written), then rests under it. Ease-in-out, 280 ms; no glide with reduced motion.
+let logo = null;
+const calm = matchMedia('(prefers-reduced-motion: reduce)');
+function moveLogo(line, { rest = false } = {}) {
+  logo ??= meshIcon({ keep: true });
+  const from = logo.isConnected ? logo.getBoundingClientRect() : null;
+  if (logo.parentElement !== line) line.append(logo);
+  restMesh(logo, rest);
+  if (!from || calm.matches) return;
+  const to = logo.getBoundingClientRect();
+  const dy = from.top - to.top, dx = from.left - to.left;
+  if (!dy && !dx) return;
+  const near = Math.abs(dy) < innerHeight * 1.5; // from far above: fade in at the new place instead of a long flight
+  logo.animate(near ? [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }] : [{ opacity: 0 }, { opacity: 1 }], { duration: 280, easing: 'ease-in-out' });
+}
+// The turn is over: the logo goes to the newest reply (nothing to show it under after an error with no reply at all).
+function settleLogo() {
+  const last = [...output.querySelectorAll('.chat-line.assistant')].at(-1);
+  if (last) moveLogo(last, { rest: true }); else logo?.remove();
+}
+function pendingLine() {
+  const el = addLine('assistant pending', '', { meta: '' });
+  el.querySelector('.chat-text').append(Object.assign(document.createElement('span'), { className: 'think-label', textContent: 'Thinking...' }));
+  moveLogo(el);
+  return el;
+}
+
+// All tool calls of one stretch (until the model writes text again) share one quiet row: the running step while it works,
+// "Ran 3 steps" after, opening to the list. The tool lines used to be one box each, plus a "Thinking..." line between them.
+const parseArgs = (a) => { try { return typeof a === 'string' ? JSON.parse(a || '{}') : a; } catch { return {}; } };
+const STEP_STATE = { running: '', ok: '', failed: 'failed', queued: 'waiting for your approval', denied: 'not approved', stopped: 'stopped' };
+const secs = (ms) => (ms == null ? '' : ms < 950 ? `${Math.max(1, Math.round(ms))} ms` : `${(ms / 1000).toFixed(ms < 9500 ? 1 : 0)} s`);
+const shorten = (t, n = 46) => (t.length > n ? `${t.slice(0, n - 1)}…` : t);
+const agentRows = new Map(); // coding-agent task id -> its row, so what the agent does later still lands under that step
+function stepsGroup() {
+  const el = addLine('steps live', '', { meta: '' });
+  el.querySelector('.chat-text').innerHTML = '<details class="steps-box"><summary class="steps-head"><span class="steps-lead"><span class="icon" data-icon="check" aria-hidden="true"></span></span>'
+    + '<span class="steps-label"></span><span class="steps-count"></span><span class="icon" data-icon="chevron-right" aria-hidden="true"></span></summary><ol class="steps-list"></ol></details>';
+  el.querySelector('.steps-lead').prepend(orb());
+  hydrateIcons(el);
+  const box = el.querySelector('.steps-box');
+  const [label, count, list] = ['.steps-label', '.steps-count', '.steps-list'].map((s) => el.querySelector(s));
+  const rows = [];
+  let touched = false; // the user opened or closed it themselves: leave it alone
+  box.open = true; // while it works, every step is on show; it folds to one line when the turn ends
+  el.querySelector('.steps-head').addEventListener('click', () => { touched = true; });
+  const refresh = () => {
+    const running = rows.find((r) => r.state === 'running');
+    const bad = rows.filter((r) => r.state === 'failed' || r.state === 'denied').length;
+    el.classList.toggle('live', !!running);
+    el.classList.toggle('bad', !running && bad > 0);
+    const only = rows[0];
+    label.textContent = running ? `${running.doing}...` : rows.length === 1 ? (only.state === 'ok' ? only.did : `${only.doing} (${STEP_STATE[only.state]})`) : summarizeKinds(rows.map((r) => ({ name: r.name, args: r.args, failed: r.state !== 'ok' })));
+    count.textContent = '';
+  };
+  const add = (name, machine, state = 'running', args = {}) => {
+    const { doing, did } = describeCall(name, args);
+    const li = document.createElement('li');
+    li.innerHTML = '<details class="step"><summary class="step-line"><span class="step-name"></span><span class="step-flag"></span></summary>'
+      + '<div class="step-body"><div class="step-facts"></div><pre class="step-args"></pre><pre class="step-detail"></pre></div></details><ol class="step-sub"></ol>';
+    const q = (s) => li.querySelector(s);
+    q('.step-name').textContent = doing;
+    let argText = '';
+    try { argText = Object.keys(args ?? {}).length ? JSON.stringify(args, null, 1).slice(0, 700) : ''; } catch { /* arguments that cannot be shown */ }
+    q('.step-args').innerHTML = argText ? `<span class="step-label">Request</span>${highlightCode(argText, 'json')}` : ''; // highlightCode escapes the text
+    const subs = new Map();
+    const row = {
+      name, args, state, li, doing, did, ms: null, summary: '', note: '',
+      set(s, r = {}) {
+        row.state = s;
+        li.dataset.state = s;
+        if (r.ms != null) row.ms = r.ms;
+        row.did = did;
+        q('.step-name').textContent = s === 'ok' ? did : doing;
+        q('.step-flag').textContent = STEP_STATE[s];
+        if (r.summary !== undefined) row.summary = r.summary;
+        row.facts();
+        if (r.detail) q('.step-detail').innerHTML = `<span class="step-label">Result</span>${/^\s*[{[]/.test(r.detail) ? highlightCode(r.detail, 'json') : escapeHtml(r.detail)}`;
+        q('details.step').classList.toggle('plain', !argText && !r.detail && !q('.step-facts').textContent);
+        refresh();
+      },
+      // "on PC · 1.2 s · 5 messages", shown when the step is opened
+      facts() { q('.step-facts').textContent = [machine ? `on ${machine}` : '', secs(row.ms), row.summary, row.note].filter(Boolean).join(' · '); },
+      // something the coding agent did inside this step: a command, a file read or edited
+      sub({ id, text, status = 'running', output }) {
+        let item = subs.get(id);
+        if (!item) { item = document.createElement('li'); item.innerHTML = '<span class="sub-text"></span>'; subs.set(id, item); q('.step-sub').append(item); }
+        item.dataset.state = status === 'done' ? 'ok' : status;
+        item.querySelector('.sub-text').textContent = output && status === 'failed' ? `${text}: ${output}` : text;
+        if (output) item.title = output;
+        li.dataset.agent = 'on';
+      },
+      endSubs() { for (const item of subs.values()) if (item.dataset.state === 'running') item.dataset.state = 'ok'; },
+    };
+    rows.push(row);
+    list.append(li);
+    row.set(state);
+    return row;
+  };
+  return {
+    el,
+    add,
+    finish(state, r) {
+      const row = rows.find((x) => x.state === 'running');
+      row?.set(state, r);
+      if (row && r?.taskId) agentRows.set(r.taskId, row);
+    },
+    settle() { // the turn ended: anything still marked running was stopped; the list folds to its one line
+      rows.filter((r) => r.state === 'running').forEach((r) => r.set('stopped'));
+      if (!touched) box.open = false;
+    },
+  };
+}
+// What the coding agent does inside a task shows under that task's step, even after the turn that started it has ended.
+onLink((e) => {
+  if (e.type === 'agent.step') agentRows.get(e.taskId)?.sub(e);
+  else if (e.type === 'agent.status' && ['done', 'failed', 'aborted', 'timeout'].includes(e.task?.state)) {
+    const row = agentRows.get(e.task.taskId);
+    if (!row) return;
+    row.endSubs();
+    row.note = e.task.state === 'done' ? `Finished${e.task.summary ? `: ${e.task.summary.replace(/\s+/g, ' ').slice(0, 160)}` : ''}` : `Task ${e.task.state}${e.task.error ? `: ${e.task.error}` : ''}`;
+    row.facts();
+    row.li.querySelector('details.step').classList.remove('plain');
+    agentRows.delete(e.task.taskId);
+  }
+});
+// What a saved tool message says about how the call went (the router writes "[PC] name finished:", "... failed:", "... was not run:").
+const resultState = (content) => { const s = String(content).slice(0, 300); return /needs approval and nobody/.test(s) ? 'queued' : /did not approve/.test(s) ? 'denied' : /Cancelled before/.test(s) ? 'stopped' : /\] \S+ finished:/.test(s) ? 'ok' : 'failed'; };
 
 // --- assistant blocks ----------------------------------------------------
 function artifactCard(p, done) {
@@ -123,9 +263,9 @@ function artifactCard(p, done) {
   const title = p.opening ? 'Writing artifact...' : escapeHtml(p.title);
   const state = p.complete ? 'Open' : done ? 'Incomplete' : `Writing... ${fmtChars(p.content.length)}`;
   const type = p.opening ? '...' : p.type === 'code' && p.lang ? p.lang : p.type;
-  const sym = p.opening ? '' : elementSymbol(type);
+  const sym = p.opening ? '' : elementSymbol(type); // the nodes design draws the type as an element tile (data-sym, data-type)
   return `<button type="button" class="artifact-card${usable ? '' : ' busy'}" data-artifact="${escapeHtml(p.id)}"${usable ? '' : ' disabled'}>`
-    + `<span class="ac-type" data-sym="${escapeHtml(sym)}"><span class="ac-word">${escapeHtml(type)}</span></span><span class="ac-title">${title}</span><span class="ac-state" data-type="${escapeHtml(p.opening ? '' : typeName(type))}">${state}</span></button>`
+    + `<span class="icon" data-icon="layers" aria-hidden="true"></span><span class="ac-type" data-sym="${escapeHtml(sym)}"><span class="ac-word">${escapeHtml(type)}</span></span><span class="ac-title">${title}</span><span class="ac-state" data-type="${escapeHtml(p.opening ? '' : typeName(type))}">${state}</span></button>`
     + artifactSource(p);
 }
 
@@ -140,28 +280,81 @@ function artifactSource(p) {
   return `<div class="code-box ac-source"><div class="code-head"><span>${escapeHtml(lang || 'code')}</span><button type="button" class="copy-btn">Copy</button></div><pre><code class="hljs">${body}</code></pre></div>`;
 }
 
+// Puts a reply into its message without rebuilding what did not change. While a reply streams, every block above
+// the one being written is the same as in the paint before; replacing it would restyle, relayout and (for the
+// reader) drop a text selection on every paint. A reply is a list of parts: rendered markdown (a list of blocks) or
+// plain html (artifact cards). The new list is compared with the last one and only the blocks that differ are made
+// again; nothing unchanged is even parsed.
+const shown = new WeakMap(); // the message text element -> the parts drawn in it
+const nodesFrom = (html) => { const t = document.createElement('template'); t.innerHTML = html; return [...t.content.childNodes]; };
+const dropNodes = (nodes) => nodes.forEach((n) => n.remove());
+function swapNodes(oldNodes, newNodes, host) {
+  if (oldNodes.length) { oldNodes[0].before(...newNodes); dropNodes(oldNodes); } else host.append(...newNodes);
+}
+function patchParts(host, parts) {
+  if (!shown.has(host)) host.replaceChildren(); // the "Thinking..." text
+  const old = shown.get(host) ?? [];
+  const out = parts.map((p, i) => {
+    const o = old[i];
+    if (p.kind === 'md') {
+      const made = (html) => ({ html, nodes: nodesFrom(html) });
+      if (!o || o.kind !== 'md') {
+        const el = Object.assign(document.createElement('div'), { className: 'md' });
+        const blocks = p.blocks.map(made);
+        el.append(...blocks.flatMap((x) => x.nodes));
+        if (o) { o.nodes[0].before(el); dropNodes(o.nodes); } else host.append(el);
+        return { kind: 'md', nodes: [el], blocks };
+      }
+      const el = o.nodes[0];
+      // a block that drew nothing has no node to put its replacement next to: start this part over (rare)
+      if (p.blocks.some((html, j) => o.blocks[j] && o.blocks[j].html !== html && !o.blocks[j].nodes.length)) {
+        const blocks = p.blocks.map(made);
+        el.replaceChildren(...blocks.flatMap((x) => x.nodes));
+        return { kind: 'md', nodes: [el], blocks };
+      }
+      const blocks = p.blocks.map((html, j) => {
+        const b = o.blocks[j];
+        if (b && b.html === html) return b;
+        const fresh = made(html);
+        if (b) swapNodes(b.nodes, fresh.nodes, el); else el.append(...fresh.nodes);
+        return fresh;
+      });
+      o.blocks.slice(p.blocks.length).forEach((x) => dropNodes(x.nodes));
+      return { kind: 'md', nodes: [el], blocks };
+    }
+    if (o && o.kind === 'html' && o.html === p.html) return o;
+    const nodes = nodesFrom(p.html);
+    if (o) swapNodes(o.nodes, nodes, host); else host.append(...nodes);
+    return { kind: 'html', html: p.html, nodes };
+  });
+  old.slice(parts.length).forEach((o) => dropNodes(o.nodes));
+  shown.set(host, out);
+}
+
 // quiet: redrawing a saved conversation: artifacts are registered again but nothing is opened or arranged.
 function renderAssistant(el, content, { done, quiet = false }) {
-  let html = '';
+  const parts = [];
   for (const p of parseReply(content)) {
     if (p.kind === 'board') {
       if (done && !quiet) applyBoardSpec(p); // arrange the panels once the whole reply is in
       continue;
     }
     if (p.kind === 'text') {
-      html += `<div class="md">${renderMarkdown(p.text)}</div>`;
+      parts.push({ kind: 'md', blocks: renderBlocks(p.text) });
       continue;
     }
-    html += artifactCard(p, done);
+    parts.push({ kind: 'html', html: artifactCard(p, done) });
     if (p.id && p.content && (p.complete || done)) {
       const { changed } = upsertArtifact({ ...p, partial: !p.complete });
       // A source file has nothing to preview: it is already written out in the session, so it
       // gets no panel of its own unless the user clicks its card. Everything else opens beside it.
       if (quiet) { /* registered above, left closed */ }
-      else if (changed) openArtifact(p.id);
+      else if (changed) openArtifact(p.id, { auto: true });
     }
   }
-  el.querySelector('.chat-text').innerHTML = html;
+  patchParts(el.querySelector('.chat-text'), parts);
+  hydrateIcons(el);
+  syncCards(el);
 }
 
 // Collapsible reasoning block above the answer.
@@ -204,13 +397,121 @@ function interrupt() {
 
 // /stop ends a running turn (a long agent job) without waiting for it.
 function stopTurn() {
+  if (serverTurn) abortChat();
   turn?.controller.abort();
   approval?.cancel();
 }
 stopBtn?.addEventListener('click', stopTurn);
 document.addEventListener('jarvis:stop', stopTurn); // Ctrl+. (shortcuts.js)
 
+// --- the JARVIS server path -------------------------------------------------
+// The server streams the reply, runs tools on the active computer and asks for approval itself (server-ui.js shows the
+// dialog). This function only draws what arrives. It never falls back to the local model or local tools: if the server is
+// not reachable, nothing is sent and the message goes back into the box.
+let serverTurn = null;
+async function sendViaServer(text) {
+  const { content, names } = takeAsContent(text);
+  const body = typeof content === 'string' ? content : textOf(content);
+  const sent = sendChat(body, { code: currentPage() === 'code' });
+  if (!sent.ok) {
+    addLine('system', sent.reason, { meta: '' });
+    input.value = text;
+    input.dispatchEvent(new Event('input'));
+    busy = false;
+    return;
+  }
+  lastSent = text;
+  noteUserUrls(text); // an address you typed may be fetched without asking (actions.js)
+  document.dispatchEvent(new CustomEvent('jarvis:message-sent'));
+  setWorking(true);
+  const target = (link.machines[link.target]?.label ?? link.target).toUpperCase();
+  addLine('user', text, { files: names, meta: `${clock()}  ${target}` });
+  workspace.classList.add('has-output');
+  let pending = pendingLine();
+  let latest = '';
+  let afterTool = false;
+  let steps = null; // the row that holds this stretch of tool calls
+  let frame = 0;
+  const paint = (final) => { if (latest) renderAssistant(pending, latest, { done: final }); };
+  const stamp = (line, stats = null) => {
+    const m = document.createElement('span');
+    m.className = 'chat-meta';
+    m.textContent = `${clock()}  ${target}`;
+    line.append(m);
+    if (stats?.completionTokens) line.append(Object.assign(document.createElement('div'), { className: 'chat-stats', textContent: statsLine(stats), title: 'What this reply cost the local model' }));
+    replyButtons(line, latest, false);
+  };
+  output.scrollTop = output.scrollHeight;
+
+  await new Promise((finish) => {
+    const end = () => { cancelAnimationFrame(frame); steps?.settle(); settleLogo(); off(); serverTurn = null; setThinking(false); busy = false; setWorking(false); document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')); finish(); };
+    serverTurn = { end };
+    const fail = (message, kind = 'error') => { pending.className = `chat-line ${kind}`; pending.querySelector('.thought')?.remove(); setText(pending, message); end(); };
+    const off = onLink((e) => {
+      switch (e.type) {
+        case 'chat.delta':
+          if (!e.text) break; // an empty chunk is not a letter yet: the line stays "Thinking..."
+          if (afterTool) { paint(true); pending = addLine('assistant pending', '', { meta: '' }); latest = ''; afterTool = false; }
+          pending.className = 'chat-line assistant';
+          latest += e.text;
+          pulse();
+          feedMesh(e.text);
+          if (!frame) frame = requestAnimationFrame(() => { frame = 0; const stick = nearBottom(); paint(false); follow(stick); });
+          break;
+        case 'resume': // reconnected while the reply was being written: the server sends what it has so far
+          if (!e.text) break;
+          latest = e.text;
+          pending.className = 'chat-line assistant';
+          paint(false);
+          break;
+        case 'tool.call':
+          if (latest) { cancelAnimationFrame(frame); frame = 0; paint(true); stamp(pending); steps = null; pending.querySelector(':scope > .orb')?.remove(); } else if (pending.classList.contains('pending')) pending.remove();
+          steps ??= stepsGroup();
+          steps.add(e.name, link.machines[e.target]?.label ?? e.target, 'running', e.args);
+          follow(following);
+          afterTool = true;
+          break;
+        case 'tool.result':
+          steps?.finish(e.ok ? 'ok' : e.queued ? 'queued' : e.denied ? 'denied' : 'failed', { summary: e.summary, detail: e.detail, ms: e.ms, taskId: e.taskId });
+          pending = pendingLine();
+          latest = '';
+          afterTool = false;
+          break;
+        case 'chat.done':
+          cancelAnimationFrame(frame);
+          if (e.text) { latest = e.text; pending.className = 'chat-line assistant'; paint(true); stamp(pending, e.stats); recordReply(e.stats); } else pending.remove();
+          follow(following);
+          end();
+          break;
+        case 'chat.error': fail(e.reason === 'aborted' ? 'Stopped' : e.reason, e.reason === 'aborted' ? 'system' : 'error'); break;
+        case 'status':
+          if (link.status !== 'online' && link.status !== 'connecting') setText(pending, 'Lost the connection to the JARVIS server. Reconnecting; the reply continues there.');
+          break;
+        case 'state': { // back online: if the reply finished while we were away, it is in the snapshot
+          if (link.conversation.streaming) break;
+          const last = link.conversation.messages.at(-1);
+          if (last?.role === 'assistant' && last.content) { latest = last.content; pending.className = 'chat-line assistant'; paint(true); stamp(pending); end(); }
+          break;
+        }
+        case 'title': setMathText(document.getElementById('chat-title'), e.title); break;
+        default: break;
+      }
+    });
+  });
+}
+
+// Leaving a chat that is still being answered (a new chat, another chat, Code) does not stop it: with the server on, the reply keeps being
+// written there, saved in that chat, and the chat list shows the chat as working. Returns false only when something here is busy and cannot let go.
+function detachRunning() {
+  if (!working) return true;
+  if (!serverTurn) return false;
+  serverTurn.end();
+  return true;
+}
+
 async function send() {
+  const quiet = input.dataset.quiet === '1'; // a command the app typed (open a chat, new chat): not shown as the user's message
+  delete input.dataset.quiet;
   const text = input.value.trim();
   if (busy && text.toLowerCase() === '/stop') {
     input.value = '';
@@ -225,6 +526,7 @@ async function send() {
     btw((side[1] ?? '').trim());
     return;
   }
+  if (busy && serverTurn && /^\/(clear|new|resume)(\s|$)/i.test(text)) detachRunning();
   if (!text || busy) return;
   busy = true;
   following = true; // a new message always brings the reader back to the bottom
@@ -241,8 +543,8 @@ async function send() {
   if (text.startsWith('/') && !skill) {
     try {
       const reply = await runCommand(text);
-      addLine('user', text, { meta: '' });
-      if (reply) addLine('system', reply, { meta: '' });
+      if (!quiet) addLine('user', text, { meta: '' });
+      if (reply && !(quiet && /^(Resumed|Conversation cleared)/.test(reply))) addLine('system', reply, { meta: '' });
       output.scrollTop = output.scrollHeight;
     } finally {
       busy = false;
@@ -250,8 +552,11 @@ async function send() {
     return;
   }
 
+  // With the JARVIS server on, the server owns the model, the tools, the approvals and the conversation.
+  if (serverMode()) { await sendViaServer(text); return; }
+
   // A routine phrase typed on its own ("lock screen") runs at once, without the model; it still goes
-  // through the action gate and the audit log.
+  // through the action gate and the audit log. Local mode only: with the server on, its agent owns the computer.
   const routine = !skill && matchRoutine(text, getRoutines());
   if (routine) {
     try {
@@ -269,7 +574,7 @@ async function send() {
   if (hasImages() && getMode() !== 'visual') selectMode('visual');
   const { content, names } = takeAsContent(skillText ?? text);
   lastSent = text;
-  noteUserUrls(text);
+  document.dispatchEvent(new CustomEvent('jarvis:message-sent'));
 
   setWorking(true);
   try { await maybeCompact(); } catch (e) { console.warn('[jarvis] compaction failed:', e); } // between turns, so no index shifts mid-turn
@@ -281,7 +586,7 @@ async function send() {
   const userLine = addLine('user', text, { files: names });
   markUser(userLine, userMsg);
   workspace.classList.add('has-output');
-  let pending = addLine('assistant pending', 'Thinking...', { meta: '' });
+  let pending = pendingLine();
   // The line says what is really happening: a model is loaded or unloaded only when LM Studio is
   // doing that (llm-client phase events); every other wait before the first token is the model
   // reading the message, which is thinking.
@@ -321,8 +626,8 @@ async function send() {
   const stamp = (stats, final = false) => {
     const m = document.createElement('span');
     m.className = 'chat-meta';
-    m.textContent = [clock(), getPreset().model, stats?.tps ? `${stats.tps.toFixed(1)} t/s` : ''].filter(Boolean).join(' · ');
-    m.title = stats ? `First token after ${stats.ttft?.toFixed(1) ?? '?'} s, ${stats.promptTokens ?? '?'} prompt and ${stats.completionTokens ?? '?'} reply tokens` : '';
+    m.textContent = `${clock()}  ${getPreset().model}${stats?.tps ? `  ${stats.tps.toFixed(1)} t/s` : ''}`;
+    if (stats) m.title = `First token after ${stats.ttft?.toFixed(1) ?? '?'} s, ${stats.promptTokens ?? '?'} prompt and ${stats.completionTokens ?? '?'} reply tokens`;
     pending.append(m);
     replyButtons(pending, latest.content, final);
   };
@@ -332,13 +637,15 @@ async function send() {
   const mine = { controller, text, userLine, speech, base, lines: [pending], files: names.length > 0, taken: false };
   turn = mine;
   try {
-    // Stable context goes in the system message; what changes per turn rides on the newest user
-    // message (llm-client), so the prefix stays identical and LM Studio reuses its cache.
-    const context = [projectInstructionsContext(), skillsContext()].filter(Boolean).join('\n\n');
-    const turnContext = [await buildContext(text), speech ? '<voice-mode>This reply will be spoken aloud.</voice-mode>' : ''].filter(Boolean).join('\n\n');
+    // Stable context goes in the system message; what changes per turn rides on the newest user message (llm-client.js
+    // withReminder), so the prompt prefix stays identical and LM Studio reuses its cache. The effort note is the same one
+    // the server adds (shared/effort.js); Medium adds nothing.
+    const context = [projectInstructionsContext(), projectContext(session.project), skillsContext()].filter(Boolean).join('\n\n');
+    const turnContext = [await buildContext(text), speech ? '<voice-mode>This reply will be spoken aloud.</voice-mode>' : '', titleNote(), effortNote(getEffort())].filter(Boolean).join('\n\n');
     let spoken = ''; // text of the rounds already finished, so speech sees one growing text
     for (let round = 0; ; round++) {
       latest = { content: '', reasoning: '' };
+      resetMeshFeed();
       thinkStart = null;
       if (round > 0 && shouldCompact(lastUsed, contextMax())) trimToolResults(history, 8); // long agent job: shorten old tool output
       const result = await chat(history, {
@@ -353,6 +660,8 @@ async function send() {
           if (thinkStart === null) thinkStart = performance.now();
           if (thinking) speech?.thinking();
           if (!thinking) { pulse(); speech?.push(spoken + visible); }
+          feedMeshTotal('content', visible ?? '');
+          feedMeshTotal('reasoning', reasoning ?? '', 0.5); // thought text is writing too, a little quieter
           if (thinking && !reasoning) setText(pending, 'Thinking...');
           latest = { content: visible, reasoning };
           if (!frame) frame = requestAnimationFrame(paintStreaming);
@@ -404,7 +713,7 @@ async function send() {
         }
       }
       consistent = history.length;
-      pending = addLine('assistant pending', 'Thinking...', { meta: '' });
+      pending = pendingLine();
       mine.lines.push(pending);
       follow(stick);
     }
@@ -423,6 +732,7 @@ async function send() {
     setText(pending, stopped ? 'Stopped' : `Could not reach the model: ${e.message}`);
   } finally {
     offPhase();
+    settleLogo();
     if (!mine.taken) { setThinking(false); busy = false; setWorking(false); saveSoon(); }
   }
 }
@@ -479,7 +789,7 @@ function contextReport() {
   ].join('\n');
 }
 
-// --- reply buttons: copy, and regenerate on the latest reply ---------------
+// --- reply buttons: copy, and ask again on the latest reply ---------------
 const replyTexts = new WeakMap(); // assistant line -> its markdown
 function replyButtons(line, text, regen) {
   if (!text) return;
@@ -487,7 +797,7 @@ function replyButtons(line, text, regen) {
   const bar = line.querySelector(':scope > .chat-meta') ?? line.appendChild(Object.assign(document.createElement('span'), { className: 'chat-meta' }));
   const btn = (cls, label, title) => bar.appendChild(Object.assign(document.createElement('button'), { type: 'button', className: `chat-edit ${cls}`, textContent: label, title }));
   btn('chat-copy', 'Copy', 'Copy this reply as Markdown');
-  if (regen) {
+  if (regen && !serverMode()) {
     output.querySelectorAll('.chat-regen').forEach((b) => b.remove()); // only the newest reply can be asked again
     btn('chat-regen', 'Retry', 'Ask the last message again (same model; pick another in the model menu first to compare)');
   }
@@ -575,27 +885,32 @@ function saveSoon() {
   saveTimer = setTimeout(() => {
     if (!history.length) return;
     session.name ||= sessionTitle(history);
+    session.mode ||= currentPage() === 'code' ? 'code' : 'chat';
     saveSession({ ...session, updated: Date.now(), messages: history.length }, history)
-      .then(() => document.dispatchEvent(new CustomEvent('jarvis:saved', { detail: { id: session.id } })))
+      .then(() => document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')))
       .catch(() => { /* a plain browser cannot save */ });
   }, 400);
 }
-const startSession = () => { session = { id: newSessionId(), name: '', created: Date.now() }; };
-// The sidebar renamed or deleted a saved chat (shell.js). A deleted current chat is cleared, and a
-// new id keeps the next save from bringing it back.
-document.addEventListener('jarvis:session-renamed', (e) => { if (e.detail.id === session.id) session.name = e.detail.name; });
-document.addEventListener('jarvis:session-deleted', (e) => {
-  if (e.detail.id !== session.id) return;
-  if (working) { startSession(); return; }
-  history.length = 0;
-  turn = null;
-  lastSent = '';
-  lastUsed = 0;
-  turnEdits.clear();
-  userLines.clear();
-  startSession();
-  output.replaceChildren();
-  workspace.classList.remove('has-output');
+const announceName = (animate) => document.dispatchEvent(new CustomEvent('jarvis:session-name', { detail: { id: session.id, name: session.name, animate } }));
+const startSession = (keep = {}) => { session = { id: newSessionId(), name: '', created: Date.now(), ...keep }; announceName(false); };
+
+// The model names the chat itself: it is asked (in the turn's context) to start its reply with a <jarvis-title> tag
+// after the first exchange and again every 10 of the user's messages, only when the old name no longer fits.
+// llm-client.js cuts the tag out of the reply and announces it; nothing of it reaches the conversation.
+const userCount = () => history.filter((m) => m.role === 'user' && !m.summary).length;
+function titleNote() {
+  if (session.manual) return '';
+  const users = userCount(); // this turn's message is already in the history
+  if (!session.named) return '<chat-title>This chat has no name yet. Start your reply with <jarvis-title>a name of 2 to 5 words</jarvis-title> on its own, before any other text. The app removes the tag and the user never sees it. Do not mention it.</chat-title>';
+  if (users - (session.namedAt ?? 0) >= 10) return `<chat-title>The chat is named "${session.name.replaceAll('"', "'")}". Judge whether that still fits what the conversation is about now. Only if it no longer fits, start your reply with <jarvis-title>a new name of 2 to 5 words</jarvis-title> before any other text; otherwise write no tag at all. The app removes the tag and the user never sees it. Do not mention it.</chat-title>`;
+  return '';
+}
+onEvent((e) => {
+  if (e.type !== 'title' || session.manual || !e.title || e.title.length > 60) return;
+  session.named = true;
+  session.namedAt = userCount();
+  if (e.title !== session.name) { session.name = e.title; announceName(true); }
+  saveSoon();
 });
 const ago = (ms) => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
 let lastListing = [];
@@ -610,21 +925,28 @@ async function sessionsCommand() {
 function renderHistory() {
   output.replaceChildren();
   userLines.clear();
+  let steps = null; // calls and results between two pieces of text share one row
+  const rowOf = new Map(); // tool_call_id -> its row
   for (const m of history) {
     if (m.summary) { if (m.role === 'user') addLine('system', 'Earlier conversation summarised', { meta: '' }); continue; }
-    if (m.role === 'user') markUser(addLine('user', m.shown ?? messageText(m.content), { meta: '' }), m);
+    if (m.role === 'user') { steps = null; markUser(addLine('user', m.shown ?? messageText(m.content), { meta: '' }), m); }
     else if (m.role === 'assistant') {
       const text = messageText(m.content);
-      if (text) { const line = addLine('assistant', '', { meta: '' }); renderAssistant(line, text, { done: true, quiet: true }); replyButtons(line, text, false); }
-      if (m.tool_calls) addLine('system', `Action  ${m.tool_calls.map((c) => c.function.name).join(', ')}`, { meta: '' });
-    } else if (m.role === 'tool') addLine('system', `Result  ${String(m.content).split('\n')[0].slice(0, 140)}`, { meta: '' });
+      if (text) { steps = null; const line = addLine('assistant', '', { meta: '' }); renderAssistant(line, text, { done: true, quiet: true }); replyButtons(line, text, false); }
+      if (m.tool_calls) {
+        steps ??= stepsGroup();
+        for (const c of m.tool_calls) rowOf.set(c.id, steps.add(c.function.name, link.machines[m.target]?.label ?? m.target, 'stopped', parseArgs(c.function.arguments)));
+      }
+    } else if (m.role === 'tool') rowOf.get(m.tool_call_id)?.set(resultState(m.content), summarizeSaved(m.name, m.content));
   }
+  const lastReply = [...output.querySelectorAll('.chat-line.assistant')].at(-1);
+  if (lastReply) moveLogo(lastReply, { rest: true }); // a saved chat: the stamp is already under its last reply
   workspace.classList.toggle('has-output', history.length > 0);
   output.scrollTop = output.scrollHeight;
 }
 
 async function resumeCommand(arg) {
-  if (working) return 'JARVIS is busy. Use /stop first.';
+  if (!detachRunning()) return 'JARVIS is busy. Use /stop first.';
   const q = arg.trim();
   if (!q) return sessionsCommand();
   if (!lastListing.length) lastListing = await listSessions();
@@ -632,16 +954,67 @@ async function resumeCommand(arg) {
     : lastListing.find((s) => s.id === q) ?? lastListing.find((s) => s.name.toLowerCase().includes(q.toLowerCase()));
   if (!pick) return `No saved session matches "${q}". Type /sessions.`;
   const saved = await loadSession(pick.id);
+  if (serverMode()) setConvId(pick.id);
   history.length = 0;
   history.push(...saved);
   turnEdits.clear();
-  session = { id: pick.id, name: pick.name, created: pick.created ?? Date.now() };
+  const { updated, messages, ...meta } = pick;
+  session = { ...meta, created: pick.created ?? Date.now() };
+  announceName(false);
   lastSent = '';
   lastUsed = 0;
   turn = null;
   renderHistory();
   return `Resumed "${pick.name}" (${history.length} messages). File changes from before cannot be rewound, but the conversation can.`;
 }
+
+// A note the model saved for later chats shows in every window at once, whole, with Undo (a note planted by a page or a mail is seen
+// before it matters). The server announces removals, so the row follows a removal made anywhere.
+const memos = new Map(); // note id -> row
+onLink((e) => {
+  if (e.type === 'memory.added' && typeof e.id === 'string' && !memos.has(e.id)) {
+    const row = document.createElement('div');
+    row.className = 'chat-memo';
+    row.setAttribute('role', 'status');
+    const text = document.createElement('span');
+    text.textContent = `Saved for later chats: ${e.text ?? ''}`;
+    const undo = document.createElement('button');
+    undo.type = 'button';
+    undo.className = 'av-btn';
+    undo.textContent = 'Undo';
+    undo.addEventListener('click', () => { undo.disabled = true; runAction('forget', { note: e.id }); });
+    row.append(text, undo);
+    output.appendChild(row);
+    memos.set(e.id, row);
+  } else if (e.type === 'memory.removed' && memos.has(e.id)) {
+    const row = memos.get(e.id);
+    row.firstChild.textContent = 'Note removed.';
+    row.querySelector('button')?.remove();
+    memos.delete(e.id);
+  }
+});
+
+// With the server on, a reload (or another device) shows the chat this window was in, and the list of chats appears once connected.
+onLink((e) => {
+  if (!serverMode()) return;
+  if (e.type === 'status' && link.status === 'online') document.dispatchEvent(new CustomEvent('jarvis:sessions-changed'));
+  if (e.type === 'state' && !working && !history.length && !output.querySelector('.chat-line') && link.conversation.messages.length) {
+    history.push(...link.conversation.messages.map(({ role, content }) => ({ role, content })));
+    session.name = link.conversation.title || session.name;
+    renderHistory();
+    announceName(false);
+  }
+  // A reply finished in the open chat, but this window was not waiting for it (it was started, then the chat was left and opened again):
+  // the server has saved it, so read it back.
+  if (e.type === 'chat.done' && !serverTurn && !working) {
+    loadSession(link.conversation.id).then((saved) => {
+      if (working || !saved.length || saved.length <= history.length) return;
+      history.length = 0;
+      history.push(...saved);
+      renderHistory();
+    }).catch(() => {});
+  }
+});
 
 async function exportCommand() {
   if (!history.length) return 'Nothing to export yet.';
@@ -668,8 +1041,7 @@ function btw(question) {
   const close = document.createElement('button');
   close.type = 'button';
   close.className = 'chat-edit btw-x';
-  close.innerHTML = icon('close', 14);
-  close.setAttribute('aria-label', 'Dismiss this answer');
+  close.textContent = '×';
   close.title = 'Dismiss this answer';
   close.addEventListener('click', () => line.remove());
   line.replaceChildren(head, body, close);
@@ -681,6 +1053,44 @@ function btw(question) {
     .then(({ reply }) => { body.textContent = reply || '(no answer)'; })
     .catch((e) => { body.textContent = `Could not answer: ${e.message ?? e}`; });
 }
+
+// --- actions on saved chats, asked for by the sidebar and the Projects page --------------------------
+const toast = (text) => document.dispatchEvent(new CustomEvent('jarvis:toast', { detail: { text } }));
+document.addEventListener('jarvis:session-op', async (e) => {
+  const { op, id = session.id, ...rest } = e.detail;
+  const mine = id === session.id;
+  const changed = () => document.dispatchEvent(new CustomEvent('jarvis:sessions-changed'));
+  try {
+    if (op === 'patch') {
+      if (mine) {
+        Object.assign(session, rest.patch);
+        if (rest.patch.name !== undefined) announceName(true);
+        if (history.length) saveSoon();
+        if (serverMode()) await patchSession(id, rest.patch); // the server keeps the chat; its name, pin and folder are saved there
+      } else await patchSession(id, rest.patch);
+      changed();
+    } else if (op === 'delete') {
+      if (working && mine) { toast('JARVIS is busy. Stop it first.'); return; }
+      if (mine) await runCommand('/clear');
+      await deleteSession(id);
+      changed();
+    } else if (op === 'duplicate') {
+      if (mine && history.length) await saveSession({ ...session, updated: Date.now(), messages: history.length }, history);
+      await copySession(id);
+      changed();
+      toast('Chat duplicated');
+    } else if (op === 'export') {
+      if (mine) { toast(await exportCommand()); return; }
+      const meta = (await listSessions()).find((s) => s.id === id);
+      toast(`Saved to ${await exportSession(id, toMarkdown(meta?.name ?? 'Chat', await loadSession(id)))}`);
+    } else if (op === 'new') {
+      if (!detachRunning()) { toast('JARVIS is busy. Stop it first.'); return; }
+      await runCommand('/clear');
+      session.project = rest.project;
+      if (rest.mode) session.mode = rest.mode;
+    }
+  } catch (err) { toast(`Could not do that: ${err.message ?? err}`); }
+});
 
 // --- transcript clicks: artifact cards, code copy, inert links ----------
 async function copyText(text) {
@@ -727,7 +1137,6 @@ output.addEventListener('scroll', () => output.classList.toggle('fade-top', outp
 
 modeButtons.forEach((b) => b.addEventListener('click', () => {
   selectMode(b.dataset.preset);
-  if (!busy) scheduleSwap();
 }));
 // Enter sends; Shift+Enter starts a new line (the field is a textarea that grows, input-grow.js).
 input.addEventListener('keydown', (e) => {
@@ -741,7 +1150,7 @@ bindChat({
   notify: (text) => { addLine('system', text, { meta: '' }); follow(following); },
 });
 registerActionHost({
-  selectMode: (name, { swap = false } = {}) => { selectMode(name); if (swap && !busy) scheduleSwap(); },
+  selectMode: (name) => { selectMode(name); },
   // The approval card: shown in the transcript, answered with a click. Resolves once | always | deny.
   approve: (request) => {
     const card = approvalCard(request);
@@ -769,10 +1178,10 @@ registerCommandHost({
   count: () => history.length,
   selectMode: (name) => {
     selectMode(name);
-    if (!busy) scheduleSwap();
   },
   clear: () => {
-    if (working) return 'JARVIS is busy. Use /stop first.';
+    if (!detachRunning()) return 'JARVIS is busy. Use /stop first.';
+    document.dispatchEvent(new CustomEvent('jarvis:cleared'));
     history.length = 0;
     turn = null;
     lastSent = '';
@@ -794,6 +1203,8 @@ registerCommandHost({
   rename: (name) => {
     if (!name) return `This session is called "${session.name || sessionTitle(history)}". Usage: /rename <name>`;
     session.name = name.slice(0, 80);
+    session.manual = true;
+    announceName(true);
     saveSoon();
     return `Renamed to "${session.name}".`;
   },
@@ -803,7 +1214,8 @@ registerCommandHost({
     session.name ||= sessionTitle(history);
     await saveSession({ ...session, updated: Date.now(), messages: history.length }, history); // keep the original as it is
     const original = session.name;
-    session = { id: newSessionId(), name: name || `${original} (branch)`, created: Date.now() };
+    session = { id: newSessionId(), name: name || `${original} (branch)`, created: Date.now(), project: session.project, manual: !!name };
+    announceName(false);
     saveSoon();
     return `Branched. You are now in "${session.name}"; "${original}" is saved as it was (/resume to go back).`;
   },

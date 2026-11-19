@@ -1,0 +1,69 @@
+/* System pane: one card per component (processor, graphics, memory, storage, network, models).
+   The pane lays itself out from its own width, not the window's: 1 column, 2 columns, then a 12-column grid. */
+#ws-body { container-type: inline-size; container-name: ws; }
+#ws-system { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); align-content: start; padding: var(--pane-gutter); }
+.sys-card { display: flex; flex-direction: column; gap: var(--s-3); min-width: 0; padding: var(--card-pad); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); }
+.sys-card h3 { display: flex; justify-content: space-between; align-items: center; height: var(--lh-md); font: 600 var(--fs-2)/var(--lh-md) var(--sans); color: var(--text-3); }
+.sys-card h3 .sub { font-weight: 400; }
+@container ws (min-width: 440px) {
+  #ws-system { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .c-cpu, .c-models { grid-column: 1 / -1; }
+}
+@container ws (min-width: 620px) {
+  #ws-system { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .c-cpu { grid-column: span 7; }
+  .c-gpu { grid-column: span 5; }
+  .c-ram, .c-ssd, .c-net { grid-column: span 4; }
+  .c-models { grid-column: 1 / -1; }
+}
+
+/* the big number, its caption and the minute behind it */
+.t-hero { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-2); }
+.t-val { font: 400 var(--fs-6)/var(--lh-lg) var(--mono); letter-spacing: -0.02em; color: var(--text); white-space: nowrap; }
+.t-val .mono-data { font: inherit; white-space: nowrap; }
+.t-val .mono-data.na { color: var(--text-3); font-size: var(--fs-5); }
+.t-sub { font: 400 var(--fs-1)/var(--lh-xs) var(--sans); color: var(--text-3); text-align: right; }
+.spark { display: block; width: 100%; flex: 1 1 auto; min-height: var(--h-lg); max-height: 80px; pointer-events: none; }
+.spark path.area { fill: var(--surface-4); stroke: none; }
+.spark path.line { fill: none; stroke: var(--accent-mid); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.spark[data-level="mid"] path.line { stroke: var(--warm); }
+.spark[data-level="mid"] path.area { fill: var(--warm-wash); }
+.spark[data-level="high"] path.line { stroke: var(--danger); }
+.spark[data-level="high"] path.area { fill: var(--danger-wash); }
+
+/* cores: 4 across, tiles grow with the card, 4:3, percent in the middle */
+.cores-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-2); }
+.core-node { position: relative; aspect-ratio: 4 / 3; min-height: 56px; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; }
+.core-num { position: absolute; top: var(--s-1); right: var(--s-2); font: 400 var(--fs-1)/var(--s-4) var(--mono); color: var(--text-3); }
+.core-load-val { position: absolute; left: 0; right: 0; top: 50%; translate: 0 -55%; text-align: center; font: 600 var(--fs-4)/var(--lh-sm) var(--mono); color: var(--text); white-space: nowrap; }
+.core-track { position: absolute; left: var(--s-2); right: var(--s-2); bottom: var(--s-2); height: var(--s-1); background: var(--surface-3); border-radius: 2px; /* optical: half of a 4px track */ overflow: hidden; }
+.core-node-fill { height: 100%; width: 100%; background: var(--accent-mid); transform-origin: left; transition: transform var(--dur) var(--ease-out); }
+
+/* metric rows inside a card: 48 tall = 8 + label 20 + 8 + bar 4 + 8, dividers between */
+.sys-list { display: flex; flex-direction: column; }
+.sys-list .metric-group { flex: none; }
+.metric-group { min-height: 48px; /* optical: row tier of 48 */ padding: var(--s-2) 0; display: flex; flex-direction: column; justify-content: center; gap: var(--s-2); }
+.metric-group + .metric-group { border-top: 1px solid var(--border); }
+.metric-label { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2); height: var(--lh-sm); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); color: var(--text-2); }
+.metric-label .mono-data { color: var(--text); font-size: var(--fs-3); font-weight: 600; }
+.progress-bar { height: var(--s-1); background: var(--surface-3); border-radius: 2px; /* optical: half of a 4px track */ overflow: hidden; flex: none; }
+.progress-fill { height: 100%; width: 100%; background: var(--accent-mid); transform-origin: left; transition: transform var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out); }
+.progress-fill.unavailable { background: var(--border-strong); }
+
+/* loaded models: a definition grid kept to a readable width */
+#model-info-body { min-width: 0; }
+.model-card + .model-card { margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--border); }
+.model-card-head { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2); margin-bottom: var(--s-3); }
+.model-name { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quant-pill { display: inline-flex; align-items: center; height: var(--lh-md); padding: 0 var(--s-2); border: 1px solid var(--border-strong); border-radius: var(--r-pill); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-2); }
+.model-stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3) var(--s-4); }
+.model-stat { display: flex; flex-direction: column; min-width: 0; }
+.model-stat-label { font: 400 var(--fs-1)/var(--lh-xs) var(--sans); color: var(--text-3); }
+.model-stat-value { font: 400 var(--fs-3)/var(--lh-sm) var(--mono); }
+.model-note { font-size: var(--fs-3); line-height: var(--lh-sm); color: var(--text-3); padding: var(--s-2) 0; }
+
+/* unload: a small square button with the eject triangle, at the end of the model's name row */
+.model-eject { flex: none; width: var(--h-sm); height: var(--h-sm); border: 1px solid var(--border-strong); background: var(--surface-1); color: var(--text-2); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+.model-eject:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
+.model-eject:disabled { opacity: 0.4; }
+.model-eject .icon { width: var(--icon-sm); height: var(--icon-sm); }

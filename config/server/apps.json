@@ -1,0 +1,13 @@
+{
+  "browser": { "win32": "msedge", "darwin": "Safari" },
+  "chrome": { "win32": "chrome", "darwin": "Google Chrome" },
+  "code": { "win32": "code", "darwin": "Visual Studio Code" },
+  "terminal": { "win32": "wt", "darwin": "Terminal" },
+  "notes": { "win32": "notepad", "darwin": "Notes" },
+  "explorer": { "win32": "explorer", "darwin": "Finder" },
+  "calculator": { "win32": "calc", "darwin": "Calculator" },
+  "spotify": { "win32": "spotify", "darwin": "Spotify" },
+  "discord": { "win32": "discord", "darwin": "Discord" },
+  "steam": { "win32": "steam", "darwin": "Steam" },
+  "lmstudio": { "win32": "LM Studio", "darwin": "LM Studio" }
+}

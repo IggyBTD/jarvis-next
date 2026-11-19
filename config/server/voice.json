@@ -1,0 +1,9 @@
+{
+  "enabled": false,
+  "mode": "push_to_talk",
+  "languages": ["en", "es", "fr"],
+  "stt": { "url": "http://127.0.0.1:8770/v1/audio/transcriptions", "model": "whisper-1", "timeoutMs": 30000 },
+  "tts": { "url": "http://127.0.0.1:8771/v1/audio/speech", "model": "kokoro", "voices": { "en": "af_heart", "es": "ef_dora", "fr": "ff_siwis" } },
+  "vad": { "energyThreshold": 0.02, "minSpeechMs": 200, "frameMs": 30 },
+  "turn": { "silenceMs": 900, "maxUtteranceMs": 30000 }
+}

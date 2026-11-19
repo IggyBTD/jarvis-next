@@ -6,6 +6,7 @@ const SERVICES = [
   ['lmstudio', 'LM Studio'],
   ['sensors', 'Sensors'],
   ['voice', 'Voice'],
+  ['server', 'JARVIS server'],
 ];
 
 const root = document.getElementById('notch-status');

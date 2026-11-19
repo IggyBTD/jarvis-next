@@ -8,7 +8,15 @@
         "run",
         "dev"
       ],
-      "port": 5173
+      "port": 5174
+    },
+    {
+      "name": "phone",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/phone-preview.js"
+      ],
+      "port": 5198
     }
   ]
 }

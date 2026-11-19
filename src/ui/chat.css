@@ -1,0 +1,219 @@
+/* Chat column: one flex column with one gap, so spacing cannot compound. 24 between the user's message
+   and the answer, 32 between one exchange and the next (the user line adds 8 on top of the 24 gap). */
+#chat-host { flex: 1; min-height: 0; display: flex; }
+#chat-stack { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; position: relative; }
+#chat-output { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; display: flex; flex-direction: column; gap: var(--s-5); padding: var(--pane-gutter) max(var(--chat-gutter), calc((100% - var(--measure)) / 2)) var(--s-8); user-select: text; }
+
+.chat-line { max-width: 100%; overflow-wrap: anywhere; content-visibility: auto; contain-intrinsic-size: auto 96px; overflow-clip-margin: var(--s-5); position: relative; }
+.chat-line .chat-text { white-space: pre-wrap; }
+.chat-line .chat-text:has(> .md), .chat-line .chat-text:has(> .artifact-card) { white-space: normal; }
+
+/* the user's message: a bubble that hugs its text, time and edit under it */
+.chat-line.user { align-self: flex-end; max-width: 80%; display: flex; flex-direction: column; align-items: flex-end; gap: var(--s-2); }
+.chat-line.user:not(:first-child) { padding-top: var(--s-2); }
+.chat-line.user .chat-text { width: fit-content; max-width: 100%; padding: var(--s-2) var(--s-4); background: var(--surface-4); border-radius: var(--r-lg); font: 400 var(--fs-5)/var(--lh-md) var(--sans); }
+.chat-line.user .chat-attach { text-align: right; }
+
+/* the assistant: prose in the serif, no bubble */
+.chat-line.assistant { align-self: stretch; font: 400 var(--fs-5)/var(--lh-prose) var(--serif); }
+.chat-line.assistant .md code, .chat-line.assistant .md pre, .chat-line.assistant .code-box, .chat-line.assistant .tool-card { font-family: var(--mono); }
+.chat-line.assistant .md th { font-family: var(--sans); }
+.chat-line.error { color: var(--danger); }
+.chat-line.summarised { opacity: 0.6; }
+.chat-line.tool { width: 100%; content-visibility: visible; }
+
+/* notices: one block, 12 by 16 inside, nothing floating */
+.chat-line.system { align-self: stretch; padding: var(--s-3) var(--s-4); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); font: 400 var(--fs-3)/var(--lh-sm) var(--mono); color: var(--text-2); }
+.chat-line.system .chat-text { white-space: pre-wrap; }
+.chat-line.btw { padding: var(--s-3) var(--s-5) var(--s-3) var(--s-4); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface-2); }
+.btw-q { font-size: var(--fs-2); line-height: var(--lh-xs); font-weight: 600; color: var(--accent); margin-bottom: var(--s-1); }
+.btw-a { white-space: pre-wrap; color: var(--text-2); }
+.btw-x { position: absolute; top: var(--s-1); right: var(--s-1); opacity: 1; }
+
+/* what the reply cost the local model: tokens per second, tokens, time to the first token, total time */
+.chat-stats { margin-top: var(--s-2); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); }
+
+/* the time lives in the gap under the message, so showing it never moves anything */
+.chat-meta { position: absolute; top: calc(100% + var(--s-1)); left: 0; white-space: nowrap; font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); }
+.chat-line.user .chat-meta { left: auto; right: 0; }
+/* the stamp rests under the newest reply at the left edge: the time starts after it and centres on it, so the two never overlap */
+.chat-line.assistant:has(> .orb) .chat-meta { left: calc(var(--s-5) + var(--s-2)); line-height: var(--s-5); }
+.chat-line:hover .chat-meta, .chat-line:focus-within .chat-meta { opacity: 1; }
+.chat-attach { display: block; font-size: var(--fs-2); line-height: var(--lh-xs); color: var(--text-3); }
+.chat-edit { height: var(--h-sm); padding: 0 var(--s-2); background: none; border: 1px solid var(--border-strong); border-radius: var(--r-sm); color: var(--text-3); font-size: var(--fs-2); opacity: 0; transition: opacity var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+.chat-line:hover .chat-edit, .chat-edit:focus-visible { opacity: 1; }
+.chat-edit:hover { color: var(--text); }
+
+/* the reasoning line: 24 high, 8 above the prose */
+.thought { margin-bottom: var(--s-2); font: 400 var(--fs-3)/var(--lh-md) var(--sans); color: var(--text-3); }
+.thought summary { cursor: pointer; user-select: none; height: var(--lh-md); }
+.thought summary::before { content: "\25B8"; display: inline-block; width: var(--s-4); transition: rotate var(--dur-fast) var(--ease-out); }
+.thought[open] summary::before { rotate: 90deg; }
+.thought-body { margin-top: var(--s-2); padding: var(--s-2) var(--s-4); background: var(--surface-1); border-radius: var(--r-md); white-space: pre-wrap; }
+
+/* ---- the logo: the node mesh as a still picture (node-mesh.js mountLogos); the same mesh moves as the loading icon and rests under the newest reply ---- */
+@keyframes core-breathe { 0%, 100% { transform: scale(0.8); } 50% { transform: scale(1); } }
+@keyframes ring-out { 0% { transform: scale(0.55); opacity: 0.7; } 100% { transform: scale(1.35); opacity: 0; } }
+.chat-line.pending .chat-text { position: relative; display: inline-flex; align-items: center; gap: var(--s-3); height: var(--lh-md); color: var(--text-3); font: 400 var(--fs-4)/var(--lh-md) var(--sans); }
+
+/* ---- the loading icon: the node mesh (node-mesh.js) drawn into a canvas, sized by --orb-size. It opens with the letters being written. ---- */
+.orb { --orb-size: var(--s-6); display: block; flex: none; width: var(--orb-size); height: var(--orb-size); }
+/* the orb sits beside "Thinking...", and under the reply while it is being written (in the gap, so nothing moves when it goes) */
+.chat-line.pending { display: flex; align-items: center; gap: var(--s-3); }
+.chat-line.pending > .orb { order: -1; }
+.chat-line.pending .think-label { display: block; }
+.chat-line.assistant:not(.pending) > .orb { --orb-size: var(--s-5); position: absolute; top: 100%; left: 0; margin-top: var(--s-1); }
+.chat-line.assistant:not(.pending):has(> .orb) { content-visibility: visible; }
+
+/* ---- the steps row: every tool call of one stretch lives in ONE quiet row (the current step while it runs, "Ran 3 steps" after), which opens to the list ---- */
+.chat-line.steps { align-self: stretch; content-visibility: visible; }
+.chat-line.steps .chat-text { white-space: normal; }
+.steps-box { color: var(--text-3); font: 400 var(--fs-4)/var(--lh-md) var(--sans); }
+.steps-head { display: flex; align-items: center; gap: var(--s-2); height: var(--lh-md); list-style: none; cursor: pointer; user-select: none; }
+.steps-head::-webkit-details-marker { display: none; }
+.steps-head:hover, .steps-head:focus-visible { color: var(--text-2); }
+.steps-lead { display: grid; place-items: center; flex: none; width: var(--icon-lg); height: var(--icon-lg); }
+.steps-lead .icon svg { width: var(--icon-sm); height: var(--icon-sm); }
+.steps-lead .orb { --orb-size: var(--s-5); }
+.steps-lead .icon { display: none; } /* no check mark: the header is plain text, and the logo shows only while a step runs */
+.steps:not(.live) .steps-lead { display: none; }
+.steps-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.steps.bad .steps-label { color: var(--danger); }
+.steps-count { flex: none; font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
+.steps-head > .icon { flex: none; transition: rotate var(--dur-fast) var(--ease-out); }
+.steps-box[open] > .steps-head > .icon { rotate: 90deg; }
+.steps-list { margin: var(--s-1) 0 var(--s-1) var(--s-2); padding: 0 0 0 var(--s-4); border-left: 1px solid var(--border); list-style: none; }
+/* the header is the whole story ("Searched your email, read 2 emails"); opened, each step is one short quiet line, and its details (where, how long, request, answer) open under it */
+.step-line { display: flex; align-items: baseline; gap: var(--s-2); list-style: none; cursor: pointer; color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
+.step-line::-webkit-details-marker { display: none; }
+.step.plain > .step-line { cursor: default; }
+.step-line:hover, .step-line:focus-visible { color: var(--text-2); }
+.step-name { min-width: 0; overflow-wrap: anywhere; }
+.step-flag { flex: none; color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--sans); }
+.step-flag:empty { display: none; }
+li[data-state="running"] > .step > .step-line { color: var(--accent); }
+li[data-state="failed"] > .step > .step-line, li[data-state="denied"] > .step > .step-line, li[data-state="failed"] .step-flag, li[data-state="denied"] .step-flag { color: var(--danger); }
+li[data-state="queued"] > .step > .step-line, li[data-state="queued"] .step-flag { color: var(--warm); }
+.step-body { display: grid; gap: var(--s-2); margin: var(--s-1) 0 var(--s-2) var(--s-3); }
+.step-facts { color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--sans); overflow-wrap: anywhere; }
+.step-facts:empty { display: none; }
+.step-body pre { margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); background: var(--surface-1); color: var(--text-2); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: calc(var(--s-8) * 3); overflow: auto; }
+.step-body pre:empty { display: none; }
+.step-body .step-label { display: block; color: var(--text-3); }
+.step-body .hljs-attr { color: var(--syn-key); }
+.step-body .hljs-string { color: var(--syn-string); }
+.step-body .hljs-number { color: var(--syn-number); }
+.step-body .hljs-literal { color: var(--syn-literal); }
+.step.plain > .step-body { display: none; }
+/* what the coding agent did inside a task: plain lines under its step */
+.step-sub { margin: 0 0 var(--s-1) var(--s-3); padding: 0; list-style: none; }
+.step-sub:empty { display: none; }
+.step-sub li { color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
+.step-sub li[data-state="running"] { color: var(--accent); }
+.step-sub li[data-state="failed"] { color: var(--danger); }
+.sub-text { min-width: 0; overflow-wrap: anywhere; }
+
+/* ---- empty state: the greeting and the input card sit together in the middle of the pane, the way Claude's new chat does ------- */
+#chat-stack:not(:has(.chat-line)) { justify-content: center; padding-bottom: var(--s-6); overflow-y: auto; }
+#chat-stack:not(:has(.chat-line, .chat-memo)) #chat-output { display: none; } /* a saved-note row shows even in an empty chat */
+#chat-stack:has(.chat-line) #chat-empty, #chat-stack:has(.chat-line) > .machine { display: none; }
+#chat-empty { flex: none; width: min(var(--measure), calc(100% - 2 * var(--chat-gutter))); margin: 0 auto var(--s-5); text-align: center; }
+#chat-empty .logo { --orb-size: clamp(var(--s-7), 24vh, calc(var(--s-8) * 3)); margin: 0 auto var(--s-4); cursor: grab; touch-action: none; } /* the centrepiece: 192 px on a tall window, smaller on a short one, so the greeting and the card stay centred together */
+#chat-empty .logo:active { cursor: grabbing; }
+#chat-empty h2 { font: 400 var(--fs-6)/var(--lh-lg) var(--serif); color: var(--text); }
+#chat-empty h2 b { font-weight: 600; color: var(--accent); }
+#chat-empty p { margin-top: var(--s-2); color: var(--text-2); font-size: var(--fs-5); line-height: var(--lh-md); }
+#chat-stack:not(:has(.chat-line)) #composer-dock { margin-bottom: var(--s-4); }
+#chat-stack > .machine { flex: none; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2); width: min(var(--measure), calc(100% - 2 * var(--chat-gutter))); margin: 0 auto; }
+.machine .fact { display: inline-flex; align-items: center; height: var(--lh-md); padding: 0 var(--s-3); border: 1px solid var(--border); border-radius: var(--r-pill); font-size: var(--fs-2); color: var(--text-2); background: var(--surface-2); }
+.machine .fact b { margin-left: var(--s-1); color: var(--text); font-weight: 600; }
+
+/* ---- artifact card in the chat ------------------------------------------------------------------- */
+.artifact-card { display: grid; grid-template-columns: var(--h-lg) minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-3); width: 100%; margin: var(--s-2) 0; padding: var(--s-2) var(--s-4) var(--s-2) var(--s-2); background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--r-md); text-align: left; transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+.artifact-card:hover:not(:disabled) { background: var(--surface-3); }
+.artifact-card.busy { color: var(--text-3); }
+.artifact-card > .icon { grid-column: 1; grid-row: 1 / span 2; width: var(--h-lg); height: var(--h-lg); border-radius: var(--r-sm); background: var(--surface-3); color: var(--accent-mid); }
+.artifact-card > .icon svg { width: var(--icon-size); height: var(--icon-size); }
+.ac-type { grid-column: 2; grid-row: 2; font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); text-transform: capitalize; }
+.ac-title { grid-column: 2; grid-row: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 var(--fs-4)/var(--lh-sm) var(--sans); }
+.ac-state { grid-column: 3; grid-row: 1 / span 2; font: 600 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--accent); }
+.artifact-card.busy .ac-state { color: var(--text-3); font-weight: 400; }
+.artifact-card.is-open { background: var(--accent-wash); border-color: var(--border-strong); cursor: default; }
+.artifact-card.is-open .ac-state { color: var(--text-3); font-weight: 400; }
+.ac-source { display: none; }
+body[data-page="code"] .ac-source { display: block; margin-bottom: var(--s-4); }
+
+/* ---- markdown ---------------------------------------------------------------------------------------- */
+.md { white-space: normal; }
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md p { margin: 0 0 var(--s-4); }
+.md h1, .md h2, .md h3, .md h4 { margin: var(--s-5) 0 var(--s-2); font-family: var(--serif); font-weight: 600; line-height: var(--lh-lg); }
+.md h1 { font-size: var(--fs-6); } .md h2 { font-size: var(--fs-6); } .md h3 { font-size: var(--fs-5); } .md h4 { font-size: var(--fs-5); }
+.md ul, .md ol { margin: 0 0 var(--s-4); padding-left: var(--s-5); }
+.md li { margin: var(--s-1) 0; padding-left: var(--s-1); }
+.md li > p { margin: 0; }
+.md li > ul, .md li > ol { margin: var(--s-1) 0 0; }
+.md li::marker { color: var(--text-3); }
+.md a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; /* optical: underline offset */ cursor: default; }
+.md blockquote { margin: 0 0 var(--s-4); padding: var(--s-2) var(--s-4); background: var(--surface-1); border-radius: var(--r-md); color: var(--text-2); }
+.md hr { border: none; border-top: 1px solid var(--border); margin: var(--s-5) 0; }
+.md code { font-family: var(--mono); font-size: 0.88em; padding: 0 var(--s-1); background: var(--surface-4); border-radius: var(--r-sm); }
+.md pre { margin: 0 0 var(--s-4); padding: var(--s-3) var(--s-4); overflow-x: auto; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); }
+.md pre code { padding: 0; background: none; font-size: var(--fs-3); line-height: var(--lh-sm); white-space: pre; }
+.md table { border-collapse: collapse; margin: 0 0 var(--s-4); font-size: var(--fs-4); line-height: var(--lh-sm); display: block; overflow-x: auto; }
+.md th, .md td { padding: var(--s-2) var(--s-3); border-bottom: 1px solid var(--border); text-align: left; }
+.md th { font-weight: 600; border-bottom-color: var(--border-strong); }
+.md .katex-display { margin: var(--s-4) 0; overflow-x: auto; overflow-y: hidden; }
+.code-box { margin: 0 0 var(--s-4); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; background: var(--surface-1); }
+.code-head { display: flex; justify-content: space-between; align-items: center; height: var(--h-md); padding: 0 var(--s-4); border-bottom: 1px solid var(--border); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); }
+.code-box pre, .md .code-box pre { margin: 0; border: 0; border-radius: 0; background: transparent; padding: var(--s-3) var(--s-4); overflow-x: auto; }
+.code-box code { font-family: var(--mono); font-size: var(--fs-3); line-height: var(--lh-sm); white-space: pre; background: none; padding: 0; }
+.copy-btn { background: none; border: 0; color: var(--text-3); font: inherit; }
+.copy-btn:hover { color: var(--text); }
+.hljs-comment, .hljs-quote { color: var(--text-3); font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-built_in { color: var(--accent); }
+.hljs-string, .hljs-regexp, .hljs-attr { color: var(--text-2); }
+.hljs-number, .hljs-symbol, .hljs-bullet { color: var(--accent); }
+.hljs-title, .hljs-function, .hljs-class .hljs-title { color: var(--text); font-weight: 600; }
+.hljs-meta, .hljs-tag, .hljs-name { color: var(--text-2); }
+
+/* a note the model saved for later chats, with Undo (every window shows it) */
+.chat-memo { display: flex; align-items: center; gap: var(--s-3); margin: var(--s-2) 0; color: var(--text-3); font-size: var(--fs-3); line-height: var(--lh-sm); overflow-wrap: anywhere; }
+
+/* ---- agent action cards, diffs, approvals ---------------------------------------------------------- */
+.tool-card { margin: var(--s-1) 0; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface-1); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); color: var(--text-2); overflow: hidden; }
+.tool-card.bad { border-color: var(--danger); }
+.tool-card.approval { border-color: var(--warm); background: var(--warm-wash); }
+.tool-card.approval.approved { border-color: var(--ok); background: var(--surface-1); }
+.tool-card.approval.denied { border-color: var(--danger); background: var(--surface-1); }
+.tool-card.undone { opacity: 0.6; }
+.tc-head { display: flex; align-items: center; gap: var(--s-2); min-height: var(--h-md); padding: 0 var(--s-3); cursor: pointer; list-style: none; user-select: none; }
+div.tc-head { cursor: default; }
+.tc-type { height: var(--lh-md); padding: 0 var(--s-2); border-radius: var(--r-sm); background: var(--surface-4); color: var(--text-2); font: 600 var(--fs-2)/var(--lh-md) var(--sans); }
+.tc-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-family: var(--mono); }
+.tc-state { font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); white-space: nowrap; }
+.tool-card.approval .tc-state { color: var(--warm); font-weight: 600; }
+.tc-output { margin: 0; padding: var(--s-2) var(--s-3); max-height: 260px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; border-top: 1px solid var(--border); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-2); }
+.tc-diff { max-height: 320px; overflow: auto; border-top: 1px solid var(--border); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); background: var(--bg); }
+.tc-row { display: flex; gap: var(--s-2); padding: 0 var(--s-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.tc-row .tc-no { flex: none; width: 4ch; text-align: right; color: var(--text-3); }
+.tc-row .tc-sign { flex: none; width: 1ch; }
+.tc-row .tc-code { flex: 1; min-width: 0; }
+.tc-row.add { background: var(--ok-wash); color: var(--text); }
+.tc-row.add .tc-sign { color: var(--ok); }
+.tc-row.del { background: var(--danger-wash); color: var(--text); }
+.tc-row.del .tc-sign { color: var(--danger); }
+.tc-row.ctx { color: var(--text-3); }
+.tc-gap { padding: 0 var(--s-2); color: var(--text-3); }
+.tc-bar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2); padding: var(--s-2) var(--s-3); border-top: 1px solid var(--border); }
+.tc-btn { height: var(--h-sm); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-sm); background: var(--surface-2); color: var(--text); font: 600 var(--fs-2)/var(--lh-xs) var(--sans); }
+.tc-btn:hover:not(:disabled) { background: var(--surface-3); }
+.tc-btn.deny:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+.tc-btn:disabled { color: var(--text-3); }
+.tc-note { font-size: var(--fs-2); line-height: var(--lh-xs); color: var(--text-3); padding: 0 var(--s-3); }
+.tc-bar .tc-note { padding: 0; }
+.tc-rule { margin-left: auto; font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 50%; }
+
+/* maths inside names and messages sits at the size of the text around it */
+.inline-math .katex { font-size: 1em; }

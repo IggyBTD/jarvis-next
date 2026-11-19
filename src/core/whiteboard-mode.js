@@ -2,7 +2,7 @@
 // Pages: chat, code, artifacts, settings (body[data-page]). The old names are kept because chat-ui,
 // actions, commands and shortcuts call them: "whiteboard mode" now means "the workspace beside
 // the chat is shown" (body.ws-off when hidden).
-export const PAGES = ['chat', 'code', 'artifacts', 'settings'];
+export const PAGES = ['chat', 'code', 'intel', 'projects', 'artifacts', 'scheduled', 'accounts', 'customize', 'settings'];
 
 let page = 'chat';
 let wsOn = true;

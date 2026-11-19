@@ -48,7 +48,7 @@ function setMetric(id, barId, value, max, unit, digits = 1) {
     const ratio = ok ? Math.min(1, value / max) : 0;
     bar.style.transform = `scaleX(${ratio})`;
     // teal above 75 %, red above 90 %; free disk space is the other way round, so it keeps the accent
-    bar.dataset.level = ok && barId !== 'ssd-space-bar' ? (ratio > 0.9 ? 'high' : ratio > 0.75 ? 'mid' : '') : '';
+    bar.dataset.level = ok && !['ssd-space-bar', 'ram-freq-bar', 'wifi-speed-bar'].includes(barId) ? (ratio > 0.9 ? 'high' : ratio > 0.7 ? 'mid' : '') : '';
   }
 }
 
@@ -104,16 +104,39 @@ function showUnavailable(reason) {
   if (reason) reportService('sensors', 'error', 'no reading from LibreHardwareMonitor (port 8085)');
 }
 
+// Every reading is drawn into the System tab's elements. While that tab is closed nobody can see them, so the
+// drawing waits (the numbers are kept) and happens once, when the tab is shown again.
+const sys = $('ws-system');
+let stale = false;
+if (sys) new MutationObserver(() => { if (!sys.hidden && stale) { stale = false; render(latest); } }).observe(sys, { attributes: true, attributeFilter: ['hidden'] });
+
+// Where readings come from: this computer's own sensors ('local', the Tauri stream) or the JARVIS server ('server', the PC's
+// readings, which is how a client on the Mac sees them). Only the chosen source is drawn.
+let source = 'local';
+export function useTelemetrySource(next) { source = next; }
+function onReading(payload) {
+  sawData = true;
+  lastUpdate = Date.now();
+  if (notchMeta && notchMeta.textContent === 'Sensors offline') notchMeta.textContent = '';
+  if (sys?.hidden) stale = true; else render(payload);
+  publish(payload, false);
+  reportService('sensors', 'ok', 'readings arriving');
+}
+// The Mac reports once a minute, the PC every second: `slow` allows the longer silence before "Sensors offline".
+let staleMs = STALE_MS;
+export function ingestTelemetry(payload, slow = false) { if (source === 'server') { staleMs = slow ? 150_000 : STALE_MS; onReading(payload ?? {}); } }
+
 export async function initTelemetry() {
   showUnavailable(''); // N/A until the first real reading arrives
   const started = Date.now();
 
   // Watchdog: the Rust side only emits while the sensor source answers.
   setInterval(() => {
-    const quiet = sawData ? Date.now() - lastUpdate > STALE_MS : Date.now() - started > INITIAL_GRACE_MS;
+    const quiet = sawData ? Date.now() - lastUpdate > staleMs : Date.now() - started > INITIAL_GRACE_MS;
     if (quiet) showUnavailable('Sensors offline');
   }, 1000);
 
+  if (!window.__TAURI_INTERNALS__) return; // a browser window gets its readings from the server (ingestTelemetry)
   try {
     const { invoke } = await import('@tauri-apps/api/core');
     const { listen } = await import('@tauri-apps/api/event');
@@ -122,7 +145,7 @@ export async function initTelemetry() {
       sawData = true;
       lastUpdate = Date.now();
       if (notchMeta && notchMeta.textContent === 'Sensors offline') notchMeta.textContent = '';
-      render(e.payload ?? {});
+      if (sys?.hidden) stale = true; else render(e.payload ?? {});
       publish(e.payload ?? {}, false);
       reportService('sensors', 'ok', 'readings arriving');
     });

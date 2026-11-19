@@ -5,6 +5,7 @@ import {
   addInstinct, listInstincts, adjustInstinct, retireInstinct, promoteInstinct,
 } from './memory-client.js';
 import { setProject, getProject, pickFolder } from './agent-client.js';
+import { copyClipboard, serverMode } from './server-link.js';
 import { listRules, removeLocalRule, listHooks } from './actions.js';
 import { getSkills } from './skills.js';
 import { readAudit, verifyAudit } from './audit.js';
@@ -269,6 +270,16 @@ const handlers = {
       : 'No hooks. Add them in config/hooks.json (the file explains the format).';
   },
 
+  // /clip [mac|pc]: puts the other computer's clipboard on this one's, or this one's on the named one. With no argument the
+  // clipboard goes away from this computer: a window on the PC itself sends to the Mac, any other window sends to the PC.
+  async clip(args) {
+    if (!serverMode()) return 'The clipboard copy needs the JARVIS server (Settings, Server).';
+    const here = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) ? 'pc' : 'mac';
+    const to = args.trim().toLowerCase() || (here === 'pc' ? 'mac' : 'pc');
+    if (to !== 'pc' && to !== 'mac') return 'Usage: /clip mac (the PC clipboard to the Mac) or /clip pc (the Mac clipboard to the PC).';
+    return (await copyClipboard(to === 'mac' ? 'pc' : 'mac', to)).message;
+  },
+
   async retry() {
     return host.retry ? host.retry() : 'Nothing to retry.';
   },
@@ -353,7 +364,7 @@ const handlers = {
   },
 
   async attach() {
-    document.getElementById('dock-attach')?.click();
+    document.getElementById('attach-pc')?.click();
     return 'Choose the files to attach.';
   },
 
@@ -431,6 +442,7 @@ export const COMMANDS = [
   { group: 'Voice', name: 'ping', args: 'on|off', desc: 'The soft repeating note while JARVIS thinks (voice only)' },
   { group: 'Voice', name: 'lang', args: '<auto|en|es|fr|it>', desc: 'The language the microphone listens for (nothing else is heard)' },
 
+  { group: 'Agent', name: 'clip', args: '[mac|pc]', desc: 'Copy one computer’s clipboard text to the other: /clip mac sends the PC’s to the Mac' },
   { group: 'Agent', name: 'project', args: '[path|pick]', desc: 'Show, set or choose the folder the coding tools work in' },
   { group: 'Agent', name: 'permissions', args: '[remove <rule>]', desc: 'List the rules that decide what JARVIS may do, or drop one of yours' },
   { group: 'Agent', name: 'audit', args: '[n]', desc: 'The last n actions JARVIS took, and whether the log is intact' },

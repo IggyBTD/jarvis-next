@@ -1,0 +1,75 @@
+/* Input dock: a rounded card that holds the text and the send button, and under it a row of 32 tall controls (tools on the left,
+   then the counter and the model menu on the right). 24 to the window edge. */
+#composer-dock { position: relative; flex: none; container-type: inline-size; display: flex; flex-direction: column; gap: var(--s-2); width: min(var(--measure), calc(100% - 2 * var(--chat-gutter))); margin: 0 auto var(--pane-gutter); }
+#composer-card { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-3); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-lg); transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out); }
+#composer-card:focus-within { border-color: var(--border-strong); box-shadow: 0 0 0 3px var(--accent-wash); /* optical: focus glow */ }
+#composer { position: relative; display: flex; align-items: flex-end; gap: var(--s-2); min-height: var(--h-md); padding: 0 0 0 var(--s-1); }
+#composer .chat-input { flex: 1; min-width: 0; align-self: center; }
+.chat-input { display: block; width: 100%; max-height: 192px; /* 8 lines of 24 */ min-height: var(--lh-md); resize: none; background: transparent; border: 0; color: var(--text); font: 400 var(--fs-5)/var(--lh-md) var(--sans); padding: 0; user-select: text; scrollbar-gutter: stable; }
+.chat-input::placeholder { color: var(--text-3); }
+.chat-input:focus, .chat-input:focus-visible { outline: none; }
+
+/* the row under the text: tools on the left, counter, model and send on the right, all 32 and 8 apart (4 between the quiet ones) */
+.composer-bar { display: flex; align-items: center; gap: var(--s-1); min-height: var(--h-md); min-width: 0; padding: 0 var(--s-1); }
+.composer-bar .grow { flex: 1; min-width: 0; }
+.tool-btn { position: relative; flex: none; width: var(--h-md); height: var(--h-md); display: grid; place-items: center; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-3); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+.tool-btn:hover { background: var(--surface-3); color: var(--text-2); }
+.tool-btn.is-off#dock-web, .tool-btn.is-off#dock-link { color: var(--warm); }
+#dock-mic[data-active], #dock-mic.is-on { background: var(--warm-wash); }
+#dock-mic[data-active] .icon, #dock-mic.is-on .icon { color: var(--warm); }
+#dock-mic.is-on::after { border-color: var(--warm); }
+.tool-btn.recording { background: var(--warm); }
+.tool-btn.recording .icon { color: var(--on-accent); }
+.dock-badge { position: absolute; top: 0; right: 0; min-width: var(--s-4); height: var(--s-4); padding: 0 var(--s-1); border-radius: var(--r-sm); background: var(--accent); color: var(--on-accent); font: 400 var(--fs-1)/var(--s-4) var(--mono); text-align: center; }
+#ctx-meter { flex: none; font: 400 var(--fs-2)/var(--lh-xs) var(--mono); color: var(--text-3); padding: 0 var(--s-2); }
+#ctx-meter:empty { display: none; }
+/* a ring that fills as the conversation uses the model's window (amber from 70 %, red from 90 %) */
+#ctx-meter { display: inline-flex; align-items: center; gap: var(--s-2); }
+#ctx-meter::before { content: ""; flex: none; width: var(--s-3); height: var(--s-3); border-radius: 50%; background: conic-gradient(var(--accent-mid) calc(var(--ctx, 0) * 1turn), var(--surface-4) 0); -webkit-mask: radial-gradient(circle, transparent 3px, var(--text) 3.5px); mask: radial-gradient(circle, transparent 3px, var(--text) 3.5px); }
+#ctx-meter[data-level="mid"]::before { background: conic-gradient(var(--warm) calc(var(--ctx, 0) * 1turn), var(--surface-4) 0); }
+#ctx-meter[data-level="high"]::before { background: conic-gradient(var(--danger) calc(var(--ctx, 0) * 1turn), var(--surface-4) 0); }
+.send-btn, .stop-btn { position: relative; flex: none; width: var(--h-md); height: var(--h-md); display: grid; place-items: center; border: 0; border-radius: var(--r-sm); transition: background-color var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out); }
+.send-btn { background: var(--accent); }
+.send-btn:hover { opacity: 0.88; }
+.send-btn .icon, .send-btn:hover .icon, .send-btn:active .icon { color: var(--on-accent); }
+.stop-btn { background: var(--surface-3); border: 1px solid var(--border); }
+.stop-btn:hover { background: var(--surface-4); }
+.stop-btn .icon { color: var(--text-2); }
+.stop-btn:hover .icon { color: var(--text); }
+.stop-btn::after { content: ""; position: absolute; inset: 0; border-radius: var(--r-sm); border: 1.5px solid var(--text-3); /* optical: 1.5px ring */ animation: ring-out 1.6s ease-out infinite; }
+body:has(#dock-stop:not([hidden])) #send-btn { display: none; }
+
+/* a narrow row gives up its least important parts first: the counter and the computer tag, then the model's name shortens */
+@container (max-width: 560px) { #ctx-meter, #target-tag { display: none; } #model-chip { max-width: 160px; } }
+@container (max-width: 420px) { #dock-link, #dock-web { display: none; } #model-chip { max-width: 112px; } }
+
+/* attachments and the voice wave sit above the text, inside the card */
+#attach-row { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+#attach-row:empty { display: none; }
+.attach-chip { display: inline-flex; align-items: center; height: var(--h-sm); padding: 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-sm); background: var(--surface-1); color: var(--text-2); font-size: var(--fs-2); line-height: var(--lh-xs); }
+button.attach-chip:hover { color: var(--danger); border-color: var(--danger); }
+.attach-chip.busy { color: var(--text-3); }
+.attach-chip.error { color: var(--danger); border-color: var(--danger); background: var(--danger-wash); }
+#voice-wave { display: block; width: 100%; height: 48px; border-radius: var(--r-md); opacity: 0.6; transition: opacity var(--dur) var(--ease-out); }
+#voice-wave.on { opacity: 1; background: var(--warm-wash); }
+
+/* the "/" menu opens above the card */
+#command-palette { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--s-2)); z-index: 30; display: flex; flex-direction: column; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--r-md); box-shadow: var(--shadow); overflow: hidden; font-size: var(--fs-3); line-height: var(--lh-sm); }
+#command-palette ul { list-style: none; max-height: min(40vh, 336px); overflow-y: auto; padding: var(--s-1); }
+#command-palette li { display: flex; align-items: baseline; gap: var(--s-4); min-height: var(--h-md); padding: var(--s-1) var(--s-2); border-radius: var(--r-sm); cursor: pointer; }
+#command-palette li.active { background: var(--accent-wash); }
+#command-palette .cp-name { flex: none; min-width: 128px; font-family: var(--mono); color: var(--text-2); white-space: nowrap; }
+#command-palette .cp-name b { font-weight: 600; color: var(--accent); }
+#command-palette .cp-desc { flex: 1; min-width: 0; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#command-palette li.cp-empty { color: var(--text-3); cursor: default; }
+#command-palette .cp-usage { padding: var(--s-1) var(--s-4); border-top: 1px solid var(--border); color: var(--text-3); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#command-palette .cp-usage:empty { display: none; }
+
+/* LaTeX mode signal beside the input */
+.latex-chip { align-self: center; flex: none; height: var(--h-sm); padding: 0 var(--s-2); border: 1px solid var(--accent); border-radius: var(--r-sm); background: transparent; color: var(--accent); font: 400 var(--fs-2)/var(--lh-xs) var(--mono); }
+.latex-chip:hover { background: var(--surface-3); }
+/* LaTeX mode: the maths editor takes the input's place; the ordinary input stays focusable (so the app can focus it) but takes no room */
+#composer .chat-input.latex-off { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+#composer #latex-field { flex: 1; min-width: 0; display: block; align-self: center; min-height: var(--lh-lg); padding: 0; border: 0; border-radius: 0; outline: none; background: transparent; color: var(--text); font-size: var(--fs-6); --caret-color: var(--text); --selection-background-color: var(--accent-wash); --contains-highlight-background-color: var(--accent-wash); --placeholder-color: var(--text-3); --primary: var(--accent); }
+#composer #latex-field[hidden] { display: none; }
+#composer #latex-field::part(menu-toggle), #composer #latex-field::part(virtual-keyboard-toggle) { display: none; }

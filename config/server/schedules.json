@@ -1,0 +1,11 @@
+{
+  "timezone": "Europe/Madrid",
+  "catchUpWindowMinutes": 360,
+  "jobs": {
+    "digest": { "at": "07:00", "enabled": true },
+    "telemetry-rollup": { "everyMinutes": 60, "enabled": true },
+    "audit-verify": { "at": "03:30", "enabled": true },
+    "pending-approvals-expire": { "everyMinutes": 15, "enabled": true },
+    "log-rotate": { "at": "04:00", "enabled": true }
+  }
+}

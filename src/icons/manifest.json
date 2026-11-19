@@ -1,0 +1,150 @@
+{
+  "names": [
+    "chat",
+    "code",
+    "sidebar",
+    "plus",
+    "artifacts",
+    "system",
+    "settings",
+    "attach",
+    "mic",
+    "globe",
+    "wifi",
+    "send",
+    "stop",
+    "chevron-down",
+    "chevron-left",
+    "chevron-right",
+    "close",
+    "copy",
+    "save",
+    "layers",
+    "check",
+    "win-min",
+    "win-max",
+    "win-restore",
+    "win-close",
+    "cpu",
+    "gpu",
+    "ram",
+    "search",
+    "folder",
+    "pin",
+    "trash",
+    "edit",
+    "eject",
+    "refresh",
+    "spark",
+    "clock",
+    "sliders",
+    "more",
+    "plug",
+    "tasks",
+    "folder-plus",
+    "folder-open",
+    "file",
+    "diff",
+    "terminal",
+    "bell",
+    "mail",
+    "play"
+  ],
+  "sets": {
+    "phosphor": {
+      "name": "Phosphor",
+      "variants": [
+        "thin",
+        "light",
+        "regular",
+        "bold",
+        "duotone"
+      ],
+      "active": "fill",
+      "kinds": {
+        "thin": "fill",
+        "light": "fill",
+        "regular": "fill",
+        "bold": "fill",
+        "duotone": "fill",
+        "fill": "fill"
+      },
+      "missing": []
+    },
+    "tabler": {
+      "name": "Tabler",
+      "variants": [
+        "outline",
+        "filled"
+      ],
+      "active": "filled",
+      "kinds": {
+        "outline": "stroke",
+        "filled": "fill",
+        "fill": "fill"
+      },
+      "missing": []
+    },
+    "iconoir": {
+      "name": "Iconoir",
+      "variants": [
+        "regular",
+        "solid"
+      ],
+      "active": "solid",
+      "kinds": {
+        "regular": "stroke",
+        "solid": "fill",
+        "fill": "fill"
+      },
+      "missing": []
+    },
+    "remix": {
+      "name": "Remix",
+      "variants": [
+        "line",
+        "fill"
+      ],
+      "active": "fill",
+      "kinds": {
+        "line": "fill",
+        "fill": "fill"
+      },
+      "missing": []
+    },
+    "solar": {
+      "name": "Solar",
+      "variants": [
+        "linear",
+        "outline",
+        "bold",
+        "bold-duotone",
+        "line-duotone",
+        "broken"
+      ],
+      "active": "bold",
+      "kinds": {
+        "linear": "baked",
+        "outline": "fill",
+        "bold": "fill",
+        "bold-duotone": "fill",
+        "line-duotone": "baked",
+        "broken": "baked",
+        "fill": "fill"
+      },
+      "missing": []
+    },
+    "lucide": {
+      "name": "Lucide (stock baseline)",
+      "variants": [
+        "baseline"
+      ],
+      "active": null,
+      "kinds": {
+        "baseline": "stroke",
+        "fill": "fill"
+      },
+      "missing": []
+    }
+  }
+}

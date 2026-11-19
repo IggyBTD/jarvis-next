@@ -1,0 +1,1 @@
+{"prompt":"src/report.js is far too slow on large inputs (200k items). Make uniqueSorted, groupCounts and topK fast (each must finish in well under half a second for that many) without changing their output in any way, including ordering and tie handling. Do not change the function signatures. Run the tests with `node --test`."}

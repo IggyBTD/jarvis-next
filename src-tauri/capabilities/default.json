@@ -13,6 +13,8 @@
     "core:window:allow-unmaximize",
     "core:window:allow-is-maximized",
     "core:window:allow-close",
+    "core:window:allow-set-decorations",
+    "core:webview:allow-set-webview-zoom",
     "core:window:allow-start-dragging",
     "dialog:allow-save",
     "dialog:allow-open",

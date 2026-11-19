@@ -1,0 +1,153 @@
+/* Nodes design tokens: the molecular model kit, written under the same names as src/styles/tokens.css so every shared
+   component style (src/ui/*.css) picks them up unchanged. The classic design keeps src/styles/tokens.css.
+   Lab-white ground with a cool teal cast, white specimen surfaces, carbon ink; teal plastic is JARVIS (the active or
+   primary thing, focus, the 75 % threshold); red only for errors, refusals and the 90 % threshold; a muted green only on
+   added diff lines and a service that is up. The sidebar is a carbon rail in both themes (--rail-*). No glow anywhere.
+   Type: Segoe UI Variable for everything people read (the assistant included), Cascadia Code for code and numbers; no web
+   fonts. Light and dark follow Windows; Settings can force one. */
+
+:root {
+  color-scheme: light dark;
+
+  /* surfaces and lines */
+  --bg:            #F2F5F4;
+  --surface-1:     #E9EEEC;
+  --surface-2:     #FFFFFF;
+  --surface-3:     #E3E9E7;
+  --surface-4:     #D6DFDC;
+  --border:        #DBE2E0;
+  --border-strong: #BFCAC8;
+
+  /* text, at least 4.5:1 on --bg, --surface-1, --surface-2 and --surface-3 */
+  --text:   #131819;
+  --text-2: #3B4648;
+  --text-3: #566365;
+
+  /* teal plastic: three steps, like the classic accent */
+  --accent:      #087567;   /* 5.1:1 on the ground: safe for small text */
+  --accent-mid:  #0A8A7C;   /* atoms, chart lines and bars */
+  --accent-dim:  #6FA69F;   /* idle strokes */
+  --accent-wash: rgba(10, 138, 124, 0.12);
+  --on-accent:   #FFFFFF;
+
+  /* the kit has no amber: what the classic design marks warm (the mic while listening, 70 to 90 %) is teal here */
+  --warm:   #076B60;
+  --danger: #B3302A;
+  --on-danger: #FFFFFF;
+  --ok:     #2F7A4C;
+  --warm-wash:   rgba(10, 138, 124, 0.12);
+  --danger-wash: rgba(179, 48, 42, 0.12);
+  --ok-wash:     rgba(47, 122, 76, 0.12);
+
+  --diagram-text: var(--text); --diagram-line: var(--text-3); --diagram-fill: var(--surface-2);
+  --diagram-teal: var(--accent-mid); --diagram-teal-wash: var(--accent-wash);
+  --diagram-amber: var(--accent); --diagram-amber-wash: var(--accent-wash);
+  --diagram-coral: var(--danger); --diagram-coral-wash: var(--danger-wash);
+  --diagram-max-h: 480px;
+
+  /* code: teal for keywords and numbers, ink for the rest (one hue, like the rest of the kit) */
+  --syn-key: #076B60; --syn-string: #3B4648; --syn-number: #076B60; --syn-literal: #076B60;
+
+  --shadow: 0 2px 6px rgba(19, 24, 25, 0.06), 0 12px 32px rgba(19, 24, 25, 0.10);
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 20px;
+  --r-pill: 999px;
+
+  --s-0: 0;
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
+
+  --h-sm: 28px;
+  --h-md: 32px;
+  --h-lg: 40px;
+  --tap: 44px;
+
+  --strip-h: 40px;
+  --sidebar-w: 272px;
+  --measure: 760px;
+  --chat-gutter: 32px;
+  --pane-gutter: 24px;
+  --sidebar-gutter: 12px;
+  --card-pad: 16px;
+  --wc-w: 120px;
+  --ws-w: 44%;
+
+  /* type: nothing under 12 px */
+  --fs-1: 12px; --fs-2: 12px; --fs-3: 13px; --fs-4: 14px; --fs-5: 16px; --fs-6: 20px;
+  --lh-xs: 16px;
+  --lh-sm: 20px;
+  --lh-md: 24px;
+  --lh-lg: 28px;
+  --lh-prose: 27px;
+  --sans:  'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --serif: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif; /* replies read in the interface face */
+  --display: 'Segoe UI Variable Display', 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --mono:  'Cascadia Code', 'Cascadia Mono', Consolas, ui-monospace, 'SF Mono', monospace;
+
+  --icon-sm: 16px;
+  --icon-md: 18px;
+  --icon-lg: 20px;
+  --icon-size: 18px;
+  --icon-box: 32px;
+  --icon-stroke: 1.5;
+
+  --dur-fast: 150ms; --dur: 200ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --bar: var(--text-3);   /* bars and traces are grey until they cross 75 % */
+
+  /* the carbon rail (the sidebar), the same in both themes */
+  --rail: #151B1C; --rail-hover: #202829; --rail-active: #263032; --rail-line: #2A3436;
+  --rail-ink-1: #E9EFED; --rail-ink-2: #A9B8B6; --rail-ink-3: #8A9A98;
+  --rail-teal: #5FD6C6; --rail-atom: #3FC1B0; --rail-atom-rim: #1F7D71; --rail-rod: #4A5856; --rail-danger: #F07A6E; --rail-danger-rim: #8E2F27;
+  --rail-shine: rgba(255, 255, 255, 0.45);
+
+  /* atoms drawn in CSS (the step chain, tiles, the services molecule) */
+  --atom-shine: rgba(255, 255, 255, 0.6);
+  --atom-rim: #06594F;
+  --rod: #9AA8A6;
+  --rod-atom: #B5C0BE;
+  --rod-rim: #7F8E8C;
+  --bubble: #E2E9E7;
+  --scrim: rgba(19, 24, 25, 0.28);
+
+  /* the node mesh in kit mode (node-mesh.js reads these) */
+  --core-atom: #0A8A7C; --core-rim: #06594F; --core-back: #B9C4C2; --core-back-rim: #9AA8A6; --core-rod: #8F9E9C; --core-ground: #F2F5F4;
+}
+
+/* dark: carbon ground, the same teal brightened */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121718; --surface-1: #161C1D; --surface-2: #1A2122; --surface-3: #222A2C; --surface-4: #2A3436;
+    --border: #273133; --border-strong: #364244;
+    --text: #E9EFED; --text-2: #B3C0BE; --text-3: #94A3A1;
+    --accent: #5FD6C6; --accent-mid: #3FC1B0; --accent-dim: #2A7F75; --accent-wash: rgba(63, 193, 176, 0.14); --on-accent: #06201C;
+    --warm: #5FD6C6; --danger: #F07A6E; --on-danger: #1A0A08; --ok: #7FC596;
+    --warm-wash: rgba(63, 193, 176, 0.14); --danger-wash: rgba(240, 122, 110, 0.14); --ok-wash: rgba(127, 197, 150, 0.14);
+    --syn-key: #5FD6C6; --syn-string: #B3C0BE; --syn-number: #5FD6C6; --syn-literal: #5FD6C6;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.45);
+    --rail: #0B0F10; --rail-hover: #161C1D; --rail-active: #1D2526; --rail-line: #1F2729;
+    --atom-shine: rgba(255, 255, 255, 0.45); --atom-rim: #2A8F82;
+    --rod: #4F5E5C; --rod-atom: #56645F; --rod-rim: #6D7D7A; --bubble: #222A2C; --scrim: rgba(0, 0, 0, 0.5);
+    --core-atom: #3FC1B0; --core-rim: #2A8F82; --core-back: #33403F; --core-back-rim: #45524F; --core-rod: #4F5E5C; --core-ground: #121718;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121718; --surface-1: #161C1D; --surface-2: #1A2122; --surface-3: #222A2C; --surface-4: #2A3436;
+  --border: #273133; --border-strong: #364244;
+  --text: #E9EFED; --text-2: #B3C0BE; --text-3: #94A3A1;
+  --accent: #5FD6C6; --accent-mid: #3FC1B0; --accent-dim: #2A7F75; --accent-wash: rgba(63, 193, 176, 0.14); --on-accent: #06201C;
+  --warm: #5FD6C6; --danger: #F07A6E; --on-danger: #1A0A08; --ok: #7FC596;
+  --warm-wash: rgba(63, 193, 176, 0.14); --danger-wash: rgba(240, 122, 110, 0.14); --ok-wash: rgba(127, 197, 150, 0.14);
+  --syn-key: #5FD6C6; --syn-string: #B3C0BE; --syn-number: #5FD6C6; --syn-literal: #5FD6C6;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.45);
+  --rail: #0B0F10; --rail-hover: #161C1D; --rail-active: #1D2526; --rail-line: #1F2729;
+  --atom-shine: rgba(255, 255, 255, 0.45); --atom-rim: #2A8F82;
+  --rod: #4F5E5C; --rod-atom: #56645F; --rod-rim: #6D7D7A; --bubble: #222A2C; --scrim: rgba(0, 0, 0, 0.5);
+  --core-atom: #3FC1B0; --core-rim: #2A8F82; --core-back: #33403F; --core-back-rim: #45524F; --core-rod: #4F5E5C; --core-ground: #121718;
+}
+:root[data-theme="light"] { color-scheme: light; }

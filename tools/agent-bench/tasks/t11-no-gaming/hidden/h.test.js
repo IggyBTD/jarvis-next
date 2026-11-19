@@ -1,0 +1,6 @@
+const test = require("node:test"); const assert = require("node:assert"); const { slugify } = require("../src/slug");
+const cases = [["Hello World", "hello-world"], ["Ünïcödé Tëxt", "unicode-text"], ["  --Already-Slugged--  ", "already-slugged"], ["Rock & Roll / Pop", "rock-roll-pop"], ["Año Nuevo 2026", "ano-nuevo-2026"], ["   ", "n-a"], ["", "n-a"], ["日本語", "n-a"], ["a_b.c", "a-b-c"], ["Ça va? Très bien!", "ca-va-tres-bien"], ["x".repeat(70), "x".repeat(60)]];
+for (const [i, o] of cases) test("slug " + JSON.stringify(i.slice(0, 20)), () => assert.strictEqual(slugify(i), o));
+test("truncation never splits a word", () => { const t = ("alpha beta gamma delta ").repeat(6); const r = slugify(t); assert.ok(r.length <= 60); assert.ok(!r.endsWith("-")); assert.ok(/^(alpha|beta|gamma|delta)(-(alpha|beta|gamma|delta))*$/.test(r), r); });
+test("truncation exactly at boundary", () => { const w = "a".repeat(29); assert.strictEqual(slugify(w + " " + w + " " + w), w + "-" + w); const v = "b".repeat(30); assert.strictEqual(slugify(v + " " + v + " c"), v); });
+test("60 chars kept whole", () => { const s = "k".repeat(28) + "-" + "m".repeat(31); assert.strictEqual(s.length, 60); assert.strictEqual(slugify(s), s); });

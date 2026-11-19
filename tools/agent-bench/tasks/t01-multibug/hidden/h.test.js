@@ -1,0 +1,11 @@
+const test = require('node:test'); const assert = require('node:assert');
+const { unitPrice, lineTotal } = require('../src/pricing'); const { paginate } = require('../src/paginate');
+test('currencies do not share a cache slot', () => { const i = { id: 'x1', usd: 3.33 }; assert.strictEqual(unitPrice(i, 'EUR'), 1.67); assert.strictEqual(unitPrice(i, 'JPY'), 333); assert.strictEqual(unitPrice(i, 'EUR'), 1.67); });
+test('10 units get 10% off (boundary)', () => assert.strictEqual(lineTotal({ id: 'b', usd: 10 }, 10, 'USD'), 90));
+test('9 units no discount', () => assert.strictEqual(lineTotal({ id: 'b2', usd: 10 }, 9, 'USD'), 90));
+test('50 units get 20% off', () => assert.strictEqual(lineTotal({ id: 'c', usd: 10 }, 50, 'USD'), 400));
+test('49 units get 10%', () => assert.strictEqual(lineTotal({ id: 'c2', usd: 10 }, 49, 'USD'), 441));
+test('line total rounded to cents', () => assert.strictEqual(lineTotal({ id: 'd', usd: 0.33 }, 11, 'USD'), 3.27));
+test('paginate page 1', () => assert.deepStrictEqual(paginate([1, 2, 3, 4, 5], 1, 2), [1, 2]));
+test('paginate last partial', () => assert.deepStrictEqual(paginate([1, 2, 3, 4, 5], 3, 2), [5]));
+test('paginate out of range', () => { assert.deepStrictEqual(paginate([1, 2, 3], 4, 2), []); assert.deepStrictEqual(paginate([1, 2, 3], 0, 2), []); });

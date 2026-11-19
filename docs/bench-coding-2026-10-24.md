@@ -1,0 +1,13 @@
+# Coding benchmark 2026-10-24
+
+| Model | Total /100 | parseDuration | fix mergeIntervals | LRUCache | tool calls | Tokens/s |
+|---|---|---|---|---|---|---|
+| qwen3.8-27b | **50** | 0/12 | 8/8 | 0/7 | 5/5 | 42.4 |
+| qwen/qwen3-coder-30b | **97** | 12/12 | 7/8 | 7/7 | 5/5 | 50.4 |
+
+Failures:
+- qwen3.8-27b, parseDuration: failed answer cut off before the code ended
+- qwen3.8-27b, LRUCache: failed answer cut off before the code ended
+- qwen/qwen3-coder-30b, fix mergeIntervals: failed no shared arrays
+
+Verdict: qwen/qwen3-coder-30b is clearly better (97 vs 50).

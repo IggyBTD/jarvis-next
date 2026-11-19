@@ -94,11 +94,12 @@ async function swapTo(key) {
   usedSeen = false;
   if (seen && Date.now() - seen.at < SEEN_FRESH_MS) {
     const now = loadedInstances(seen.models);
-    if (now.length === 1 && now[0].key === key) { usedSeen = true; return now[0].id; }
+    if (now.length) { usedSeen = true; return now[0].id; }
   }
   const loaded = loadedInstances(await listModels());
-  const keep = loaded.find((i) => i.key === key);
-  const drop = loaded.filter((i) => i !== keep);
+  if (loaded.length) return loaded[0].id; // whatever is loaded is used; nothing is unloaded or swapped automatically
+  const keep = null;
+  const drop = [];
 
   for (const inst of drop) {
     emit({ type: 'phase', phase: 'unloading', model: inst.key });
@@ -116,6 +117,19 @@ async function swapTo(key) {
   const models = await waitFor((ms) => loadedInstances(ms).some((i) => i.key === key), 'load to finish');
   emit({ type: 'phase', phase: 'idle', model: key });
   return loadedInstances(models).find((i) => i.key === key).id;
+}
+
+// Frees one loaded model from memory (the next message loads it again).
+export function unloadModel(instanceId, key) {
+  const run = swapQueue.then(async () => {
+    emit({ type: 'phase', phase: 'unloading', model: key });
+    try {
+      await native('/models/unload', { instance_id: instanceId });
+      await waitFor((ms) => !loadedInstances(ms).some((i) => i.id === instanceId), 'unload to finish');
+    } finally { seen = null; emit({ type: 'phase', phase: 'idle', model: key }); }
+  });
+  swapQueue = run.catch(() => {});
+  return run;
 }
 
 // Swaps never overlap. The target is read when the swap actually runs, so rapid
@@ -143,7 +157,16 @@ export function unloadAll() {
 
 // --- chat ----------------------------------------------------------------
 // Hides <think> blocks (closed or still open) that some Qwen3 builds inline.
-const visibleText = (text) => text.replace(/<think>[\s\S]*?(<\/think>|$)/g, '').trim();
+// The model may start its reply with <jarvis-title>a name for this chat</jarvis-title>. The app uses it and never shows it:
+// complete tags are cut out, and so is a tag still being written (including a bare "<jar" at the very end).
+const TITLE_TAG = '<jarvis-title>';
+function withoutTitle(text) {
+  let t = text.replace(/<jarvis-title>[\s\S]*?<\/jarvis-title>\s*/g, '').replace(/<jarvis-title>[\s\S]*$/, '');
+  for (let n = Math.min(TITLE_TAG.length - 1, t.length); n > 0; n -= 1) if (TITLE_TAG.startsWith(t.slice(-n))) { t = t.slice(0, -n); break; }
+  return t;
+}
+export const titleIn = (text) => /<jarvis-title>([\s\S]*?)<\/jarvis-title>/.exec(text)?.[1].trim().replace(/^[\s"'`*#]+|[\s"'`*.]+$/g, '') || '';
+const visibleText = (text) => withoutTitle(text.replace(/<think>[\s\S]*?(<\/think>|$)/g, '')).trim();
 
 // Streams a reply. onDelta({ content, reasoning, thinking }) fires on every chunk:
 // content is the visible reply so far, reasoning the model's thinking so far.
@@ -236,5 +259,7 @@ ${context}` : systemPrompt }, ...withReminder(messages, turnReminder).map(({ sum
     promptTps: promptTokens && ttft ? promptTokens / ttft : null,
   };
   emit({ type: 'stats', model: preset.model, stats });
+  const title = titleIn(content.replace(/<think>[\s\S]*?<\/think>/g, ''));
+  if (title) emit({ type: 'title', title });
   return { reply: visibleText(content), toolCalls: toolCalls.result(), preset, stats };
 }

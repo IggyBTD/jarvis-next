@@ -34,26 +34,24 @@ async function cspStatic() {
   return staticPolicy;
 }
 
+import monoFont from '@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2?inline';
+
 // Artifacts follow the app theme (the Settings choice, else Windows).
 const isDark = () => (document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches);
-const PAL = {
-  dark: { bg: '#262624', fg: '#faf9f5', muted: '#c2c0b6', line: '#3a3936', ctl: '#30302e', ctlLine: '#54524d', accent: '#3fc1b0', err: '#ef7d78', sel: 'rgba(63,193,176,0.3)' },
-  light: { bg: '#faf9f5', fg: '#141413', muted: '#4d4c46', line: '#e6e3d9', ctl: '#f0eee6', ctlLine: '#cfcbbe', accent: '#0b7f73', err: '#b3342f', sel: 'rgba(11,127,115,0.25)' },
-};
-// An interface can restyle artifacts with --art-<key> custom properties on :root (the nodes
-// interface does); without them the palette above applies.
-const pal = () => {
-  const base = { ...PAL[isDark() ? 'dark' : 'light'], series: '#8b897f' };
-  const css = getComputedStyle(document.documentElement);
-  return Object.fromEntries(Object.entries(base).map(([k, v]) => [k, css.getPropertyValue(`--art-${k}`).trim() || v]));
-};
+const token = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const pal = () => ({
+  bg: token('--bg'), fg: token('--text'), muted: token('--text-2'), text3: token('--text-3'), line: token('--border'), lineStrong: token('--border-strong'),
+  ctl: token('--surface-3'), ctlLine: token('--border-strong'), accent: token('--accent'), accentMid: token('--accent-mid'), accentDim: token('--accent-dim'),
+  warm: token('--warm'), err: token('--danger'), sel: token('--accent-wash'),
+});
 const baseCss = () => {
   const p = pal();
   return `
+  @font-face { font-family: 'JetBrains Mono'; font-weight: 400; src: url(${monoFont}) format('woff2'); }
   html { color-scheme: ${isDark() ? 'dark' : 'light'}; }
   body { margin: 0; background: ${p.bg}; color: ${p.fg}; font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; }
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-thumb { background: ${p.ctlLine}; border-radius: 8px; border: 3px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: ${p.ctl}; border-radius: 8px; }
   ::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
   ::selection { background: ${p.sel}; }
   /* themed starting point for controls a page does not style itself (no browser-grey buttons) */
@@ -97,12 +95,11 @@ function wrap(body, { head = '', scripts = '', policy }) {
   return `<!doctype html><html><head><meta charset="utf-8">${cspMeta(policy)}<style>${baseCss()}</style>${GUARD_TAG}${head}</head><body>${body}${scripts}</body></html>`;
 }
 
-// A full HTML document: inject the CSP as the very first thing in <head>.
+// A full HTML document: the CSP goes at offset 0, before anything the document says. The HTML parser puts a leading <meta> into the
+// head it creates itself, so no <head> in a comment, in a script string or after earlier content can come before the policy. The
+// document's own <html> and <head> tags that follow are merged into those (the browser ignores the repeats).
 function htmlDocument(source) {
-  const base = `${cspMeta(CSP_SCRIPTS)}<style>${baseCss()}</style>${GUARD_TAG}`;
-  if (/<head[\s>]/i.test(source)) return source.replace(/<head([^>]*)>/i, `<head$1><meta charset="utf-8">${base}`);
-  if (/<html[\s>]/i.test(source)) return source.replace(/<html([^>]*)>/i, `<html$1><head><meta charset="utf-8">${base}</head>`);
-  return `<!doctype html><html><head><meta charset="utf-8">${base}</head><body>${source}</body></html>`;
+  return `<!doctype html><meta charset="utf-8">${cspMeta(CSP_SCRIPTS)}<style>${baseCss()}</style>${GUARD_TAG}${source}`;
 }
 
 const mermaidTheme = () => {
@@ -133,24 +130,71 @@ export async function buildSrcdoc(type, content) {
 
     case 'chart': {
       const lib = await chartLibrary();
-      return wrap('<div style="position:absolute;inset:12px"><canvas id="c"></canvas></div>', {
+      const p = pal();
+      const boot = `var P = ${JSON.stringify({ muted: p.muted, text3: p.text3, line: p.line, accentMid: p.accentMid, accentDim: p.accentDim, accent: p.accent, warm: p.warm, bg: p.bg, fg: p.fg })};`;
+      return wrap('<div style="position:absolute;inset:0;padding:16px 16px 12px"><canvas id="c"></canvas></div>', {
         policy: CSP_SCRIPTS,
         scripts: `<script type="application/json" id="spec">${jsonForScript(content)}</script><script>${lib}</script><script>
           try {
+            ${boot}
             var spec = JSON.parse(document.getElementById('spec').textContent);
-            Chart.defaults.animation = false; // draw immediately; does not depend on animation frames
-            Chart.defaults.color = '${pal().muted}';
-            Chart.defaults.borderColor = '${pal().line}';
-            // Datasets without their own colour use the app's bar grey (at least 3:1 on both themes);
-            // Chart.js's own default, 10% black, all but disappears on the dark canvas.
-            Chart.defaults.backgroundColor = '${pal().series}';
-            Chart.defaults.elements.line.borderColor = '${pal().series}';
-            Chart.defaults.elements.point.backgroundColor = '${pal().series}';
-            Chart.defaults.font.family = 'Segoe UI, system-ui, sans-serif';
-            spec.options = Object.assign({ responsive: true, maintainAspectRatio: false }, spec.options || {});
+            var sets = (spec.data && spec.data.datasets) || [];
+            var single = sets.length === 1 && (spec.type === 'line' || !spec.type);
+            var mono = "'JetBrains Mono', ui-monospace, monospace";
+            Chart.defaults.animation = false; // also honours reduced motion: nothing moves
+            Chart.defaults.color = P.text3;
+            Chart.defaults.font.family = mono;
+            Chart.defaults.font.size = 11;
+            Chart.defaults.elements.point.radius = 0;
+            Chart.defaults.elements.point.hoverRadius = 4;
+            Chart.defaults.elements.point.hitRadius = 12;
+            Chart.defaults.elements.line.borderWidth = 1.5;
+            Chart.defaults.elements.line.tension = 0.25;
+            // a percentage axis gets % on its ticks and a fixed 25-point step
+            var label = (sets[0] && sets[0].label || '') + ' ' + (((spec.options || {}).scales || {}).y && spec.options.scales.y.title && spec.options.scales.y.title.text || '');
+            var unit = /%/.test(label) ? '%' : '';
+            var yTicks = { callback: function (v) { return v + unit; }, padding: 8 };
+            var y = (spec.options && spec.options.scales && spec.options.scales.y) || {};
+            if (unit && y.min === 0 && y.max === 100) yTicks.stepSize = 25;
+            // series colour: one quiet blue for a single series; area fades to nothing
+            function rgba(hex, a) { var h = hex.replace('#', ''); if (h.length === 3) h = h.replace(/(.)/g, '$1$1'); var n = parseInt(h, 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; }
+            var palette = [P.accentMid, P.warm, P.muted, P.accentDim];
+            sets.forEach(function (d, i) {
+              var colour = single ? P.accentMid : (d.borderColor || palette[i % palette.length]);
+              d.borderColor = colour;
+              if (!d.fill && !d.backgroundColor) d.backgroundColor = colour; // bars and points get the series colour, not Chart.js's 10 % grey
+              if (d.fill) {
+                d.fill = true;
+                d.backgroundColor = function (ctx) {
+                  var area = ctx.chart.chartArea; if (!area) return 'transparent';
+                  var g = ctx.chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+                  g.addColorStop(0, rgba(P.accent, 0.25)); g.addColorStop(1, rgba(P.accent, 0));
+                  return g;
+                };
+              }
+            });
+            var o = spec.options = Object.assign({ responsive: true, maintainAspectRatio: false }, spec.options || {});
+            o.layout = Object.assign({ padding: { top: 12, right: 12, bottom: 8, left: 8 } }, o.layout || {});
+            o.plugins = o.plugins || {};
+            o.plugins.legend = Object.assign({ display: !single, labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true } }, o.plugins.legend || {});
+            o.plugins.tooltip = Object.assign({ backgroundColor: P.bg, titleColor: P.fg, bodyColor: P.muted, borderColor: P.line, borderWidth: 1, padding: 8, displayColors: false, titleFont: { family: mono }, bodyFont: { family: mono } }, o.plugins.tooltip || {});
+            o.scales = o.scales || {};
+            o.scales.x = Object.assign({ grid: { display: false }, border: { display: false }, ticks: { maxRotation: 0, padding: 6 } }, o.scales.x || {});
+            o.scales.y = Object.assign({}, o.scales.y, { grid: Object.assign({ color: rgba(P.text3, 0.18), drawTicks: false }, (o.scales.y || {}).grid || {}), border: { display: false }, ticks: Object.assign(yTicks, (o.scales.y || {}).ticks || {}) });
+            // the highest sample of a single series is marked once, in the warm colour, with its value
+            spec.plugins = (spec.plugins || []).concat(single ? [{
+              id: 'peak',
+              afterDatasetsDraw: function (chart) {
+                var data = chart.data.datasets[0].data.map(Number), max = Math.max.apply(null, data);
+                if (!isFinite(max) || max === Math.min.apply(null, data)) return;
+                var i = data.indexOf(max), pt = chart.getDatasetMeta(0).data[i], c = chart.ctx;
+                c.save(); c.fillStyle = P.warm; c.beginPath(); c.arc(pt.x, pt.y, 4, 0, 6.2832); c.fill();
+                c.font = '11px ' + mono; c.textAlign = 'center'; c.fillText(max + unit, Math.min(Math.max(pt.x, 20), chart.width - 20), pt.y - 10); c.restore();
+              },
+            }] : []);
             new Chart(document.getElementById('c'), spec);
           } catch (e) {
-            document.body.insertAdjacentHTML('beforeend', '<pre style="color:${pal().err};padding:16px;white-space:pre-wrap">' + String(e && e.message || e).replace(/</g, '&lt;') + '</pre>');
+            document.body.insertAdjacentHTML('beforeend', '<pre style="color:${p.err};padding:16px;white-space:pre-wrap">' + String(e && e.message || e).replace(/</g, '&lt;') + '</pre>');
           }
         </script>`,
       });

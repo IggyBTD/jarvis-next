@@ -1,78 +1,16 @@
-// The CLI page: docked panels in fixed slots (workspace left, session centre, changes right).
-// The session is the real conversation, moved in while the page is open (the same trick as the
-// whiteboard session, so streaming keeps working). Side columns resize by dragging a splitter
-// (8 px steps) and hide with the FILES / CHANGES buttons. Only real data is shown; see
-// .md Files/JARVIS_CLI_Brief.md.
+// The code side of the panel: the project's files, what the agent changed, its task list, plan mode, the diff and approval
+// panels that float over the page. The conversation is the real one (the same as Chat), and the files, changes and tasks
+// live in the right panel's tabs (index.html, panel-info.js). Only real data is shown; see .md Files/JARVIS_CLI_Brief.md.
 import { getProject, listDir } from './agent-client.js';
-import { icon } from './icons.js';
-import { getModelHealth, onModelHealth } from './model-panel.js';
-import { getPreset } from './llm-client.js';
 import { diffBody } from './tool-cards.js';
 import { getTasks, onTasks, taskSummary, isPlanMode, setPlanMode, onPlanMode } from './work-state.js';
 
 const $ = (id) => document.getElementById(id);
-const page = $('page-code');
 const chatOutput = $('chat-output');
+const STEP = 8; // floating panels move and resize in 8 px steps
 
-const KEY = 'jarvis.cli';
-const MIN = 200;
-const MAX = 480;
-const STEP = 8;
-const layout = { left: 280, right: 320, leftOn: true, rightOn: true };
-try { Object.assign(layout, JSON.parse(localStorage.getItem(KEY) ?? '{}')); } catch { /* defaults */ }
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(layout)); } catch { /* storage blocked */ } };
-const clamp = (v) => Math.min(MAX, Math.max(MIN, Math.round(v / STEP) * STEP));
-
-function applyLayout() {
-  // a hidden column gives its track (and its splitter's) back to the session
-  page.style.setProperty('--cli-left', layout.leftOn ? `${clamp(layout.left)}px` : '0px');
-  page.style.setProperty('--cli-sl', layout.leftOn ? '8px' : '0px');
-  page.style.setProperty('--cli-right', layout.rightOn ? `${clamp(layout.right)}px` : '0px');
-  page.style.setProperty('--cli-sr', layout.rightOn ? '8px' : '0px');
-  page.dataset.left = layout.leftOn ? 'on' : 'off';
-  page.dataset.right = layout.rightOn ? 'on' : 'off';
-  $('cli-toggle-left').setAttribute('aria-pressed', String(layout.leftOn));
-  $('cli-toggle-right').setAttribute('aria-pressed', String(layout.rightOn));
-}
-
-// --- splitters -----------------------------------------------------------
-function splitter(el, side) {
-  const set = (v) => { layout[side] = clamp(v); applyLayout(); };
-  el.addEventListener('pointerdown', (e) => {
-    el.setPointerCapture(e.pointerId);
-    el.classList.add('dragging');
-    const box = page.getBoundingClientRect();
-    const move = (m) => set(side === 'left' ? m.clientX - box.left : box.right - m.clientX);
-    const done = () => {
-      el.classList.remove('dragging');
-      el.removeEventListener('pointermove', move);
-      el.removeEventListener('pointerup', done);
-      el.removeEventListener('pointercancel', done);
-      save();
-    };
-    el.addEventListener('pointermove', move);
-    el.addEventListener('pointerup', done);
-    el.addEventListener('pointercancel', done);
-  });
-  el.addEventListener('keydown', (e) => {
-    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    e.preventDefault();
-    const grow = (e.key === 'ArrowRight') === (side === 'left');
-    set(layout[side] + (grow ? STEP : -STEP) * (e.shiftKey ? 4 : 2));
-    save();
-  });
-}
-splitter($('cli-split-left'), 'left');
-splitter($('cli-split-right'), 'right');
-
-for (const [id, key] of [['cli-toggle-left', 'leftOn'], ['cli-toggle-right', 'rightOn']]) {
-  $(id).addEventListener('click', () => { layout[key] = !layout[key]; applyLayout(); save(); });
-}
-applyLayout();
-
-// --- session: shell.js moves the conversation into #cli-session-body while this page is open ---
 document.addEventListener('jarvis:page', (e) => {
-  if (e.detail.page === 'code') { refreshTree(); refreshContext(); syncApprovals(); }
+  if (e.detail.page === 'code') { refreshTree(); syncApprovals(); }
 });
 
 // --- workspace -----------------------------------------------------------
@@ -107,7 +45,6 @@ async function refreshTree() {
   let root = null;
   try { root = await getProject(); } catch { /* no backend */ }
   if (token !== treeToken) return;
-  $('cli-project').textContent = root ? root.split(/[\\/]/).filter(Boolean).pop() : '';
   if (!root) {
     tree.replaceChildren(empty(window.__TAURI_INTERNALS__ ? 'No project folder. Use /project <path>' : 'Needs the desktop app'));
     return;
@@ -126,17 +63,6 @@ async function refreshTree() {
   }
 }
 
-// --- context -------------------------------------------------------------
-const fmtK = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n));
-function refreshContext() {
-  const { ctxUsed, ctxMax } = getModelHealth();
-  const known = ctxUsed != null && ctxMax;
-  $('cli-model').textContent = getPreset().model.split('/').pop();
-  $('cli-ctx-val').textContent = known ? `${fmtK(ctxUsed)} / ${fmtK(ctxMax)}` : '--';
-  $('cli-ctx-bar').style.transform = `scaleX(${known ? Math.min(1, ctxUsed / ctxMax) : 0})`;
-}
-onModelHealth(refreshContext);
-
 // --- floating panels ------------------------------------------------------
 // Extra panels over the frame. Drag by the title bar, resize from the corner; with the title bar
 // focused, Alt + arrows move and Alt + Shift + arrows resize by 8 px. Kept inside the page area.
@@ -151,7 +77,7 @@ function openFloat(id, title, { x, y, w = 560, h = 360, cls = '', sub = '' } = {
   const el = document.createElement('section');
   el.className = `cli-float-panel ${cls}`;
   el.setAttribute('aria-label', title);
-  el.innerHTML = `<div class="panel-head" tabindex="0" role="group" aria-label="Panel title bar. Alt and arrow keys move it, Alt Shift and arrow keys resize it."><span class="title-main"></span><span class="title-sub sub"></span><button type="button" class="wb-btn" title="Close panel" aria-label="Close panel">${icon('close', 14)}</button></div><div class="cli-body"></div><i class="cli-rz"></i>`;
+  el.innerHTML = '<div class="panel-head" tabindex="0" role="group" aria-label="Panel title bar. Alt and arrow keys move it, Alt Shift and arrow keys resize it."><span class="title-main"></span><span class="title-sub sub"></span><button type="button" class="wb-btn" title="Close panel" aria-label="Close panel">×</button></div><div class="cli-body"></div><i class="cli-rz"></i>';
   const head = el.firstElementChild;
   head.querySelector('.title-main').textContent = title;
   head.querySelector('.title-sub').textContent = sub;
@@ -197,7 +123,7 @@ function openFloat(id, title, { x, y, w = 560, h = 360, cls = '', sub = '' } = {
   return panel;
 }
 
-// Artifacts opened while this page is showing (whiteboard.js) float over it.
+// Anything else that wants a floating panel over the page (the diffs and approvals above use the same one).
 document.addEventListener('jarvis:float', (e) => {
   const { id, title, mount } = e.detail;
   const had = floats.get(id);
@@ -207,24 +133,39 @@ document.addEventListener('jarvis:float', (e) => {
 });
 
 // --- changes: files the agent edited or wrote this session ------------------
-// A click on a file opens its diff (first "before" to latest "after") in a floating panel.
+// Each file is a row (what happened, where it is, how many lines); a click opens its diff, first "before" to latest "after", under it.
 const changed = new Map(); // path -> { kind, count, before, after }, oldest first
-function showDiff(path) {
-  const c = changed.get(path);
-  if (!c) return;
-  const { body, added, removed } = diffBody({ before: c.before, after: c.after });
-  const panel = openFloat(`diff:${path}`, `Diff  ${path}`, { w: 640, h: 400 });
-  panel.head.querySelector('.title-sub').textContent = `+${added} -${removed}`;
-  panel.body.replaceChildren(body);
-}
+export const changedFiles = () => [...changed].map(([path, v]) => ({ path, ...v }));
+const open = new Set(); // paths whose diff is open
+const KIND = { NEW: 'New', WRITE: 'Written', EDIT: 'Edited' };
 function renderChanges() {
   const box = $('cli-changes');
-  $('cli-changes-count').textContent = changed.size ? String(changed.size) : '';
-  if (!changed.size) {
-    box.replaceChildren(empty('Nothing changed yet'));
-    return;
-  }
-  box.replaceChildren(...[...changed].reverse().map(([path, c]) => row(path, 0, false, `${c.kind}${c.count > 1 ? ` x${c.count}` : ''}`, () => showDiff(path))));
+  const list = [...changed].reverse();
+  let plus = 0; let minus = 0;
+  const rows = list.map(([path, c]) => {
+    const { body, added, removed } = diffBody({ before: c.before, after: c.after });
+    plus += added; minus += removed;
+    const d = document.createElement('details');
+    d.className = 'chg';
+    d.open = open.has(path);
+    d.addEventListener('toggle', () => { if (d.open) open.add(path); else open.delete(path); });
+    const dir = path.includes('/') || path.includes('\\') ? path.replace(/[\\/][^\\/]*$/, '') : '';
+    const name = path.split(/[\\/]/).pop();
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="chg-kind"></span><span class="chg-name"></span><span class="chg-dir"></span><span class="chg-count"><b class="plus"></b> <b class="minus"></b></span>';
+    s.querySelector('.chg-kind').textContent = KIND[c.kind] ?? c.kind;
+    s.querySelector('.chg-kind').dataset.kind = c.kind;
+    s.querySelector('.chg-name').textContent = name;
+    s.querySelector('.chg-dir').textContent = dir;
+    s.querySelector('.plus').textContent = `+${added}`;
+    s.querySelector('.minus').textContent = `-${removed}`;
+    s.title = path + (c.count > 1 ? `  (${c.count} edits)` : '');
+    d.append(s, body);
+    return d;
+  });
+  $('cli-changes-count').innerHTML = `<b class="plus">+${plus}</b> <b class="minus">-${minus}</b>`;
+  box.replaceChildren(...(rows.length ? rows : [empty('Nothing changed yet')]));
+  document.dispatchEvent(new CustomEvent('jarvis:changes'));
 }
 document.addEventListener('jarvis:action', (e) => {
   const { name, args, ok, display } = e.detail;
@@ -232,13 +173,12 @@ document.addEventListener('jarvis:action', (e) => {
   const prev = changed.get(args.path);
   changed.delete(args.path); // re-insert so the latest change is last
   changed.set(args.path, {
-    kind: prev?.kind ?? (display?.created ? 'New' : name === 'write_file' ? 'Write' : 'Edit'),
+    kind: prev?.kind ?? (display?.created ? 'NEW' : name === 'write_file' ? 'WRITE' : 'EDIT'),
     count: (prev?.count ?? 0) + 1,
     before: prev ? prev.before : display?.before ?? '',
     after: display?.after ?? prev?.after ?? '',
   });
   renderChanges();
-  if (floats.has(`diff:${args.path}`)) showDiff(args.path); // an open diff follows the file
   if (document.body.dataset.page === 'code') refreshTree();
 });
 renderChanges();
@@ -321,6 +261,3 @@ function renderTasks(list) {
 onTasks(renderTasks);
 renderTasks(getTasks());
 
-const planBtn = $('cli-toggle-plan');
-planBtn.addEventListener('click', () => setPlanMode(!isPlanMode()));
-onPlanMode((on) => planBtn.setAttribute('aria-pressed', String(on)));

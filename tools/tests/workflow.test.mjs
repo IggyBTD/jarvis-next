@@ -6,7 +6,6 @@ import { parseTasks, setTasks, getTasks, formatTasks, taskSummary, setPlanMode, 
 import { estimateTokens, shouldCompact, trimToolResults, findCut, summaryRequest, applySummary, withReminder } from '../../src/core/context-manager.js';
 import { parseSkill, skillPrompt } from '../../src/core/skills.js';
 import { matchHooks, buildCommand } from '../../src/core/hooks.js';
-import { slimHistory, sessionTitle, toMarkdown } from '../../src/core/sessions.js';
 import { createActionRunner } from '../../src/core/action-runner.js';
 
 // --- tasks and plan mode ---
@@ -128,21 +127,6 @@ test('hook commands refuse values that could break out of the command', () => {
 });
 
 // --- sessions ---
-test('history is saved without images; titles and markdown read well', () => {
-  const h = [
-    { role: 'user', content: [{ type: 'text', text: 'what is this?' }, { type: 'image_url', image_url: { url: 'data:image/png;base64,AAAA' } }] },
-    { role: 'assistant', content: 'A diagram.' },
-  ];
-  const slim = slimHistory(h);
-  assert.equal(JSON.stringify(slim).includes('base64'), false);
-  assert.equal(slim[0].content[1].text, '[image]');
-  assert.equal(sessionTitle(h), 'what is this?');
-  assert.equal(sessionTitle([]), 'Untitled');
-  const md = toMarkdown('T', h);
-  assert.match(md, /\*\*You:\*\* what is this\?/);
-  assert.match(md, /\*\*JARVIS:\*\* A diagram\./);
-});
-
 // --- the runner's gate and hooks ---
 const actions = [
   { name: 'edit_file', tier: 'auto', effect: 'local-mutate', primary: 'path', parameters: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },

@@ -34,4 +34,5 @@ closeBtn.addEventListener('click', () => run((w) => w.close()));
 
 // Double-clicking the drag region maximizes in Tauri; the window also changes size from the
 // keyboard (Win+Up) or snapping, so re-sync the icon whenever the window is resized.
-appWindow().then((win) => { win?.onResized(syncMaximized); syncMaximized(); });
+// Belt and braces: the config already turns the native title bar off; this makes sure of it for any window it did not reach.
+appWindow().then((win) => { win?.setDecorations(false).catch(() => {}); win?.onResized(syncMaximized); syncMaximized(); });
