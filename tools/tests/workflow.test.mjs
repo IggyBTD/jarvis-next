@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseTasks, setTasks, getTasks, formatTasks, taskSummary, setPlanMode, isPlanMode, planRefusal, workContext } from '../../src/core/work-state.js';
-import { estimateTokens, shouldCompact, trimToolResults, findCut, summaryRequest, applySummary } from '../../src/core/context-manager.js';
+import { estimateTokens, shouldCompact, trimToolResults, findCut, summaryRequest, applySummary, withReminder } from '../../src/core/context-manager.js';
 import { parseSkill, skillPrompt } from '../../src/core/skills.js';
 import { matchHooks, buildCommand } from '../../src/core/hooks.js';
 import { slimHistory, sessionTitle, toMarkdown } from '../../src/core/sessions.js';
@@ -180,4 +180,15 @@ test('a before hook can refuse; an after hook adds its output to the result', as
   assert.equal(edited.ok, true);
   assert.match(edited.content, /edited\n\[hook output\]\nsyntax ok/);
   assert.deepEqual(seen, ['edit_file']);
+});
+
+test('withReminder puts per-turn context on a copy of the newest user message only', () => {
+  const history = [{ role: 'user', content: 'a' }, { role: 'assistant', content: 'b' }, { role: 'user', content: 'c' }, { role: 'tool', content: 'r' }];
+  const out = withReminder(history, '<tasks>x</tasks>');
+  assert.equal(out[2].content, 'c\n\n<tasks>x</tasks>');
+  assert.equal(out[0].content, 'a');
+  assert.equal(history[2].content, 'c'); // the stored history is untouched
+  const img = withReminder([{ role: 'user', content: [{ type: 'text', text: 'q' }] }], 'r');
+  assert.deepEqual(img[0].content[1], { type: 'text', text: 'r' });
+  assert.equal(withReminder(history, ''), history);
 });

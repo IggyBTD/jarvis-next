@@ -2,6 +2,7 @@
 import config from '../../config/models.json';
 import systemPrompt from '../../config/system-prompt.md?raw';
 import { createToolCallAccumulator } from './tool-calls.js';
+import { withReminder } from './context-manager.js';
 
 const BASE = config.endpoint;                          // OpenAI-compatible: .../v1
 const NATIVE = BASE.replace(/\/v1\/?$/, '/api/v1');    // LM Studio native: models, load, unload
@@ -122,13 +123,13 @@ const visibleText = (text) => text.replace(/<think>[\s\S]*?(<\/think>|$)/g, '').
 // content is the visible reply so far, reasoning the model's thinking so far.
 // Resolves { reply, toolCalls, preset, stats }. With `tools` (OpenAI function definitions) the model
 // may answer with tool calls instead of, or after, text: toolCalls is [{ id, name, arguments }].
-export async function chat(messages, { signal, onDelta, context = '', tools = null } = {}) {
+export async function chat(messages, { signal, onDelta, context = '', reminder = '', tools = null } = {}) {
   const preset = getPreset();
   const body = (instanceId) => JSON.stringify({
     model: instanceId,
     messages: [{ role: 'system', content: context ? `${systemPrompt}
 
-${context}` : systemPrompt }, ...messages.map(({ summary, shown, ...m }) => m)], // "summary" and "shown" are our own bookkeeping, not part of the API
+${context}` : systemPrompt }, ...withReminder(messages, reminder).map(({ summary, shown, ...m }) => m)], // "summary" and "shown" are our own bookkeeping, not part of the API
     stream: true,
     stream_options: { include_usage: true },
     ...(tools?.length ? { tools, tool_choice: 'auto' } : {}),

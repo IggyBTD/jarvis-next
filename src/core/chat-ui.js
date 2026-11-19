@@ -310,17 +310,18 @@ async function send() {
   const mine = { controller, text, userLine, speech, base, lines: [pending], files: names.length > 0, taken: false };
   turn = mine;
   try {
-    const memoryContext = await buildContext(text);
-    const context = [speech ? `${memoryContext}
-
-<voice-mode>This reply will be spoken aloud.</voice-mode>`.trim() : memoryContext, projectInstructionsContext(), skillsContext()].filter(Boolean).join('\n\n');
+    // Stable context goes in the system message; what changes per turn rides on the newest user
+    // message (llm-client), so the prefix stays identical and LM Studio reuses its cache.
+    const context = [projectInstructionsContext(), skillsContext()].filter(Boolean).join('\n\n');
+    const turnContext = [await buildContext(text), speech ? '<voice-mode>This reply will be spoken aloud.</voice-mode>' : ''].filter(Boolean).join('\n\n');
     let spoken = ''; // text of the rounds already finished, so speech sees one growing text
     for (let round = 0; ; round++) {
       latest = { content: '', reasoning: '' };
       thinkStart = null;
       if (round > 0 && shouldCompact(lastUsed, contextMax())) trimToolResults(history, 8); // long agent job: shorten old tool output
       const result = await chat(history, {
-        context: [context, workContext()].filter(Boolean).join('\n\n'), // the task list and plan mode can change between rounds
+        context,
+        reminder: [turnContext, workContext()].filter(Boolean).join('\n\n'), // the task list and plan mode can change between rounds
         signal: controller.signal,
         tools: round < MAX_TOOL_ROUNDS ? toolDefinitions() : null,
         onDelta({ content: visible, reasoning, thinking }) {

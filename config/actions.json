@@ -40,7 +40,7 @@
     },
     {
       "name": "open_panel",
-      "description": "Open a new floating panel on the whiteboard (opens the whiteboard first if needed). Give it a title; content is optional and may be filled in later by calling this again with the same id.",
+      "description": "Open a new tab in the workspace beside the chat. Give it a title; content is optional and may be filled in later by calling this again with the same id.",
       "tier": "auto",
       "primary": "type",
       "parameters": {

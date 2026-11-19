@@ -70,3 +70,14 @@ export const summaryMessages = (summary) => [
 export function applySummary(history, cut, summary) {
   return history.splice(0, cut, ...summaryMessages(summary));
 }
+
+// Per-turn context (recalled memory, tasks, plan mode) is appended to a copy of the newest user
+// message instead of the system prompt: the system prompt and older history then stay identical
+// between turns, so LM Studio reuses its cached prefix instead of reading the whole chat again.
+export function withReminder(messages, reminder) {
+  const i = messages.findLastIndex((m) => m.role === 'user');
+  if (!reminder || i < 0) return messages;
+  const m = messages[i];
+  const content = Array.isArray(m.content) ? [...m.content, { type: 'text', text: reminder }] : `${m.content}\n\n${reminder}`;
+  return messages.with(i, { ...m, content });
+}

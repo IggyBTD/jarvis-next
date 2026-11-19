@@ -240,5 +240,13 @@ const runner = createActionRunner({
   },
 });
 
-export const toolDefinitions = runner.tools;
+// Offer only the tools that can work right now: fewer schemas means a shorter prompt and better picks
+// from a small model. The set changes only when the project, plan mode or skills change, so the
+// prompt prefix stays cacheable between turns.
+const FILE_TOOLS = new Set(['list_dir', 'read_file', 'search_files', 'edit_file', 'write_file', 'run_command']);
+const offered = (name) => (FILE_TOOLS.has(name) ? !!agent.currentProject()
+  : name === 'submit_plan' ? isPlanMode()
+  : name === 'use_skill' ? getSkills().length > 0
+  : true);
+export const toolDefinitions = () => runner.tools().filter((t) => offered(t.function.name));
 export const runToolCall = runner.run;

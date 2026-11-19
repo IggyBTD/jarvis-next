@@ -1,6 +1,8 @@
 // Client for the Rust agent tools (src-tauri/src/agent.rs): files and shell inside one project
 // folder. Same pattern as memory-client.js. Needs the desktop app; a plain browser has no backend.
 const KEY = 'jarvis.project';
+let current = null; // the project folder, or null: the file tools are only offered to the model with one
+export const currentProject = () => current;
 
 async function call(command, args) {
   if (!window.__TAURI_INTERNALS__) throw new Error('The coding tools need the JARVIS desktop app (no Tauri backend here).');
@@ -10,6 +12,7 @@ async function call(command, args) {
 
 export async function setProject(path) {
   const shown = await call('agent_set_root', { path });
+  current = shown;
   try { localStorage.setItem(KEY, shown); } catch { /* storage blocked */ }
   document.dispatchEvent(new CustomEvent('jarvis:project')); // project-instructions.js re-reads its notes file
   return shown;
@@ -24,6 +27,7 @@ export async function restoreProject() {
   if (!saved || !window.__TAURI_INTERNALS__) return null;
   try {
     const shown = await call('agent_set_root', { path: saved });
+    current = shown;
     document.dispatchEvent(new CustomEvent('jarvis:project'));
     return shown;
   } catch { return null; } // the folder may be gone
