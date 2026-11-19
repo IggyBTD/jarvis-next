@@ -134,9 +134,9 @@ if (thinkBtn) {
   paintThink();
 }
 
-// Shift+Tab in the message box steps through the permission modes (mode-ui.js).
+// Shift+Tab in the message box steps through the permission modes (mode-ui.js), on the Code page where the mode is shown.
 $('hud-chat-input')?.addEventListener('keydown', (e) => {
-  if (e.key !== 'Tab' || !e.shiftKey || e.ctrlKey || e.altKey) return;
+  if (e.key !== 'Tab' || !e.shiftKey || e.ctrlKey || e.altKey || document.body.dataset.page !== 'code') return;
   e.preventDefault();
   cycleMode();
 });

@@ -16,6 +16,9 @@ const VITE_PORT = 5198;
 const SHOTS = path.join(ROOT, 'docs', 'ui-shots', 'layout');
 const SIZES = [[960, 600], [1100, 700], [1280, 800], [1440, 900], [1920, 1080]];
 let rig; let api; let vite; let browser; let page; const errors = [];
+// Which design: '' is index.html (the nodes design, no Intel page), UI_PAGE=classic.html the classic one.
+const PAGE = process.env.UI_PAGE ?? '';
+let hasIntel = false;
 
 before(async () => {
   rig = await makeRig({ enableAll: true, edit: (f) => { f['machines.json'].server.origins.push(`http://localhost:${VITE_PORT}`); } });
@@ -26,8 +29,9 @@ before(async () => {
   page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   page.on('pageerror', (e) => errors.push(e.message));
   await page.addInitScript(([url, token]) => { try { localStorage.setItem('jarvis.server', JSON.stringify({ enabled: true, url, token })); localStorage.setItem('jarvis.theme', 'dark'); } catch { /* storage blocked */ } }, [api.wsUrl, api.uiToken]);
-  await page.goto(`http://localhost:${VITE_PORT}`);
+  await page.goto(`http://localhost:${VITE_PORT}/${PAGE}`);
   await page.waitForSelector('#target-switch:not([hidden])', { timeout: 15000 });
+  hasIntel = !!(await page.$('#page-intel'));
   if (process.env.SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 });
 
@@ -59,7 +63,7 @@ const goto = async (p) => {
 for (const [w, h] of SIZES) {
   test(`${w}x${h}: every page, sidebar and panel shown or hidden`, async () => {
     await setSize(w, h);
-    for (const p of ['chat', 'code', 'intel', 'projects', 'artifacts', 'scheduled', 'accounts', 'customize', 'settings']) {
+    for (const p of ['chat', 'code', 'intel', 'projects', 'artifacts', 'scheduled', 'accounts', 'customize', 'settings'].filter((x) => x !== 'intel' || hasIntel)) {
       await goto(p);
       for (const side of [true, false]) {
         for (const pan of p === 'chat' || p === 'code' ? [true, false] : [true]) {
@@ -123,7 +127,8 @@ test('menus: model menu, slash menu, a folder, search', async () => {
   }
 });
 
-test('Intel: the start page, the globe and the browser, with the conversation beside them', async () => {
+test('Intel: the start page, the globe and the browser, with the conversation beside them', async (t) => {
+  if (!hasIntel) { t.skip('this design has no Intel page'); return; }
   for (const [w, h] of SIZES) {
     await setSize(w, h); await goto('intel');
     for (const side of [true, false]) {

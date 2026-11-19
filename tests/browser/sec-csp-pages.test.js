@@ -13,7 +13,7 @@ test('F2-1: the served app loads under its CSP with no violation', { skip: !fs.e
   const api = await startApi(r);
   const browser = await chromium.launch({ channel: 'chrome', headless: true }).catch(() => chromium.launch({ headless: true }));
   try {
-    for (const p of ['/', '/mobile.html']) {
+    for (const p of ['/', '/classic.html', '/mobile.html', '/mobile-classic.html']) {
       const page = await browser.newPage();
       // as on the Mac and the phone: the page talks to the server that served it (server mode)
       await page.addInitScript(([url, token]) => { localStorage.setItem('jarvis.server', JSON.stringify({ enabled: true, url, token })); localStorage.setItem('jarvis.mobile', JSON.stringify({ token })); }, [api.wsUrl, api.uiToken]);

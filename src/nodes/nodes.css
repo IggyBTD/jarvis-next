@@ -174,8 +174,6 @@ li[data-state="queued"] > .step > .step-line, li[data-state="queued"] .step-flag
 #ctx-meter::before { background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--rod); }
 #ctx-meter[data-level="mid"]::before { background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--accent-mid); }
 #ctx-meter[data-level="high"]::before { background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--danger); }
-/* the permission mode shows on both pages: Manual and Plan change what local actions do in a chat too */
-body:not([data-page="code"]) #mode-wrap { display: block; }
 
 /* starters on a new chat */
 #starters { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2); width: min(var(--measure), calc(100% - 2 * var(--chat-gutter))); margin: 0 auto var(--s-4); }
@@ -205,4 +203,29 @@ body:not([data-page="code"]) #mode-wrap { display: block; }
 @keyframes bond-in { from { transform: scaleY(0); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) {
   .chat-line::before, .chat-line::after { animation: none !important; }
+}
+
+/* ---- the Code page's usage card: no terminal costume, no tracked capitals; the activity map is a grid of atoms ------------------ */
+.ch-title { font: 600 var(--fs-4)/var(--lh-sm) var(--sans); letter-spacing: 0; color: var(--text); }
+.ch-title::before { content: none; }
+.ch-tile::before { display: none; }
+.ch-label { font: 400 var(--fs-2)/var(--lh-xs) var(--sans); letter-spacing: 0; text-transform: none; color: var(--text-3); }
+.ch-cell { border-radius: 50%; }
+.ch-cell[data-level="4"] { box-shadow: inset 0 0 0 1px var(--atom-rim); }
+
+/* ---- small targets and marks the checks found ------------------------------------------------------------------------------- */
+.link-btn { min-height: 24px; }
+.copy-btn { min-height: 24px; padding: 0 var(--s-2); border-radius: var(--r-sm); }
+.copy-btn:hover { background: var(--surface-3); }
+.tc-row.add .tc-sign, .tc-row.del .tc-sign { color: var(--text); font-weight: 600; } /* the row tint carries the colour */
+input[type="checkbox"] { width: 24px; height: 24px; margin: 0; accent-color: var(--accent-mid); }
+.spark path.area { display: none; } /* the trace is a line only */
+
+/* ---- short windows: the rail keeps Settings in view. The readout steps aside first (the panel's PC card has the same numbers),
+   then the services shrink to their atoms (the name stays in the tooltip and is read aloud) ---------------------------------------- */
+@media (max-height: 780px) { #mini-sys { display: none; } }
+@media (max-height: 660px) {
+  #sidebar #mini-services { padding: var(--s-1) 0; }
+  #sidebar #mini-services::before { top: 10px; }
+  #sidebar #mini-services .svc { font-size: 0; line-height: 0; gap: 0; }
 }

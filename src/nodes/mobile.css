@@ -1,0 +1,9 @@
+/* Nodes design for the phone app (mobile.html), over src/ui/mobile.css with src/nodes/tokens.css in place of the classic tokens.
+   The tokens carry the palette and the faces; this adds the kit's touches and removes the focus halo. mobile-classic.html keeps the
+   previous look. */
+.m-greet, .m-appr-action { font-family: var(--display); }
+.m-bubble { background: var(--bubble); border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg); }
+.m-prose { font-family: var(--sans); }
+.m-field { border-color: var(--border-strong); }
+.m-field:focus-within { border-color: var(--accent-mid); box-shadow: none; } /* focus is a teal line, not a glow */
+.m-send::before { background: var(--accent-mid); }

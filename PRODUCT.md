@@ -27,13 +27,14 @@ Everything runs locally: Qwen models in LM Studio on his own GPU, telemetry from
 - LM Studio on port 1234 with up to four presets (General 14B, Coding and finance 27B, Visual 8B, Abliterated 14B); model swaps take seconds and are visible.
 - LibreHardwareMonitor on 8085 for CPU, GPU, RAM, temperatures, VRAM.
 - Voice sidecar: hold F8 to talk, F9 toggles; replies can be spoken.
-- Slash commands (`/project`, `/think`, `/resume`, `/remember`, `/skills` and more), Shift+Tab cycles normal, careful and plan modes, Ctrl+\ hides the sidebar, Ctrl+B the workspace.
+- Slash commands (`/project`, `/think`, `/resume`, `/remember`, `/skills`, `/clip` and more), Shift+Tab steps the permission mode on the Code page, Ctrl+\ hides the sidebar, Ctrl+B the panel, Ctrl+K searches chats, Ctrl+L LaTeX mode.
+- The JARVIS server (port 7410) on the PC, with an agent per machine (PC and Mac): with it on, the app is a thin client, the server runs the model, the tools and the approvals, and you pick which computer JARVIS controls. With it off, the app talks to LM Studio directly. An iPhone app (`mobile.html`) talks to the same server.
 - Window: 1440x900 by default, 960x600 minimum, frameless with custom window buttons. Light and dark follow Windows.
 
 ## Capabilities and Constraints
 
-- Built: chat with streaming, markdown, LaTeX and code; artifacts in tabs with versions; Code page with files, tasks, changes, diffs and undo; approvals and plan cards; think toggle with a budget; reply Copy and Retry; chat search, rename, delete; effect classes and careful mode; routines; web search and fetch; memory vault and habits; voice; telemetry.
-- Not built: headless core, scheduler and approval inbox, Gmail and Calendar, Obsidian research agent, browser sidecar, switchable target computer. The interface must not claim them.
+- Built: chat with streaming, markdown, LaTeX and code; artifacts with versions in the panel; projects, folders and pinned chats; Code page with changes, tasks, diffs and undo; approvals (cards locally, a dialog through the server) and plan mode; effort levels and permission modes; think toggle with a budget; reply Copy and Retry; effect classes; routines; web search and fetch; a guarded Playwright browser; accounts (Google and Microsoft through the server), a morning digest and scheduled jobs; PC/Mac target; memory vault and habits; voice; telemetry; usage counts.
+- Not built or not checked on real machines: much of the action library is disabled until tried on the real PC and Mac (HUMAN_TODO.md); the Obsidian research agent; OSINT beyond the classic design's Intel page. The interface must not claim them.
 - Technical: vanilla JS, no framework; inherited modules look up fixed DOM ids (`hud-chat-input`, `chat-output`, `center-workspace`, `dock-*`, telemetry ids, `model-info-*`, `btn-*` presets, `cli-*`, `win-*`); renaming one breaks a module silently.
 - No web fonts: Segoe UI Variable and Cascadia Code (system faces). No network assets at runtime.
 - Sentence case everywhere. No glow, no gradients.
