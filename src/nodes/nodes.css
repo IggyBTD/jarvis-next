@@ -233,3 +233,7 @@ input[type="checkbox"] { width: 24px; height: 24px; margin: 0; accent-color: var
 /* ---- sentence case: the kit has no tracked capitals ---------------------------------------------------------------------- */
 .gate-meta dt { text-transform: none; letter-spacing: 0; font-size: var(--fs-2); }
 .target-pill { text-transform: none; letter-spacing: 0; background: var(--accent-mid); }
+
+/* round atoms in the usage map (the grid cells are wider than tall), and the services' atoms on one line when a name wraps */
+.ch-cell { width: var(--s-3); justify-self: center; }
+#sidebar #mini-services { align-items: flex-start; }

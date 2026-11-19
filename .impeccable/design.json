@@ -1,1011 +1,1128 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-19T14:30:00+00:00",
+  "generatedAt": "2026-11-19T22:34:12+00:00",
   "title": "Design System: JARVIS",
   "extensions": {
     "colorMeta": {
-      "ground": {
+      "bg": {
         "role": "neutral",
         "displayName": "Lab white",
-        "canonical": "#f2f5f4",
-        "oklch": "oklch(96.8% 0.003 174.5)",
+        "canonical": "#F2F5F4",
         "tonalRamp": [
-          "#0b0b0b",
-          "#242525",
-          "#414242",
-          "#5f6261",
-          "#808382",
-          "#a3a5a5",
-          "#c8c9c9",
-          "#eeefee"
+          "#232A27",
+          "#394642",
+          "#4F635D",
+          "#69877D",
+          "#8DA59D",
+          "#B0BFBA",
+          "#D3DAD7",
+          "#F1F3F3"
         ]
       },
-      "surface": {
+      "surface-1": {
+        "role": "neutral",
+        "displayName": "Sunk well",
+        "canonical": "#E9EEEC",
+        "tonalRamp": [
+          "#232A27",
+          "#394641",
+          "#4F635B",
+          "#69877B",
+          "#8DA59B",
+          "#B0BFB9",
+          "#D3DAD7",
+          "#F1F3F2"
+        ]
+      },
+      "surface-2": {
         "role": "neutral",
         "displayName": "Specimen white",
-        "canonical": "#ffffff",
-        "oklch": "oklch(100.0% 0.000 89.9)",
+        "canonical": "#FFFFFF",
         "tonalRamp": [
-          "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
-          "#eeeeee"
+          "#262626",
+          "#404040",
+          "#595959",
+          "#787878",
+          "#999999",
+          "#B8B8B8",
+          "#D6D6D6",
+          "#F2F2F2"
         ]
       },
-      "sunk": {
+      "surface-3": {
         "role": "neutral",
-        "displayName": "Bench grey",
-        "canonical": "#e6ecea",
-        "oklch": "oklch(93.8% 0.007 174.4)",
+        "displayName": "Bench hover",
+        "canonical": "#E3E9E7",
         "tonalRamp": [
-          "#0a0b0b",
-          "#242625",
-          "#404342",
-          "#5e6261",
-          "#7f8482",
-          "#a2a6a5",
-          "#c7cac9",
-          "#edefee"
+          "#232927",
+          "#3A4642",
+          "#50635C",
+          "#6A867D",
+          "#8EA49D",
+          "#B1BEBA",
+          "#D3DAD7",
+          "#F1F3F3"
         ]
       },
-      "sunk-2": {
+      "surface-4": {
         "role": "neutral",
-        "displayName": "Bench grey, selected",
-        "canonical": "#dbe3e1",
-        "oklch": "oklch(90.9% 0.009 179.6)",
+        "displayName": "Bench track",
+        "canonical": "#D6DFDC",
         "tonalRamp": [
-          "#0a0b0b",
-          "#232625",
-          "#3f4342",
-          "#5d6361",
-          "#7d8482",
-          "#a1a6a5",
-          "#c6cac9",
-          "#edefee"
+          "#232927",
+          "#3A4642",
+          "#50635C",
+          "#69867D",
+          "#8EA49D",
+          "#B1BFBA",
+          "#D3DAD7",
+          "#F1F3F3"
         ]
       },
-      "bubble": {
-        "role": "neutral",
-        "displayName": "Bubble grey",
-        "canonical": "#e2e9e7",
-        "oklch": "oklch(92.8% 0.008 177.3)",
-        "tonalRamp": [
-          "#0a0b0b",
-          "#232625",
-          "#3f4342",
-          "#5d6361",
-          "#7e8482",
-          "#a2a6a5",
-          "#c7cac9",
-          "#edefee"
-        ]
-      },
-      "line": {
+      "border": {
         "role": "neutral",
         "displayName": "Hairline",
-        "canonical": "#dbe2e0",
-        "oklch": "oklch(90.7% 0.008 177.3)",
+        "canonical": "#DBE2E0",
         "tonalRamp": [
-          "#0a0b0b",
-          "#232625",
-          "#3f4342",
-          "#5d6361",
-          "#7e8482",
-          "#a2a6a5",
-          "#c7cac9",
-          "#edefee"
+          "#232927",
+          "#3A4542",
+          "#51625D",
+          "#6B847D",
+          "#8FA39D",
+          "#B1BEBA",
+          "#D3D9D8",
+          "#F1F3F3"
         ]
       },
-      "line-strong": {
+      "border-strong": {
         "role": "neutral",
         "displayName": "Strong hairline",
-        "canonical": "#bfcac8",
-        "oklch": "oklch(83.0% 0.012 184.0)",
+        "canonical": "#BFCAC8",
         "tonalRamp": [
-          "#0a0c0b",
-          "#222625",
-          "#3d4342",
-          "#5b6362",
-          "#7b8583",
-          "#a0a7a5",
-          "#c5cac9",
-          "#ecefef"
+          "#242928",
+          "#3B4443",
+          "#52615E",
+          "#6D837F",
+          "#90A29F",
+          "#B2BDBB",
+          "#D4D9D8",
+          "#F2F3F3"
         ]
       },
-      "ink-1": {
+      "text": {
         "role": "neutral",
         "displayName": "Carbon ink",
         "canonical": "#131819",
-        "oklch": "oklch(20.4% 0.008 211.1)",
         "tonalRamp": [
-          "#0a0b0c",
-          "#232626",
-          "#3f4344",
-          "#5d6263",
-          "#7e8385",
-          "#a1a6a7",
-          "#c7caca",
-          "#edefef"
+          "#23292A",
+          "#394446",
+          "#4F6064",
+          "#688288",
+          "#8CA1A6",
+          "#B0BDBF",
+          "#D2D9DA",
+          "#F1F3F3"
         ]
       },
-      "ink-2": {
+      "text-2": {
         "role": "neutral",
         "displayName": "Carbon ink, secondary",
-        "canonical": "#3b4648",
-        "oklch": "oklch(38.5% 0.015 209.8)",
+        "canonical": "#3B4648",
         "tonalRamp": [
-          "#090c0c",
-          "#212627",
-          "#3c4445",
-          "#596365",
-          "#7a8587",
-          "#9ea7a8",
-          "#c4cacb",
-          "#eceff0"
+          "#242829",
+          "#3B4345",
+          "#525F61",
+          "#6C8083",
+          "#909FA2",
+          "#B2BCBD",
+          "#D3D8D9",
+          "#F1F3F3"
         ]
       },
-      "ink-3": {
+      "text-3": {
         "role": "neutral",
         "displayName": "Carbon ink, quiet",
         "canonical": "#566365",
-        "oklch": "oklch(48.9% 0.016 207.8)",
         "tonalRamp": [
-          "#090c0c",
-          "#212627",
-          "#3c4445",
-          "#586465",
-          "#798587",
-          "#9ea7a9",
-          "#c4cbcc",
-          "#eceff0"
+          "#242828",
+          "#3C4344",
+          "#535E5F",
+          "#6E7F81",
+          "#929EA0",
+          "#B3BBBC",
+          "#D4D8D8",
+          "#F2F3F3"
         ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Teal ink",
+        "canonical": "#087567",
+        "tonalRamp": [
+          "#0F3D37",
+          "#156B60",
+          "#169D8B",
+          "#12DEC3",
+          "#48EAD5",
+          "#86EADD",
+          "#BEEFE9",
+          "#ECF9F7"
+        ]
+      },
+      "accent-mid": {
+        "role": "primary",
+        "displayName": "Model-kit teal",
+        "canonical": "#0A8A7C",
+        "tonalRamp": [
+          "#103D38",
+          "#156A61",
+          "#169C8D",
+          "#13DDC7",
+          "#49E9D8",
+          "#86E9DE",
+          "#BEEFE9",
+          "#ECF9F7"
+        ]
+      },
+      "accent-dim": {
+        "role": "primary",
+        "displayName": "Idle teal",
+        "canonical": "#6FA69F",
+        "tonalRamp": [
+          "#202C2B",
+          "#344B48",
+          "#476B67",
+          "#5C938C",
+          "#83AFA9",
+          "#AAC5C2",
+          "#D0DDDB",
+          "#F0F4F4"
+        ]
+      },
+      "accent-wash": {
+        "role": "primary",
+        "displayName": "Teal wash",
+        "canonical": "rgba(10, 138, 124, 0.12)"
+      },
+      "on-accent": {
+        "role": "primary",
+        "displayName": "On teal",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#595959",
+          "#787878",
+          "#999999",
+          "#B8B8B8",
+          "#D6D6D6",
+          "#F2F2F2"
+        ]
+      },
+      "warm": {
+        "role": "primary",
+        "displayName": "Busy teal",
+        "canonical": "#076B60",
+        "tonalRamp": [
+          "#0F3D38",
+          "#146B62",
+          "#169D8E",
+          "#12DEC8",
+          "#48EAD9",
+          "#85EADF",
+          "#BDEFEA",
+          "#ECF9F7"
+        ]
+      },
+      "atom-rim": {
+        "role": "primary",
+        "displayName": "Atom rim",
+        "canonical": "#06594F",
+        "tonalRamp": [
+          "#0F3D38",
+          "#156B61",
+          "#169D8C",
+          "#12DEC5",
+          "#48EAD7",
+          "#86EADE",
+          "#BDEFE9",
+          "#ECF9F7"
+        ]
+      },
+      "atom-shine": {
+        "role": "neutral",
+        "displayName": "Atom crescent",
+        "canonical": "rgba(255, 255, 255, 0.6)"
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Fault red",
+        "canonical": "#B3302A",
+        "tonalRamp": [
+          "#361716",
+          "#5E2421",
+          "#892E29",
+          "#C03630",
+          "#D3645F",
+          "#DB9794",
+          "#E8C6C5",
+          "#F7EEEE"
+        ]
+      },
+      "danger-wash": {
+        "role": "secondary",
+        "displayName": "Fault wash",
+        "canonical": "rgba(179, 48, 42, 0.12)"
+      },
+      "on-danger": {
+        "role": "secondary",
+        "displayName": "On red",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#595959",
+          "#787878",
+          "#999999",
+          "#B8B8B8",
+          "#D6D6D6",
+          "#F2F2F2"
+        ]
+      },
+      "ok": {
+        "role": "tertiary",
+        "displayName": "Done green",
+        "canonical": "#2F7A4C",
+        "tonalRamp": [
+          "#1B3224",
+          "#2A563B",
+          "#377C51",
+          "#44AC6C",
+          "#70C290",
+          "#9ED1B2",
+          "#CAE3D3",
+          "#EFF6F1"
+        ]
+      },
+      "ok-wash": {
+        "role": "tertiary",
+        "displayName": "Added wash",
+        "canonical": "rgba(47, 122, 76, 0.12)"
       },
       "rod": {
         "role": "neutral",
         "displayName": "Rod grey",
-        "canonical": "#9aa8a6",
-        "oklch": "oklch(72.0% 0.016 186.5)",
+        "canonical": "#9AA8A6",
         "tonalRamp": [
-          "#090c0b",
-          "#212626",
-          "#3c4443",
-          "#596462",
-          "#798584",
-          "#9ea7a6",
-          "#c4cbca",
-          "#ecefef"
+          "#242828",
+          "#3C4342",
+          "#545F5D",
+          "#6F817E",
+          "#92A09E",
+          "#B3BCBB",
+          "#D4D8D8",
+          "#F2F3F3"
         ]
       },
       "rod-atom": {
         "role": "neutral",
         "displayName": "Grey atom",
-        "canonical": "#b5c0be",
-        "oklch": "oklch(79.9% 0.012 184.0)",
+        "canonical": "#B5C0BE",
         "tonalRamp": [
-          "#0a0c0b",
-          "#222625",
-          "#3d4342",
-          "#5b6362",
-          "#7b8583",
-          "#a0a7a5",
-          "#c5cac9",
-          "#ecefef"
+          "#242828",
+          "#3C4442",
+          "#535F5D",
+          "#6E817E",
+          "#92A09E",
+          "#B3BCBB",
+          "#D4D8D8",
+          "#F2F3F3"
         ]
       },
       "rod-rim": {
         "role": "neutral",
         "displayName": "Grey atom rim",
-        "canonical": "#7f8e8c",
-        "oklch": "oklch(63.4% 0.018 187.1)",
+        "canonical": "#7F8E8C",
         "tonalRamp": [
-          "#090c0b",
-          "#212626",
-          "#3b4443",
-          "#586463",
-          "#788684",
-          "#9da8a6",
-          "#c4cbca",
-          "#ebefef"
+          "#252827",
+          "#3D4342",
+          "#545E5D",
+          "#717F7D",
+          "#939F9D",
+          "#B4BBBA",
+          "#D4D8D7",
+          "#F2F3F3"
         ]
       },
-      "teal": {
-        "role": "primary",
-        "displayName": "Model-kit teal",
-        "canonical": "#0a8a7c",
-        "oklch": "oklch(56.9% 0.100 182.4)",
-        "tonalRamp": [
-          "#010e0c",
-          "#012c27",
-          "#004d45",
-          "#007165",
-          "#379487",
-          "#74b3a8",
-          "#a9d3cb",
-          "#def4f0"
-        ]
-      },
-      "teal-strong": {
-        "role": "primary",
-        "displayName": "Pressed teal",
-        "canonical": "#087567",
-        "oklch": "oklch(50.5% 0.089 180.5)",
-        "tonalRamp": [
-          "#020e0c",
-          "#082c26",
-          "#124c43",
-          "#1c7063",
-          "#449284",
-          "#7ab2a7",
-          "#add2ca",
-          "#e0f4ef"
-        ]
-      },
-      "teal-text": {
-        "role": "primary",
-        "displayName": "Teal ink",
-        "canonical": "#076b60",
-        "oklch": "oklch(47.5% 0.083 182.5)",
-        "tonalRamp": [
-          "#030e0c",
-          "#0b2b27",
-          "#174c44",
-          "#256f65",
-          "#4a9186",
-          "#7db1a8",
-          "#afd2cb",
-          "#e1f3ef"
-        ]
-      },
-      "teal-soft": {
-        "role": "primary",
-        "displayName": "Teal wash",
-        "canonical": "#dcefeb",
-        "oklch": "oklch(93.7% 0.021 181.9)",
-        "tonalRamp": [
-          "#090c0b",
-          "#202725",
-          "#3a4542",
-          "#566562",
-          "#778683",
-          "#9ca8a5",
-          "#c3cbc9",
-          "#ebf0ef"
-        ]
-      },
-      "teal-rim": {
-        "role": "primary",
-        "displayName": "Teal rim",
-        "canonical": "#06594f",
-        "oklch": "oklch(41.7% 0.073 181.7)",
-        "tonalRamp": [
-          "#040e0c",
-          "#102a26",
-          "#204b44",
-          "#316d64",
-          "#538f85",
-          "#83b0a7",
-          "#b2d1ca",
-          "#e2f3ef"
-        ]
-      },
-      "on-teal": {
-        "role": "primary",
-        "displayName": "On teal",
-        "canonical": "#ffffff",
-        "oklch": "oklch(100.0% 0.000 89.9)",
-        "tonalRamp": [
-          "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
-          "#eeeeee"
-        ]
-      },
-      "danger": {
-        "role": "secondary",
-        "displayName": "Fault red",
-        "canonical": "#b3302a",
-        "oklch": "oklch(51.1% 0.169 27.5)",
-        "tonalRamp": [
-          "#190403",
-          "#43120e",
-          "#73221d",
-          "#a6342d",
-          "#cd584e",
-          "#e4887d",
-          "#f8b6ae",
-          "#ffe5df"
-        ]
-      },
-      "danger-soft": {
-        "role": "secondary",
-        "displayName": "Fault wash",
-        "canonical": "#f7e1de",
-        "oklch": "oklch(92.7% 0.025 26.9)",
-        "tonalRamp": [
-          "#0e0a0a",
-          "#2a2322",
-          "#4b3f3d",
-          "#6d5d5b",
-          "#8f7e7b",
-          "#afa19f",
-          "#d0c6c5",
-          "#f2edec"
-        ]
-      },
-      "danger-rim": {
-        "role": "secondary",
-        "displayName": "Fault rim",
-        "canonical": "#82221e",
-        "oklch": "oklch(40.7% 0.132 27.1)",
-        "tonalRamp": [
-          "#170605",
-          "#3e1814",
-          "#692c27",
-          "#99423b",
-          "#be645b",
-          "#d78f87",
-          "#eebbb4",
-          "#ffe7e3"
-        ]
-      },
-      "ok-soft": {
+      "bubble": {
         "role": "neutral",
-        "displayName": "Added green",
-        "canonical": "#e0f0e6",
-        "oklch": "oklch(94.0% 0.022 158.6)",
+        "displayName": "Bubble grey",
+        "canonical": "#E2E9E7",
         "tonalRamp": [
-          "#090c0a",
-          "#212723",
-          "#3c443f",
-          "#58655d",
-          "#79867e",
-          "#9ea8a2",
-          "#c4cbc7",
-          "#ecf0ed"
+          "#232A28",
+          "#394743",
+          "#4F645E",
+          "#68887F",
+          "#8CA69E",
+          "#B0BFBB",
+          "#D2DAD8",
+          "#F1F3F3"
+        ]
+      },
+      "scrim": {
+        "role": "neutral",
+        "displayName": "Scrim",
+        "canonical": "rgba(19, 24, 25, 0.28)"
+      },
+      "core-back": {
+        "role": "neutral",
+        "displayName": "Mesh back atom",
+        "canonical": "#B9C4C2",
+        "tonalRamp": [
+          "#242828",
+          "#3C4442",
+          "#53605D",
+          "#6E827E",
+          "#91A19E",
+          "#B3BCBB",
+          "#D4D9D8",
+          "#F2F3F3"
+        ]
+      },
+      "core-rod": {
+        "role": "neutral",
+        "displayName": "Mesh rod",
+        "canonical": "#8F9E9C",
+        "tonalRamp": [
+          "#242828",
+          "#3C4342",
+          "#545F5D",
+          "#6F807E",
+          "#92A09E",
+          "#B3BCBB",
+          "#D4D8D8",
+          "#F2F3F3"
         ]
       },
       "rail": {
         "role": "neutral",
         "displayName": "Carbon rail",
-        "canonical": "#151b1c",
-        "oklch": "oklch(21.6% 0.009 208.8)",
+        "canonical": "#151B1C",
         "tonalRamp": [
-          "#0a0b0c",
-          "#232626",
-          "#3e4344",
-          "#5c6364",
-          "#7d8485",
-          "#a1a6a7",
-          "#c6caca",
-          "#edefef"
+          "#23292A",
+          "#394547",
+          "#4E6164",
+          "#678489",
+          "#8CA2A6",
+          "#AFBDC0",
+          "#D2D9DA",
+          "#F1F3F3"
         ]
       },
       "rail-hover": {
         "role": "neutral",
         "displayName": "Rail hover",
         "canonical": "#202829",
-        "oklch": "oklch(27.0% 0.011 205.8)",
         "tonalRamp": [
-          "#0a0b0c",
-          "#222626",
-          "#3d4344",
-          "#5b6364",
-          "#7c8485",
-          "#a0a6a7",
-          "#c5cacb",
-          "#ecefef"
+          "#232929",
+          "#3A4446",
+          "#506163",
+          "#698386",
+          "#8EA2A4",
+          "#B1BDBF",
+          "#D3D9DA",
+          "#F1F3F3"
         ]
       },
       "rail-active": {
         "role": "neutral",
         "displayName": "Rail current",
         "canonical": "#263032",
-        "oklch": "oklch(30.1% 0.014 211.1)",
         "tonalRamp": [
-          "#0a0c0c",
-          "#222627",
-          "#3c4345",
-          "#596365",
-          "#7a8487",
-          "#9fa7a8",
-          "#c5cacb",
-          "#eceff0"
+          "#23292A",
+          "#394446",
+          "#4F6064",
+          "#688288",
+          "#8CA1A6",
+          "#B0BDBF",
+          "#D2D9DA",
+          "#F1F3F3"
         ]
       },
       "rail-line": {
         "role": "neutral",
-        "displayName": "Rail hairline",
-        "canonical": "#2a3436",
-        "oklch": "oklch(31.7% 0.014 211.1)",
+        "displayName": "Rail line",
+        "canonical": "#2A3436",
         "tonalRamp": [
-          "#0a0c0c",
-          "#222627",
-          "#3c4345",
-          "#596365",
-          "#7a8487",
-          "#9fa7a8",
-          "#c5cacb",
-          "#eceff0"
+          "#23282A",
+          "#3A4446",
+          "#506063",
+          "#698286",
+          "#8DA1A5",
+          "#B0BCBF",
+          "#D3D9DA",
+          "#F1F3F3"
         ]
       },
       "rail-ink-1": {
         "role": "neutral",
         "displayName": "Rail ink",
-        "canonical": "#e9efed",
-        "oklch": "oklch(94.7% 0.007 174.4)",
+        "canonical": "#E9EFED",
         "tonalRamp": [
-          "#0a0b0b",
-          "#242625",
-          "#404342",
-          "#5e6261",
-          "#7f8482",
-          "#a2a6a5",
-          "#c7cac9",
-          "#edefee"
+          "#222A28",
+          "#384842",
+          "#4D655D",
+          "#658A7E",
+          "#8AA89E",
+          "#AFC1BB",
+          "#D2DBD8",
+          "#F1F3F3"
         ]
       },
       "rail-ink-2": {
         "role": "neutral",
         "displayName": "Rail ink, secondary",
-        "canonical": "#a9b8b6",
-        "oklch": "oklch(77.0% 0.017 187.2)",
+        "canonical": "#A9B8B6",
         "tonalRamp": [
-          "#090c0b",
-          "#212626",
-          "#3b4443",
-          "#586463",
-          "#798584",
-          "#9ea7a6",
-          "#c4cbca",
-          "#ebefef"
+          "#242928",
+          "#3B4443",
+          "#52615F",
+          "#6D8380",
+          "#90A2A0",
+          "#B2BDBC",
+          "#D3D9D8",
+          "#F2F3F3"
         ]
       },
       "rail-ink-3": {
         "role": "neutral",
         "displayName": "Rail ink, quiet",
-        "canonical": "#8a9a98",
-        "oklch": "oklch(67.3% 0.018 187.7)",
+        "canonical": "#8A9A98",
         "tonalRamp": [
-          "#090c0b",
-          "#212626",
-          "#3b4443",
-          "#576463",
-          "#788684",
-          "#9da8a6",
-          "#c3cbca",
-          "#ebefef"
+          "#242828",
+          "#3C4342",
+          "#545F5D",
+          "#6F807E",
+          "#92A09E",
+          "#B3BCBB",
+          "#D4D8D8",
+          "#F2F3F3"
         ]
       },
       "rail-teal": {
         "role": "primary",
-        "displayName": "Rail teal ink",
-        "canonical": "#5fd6c6",
-        "oklch": "oklch(80.4% 0.110 183.4)",
+        "displayName": "Rail teal",
+        "canonical": "#5FD6C6",
         "tonalRamp": [
-          "#000f0c",
-          "#002d28",
-          "#004e46",
-          "#007367",
-          "#269588",
-          "#6db5aa",
-          "#a5d4cc",
-          "#dcf5f0"
+          "#173632",
+          "#225D55",
+          "#2C877B",
+          "#33BDAA",
+          "#62D0C1",
+          "#96DAD0",
+          "#C5E7E2",
+          "#EEF7F6"
         ]
       },
       "rail-atom": {
         "role": "primary",
-        "displayName": "Rail teal atom",
-        "canonical": "#3fc1b0",
-        "oklch": "oklch(73.7% 0.114 182.7)",
+        "displayName": "Rail atom",
+        "canonical": "#3FC1B0",
         "tonalRamp": [
-          "#000f0c",
-          "#002d27",
-          "#004f46",
-          "#007366",
-          "#1d9688",
-          "#6ab5a9",
-          "#a4d5cc",
-          "#dbf5f0"
+          "#193430",
+          "#265952",
+          "#328176",
+          "#3CB4A4",
+          "#69C9BC",
+          "#9AD5CD",
+          "#C8E5E1",
+          "#EEF6F5"
         ]
       },
       "rail-atom-rim": {
         "role": "primary",
-        "displayName": "Rail teal rim",
-        "canonical": "#1f7d71",
-        "oklch": "oklch(53.4% 0.086 182.4)",
+        "displayName": "Rail atom rim",
+        "canonical": "#1F7D71",
         "tonalRamp": [
-          "#020e0c",
-          "#092b27",
-          "#144c45",
-          "#206f65",
-          "#479286",
-          "#7cb1a8",
-          "#aed2cb",
-          "#e0f3ef"
+          "#163632",
+          "#225E56",
+          "#2B887C",
+          "#32BEAC",
+          "#61D1C3",
+          "#95DAD1",
+          "#C5E7E3",
+          "#EEF7F6"
         ]
       },
       "rail-rod": {
         "role": "neutral",
         "displayName": "Rail rod",
-        "canonical": "#4a5856",
-        "oklch": "oklch(44.8% 0.018 186.1)",
+        "canonical": "#4A5856",
         "tonalRamp": [
-          "#090c0b",
-          "#212626",
-          "#3b4443",
-          "#586462",
-          "#788684",
-          "#9da8a6",
-          "#c4cbca",
-          "#ebefef"
+          "#242928",
+          "#3B4443",
+          "#53605E",
+          "#6E827F",
+          "#91A19F",
+          "#B3BDBB",
+          "#D4D9D8",
+          "#F2F3F3"
         ]
       },
       "rail-danger": {
         "role": "secondary",
-        "displayName": "Rail fault red",
-        "canonical": "#f07a6e",
-        "oklch": "oklch(71.2% 0.147 27.4)",
+        "displayName": "Rail red",
+        "canonical": "#F07A6E",
         "tonalRamp": [
-          "#180504",
-          "#401512",
-          "#6d2823",
-          "#9e3d35",
-          "#c55f55",
-          "#dd8c83",
-          "#f2b9b1",
-          "#ffe6e1"
+          "#3C1511",
+          "#681F18",
+          "#98261B",
+          "#D72B19",
+          "#E45C4E",
+          "#E69289",
+          "#EDC3BF",
+          "#F8EDEC"
         ]
       },
-      "ground-dark": {
+      "rail-danger-rim": {
+        "role": "secondary",
+        "displayName": "Rail red rim",
+        "canonical": "#8E2F27",
+        "tonalRamp": [
+          "#351A17",
+          "#5C2824",
+          "#85342D",
+          "#BA4035",
+          "#CE6C64",
+          "#D89C97",
+          "#E6C9C6",
+          "#F7EFEE"
+        ]
+      },
+      "rail-on-atom": {
+        "role": "primary",
+        "displayName": "Ink on rail atom",
+        "canonical": "#06201C",
+        "tonalRamp": [
+          "#143833",
+          "#1E6257",
+          "#248E7E",
+          "#28C8AF",
+          "#59D9C5",
+          "#90DFD3",
+          "#C3EAE4",
+          "#EDF7F6"
+        ]
+      },
+      "bg-dark": {
         "role": "neutral",
         "displayName": "Lab white (dark)",
         "canonical": "#121718",
-        "oklch": "oklch(20.0% 0.008 211.1)",
         "tonalRamp": [
-          "#0a0b0c",
-          "#232626",
-          "#3f4344",
-          "#5d6263",
-          "#7e8385",
-          "#a1a6a7",
-          "#c6caca",
-          "#edefef"
+          "#23292A",
+          "#394447",
+          "#4E6164",
+          "#678389",
+          "#8CA2A6",
+          "#AFBDC0",
+          "#D2D9DA",
+          "#F1F3F3"
         ]
       },
-      "surface-dark": {
+      "surface-1-dark": {
+        "role": "neutral",
+        "displayName": "Sunk well (dark)",
+        "canonical": "#161C1D",
+        "tonalRamp": [
+          "#23292A",
+          "#394547",
+          "#4F6164",
+          "#688388",
+          "#8CA2A6",
+          "#B0BDBF",
+          "#D2D9DA",
+          "#F1F3F3"
+        ]
+      },
+      "surface-2-dark": {
         "role": "neutral",
         "displayName": "Specimen white (dark)",
-        "canonical": "#1a2122",
-        "oklch": "oklch(24.1% 0.010 207.0)",
+        "canonical": "#1A2122",
         "tonalRamp": [
-          "#0a0b0c",
-          "#222626",
-          "#3e4344",
-          "#5b6364",
-          "#7c8485",
-          "#a0a6a7",
-          "#c6cacb",
-          "#edefef"
+          "#23292A",
+          "#394546",
+          "#4F6164",
+          "#688487",
+          "#8DA2A5",
+          "#B0BDBF",
+          "#D2D9DA",
+          "#F1F3F3"
         ]
       },
-      "sunk-dark": {
+      "surface-3-dark": {
         "role": "neutral",
-        "displayName": "Bench grey (dark)",
-        "canonical": "#222a2c",
-        "oklch": "oklch(27.8% 0.012 214.5)",
+        "displayName": "Bench hover (dark)",
+        "canonical": "#222A2C",
         "tonalRamp": [
-          "#0a0b0c",
-          "#222627",
-          "#3d4345",
-          "#5b6365",
-          "#7c8486",
-          "#a0a6a8",
-          "#c5cacb",
-          "#eceff0"
+          "#23282A",
+          "#394446",
+          "#4F5F63",
+          "#698187",
+          "#8DA0A5",
+          "#B0BCBF",
+          "#D3D8DA",
+          "#F1F3F3"
         ]
       },
-      "sunk-2-dark": {
+      "surface-4-dark": {
         "role": "neutral",
-        "displayName": "Bench grey, selected (dark)",
-        "canonical": "#2a3436",
-        "oklch": "oklch(31.7% 0.014 211.1)",
+        "displayName": "Bench track (dark)",
+        "canonical": "#2A3436",
         "tonalRamp": [
-          "#0a0c0c",
-          "#222627",
-          "#3c4345",
-          "#596365",
-          "#7a8487",
-          "#9fa7a8",
-          "#c5cacb",
-          "#eceff0"
+          "#23282A",
+          "#3A4446",
+          "#506063",
+          "#698286",
+          "#8DA1A5",
+          "#B0BCBF",
+          "#D3D9DA",
+          "#F1F3F3"
         ]
       },
-      "line-dark": {
+      "border-dark": {
         "role": "neutral",
         "displayName": "Hairline (dark)",
         "canonical": "#273133",
-        "oklch": "oklch(30.5% 0.014 211.1)",
         "tonalRamp": [
-          "#0a0c0c",
-          "#222627",
-          "#3c4345",
-          "#596365",
-          "#7a8487",
-          "#9fa7a8",
-          "#c5cacb",
-          "#eceff0"
+          "#23292A",
+          "#394446",
+          "#4F6064",
+          "#688287",
+          "#8DA1A5",
+          "#B0BDBF",
+          "#D2D9DA",
+          "#F1F3F3"
         ]
       },
-      "line-strong-dark": {
+      "border-strong-dark": {
         "role": "neutral",
         "displayName": "Strong hairline (dark)",
         "canonical": "#364244",
-        "oklch": "oklch(36.9% 0.016 208.8)",
         "tonalRamp": [
-          "#090c0c",
-          "#212627",
-          "#3c4445",
-          "#586466",
-          "#798587",
-          "#9ea7a9",
-          "#c4cacc",
-          "#eceff0"
+          "#232829",
+          "#3A4445",
+          "#506062",
+          "#6A8185",
+          "#8EA1A4",
+          "#B1BCBE",
+          "#D3D9D9",
+          "#F1F3F3"
         ]
       },
-      "ink-1-dark": {
+      "text-dark": {
         "role": "neutral",
         "displayName": "Carbon ink (dark)",
-        "canonical": "#e9efed",
-        "oklch": "oklch(94.7% 0.007 174.4)",
+        "canonical": "#E9EFED",
         "tonalRamp": [
-          "#0a0b0b",
-          "#242625",
-          "#404342",
-          "#5e6261",
-          "#7f8482",
-          "#a2a6a5",
-          "#c7cac9",
-          "#edefee"
+          "#222A28",
+          "#384842",
+          "#4D655D",
+          "#658A7E",
+          "#8AA89E",
+          "#AFC1BB",
+          "#D2DBD8",
+          "#F1F3F3"
         ]
       },
-      "ink-2-dark": {
+      "text-2-dark": {
         "role": "neutral",
         "displayName": "Carbon ink, secondary (dark)",
-        "canonical": "#b3c0be",
-        "oklch": "oklch(79.7% 0.015 185.9)",
+        "canonical": "#B3C0BE",
         "tonalRamp": [
-          "#0a0c0b",
-          "#222625",
-          "#3c4443",
-          "#596462",
-          "#7a8583",
-          "#9fa7a6",
-          "#c5cbca",
-          "#ecefef"
+          "#242928",
+          "#3B4443",
+          "#52605E",
+          "#6D837F",
+          "#90A29F",
+          "#B2BDBB",
+          "#D4D9D8",
+          "#F2F3F3"
         ]
       },
-      "ink-3-dark": {
+      "text-3-dark": {
         "role": "neutral",
         "displayName": "Carbon ink, quiet (dark)",
-        "canonical": "#94a3a1",
-        "oklch": "oklch(70.3% 0.017 187.1)",
+        "canonical": "#94A3A1",
         "tonalRamp": [
-          "#090c0b",
-          "#212626",
-          "#3b4443",
-          "#586463",
-          "#798584",
-          "#9da7a6",
-          "#c4cbca",
-          "#ebefef"
+          "#242828",
+          "#3C4342",
+          "#535F5E",
+          "#6F817E",
+          "#92A09E",
+          "#B3BCBB",
+          "#D4D8D8",
+          "#F2F3F3"
         ]
       },
-      "rod-dark": {
-        "role": "neutral",
-        "displayName": "Rod grey (dark)",
-        "canonical": "#4f5e5c",
-        "oklch": "oklch(46.9% 0.019 186.7)",
-        "tonalRamp": [
-          "#090c0b",
-          "#212626",
-          "#3b4443",
-          "#576463",
-          "#788684",
-          "#9da8a6",
-          "#c3cbca",
-          "#ebefef"
-        ]
-      },
-      "teal-dark": {
-        "role": "primary",
-        "displayName": "Model-kit teal (dark)",
-        "canonical": "#3fc1b0",
-        "oklch": "oklch(73.7% 0.114 182.7)",
-        "tonalRamp": [
-          "#000f0c",
-          "#002d27",
-          "#004f46",
-          "#007366",
-          "#1d9688",
-          "#6ab5a9",
-          "#a4d5cc",
-          "#dbf5f0"
-        ]
-      },
-      "teal-text-dark": {
+      "accent-dark": {
         "role": "primary",
         "displayName": "Teal ink (dark)",
-        "canonical": "#5fd6c6",
-        "oklch": "oklch(80.4% 0.110 183.4)",
+        "canonical": "#5FD6C6",
         "tonalRamp": [
-          "#000f0c",
-          "#002d28",
-          "#004e46",
-          "#007367",
-          "#269588",
-          "#6db5aa",
-          "#a5d4cc",
-          "#dcf5f0"
+          "#173632",
+          "#225D55",
+          "#2C877B",
+          "#33BDAA",
+          "#62D0C1",
+          "#96DAD0",
+          "#C5E7E2",
+          "#EEF7F6"
         ]
       },
-      "teal-soft-dark": {
+      "accent-mid-dark": {
+        "role": "primary",
+        "displayName": "Model-kit teal (dark)",
+        "canonical": "#3FC1B0",
+        "tonalRamp": [
+          "#193430",
+          "#265952",
+          "#328176",
+          "#3CB4A4",
+          "#69C9BC",
+          "#9AD5CD",
+          "#C8E5E1",
+          "#EEF6F5"
+        ]
+      },
+      "accent-dim-dark": {
+        "role": "primary",
+        "displayName": "Idle teal (dark)",
+        "canonical": "#2A7F75",
+        "tonalRamp": [
+          "#193330",
+          "#275953",
+          "#328077",
+          "#3DB3A5",
+          "#6AC8BD",
+          "#9BD4CE",
+          "#C8E4E1",
+          "#EEF6F5"
+        ]
+      },
+      "accent-wash-dark": {
         "role": "primary",
         "displayName": "Teal wash (dark)",
-        "canonical": "#173835",
-        "oklch": "oklch(31.5% 0.039 187.5)",
-        "tonalRamp": [
-          "#070c0c",
-          "#1b2827",
-          "#324744",
-          "#4a6865",
-          "#6b8986",
-          "#93aba8",
-          "#bdcdcb",
-          "#e8f1ef"
-        ]
+        "canonical": "rgba(63, 193, 176, 0.14)"
       },
-      "teal-rim-dark": {
-        "role": "primary",
-        "displayName": "Teal rim (dark)",
-        "canonical": "#2a8f82",
-        "oklch": "oklch(59.0% 0.093 182.7)",
-        "tonalRamp": [
-          "#020e0c",
-          "#052c27",
-          "#0c4d45",
-          "#137065",
-          "#409387",
-          "#78b2a8",
-          "#abd3cb",
-          "#dff4f0"
-        ]
-      },
-      "on-teal-dark": {
+      "on-accent-dark": {
         "role": "primary",
         "displayName": "On teal (dark)",
-        "canonical": "#06201c",
-        "oklch": "oklch(22.2% 0.033 181.5)",
+        "canonical": "#06201C",
         "tonalRamp": [
-          "#080c0b",
-          "#1d2825",
-          "#354643",
-          "#4f6762",
-          "#708883",
-          "#97aaa6",
-          "#bfcdca",
-          "#e9f0ef"
+          "#143833",
+          "#1E6257",
+          "#248E7E",
+          "#28C8AF",
+          "#59D9C5",
+          "#90DFD3",
+          "#C3EAE4",
+          "#EDF7F6"
+        ]
+      },
+      "atom-rim-dark": {
+        "role": "primary",
+        "displayName": "Atom rim (dark)",
+        "canonical": "#2A8F82",
+        "tonalRamp": [
+          "#183531",
+          "#255B54",
+          "#2F8379",
+          "#38B8A7",
+          "#66CCBF",
+          "#98D7CF",
+          "#C7E6E2",
+          "#EEF6F5"
         ]
       },
       "danger-dark": {
         "role": "secondary",
         "displayName": "Fault red (dark)",
-        "canonical": "#f07a6e",
-        "oklch": "oklch(71.2% 0.147 27.4)",
+        "canonical": "#F07A6E",
         "tonalRamp": [
-          "#180504",
-          "#401512",
-          "#6d2823",
-          "#9e3d35",
-          "#c55f55",
-          "#dd8c83",
-          "#f2b9b1",
-          "#ffe6e1"
+          "#3C1511",
+          "#681F18",
+          "#98261B",
+          "#D72B19",
+          "#E45C4E",
+          "#E69289",
+          "#EDC3BF",
+          "#F8EDEC"
         ]
       },
-      "danger-soft-dark": {
+      "on-danger-dark": {
         "role": "secondary",
-        "displayName": "Fault wash (dark)",
-        "canonical": "#3a1f1c",
-        "oklch": "oklch(27.5% 0.043 27.0)",
+        "displayName": "On red (dark)",
+        "canonical": "#1A0A08",
         "tonalRamp": [
-          "#0f0a09",
-          "#2e2120",
-          "#503c3a",
-          "#765956",
-          "#987a76",
-          "#b79f9b",
-          "#d6c5c2",
-          "#f5eceb"
+          "#341B18",
+          "#5A2B26",
+          "#823930",
+          "#B6483A",
+          "#CA7368",
+          "#D6A099",
+          "#E5CBC7",
+          "#F6EFEE"
         ]
       },
-      "ok-soft-dark": {
-        "role": "neutral",
-        "displayName": "Added green (dark)",
-        "canonical": "#1b3325",
-        "oklch": "oklch(29.7% 0.040 157.3)",
+      "ok-dark": {
+        "role": "tertiary",
+        "displayName": "Done green (dark)",
+        "canonical": "#7FC596",
         "tonalRamp": [
-          "#080c0a",
-          "#1e2822",
-          "#36463c",
-          "#516859",
-          "#71897a",
-          "#98aa9e",
-          "#c0cdc4",
-          "#e9f0ec"
+          "#1C3023",
+          "#2D5239",
+          "#3C764F",
+          "#4CA469",
+          "#76BC8D",
+          "#A2CDB0",
+          "#CCE1D3",
+          "#EFF5F1"
         ]
       },
-      "rail-dark": {
+      "rod-dark": {
         "role": "neutral",
-        "displayName": "Carbon rail (dark)",
-        "canonical": "#0b0f10",
-        "oklch": "oklch(16.4% 0.007 214.5)",
+        "displayName": "Rod grey (dark)",
+        "canonical": "#4F5E5C",
         "tonalRamp": [
-          "#0a0b0c",
-          "#232526",
-          "#3f4343",
-          "#5e6263",
-          "#7e8384",
-          "#a2a6a7",
-          "#c7caca",
-          "#edefef"
+          "#242928",
+          "#3B4443",
+          "#53605E",
+          "#6E827F",
+          "#91A19F",
+          "#B3BDBB",
+          "#D4D9D8",
+          "#F2F3F3"
         ]
       },
-      "scrim": {
+      "rod-atom-dark": {
         "role": "neutral",
-        "displayName": "Scrim",
-        "canonical": "rgba(19, 24, 25, 0.28)",
+        "displayName": "Grey atom (dark)",
+        "canonical": "#56645F",
         "tonalRamp": [
-          "#0a0b0c",
-          "#232626",
-          "#3f4344",
-          "#5d6263",
-          "#7e8385",
-          "#a1a6a7",
-          "#c7caca",
-          "#edefef"
-        ],
-        "note": "Carbon ink at 28 % alpha; the dimming layer behind the narrow rail sheet only."
+          "#242827",
+          "#3C4341",
+          "#535F5B",
+          "#6F817A",
+          "#92A09B",
+          "#B3BCB9",
+          "#D4D8D7",
+          "#F2F3F2"
+        ]
+      },
+      "rod-rim-dark": {
+        "role": "neutral",
+        "displayName": "Grey atom rim (dark)",
+        "canonical": "#6D7D7A",
+        "tonalRamp": [
+          "#242827",
+          "#3C4342",
+          "#545F5D",
+          "#70807D",
+          "#939F9D",
+          "#B4BCBA",
+          "#D4D8D7",
+          "#F2F3F3"
+        ]
+      },
+      "bubble-dark": {
+        "role": "neutral",
+        "displayName": "Bubble grey (dark)",
+        "canonical": "#222A2C",
+        "tonalRamp": [
+          "#23282A",
+          "#394446",
+          "#4F5F63",
+          "#698187",
+          "#8DA0A5",
+          "#B0BCBF",
+          "#D3D8DA",
+          "#F1F3F3"
+        ]
+      },
+      "core-back-dark": {
+        "role": "neutral",
+        "displayName": "Mesh back atom (dark)",
+        "canonical": "#33403F",
+        "tonalRamp": [
+          "#232929",
+          "#3A4544",
+          "#516261",
+          "#6B8583",
+          "#8FA3A2",
+          "#B1BEBD",
+          "#D3D9D9",
+          "#F1F3F3"
+        ]
       },
       "scrim-dark": {
         "role": "neutral",
         "displayName": "Scrim (dark)",
-        "canonical": "rgba(0, 0, 0, 0.5)",
+        "canonical": "rgba(0, 0, 0, 0.5)"
+      },
+      "rail-dark": {
+        "role": "neutral",
+        "displayName": "Carbon rail (dark)",
+        "canonical": "#0B0F10",
         "tonalRamp": [
-          "#0a0b0c",
-          "#232526",
-          "#3f4343",
-          "#5e6263",
-          "#7e8384",
-          "#a2a6a7",
-          "#c7caca",
-          "#edefef"
-        ],
-        "note": "Black at 50 % alpha; the dimming layer behind the narrow rail sheet only."
+          "#21292B",
+          "#374549",
+          "#4B6268",
+          "#62858D",
+          "#88A3AA",
+          "#ADBEC2",
+          "#D1D9DB",
+          "#F1F3F4"
+        ]
+      },
+      "rail-hover-dark": {
+        "role": "neutral",
+        "displayName": "Rail hover (dark)",
+        "canonical": "#161C1D",
+        "tonalRamp": [
+          "#23292A",
+          "#394547",
+          "#4F6164",
+          "#688388",
+          "#8CA2A6",
+          "#B0BDBF",
+          "#D2D9DA",
+          "#F1F3F3"
+        ]
+      },
+      "rail-active-dark": {
+        "role": "neutral",
+        "displayName": "Rail current (dark)",
+        "canonical": "#1D2526",
+        "tonalRamp": [
+          "#23292A",
+          "#394546",
+          "#4F6164",
+          "#688488",
+          "#8DA3A5",
+          "#B0BEBF",
+          "#D2D9DA",
+          "#F1F3F3"
+        ]
+      },
+      "rail-line-dark": {
+        "role": "neutral",
+        "displayName": "Rail line (dark)",
+        "canonical": "#1F2729",
+        "tonalRamp": [
+          "#23282A",
+          "#394447",
+          "#4F6064",
+          "#688288",
+          "#8CA1A6",
+          "#B0BCC0",
+          "#D2D9DA",
+          "#F1F3F3"
+        ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "The greeting under the core and page titles; 24px when the window is 700px tall or less."
+        "purpose": "The greeting under the hero mesh and page titles."
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Second-level headings in replies (first-level is 22px)."
+        "purpose": "First- and second-level headings inside replies."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Section heads, artifact titles; 14px/600 for the column title and System heads, 13px/600 for code page panel heads."
+        "purpose": "Settings card heads, third-level reply headings, the phone bar title."
       },
       "body-reply": {
-        "displayName": "Reply body",
-        "purpose": "Assistant replies and documents; transcript at most 760px wide, documents 72ch."
+        "displayName": "Reply",
+        "purpose": "Assistant replies and the owner's messages, 760 px measure."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Interface default."
+        "purpose": "The interface default: nav items, settings rows, menus."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Buttons, chips, tabs, tool card heads."
+        "purpose": "Starters, tabs, tool cards, step lines, settings explanations."
       },
       "caption": {
         "displayName": "Caption",
-        "purpose": "Meta, snippets, tile subtitles, the Recents heading at 600."
+        "purpose": "Meta, card buttons, rail list heads, service names, readout labels."
       },
       "mono-data": {
         "displayName": "Mono data",
-        "purpose": "Numbers, paths, model ids, file types, diffs, readouts; 12 to 13px, tabular."
+        "purpose": "Timestamps, token meters, diffs, output, readouts."
       },
       "mono-figure": {
         "displayName": "Mono figure",
-        "purpose": "The three headline system readings; never wraps."
+        "purpose": "System readings and usage figures; never wraps."
+      },
+      "mono-symbol": {
+        "displayName": "Element symbol",
+        "purpose": "The two-letter symbol on an element tile."
       },
       "brand": {
         "displayName": "Wordmark",
-        "purpose": "JARVIS in the rail, beside the atom mark."
-      },
-      "mono-symbol": {
-        "displayName": "Mono symbol",
-        "purpose": "The two-letter symbol on an element tile (artifact type)."
+        "purpose": "JARVIS beside the mesh logo in the rail; the one name in capitals."
       }
     },
     "shadows": [
       {
         "name": "rest",
-        "value": "0 1px 2px rgba(19,24,25,0.06)",
-        "dark": "0 1px 2px rgba(0,0,0,0.4)",
-        "purpose": "Composer at rest, selected segment."
+        "value": "0 1px 2px rgba(19, 24, 25, 0.05)",
+        "purpose": "The composer, at rest and while focused."
+      },
+      {
+        "name": "segment",
+        "value": "0 1px 2px rgba(0, 0, 0, 0.15)",
+        "purpose": "The chosen segment of a segmented control."
       },
       {
         "name": "float",
-        "value": "0 2px 6px rgba(19,24,25,0.06), 0 12px 32px rgba(19,24,25,0.1)",
-        "dark": "0 2px 8px rgba(0,0,0,0.4), 0 16px 40px rgba(0,0,0,0.45)",
-        "purpose": "Menus, palette, floating panels, rail sheet, focused composer."
+        "value": "0 2px 6px rgba(19, 24, 25, 0.06), 0 12px 32px rgba(19, 24, 25, 0.10)",
+        "purpose": "Menus, command palette, context menu, floating panels, toast, approval dialog."
       },
       {
-        "name": "atom-teal",
-        "value": "inset 1.5px 1.5px 0 var(--shine), inset 0 0 0 1.5px var(--teal-rim)",
-        "purpose": "Not a shadow: the flat atom recipe (crescent and rim) on a teal disc; 1px / 1.25px on atoms of 10px or less."
+        "name": "float-dark",
+        "value": "0 2px 8px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.45)",
+        "purpose": "Float in dark mode."
       },
       {
-        "name": "atom-grey",
-        "value": "inset 1px 1px 0 var(--shine), inset 0 0 0 1.25px var(--rod-rim)",
-        "purpose": "Tool-step atom."
-      },
-      {
-        "name": "atom-hollow",
-        "value": "inset 0 0 0 2px var(--teal)",
-        "purpose": "Pending reply or approval awaiting an answer (fill: ground); rod ring for system notes and unknown services."
-      },
-      {
-        "name": "focus-ring",
-        "value": "outline: 2px solid var(--teal); outline-offset: 2px",
-        "purpose": "Keyboard focus everywhere; rail search uses a rail-teal border instead."
-      },
-      {
-        "name": "scrim",
-        "value": "background: var(--scrim)",
-        "purpose": "Not a shadow: the dimming layer behind the rail sheet under 1024px; a click on it closes the sheet."
+        "name": "atom",
+        "value": "inset 1.5px 1.5px 0 var(--atom-shine), inset 0 0 0 1.5px var(--atom-rim)",
+        "purpose": "Not a shadow: the flat atom recipe (crescent and rim) as inset box-shadows."
       }
     ],
     "motion": [
       {
         "name": "ease-out",
         "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Default for every transition and entrance."
+        "purpose": "Every state change and arrival."
       },
       {
-        "name": "ease-in-out",
-        "value": "cubic-bezier(0.65, 0, 0.35, 1)",
-        "purpose": "Rail sheet closing."
+        "name": "ease-drawer",
+        "value": "cubic-bezier(0.32, 0.72, 0, 1)",
+        "purpose": "Sheets and drawers."
       },
       {
-        "name": "fast",
-        "value": "120ms",
-        "purpose": "Hover and press colour, opacity and scale."
+        "name": "dur-fast",
+        "value": "150ms",
+        "purpose": "Hover, press, colour changes."
       },
       {
-        "name": "mid",
+        "name": "dur",
         "value": "200ms",
-        "purpose": "Border/shadow changes, chevrons, atom tone changes."
+        "purpose": "Larger state changes."
       },
       {
         "name": "atom-in",
@@ -1015,83 +1132,75 @@
       {
         "name": "bond-in",
         "value": "320ms ease-out, 60ms delay, scaleY 0 to 1 from the top",
-        "purpose": "The bond drawing in after its atom."
+        "purpose": "Its bond drawing in after it."
       },
       {
-        "name": "pop-in",
-        "value": "140 to 200ms ease-out, scale 0.96 with fade",
-        "purpose": "Menus, palette, chips, tabs, floating panels."
+        "name": "readout",
+        "value": "600ms",
+        "purpose": "Rail readout bar fills."
       },
       {
-        "name": "rise-in",
-        "value": "240 to 260ms ease-out, translateY 8px with fade",
-        "purpose": "User messages and tool cards. Not used on the empty page: there only the core moves."
+        "name": "chat-running",
+        "value": "800ms steps(8) infinite",
+        "purpose": "The running chat ring in the rail; still under reduced motion."
       },
       {
-        "name": "page-in",
-        "value": "240ms ease-out fade",
-        "purpose": "Artifacts and Settings pages."
+        "name": "press",
+        "value": "scale(0.94) send/stop/tool, 0.97 starters and phone, 0.985 nav",
+        "purpose": "One press-in per control kind."
       },
       {
-        "name": "meter",
-        "value": "600ms ease-out scaleX",
-        "purpose": "Load and temperature bar fills."
-      },
-      {
-        "name": "first-message",
-        "value": "core snapshot flies into the first reply's atom over 560ms (moves by 60%, then fades) while the live core fades in over the same span; composer slides to the foot over 420ms",
-        "purpose": "The moment the core becomes the first atom of a conversation: one object handed over (src/nodes/ui.js)."
-      },
-      {
-        "name": "core",
-        "value": "idle yaw 0.14 rad/s; swell (up to 16%), wobble and breath come only from the shared speech/thinking level (mesh-state.js), so an idle core holds its size; drag momentum decays at e^-2.2t; click knocks the 4 nearest atoms on a spring k=60 c=8",
-        "purpose": "The 48-atom core (src/nodes/core.js)."
-      },
-      {
-        "name": "reduced-motion",
-        "value": "all animation and transition durations 0.01ms; core: no spin, swell or breathe, drag still turns it; no first-message flight",
-        "purpose": "prefers-reduced-motion: reduce."
-      },
-      {
-        "name": "scrim",
-        "value": "200ms ease-out fade in (@starting-style)",
-        "purpose": "The scrim behind the narrow rail sheet."
+        "name": "mesh",
+        "value": "0.4 rad/s about a 34 degree tilted axis (hero); rests to a picture 900 ms after work ends (small meshes)",
+        "purpose": "The node mesh in kit mode; a still picture under reduced motion."
       }
     ],
     "breakpoints": [
       {
-        "name": "rail-sheet",
-        "value": "max-width: 1023px",
-        "purpose": "Rail hidden by default, opens as a sheet over a scrim; scrim click or Escape closes it."
+        "name": "workspace-covers",
+        "value": "max-width: 1100px"
       },
       {
-        "name": "code-right",
-        "value": "max-width: 1280px",
-        "purpose": "Code page hides the tasks and changes column."
+        "name": "rail-readout-off",
+        "value": "max-height: 780px"
       },
       {
-        "name": "short",
-        "value": "max-height: 700px",
-        "purpose": "Core 120px, greeting 24px."
+        "name": "services-atoms-only",
+        "value": "max-height: 660px"
+      },
+      {
+        "name": "nav-compact",
+        "value": "max-height: 640px"
       },
       {
         "name": "composer-narrow",
-        "value": "container composer max-width: 520px / 420px",
-        "purpose": "Drop the token meter, then shorten the model name."
+        "value": "@container max-width: 560px"
+      },
+      {
+        "name": "composer-narrowest",
+        "value": "@container max-width: 420px"
+      },
+      {
+        "name": "window-min",
+        "value": "960x600"
       }
     ],
     "layout": {
-      "railWidth": "256px",
-      "titlebar": "48px",
-      "workspaceWidth": "46%",
-      "splitHandle": "9px",
-      "transcriptMax": "760px",
-      "composerMax": "720px",
-      "codeLeft": "248px",
-      "codeRight": "304px",
-      "pageMax": "880px",
-      "core": "168px (120px short), 48 atoms, 3 neighbours; live core 26px, the same 48-atom cage with atoms drawn 1.8x",
-      "elementTile": "40px square, 8px corners"
+      "rail": "272px",
+      "strip": "40px",
+      "measure": "760px",
+      "chatGutter": "32px",
+      "paneGutter": "24px",
+      "workspace": "44% (400px minimum each side)",
+      "controlHeights": [
+        "28px",
+        "32px",
+        "40px",
+        "44px tap"
+      ],
+      "heroMesh": "clamp(48px, 24vh, 192px)",
+      "replyMesh": "24px",
+      "stepIndent": "36px"
     }
   },
   "components": [
@@ -1099,100 +1208,98 @@
       "name": "Send button",
       "kind": "button",
       "refersTo": "button-send",
-      "description": "The composer's primary action: a pressed-teal circle.",
-      "html": "<button class=\"ds-send\" aria-label=\"Send\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 19V5M5 12l7-7 7 7\"/></svg></button>",
-      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-send{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:50%;background:var(--teal-strong);color:var(--on-teal);cursor:pointer;transition:background-color var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}.ds-send:hover{background:var(--teal-rim)}.ds-send:active{transform:scale(.92)}.ds-send:focus-visible{outline:2px solid var(--teal);outline-offset:2px}"
-    },
-    {
-      "name": "Approval actions",
-      "kind": "button",
-      "refersTo": "button-approve",
-      "description": "Allow once (primary), a secondary, and Deny in fault red, as on an approval card.",
-      "html": "<div class=\"ds-bar\"><button class=\"ds-btn ds-primary\">Allow once</button><button class=\"ds-btn\">Always allow</button><button class=\"ds-btn ds-deny\">Deny</button></div>",
-      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-bar{display:flex;gap:8px;font:14px/1.5 var(--sans)}.ds-btn{height:30px;padding:0 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink-1);font:500 13px var(--sans);cursor:pointer;transition:background-color var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}.ds-btn:hover{background:var(--sunk)}.ds-btn:active{transform:scale(.97)}.ds-btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px}.ds-primary{background:var(--teal-strong);border-color:transparent;color:var(--on-teal)}.ds-primary:hover{background:var(--teal-rim)}.ds-deny{color:var(--danger)}"
-    },
-    {
-      "name": "Starter chips",
-      "kind": "chip",
-      "refersTo": "starter",
-      "description": "Pill outlines under the composer on an empty chat.",
-      "html": "<div class=\"ds-starters\"><button class=\"ds-starter\">Make a chart</button><button class=\"ds-starter\">Work in a folder</button><button class=\"ds-starter\">Explain something</button></div>",
-      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-starters{display:flex;flex-wrap:wrap;gap:8px;padding:12px;background:var(--ground)}.ds-starter{height:32px;padding:0 14px;border:1px solid var(--line-strong);border-radius:999px;background:transparent;color:var(--ink-2);font:13px var(--sans);cursor:pointer;transition:background-color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out),color var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}.ds-starter:hover{background:var(--surface);border-color:var(--rod);color:var(--ink-1)}.ds-starter:active{transform:scale(.97)}.ds-starter:focus-visible{outline:2px solid var(--teal);outline-offset:2px}"
+      "description": "The composer's primary action: a model-kit teal circle.",
+      "html": "<button class=\"ds-send\" aria-label=\"Send\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg></button>",
+      "css": ":host{--bg:#F2F5F4;--surface-1:#E9EEEC;--surface-2:#FFFFFF;--surface-3:#E3E9E7;--surface-4:#D6DFDC;--border:#DBE2E0;--border-strong:#BFCAC8;--text:#131819;--text-2:#3B4648;--text-3:#566365;--accent:#087567;--accent-mid:#0A8A7C;--accent-wash:rgba(10,138,124,.12);--on-accent:#fff;--warm:#076B60;--atom-rim:#06594F;--atom-shine:rgba(255,255,255,.6);--danger:#B3302A;--rod:#9AA8A6;--rod-atom:#B5C0BE;--rod-rim:#7F8E8C;--bubble:#E2E9E7;--rail:#151B1C;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2A3436;--rail-ink-1:#E9EFED;--rail-ink-2:#A9B8B6;--rail-ink-3:#8A9A98;--rail-teal:#5FD6C6;--rail-atom:#3FC1B0;--rail-atom-rim:#1F7D71;--rail-rod:#4A5856;--rail-danger:#F07A6E;--rail-danger-rim:#8E2F27;--rail-shine:rgba(255,255,255,.45);--sans:'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif;--display:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease:cubic-bezier(.16,1,.3,1)}:host{font:400 14px/20px var(--sans);color:var(--text)}.ds-send{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:50%;background:var(--accent-mid);color:var(--on-accent);cursor:pointer;transition:background-color 150ms var(--ease),transform 150ms var(--ease)}.ds-send:hover{background:var(--accent)}.ds-send:active{transform:scale(.94)}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
     },
     {
       "name": "Composer",
       "kind": "input",
       "refersTo": "composer",
-      "description": "The message card: 22 px corners, rest shadow, rod border and float shadow on focus.",
-      "html": "<div class=\"ds-composer\"><textarea class=\"ds-input\" rows=\"1\" placeholder=\"Ask JARVIS anything\" aria-label=\"Message\"></textarea><div class=\"ds-cbar\"><span class=\"ds-model\">General</span><button class=\"ds-send\" aria-label=\"Send\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 19V5M5 12l7-7 7 7\"/></svg></button></div></div>",
-      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-composer{width:min(520px,100%);padding:12px 10px 8px 16px;border:1px solid var(--line-strong);border-radius:22px;background:var(--surface);box-shadow:var(--shadow-1);transition:border-color var(--mid) var(--ease-out),box-shadow var(--mid) var(--ease-out)}.ds-composer:focus-within{border-color:var(--rod);box-shadow:var(--shadow-2)}.ds-input{display:block;width:100%;min-height:28px;border:0;outline:none;resize:none;background:transparent;color:var(--ink-1);font:15px/1.6 var(--sans)}.ds-input::placeholder{color:var(--ink-3)}.ds-cbar{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:6px}.ds-model{font:13px var(--sans);color:var(--ink-2);padding:0 8px}.ds-send{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:50%;background:var(--teal-strong);color:var(--on-teal);cursor:pointer}.ds-send:hover{background:var(--teal-rim)}"
+      "description": "A 20 px specimen-white card; focus turns its border teal, nothing glows.",
+      "html": "<div class=\"ds-composer\"><textarea rows=\"1\" placeholder=\"Message JARVIS\" aria-label=\"Message\"></textarea><div class=\"ds-row\"><button class=\"ds-tool\" aria-pressed=\"true\" aria-label=\"Think\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6\"/></svg></button><span class=\"ds-sp\"></span><button class=\"ds-send\" aria-label=\"Send\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg></button></div></div>",
+      "css": ":host{--bg:#F2F5F4;--surface-1:#E9EEEC;--surface-2:#FFFFFF;--surface-3:#E3E9E7;--surface-4:#D6DFDC;--border:#DBE2E0;--border-strong:#BFCAC8;--text:#131819;--text-2:#3B4648;--text-3:#566365;--accent:#087567;--accent-mid:#0A8A7C;--accent-wash:rgba(10,138,124,.12);--on-accent:#fff;--warm:#076B60;--atom-rim:#06594F;--atom-shine:rgba(255,255,255,.6);--danger:#B3302A;--rod:#9AA8A6;--rod-atom:#B5C0BE;--rod-rim:#7F8E8C;--bubble:#E2E9E7;--rail:#151B1C;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2A3436;--rail-ink-1:#E9EFED;--rail-ink-2:#A9B8B6;--rail-ink-3:#8A9A98;--rail-teal:#5FD6C6;--rail-atom:#3FC1B0;--rail-atom-rim:#1F7D71;--rail-rod:#4A5856;--rail-danger:#F07A6E;--rail-danger-rim:#8E2F27;--rail-shine:rgba(255,255,255,.45);--sans:'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif;--display:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease:cubic-bezier(.16,1,.3,1)}:host{font:400 14px/20px var(--sans);color:var(--text)}.ds-composer{display:flex;flex-direction:column;gap:8px;width:min(560px,100%);padding:12px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:20px;box-shadow:0 1px 2px rgba(19,24,25,.05);transition:border-color 150ms var(--ease)}.ds-composer:focus-within{border-color:var(--accent-mid)}.ds-composer textarea{border:0;outline:0;resize:none;background:transparent;color:var(--text);font:400 16px/24px var(--sans)}.ds-composer textarea::placeholder{color:var(--text-3)}.ds-row{display:flex;align-items:center;gap:4px}.ds-sp{flex:1}.ds-tool{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:var(--text-3);cursor:pointer}.ds-tool:hover{background:var(--surface-3);color:var(--text-2)}.ds-tool[aria-pressed=\"true\"]{background:var(--accent-wash);color:var(--accent)}.ds-send{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:50%;background:var(--accent-mid);color:#fff;cursor:pointer}.ds-send:hover{background:var(--accent)}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    },
+    {
+      "name": "Starter chips",
+      "kind": "chip",
+      "refersTo": "starter",
+      "description": "Pill outlines under the composer on a new chat.",
+      "html": "<div class=\"ds-starters\"><button class=\"ds-starter\">Make a chart</button><button class=\"ds-starter\">Work in a folder</button><button class=\"ds-starter\">Search the web</button></div>",
+      "css": ":host{--bg:#F2F5F4;--surface-1:#E9EEEC;--surface-2:#FFFFFF;--surface-3:#E3E9E7;--surface-4:#D6DFDC;--border:#DBE2E0;--border-strong:#BFCAC8;--text:#131819;--text-2:#3B4648;--text-3:#566365;--accent:#087567;--accent-mid:#0A8A7C;--accent-wash:rgba(10,138,124,.12);--on-accent:#fff;--warm:#076B60;--atom-rim:#06594F;--atom-shine:rgba(255,255,255,.6);--danger:#B3302A;--rod:#9AA8A6;--rod-atom:#B5C0BE;--rod-rim:#7F8E8C;--bubble:#E2E9E7;--rail:#151B1C;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2A3436;--rail-ink-1:#E9EFED;--rail-ink-2:#A9B8B6;--rail-ink-3:#8A9A98;--rail-teal:#5FD6C6;--rail-atom:#3FC1B0;--rail-atom-rim:#1F7D71;--rail-rod:#4A5856;--rail-danger:#F07A6E;--rail-danger-rim:#8E2F27;--rail-shine:rgba(255,255,255,.45);--sans:'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif;--display:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease:cubic-bezier(.16,1,.3,1)}:host{font:400 14px/20px var(--sans);color:var(--text)}.ds-starters{display:flex;flex-wrap:wrap;gap:8px}.ds-starter{height:32px;padding:0 14px;border:1px solid var(--border-strong);border-radius:999px;background:transparent;color:var(--text-2);font:400 13px/20px var(--sans);cursor:pointer;transition:background-color 150ms var(--ease),border-color 150ms var(--ease),color 150ms var(--ease),transform 150ms var(--ease)}.ds-starter:hover{background:var(--surface-2);border-color:var(--rod);color:var(--text)}.ds-starter:active{transform:scale(.97)}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
     },
     {
       "name": "Rail navigation",
       "kind": "nav",
       "refersTo": "nav-item",
-      "description": "The carbon rail: new chat in an atom, nav rows, the current chat's atom.",
-      "html": "<nav class=\"ds-rail\"><button class=\"ds-nav ds-new\"><span class=\"ds-plus\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg></span>New chat</button><button class=\"ds-nav\" aria-pressed=\"true\">Chat</button><button class=\"ds-nav\">Code</button><button class=\"ds-nav\">Artifacts</button><div class=\"ds-label\">Recents</div><div class=\"ds-row ds-current\">Rugby conditioning plan</div><div class=\"ds-row\">Rekordbox library tool</div></nav>",
-      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-rail{width:256px;padding:12px;background:var(--rail);color:var(--rail-ink-1);font:14px/1.5 var(--sans);display:flex;flex-direction:column;gap:2px}.ds-nav{display:flex;align-items:center;gap:10px;height:36px;padding:0 8px;border:0;border-radius:10px;background:transparent;color:var(--rail-ink-1);font:14px var(--sans);text-align:left;cursor:pointer;transition:background-color var(--fast) var(--ease-out)}.ds-nav:hover{background:var(--rail-hover)}.ds-nav[aria-pressed=true]{background:var(--rail-active)}.ds-nav:focus-visible{outline:2px solid var(--rail-teal);outline-offset:2px}.ds-new{font-weight:600}.ds-plus{width:24px;height:24px;display:grid;place-items:center;border-radius:50%;background:var(--rail-atom);color:#fff;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45),inset 0 0 0 1.5px var(--rail-atom-rim)}.ds-label{padding:20px 8px 6px;font-size:12px;font-weight:600;color:var(--rail-ink-3)}.ds-row{position:relative;padding:6px 8px 6px 20px;border-radius:8px;font-size:13px;color:var(--rail-ink-2)}.ds-row:hover{background:var(--rail-hover);color:var(--rail-ink-1)}.ds-row::before{content:'';position:absolute;left:8px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:var(--rail-line)}.ds-current{background:var(--rail-active);color:var(--rail-ink-1)}.ds-current::before{background:var(--rail-atom);transform:scale(1.35)}"
+      "description": "The carbon rail: new chat in an atom, 32 px rows, the current item lit rail teal.",
+      "html": "<nav class=\"ds-rail\"><button class=\"ds-nav ds-new\"><span class=\"ds-plus\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg></span>New chat</button><button class=\"ds-nav\">Projects</button><button class=\"ds-nav\" aria-pressed=\"true\">Artifacts</button><button class=\"ds-nav\">Scheduled</button><div class=\"ds-chat ds-current\">Make a demo page</div></nav>",
+      "css": ":host{--bg:#F2F5F4;--surface-1:#E9EEEC;--surface-2:#FFFFFF;--surface-3:#E3E9E7;--surface-4:#D6DFDC;--border:#DBE2E0;--border-strong:#BFCAC8;--text:#131819;--text-2:#3B4648;--text-3:#566365;--accent:#087567;--accent-mid:#0A8A7C;--accent-wash:rgba(10,138,124,.12);--on-accent:#fff;--warm:#076B60;--atom-rim:#06594F;--atom-shine:rgba(255,255,255,.6);--danger:#B3302A;--rod:#9AA8A6;--rod-atom:#B5C0BE;--rod-rim:#7F8E8C;--bubble:#E2E9E7;--rail:#151B1C;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2A3436;--rail-ink-1:#E9EFED;--rail-ink-2:#A9B8B6;--rail-ink-3:#8A9A98;--rail-teal:#5FD6C6;--rail-atom:#3FC1B0;--rail-atom-rim:#1F7D71;--rail-rod:#4A5856;--rail-danger:#F07A6E;--rail-danger-rim:#8E2F27;--rail-shine:rgba(255,255,255,.45);--sans:'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif;--display:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease:cubic-bezier(.16,1,.3,1)}:host{font:400 14px/20px var(--sans);color:var(--text)}.ds-rail{display:flex;flex-direction:column;gap:2px;width:248px;padding:12px;background:var(--rail);border-radius:12px}.ds-nav{display:flex;align-items:center;gap:12px;height:32px;padding:0 8px;border:0;border-radius:8px;background:transparent;color:var(--rail-ink-2);font:400 14px/20px var(--sans);text-align:left;cursor:pointer;transition:background-color 150ms var(--ease)}.ds-nav:hover{background:var(--rail-hover);color:var(--rail-ink-1)}.ds-nav:active{transform:scale(.985)}.ds-nav[aria-pressed=\"true\"]{background:var(--rail-active);color:var(--rail-ink-1)}.ds-new{color:var(--rail-ink-1);font-weight:600}.ds-plus{display:grid;place-items:center;width:24px;height:24px;margin-left:-3px;border-radius:50%;background:var(--rail-atom);color:#06201C;box-shadow:inset 1.5px 1.5px 0 var(--rail-shine),inset 0 0 0 1.5px var(--rail-atom-rim)}.ds-chat{display:flex;align-items:center;gap:8px;height:32px;margin-top:8px;padding:0 8px;border-radius:8px;color:var(--rail-ink-2);font:400 14px/20px var(--sans)}.ds-current{background:var(--rail-active);color:var(--rail-ink-1)}.ds-current::before{content:\"\";width:8px;height:8px;margin-left:-2px;border-radius:50%;background:var(--rail-atom);box-shadow:inset 0 0 0 1px var(--rail-atom-rim)}:focus-visible{outline:2px solid var(--rail-teal);outline-offset:2px}"
+    },
+    {
+      "name": "Services molecule",
+      "kind": "custom",
+      "description": "One atom per service on a horizontal rod at the rail's foot: teal up, ring unknown, red diamond down.",
+      "html": "<div class=\"ds-svcs\"><span class=\"ds-svc\" data-state=\"ok\">LM Studio</span><span class=\"ds-svc\" data-state=\"error\">Sensors</span><span class=\"ds-svc\">Voice</span><span class=\"ds-svc\" data-state=\"ok\">Server</span></div>",
+      "css": ":host{--bg:#F2F5F4;--surface-1:#E9EEEC;--surface-2:#FFFFFF;--surface-3:#E3E9E7;--surface-4:#D6DFDC;--border:#DBE2E0;--border-strong:#BFCAC8;--text:#131819;--text-2:#3B4648;--text-3:#566365;--accent:#087567;--accent-mid:#0A8A7C;--accent-wash:rgba(10,138,124,.12);--on-accent:#fff;--warm:#076B60;--atom-rim:#06594F;--atom-shine:rgba(255,255,255,.6);--danger:#B3302A;--rod:#9AA8A6;--rod-atom:#B5C0BE;--rod-rim:#7F8E8C;--bubble:#E2E9E7;--rail:#151B1C;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2A3436;--rail-ink-1:#E9EFED;--rail-ink-2:#A9B8B6;--rail-ink-3:#8A9A98;--rail-teal:#5FD6C6;--rail-atom:#3FC1B0;--rail-atom-rim:#1F7D71;--rail-rod:#4A5856;--rail-danger:#F07A6E;--rail-danger-rim:#8E2F27;--rail-shine:rgba(255,255,255,.45);--sans:'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif;--display:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease:cubic-bezier(.16,1,.3,1)}:host{font:400 14px/20px var(--sans);color:var(--text)}.ds-svcs{position:relative;display:flex;width:248px;padding:8px 0 4px;background:var(--rail);border-radius:12px}.ds-svcs::before{content:\"\";position:absolute;top:14px;left:12.5%;right:12.5%;height:2px;border-radius:1px;background:var(--rail-rod)}.ds-svc{position:relative;flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:6px;font:400 12px/16px var(--sans);color:var(--rail-ink-3)}.ds-svc::before{content:\"\";width:12px;height:12px;border-radius:50%;background:var(--rail);box-shadow:inset 0 0 0 2px var(--rail-ink-3)}.ds-svc[data-state=\"ok\"]{color:var(--rail-ink-2)}.ds-svc[data-state=\"ok\"]::before{background:var(--rail-atom);box-shadow:inset 1.5px 1.5px 0 var(--rail-shine),inset 0 0 0 1.5px var(--rail-atom-rim)}.ds-svc[data-state=\"error\"]{color:var(--rail-danger)}.ds-svc[data-state=\"error\"]::before{border-radius:2px;transform:rotate(45deg) scale(.85);background:var(--rail-danger);box-shadow:inset 0 0 0 1.5px var(--rail-danger-rim)}"
     },
     {
       "name": "Step chain",
       "kind": "custom",
-      "refersTo": "card-tool",
-      "description": "Signature: a reply atom bonded to tool-step atoms, ending in an approval awaiting an answer (hollow atom).",
-      "html": "<div class=\"ds-chain\"><div class=\"ds-line ds-reply\"><p>I will run the tests and read the result.</p></div><div class=\"ds-line ds-tool\"><div class=\"ds-card\"><b>Read</b> <code>src/main.js</code><span>lines 1-3</span></div></div><div class=\"ds-line ds-tool ds-wait\"><div class=\"ds-card ds-appr\"><b>Run</b> <code>npm test</code><span class=\"ds-need\">Needs approval</span></div></div></div>",
-      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-chain{display:flex;flex-direction:column;gap:20px;padding:16px;background:var(--ground);font:14px/1.5 var(--sans);color:var(--ink-1)}.ds-line{position:relative;padding-left:36px}.ds-line::before{content:'';position:absolute;z-index:1;left:4px;top:4px;width:16px;height:16px;border-radius:50%;background:var(--teal);box-shadow:inset 1.5px 1.5px 0 var(--shine),inset 0 0 0 1.5px var(--teal-rim);animation:ds-atom 280ms var(--ease-out) both}.ds-line:not(:last-child)::after{content:'';position:absolute;left:11px;width:2px;top:12px;bottom:-32px;border-radius:1px;background:var(--rod);transform-origin:top;animation:ds-bond 320ms 60ms var(--ease-out) both}.ds-reply p{font-size:15px;line-height:1.7}.ds-tool::before{left:7px;top:11px;width:10px;height:10px;background:var(--rod-atom);box-shadow:inset 1px 1px 0 var(--shine),inset 0 0 0 1.25px var(--rod-rim)}.ds-wait::before{left:5px;top:9px;width:14px;height:14px;background:var(--ground);box-shadow:inset 0 0 0 2px var(--teal)}.ds-card{display:flex;align-items:center;gap:10px;min-height:34px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:13px}.ds-card b{font-weight:600;color:var(--ink-2)}.ds-card code{flex:1;font:13px var(--mono)}.ds-card span{font:12px var(--mono);color:var(--ink-3)}.ds-appr{border:1.5px solid var(--teal);background:var(--teal-soft);min-height:40px}.ds-appr .ds-need{font:600 12px var(--sans);color:var(--teal-text)}@keyframes ds-atom{from{opacity:0;transform:scale(.4)}}@keyframes ds-bond{from{transform:scaleY(0)}}@media (prefers-reduced-motion:reduce){.ds-line::before,.ds-line::after{animation:none}}"
-    },
-    {
-      "name": "Workspace tabs",
-      "kind": "nav",
-      "refersTo": "tab",
-      "description": "Tabs beside the chat, each with an atom that turns teal when selected and a close button with the icon set's close mark at 14 px.",
-      "html": "<div class=\"ds-tabs\" role=\"tablist\"><div class=\"ds-tab\"><button class=\"ds-tl\">Speed by model</button><button class=\"ds-x\" aria-label=\"Close Speed by model\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6.75827 17.2426L12.0009 12M17.2435 6.75736L12.0009 12M12.0009 12L6.75827 6.75736M12.0009 12L17.2435 17.2426\"/></svg></button></div><div class=\"ds-tab\" aria-selected=\"true\"><button class=\"ds-tl\">System</button><button class=\"ds-x\" aria-label=\"Close System\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6.75827 17.2426L12.0009 12M17.2435 6.75736L12.0009 12M12.0009 12L6.75827 6.75736M12.0009 12L17.2435 17.2426\"/></svg></button></div></div>",
-      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-tabs{display:flex;align-items:center;gap:4px;height:44px;padding:0 8px;border-bottom:1px solid var(--line);background:var(--surface);font:13px var(--sans)}.ds-tab{display:flex;align-items:center;height:30px;border-radius:8px;color:var(--ink-2);transition:background-color var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}.ds-tab:hover{background:var(--sunk);color:var(--ink-1)}.ds-tab[aria-selected=true]{background:var(--sunk-2);color:var(--ink-1)}.ds-tl{display:flex;align-items:center;gap:8px;height:100%;padding:0 4px 0 10px;border:0;background:none;color:inherit;font:inherit;cursor:pointer}.ds-tl::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--rod-atom);box-shadow:inset 0 0 0 1px var(--rod-rim)}.ds-tab[aria-selected=true] .ds-tl::before{background:var(--teal);box-shadow:inset 0 0 0 1px var(--teal-rim)}.ds-x{width:24px;height:24px;margin-right:3px;display:grid;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--ink-3);cursor:pointer}.ds-x:hover{background:var(--line);color:var(--ink-1)}.ds-tl:focus-visible,.ds-x:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:6px}"
-    },
-    {
-      "name": "System readings",
-      "kind": "custom",
-      "refersTo": "readout",
-      "description": "One unboxed row of three readings divided by hairlines: Cascadia figure that never wraps, a 24 px trace drawn as a line only, grey until the middle level.",
-      "html": "<div class=\"ds-hero\"><div class=\"ds-tile\"><span class=\"ds-n\">Processor</span><span class=\"ds-v\">41.9%</span><span class=\"ds-s\">8 cores, 52 °C</span><svg class=\"ds-spark\" viewBox=\"0 0 100 24\" preserveAspectRatio=\"none\"><path d=\"M0 16 L12 14 L25 17 L37 12 L50 13 L62 9 L75 11 L87 8 L100 10\"/></svg></div><div class=\"ds-tile\" data-level=\"mid\"><span class=\"ds-n\">Graphics</span><span class=\"ds-v\">81.0%</span><span class=\"ds-s\">9.6 of 12.0 GB</span><svg class=\"ds-spark\" viewBox=\"0 0 100 24\" preserveAspectRatio=\"none\"><path d=\"M0 16 L12 14 L25 17 L37 12 L50 13 L62 9 L75 11 L87 8 L100 10\"/></svg></div><div class=\"ds-tile\"><span class=\"ds-n\">Memory</span><span class=\"ds-v\">22.4 GB</span><span class=\"ds-s\">of 64 GB</span><svg class=\"ds-spark\" viewBox=\"0 0 100 24\" preserveAspectRatio=\"none\"><path d=\"M0 16 L12 14 L25 17 L37 12 L50 13 L62 9 L75 11 L87 8 L100 10\"/></svg></div></div>",
-      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:480px;padding:20px 20px 20px;border-bottom:1px solid var(--line);background:var(--surface);font:14px/1.5 var(--sans)}.ds-tile{display:flex;flex-direction:column;gap:2px;min-width:0;padding:0 16px}.ds-tile:first-child{padding-left:0}.ds-tile+.ds-tile{border-left:1px solid var(--line)}.ds-n{font-size:13px;font-weight:600;color:var(--ink-2)}.ds-v{font:400 24px/1.2 var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-1);white-space:nowrap}.ds-s{font-size:12px;color:var(--ink-3)}.ds-spark{display:block;width:100%;height:24px;margin-top:8px}.ds-spark path{fill:none;stroke:var(--ink-3);stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}.ds-tile[data-level=mid] .ds-spark path{stroke:var(--teal)}"
+      "description": "Each reply, step row and error of a turn is an atom bonded to the next by a grey rod.",
+      "html": "<div class=\"ds-chain\"><div class=\"ds-line ds-reply\">I will look at the folder first.</div><div class=\"ds-line ds-step\">Read 3 files</div><div class=\"ds-line ds-wait\">Write report.md: needs approval</div><div class=\"ds-line ds-err\">The command failed.</div></div>",
+      "css": ":host{--bg:#F2F5F4;--surface-1:#E9EEEC;--surface-2:#FFFFFF;--surface-3:#E3E9E7;--surface-4:#D6DFDC;--border:#DBE2E0;--border-strong:#BFCAC8;--text:#131819;--text-2:#3B4648;--text-3:#566365;--accent:#087567;--accent-mid:#0A8A7C;--accent-wash:rgba(10,138,124,.12);--on-accent:#fff;--warm:#076B60;--atom-rim:#06594F;--atom-shine:rgba(255,255,255,.6);--danger:#B3302A;--rod:#9AA8A6;--rod-atom:#B5C0BE;--rod-rim:#7F8E8C;--bubble:#E2E9E7;--rail:#151B1C;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2A3436;--rail-ink-1:#E9EFED;--rail-ink-2:#A9B8B6;--rail-ink-3:#8A9A98;--rail-teal:#5FD6C6;--rail-atom:#3FC1B0;--rail-atom-rim:#1F7D71;--rail-rod:#4A5856;--rail-danger:#F07A6E;--rail-danger-rim:#8E2F27;--rail-shine:rgba(255,255,255,.45);--sans:'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif;--display:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease:cubic-bezier(.16,1,.3,1)}:host{font:400 14px/20px var(--sans);color:var(--text)}.ds-chain{display:flex;flex-direction:column;gap:24px;max-width:520px}.ds-line{position:relative;padding-left:36px;font:400 16px/27px var(--sans)}.ds-line::before{content:\"\";position:absolute;z-index:1;left:4px;top:6px;width:16px;height:16px;border-radius:50%;background:var(--accent-mid);box-shadow:inset 1.5px 1.5px 0 var(--atom-shine),inset 0 0 0 1.5px var(--atom-rim);animation:ds-atom 280ms var(--ease) both}.ds-line:not(:last-child)::after{content:\"\";position:absolute;z-index:0;left:11px;width:2px;top:14px;bottom:-38px;border-radius:1px;background:var(--rod);transform-origin:top;animation:ds-bond 320ms 60ms var(--ease) both}.ds-step,.ds-wait,.ds-err{font-size:13px;line-height:20px;color:var(--text-2)}.ds-step::before{left:7px;top:5px;width:10px;height:10px;background:var(--rod-atom);box-shadow:inset 1px 1px 0 var(--atom-shine),inset 0 0 0 1.25px var(--rod-rim)}.ds-wait::before{left:5px;top:3px;width:14px;height:14px;background:var(--bg);box-shadow:inset 0 0 0 2px var(--accent-mid)}.ds-err{color:var(--danger);font-size:14px}.ds-err::before{background:var(--danger);box-shadow:inset 1px 1px 0 var(--atom-shine),inset 0 0 0 1.25px var(--danger)}@keyframes ds-atom{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}@keyframes ds-bond{from{transform:scaleY(0)}to{transform:none}}@media (prefers-reduced-motion:reduce){.ds-line::before,.ds-line::after{animation:none}}"
     },
     {
       "name": "Artifact card",
       "kind": "card",
       "refersTo": "card-artifact",
-      "description": "Signature: an artifact in a reply. The type is an element tile (two-letter symbol, the word visually hidden for screen readers); the type word leads the state line.",
-      "html": "<div class=\"ds-wrap\"><button class=\"ds-card\"><span class=\"ds-tile\">Ch<span class=\"ds-sr\">Chart</span></span><span class=\"ds-title\">Speed by model</span><span class=\"ds-state\"><b>Chart</b>Opened beside the chat</span></button><button class=\"ds-card\"><span class=\"ds-tile\">Pg<span class=\"ds-sr\">Page</span></span><span class=\"ds-title\">Release notes draft</span><span class=\"ds-state\"><b>Page</b>v2</span></button></div>",
-      "css": ":host{--ground:#f2f5f4;--surface:#fff;--sunk:#e6ecea;--sunk-2:#dbe3e1;--bubble:#e2e9e7;--line:#dbe2e0;--line-strong:#bfcac8;--ink-1:#131819;--ink-2:#3b4648;--ink-3:#566365;--rod:#9aa8a6;--rod-atom:#b5c0be;--rod-rim:#7f8e8c;--teal:#0a8a7c;--teal-strong:#087567;--teal-text:#076b60;--teal-soft:#dcefeb;--teal-rim:#06594f;--on-teal:#fff;--danger:#b3302a;--danger-soft:#f7e1de;--danger-rim:#82221e;--shine:rgba(255,255,255,.6);--rail:#151b1c;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2a3436;--rail-ink-1:#e9efed;--rail-ink-2:#a9b8b6;--rail-ink-3:#8a9a98;--rail-teal:#5fd6c6;--rail-atom:#3fc1b0;--rail-atom-rim:#1f7d71;--rail-rod:#4a5856;--sans:'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease-out:cubic-bezier(.16,1,.3,1);--fast:120ms;--mid:200ms;--shadow-1:0 1px 2px rgba(19,24,25,.06);--shadow-2:0 2px 6px rgba(19,24,25,.06),0 12px 32px rgba(19,24,25,.1)} .ds-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--ground);font:14px/1.5 var(--sans)}.ds-card{display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:12px;align-items:center;width:min(100%,440px);padding:10px 14px 10px 10px;border:1px solid var(--line-strong);border-radius:14px;background:var(--surface);text-align:left;font:inherit;color:var(--ink-1);cursor:pointer;transition:border-color var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}.ds-card:hover{border-color:var(--teal)}.ds-card:active{transform:scale(.99)}.ds-card:focus-visible{outline:2px solid var(--teal);outline-offset:2px}.ds-tile{grid-row:span 2;position:relative;display:grid;place-items:center;width:40px;height:40px;border-radius:8px;background:var(--teal-soft);box-shadow:inset 0 0 0 1px var(--teal);font:600 15px/1 var(--mono);color:var(--teal-text)}.ds-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.ds-title{min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-state{font-size:12px;color:var(--ink-3)}.ds-state b{margin-right:8px;font-weight:400;color:var(--ink-2)}"
+      "description": "An artifact in the conversation: element tile, title, type word and state.",
+      "html": "<button class=\"ds-art\"><span class=\"ds-tile\" data-sym=\"Ch\"><span class=\"ds-sr\">chart</span></span><span class=\"ds-t\">CPU load this week</span><span class=\"ds-s\"><b>Chart</b>Ready</span></button>",
+      "css": ":host{--bg:#F2F5F4;--surface-1:#E9EEEC;--surface-2:#FFFFFF;--surface-3:#E3E9E7;--surface-4:#D6DFDC;--border:#DBE2E0;--border-strong:#BFCAC8;--text:#131819;--text-2:#3B4648;--text-3:#566365;--accent:#087567;--accent-mid:#0A8A7C;--accent-wash:rgba(10,138,124,.12);--on-accent:#fff;--warm:#076B60;--atom-rim:#06594F;--atom-shine:rgba(255,255,255,.6);--danger:#B3302A;--rod:#9AA8A6;--rod-atom:#B5C0BE;--rod-rim:#7F8E8C;--bubble:#E2E9E7;--rail:#151B1C;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2A3436;--rail-ink-1:#E9EFED;--rail-ink-2:#A9B8B6;--rail-ink-3:#8A9A98;--rail-teal:#5FD6C6;--rail-atom:#3FC1B0;--rail-atom-rim:#1F7D71;--rail-rod:#4A5856;--rail-danger:#F07A6E;--rail-danger-rim:#8E2F27;--rail-shine:rgba(255,255,255,.45);--sans:'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif;--display:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease:cubic-bezier(.16,1,.3,1)}:host{font:400 14px/20px var(--sans);color:var(--text)}.ds-art{display:grid;grid-template-columns:40px minmax(0,1fr);align-items:center;column-gap:12px;width:360px;padding:8px 16px 8px 8px;border:1px solid var(--border-strong);border-radius:12px;background:var(--surface-2);text-align:left;cursor:pointer;transition:border-color 150ms var(--ease)}.ds-art:hover{border-color:var(--accent-mid)}.ds-tile{grid-row:1/span 2;display:grid;place-items:center;width:40px;height:40px;border-radius:8px;background:var(--accent-wash);box-shadow:inset 0 0 0 1px var(--accent-mid);position:relative;overflow:hidden}.ds-tile::before{content:attr(data-sym);font:600 15px/1 var(--mono);color:var(--accent)}.ds-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.ds-t{font:600 14px/20px var(--sans);color:var(--text)}.ds-s{font:400 12px/16px var(--sans);color:var(--text-3)}.ds-s b{font-weight:400;color:var(--text-2);margin-right:8px}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    },
+    {
+      "name": "Approval card",
+      "kind": "card",
+      "refersTo": "card-approval",
+      "description": "A tool card that waits for an answer: busy-teal border, teal wash, equal outline buttons.",
+      "html": "<div class=\"ds-appr\"><div class=\"ds-ah\"><span class=\"ds-type\">Write</span><span class=\"ds-path\">notes/report.md</span><span class=\"ds-st\">Needs approval</span></div><div class=\"ds-acts\"><button class=\"ds-btn\">Allow once</button><button class=\"ds-btn\">Always allow</button><button class=\"ds-btn ds-deny\">Deny</button></div></div>",
+      "css": ":host{--bg:#F2F5F4;--surface-1:#E9EEEC;--surface-2:#FFFFFF;--surface-3:#E3E9E7;--surface-4:#D6DFDC;--border:#DBE2E0;--border-strong:#BFCAC8;--text:#131819;--text-2:#3B4648;--text-3:#566365;--accent:#087567;--accent-mid:#0A8A7C;--accent-wash:rgba(10,138,124,.12);--on-accent:#fff;--warm:#076B60;--atom-rim:#06594F;--atom-shine:rgba(255,255,255,.6);--danger:#B3302A;--rod:#9AA8A6;--rod-atom:#B5C0BE;--rod-rim:#7F8E8C;--bubble:#E2E9E7;--rail:#151B1C;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2A3436;--rail-ink-1:#E9EFED;--rail-ink-2:#A9B8B6;--rail-ink-3:#8A9A98;--rail-teal:#5FD6C6;--rail-atom:#3FC1B0;--rail-atom-rim:#1F7D71;--rail-rod:#4A5856;--rail-danger:#F07A6E;--rail-danger-rim:#8E2F27;--rail-shine:rgba(255,255,255,.45);--sans:'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif;--display:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease:cubic-bezier(.16,1,.3,1)}:host{font:400 14px/20px var(--sans);color:var(--text)}.ds-appr{width:440px;border:1px solid var(--warm);border-radius:12px;background:var(--accent-wash);font:400 13px/20px var(--sans);color:var(--text-2);overflow:hidden}.ds-ah{display:flex;align-items:center;gap:8px;min-height:32px;padding:0 12px}.ds-type{height:24px;padding:0 8px;border-radius:8px;background:var(--surface-4);font:600 12px/24px var(--sans)}.ds-path{font:400 12px/16px var(--mono);flex:1}.ds-st{color:var(--warm);font:600 12px/16px var(--mono)}.ds-acts{display:flex;gap:8px;padding:8px 12px 12px}.ds-btn{height:28px;padding:0 12px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface-2);color:var(--text);font:600 12px/16px var(--sans);cursor:pointer}.ds-btn:hover{background:var(--surface-3)}.ds-deny:hover{border-color:var(--danger);color:var(--danger)}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    },
+    {
+      "name": "Workspace tabs",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Panel tabs with an atom each: grey at rest, teal when selected.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\">Demo page</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">CPU chart</button></div>",
+      "css": ":host{--bg:#F2F5F4;--surface-1:#E9EEEC;--surface-2:#FFFFFF;--surface-3:#E3E9E7;--surface-4:#D6DFDC;--border:#DBE2E0;--border-strong:#BFCAC8;--text:#131819;--text-2:#3B4648;--text-3:#566365;--accent:#087567;--accent-mid:#0A8A7C;--accent-wash:rgba(10,138,124,.12);--on-accent:#fff;--warm:#076B60;--atom-rim:#06594F;--atom-shine:rgba(255,255,255,.6);--danger:#B3302A;--rod:#9AA8A6;--rod-atom:#B5C0BE;--rod-rim:#7F8E8C;--bubble:#E2E9E7;--rail:#151B1C;--rail-hover:#202829;--rail-active:#263032;--rail-line:#2A3436;--rail-ink-1:#E9EFED;--rail-ink-2:#A9B8B6;--rail-ink-3:#8A9A98;--rail-teal:#5FD6C6;--rail-atom:#3FC1B0;--rail-atom-rim:#1F7D71;--rail-rod:#4A5856;--rail-danger:#F07A6E;--rail-danger-rim:#8E2F27;--rail-shine:rgba(255,255,255,.45);--sans:'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif;--display:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;--mono:'Cascadia Code','Cascadia Mono',Consolas,ui-monospace,monospace;--ease:cubic-bezier(.16,1,.3,1)}:host{font:400 14px/20px var(--sans);color:var(--text)}.ds-tabs{display:flex;gap:4px}.ds-tab{display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;border:0;border-radius:8px;background:transparent;color:var(--text-2);font:400 13px/20px var(--sans);cursor:pointer}.ds-tab::before{content:\"\";width:8px;height:8px;border-radius:50%;background:var(--rod-atom);box-shadow:inset 0 0 0 1px var(--rod-rim)}.ds-tab:hover{background:var(--surface-3)}.ds-tab[aria-selected=\"true\"]{background:var(--surface-3);color:var(--text)}.ds-tab[aria-selected=\"true\"]::before{background:var(--accent-mid);box-shadow:inset 0 0 0 1px var(--atom-rim)}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
     }
   ],
   "narrative": {
     "northStar": "The Molecular Model Kit",
-    "overview": "JARVIS's work is a structure being assembled in front of its owner. The ground is lab-white with a cool teal cast, the sidebar rail is carbon in both themes, JARVIS itself is teal plastic, and everything that connects one thing to another is a pale grey rod. The signature object is the core: a 48-atom ball-and-stick cage on a Fibonacci sphere that turns slowly, swells with streamed speech, breathes while thinking and spins when dragged. The kit also has a periodic table: each artifact type is an element tile with a two-letter symbol. The same vocabulary carries into the conversation: every reply, action and system note of a turn is an atom, and consecutive ones are bonded by a vertical rod into a step chain. Services at the foot of the rail are atoms on one horizontal bond.\n\nThe system is calm and dense in the way a desktop tool is dense: 14 px interface text, 15 px reading text, quiet 1 px lines, flat surfaces, one colour that means \"JARVIS\" and one that means \"wrong\". Depth comes from tone (ground, surface, sunk) rather than from shadows; only things that float over content cast one. Atoms are flat discs, never shaded spheres: a fill, a darker rim and a small white crescent on the upper left.\n\nIt rejects the grey chat column with a logo on top, and the cyan hologram on black that the old HUD used.",
+    "overview": "JARVIS's work is a structure being assembled in front of its owner. The ground is lab-white with a cool teal cast, the sidebar rail is carbon in both themes, JARVIS itself is teal plastic, and everything that connects one thing to another is a pale grey rod. The signature object is the node mesh in kit mode: 48 atoms on a Fibonacci sphere, each bonded to its three nearest neighbours, drawn as flat discs and round-capped rods. It is the hero on the empty chat, the brand mark in the rail, and the small atom that sits on the newest reply and spins while a reply or a step runs. The kit also has a periodic table: each artifact type is an element tile with a two-letter symbol. The same vocabulary carries into the conversation: every reply, step row, action and error of a turn is an atom, and consecutive ones are bonded by a vertical rod into a step chain. Services at the foot of the rail are atoms on one horizontal bond.\n\nThe system is calm and dense the way a desktop tool is dense: 14 px interface text, 16 px reading text, quiet 1 px lines, flat surfaces, one colour that means \"JARVIS\" and one that means \"wrong\". Depth comes from tone (ground, the four surface steps) rather than from shadows; only things that float over content cast one. Atoms are flat discs, never shaded spheres: a fill, a darker rim and a small white crescent on the upper left.\n\nThe nodes design is a skin over a shared component layer: its own token values (`src/nodes/tokens.css`) under the same names the shared styles read (`src/ui/*.css`), then one layer (`src/nodes/nodes.css`) that adds the kit's parts and removes what the kit refuses. The phone app (`mobile.html`) uses the same tokens. It rejects the grey chat column with a logo on top, and the cyan hologram on black that the old HUD used.",
     "keyCharacteristics": [
       "Lab-white ground (light) or deep carbon-teal ground (dark); the rail is carbon in both.",
-      "One voice colour, teal, for JARVIS's atoms, the primary action, focus, the current item and the middle load level.",
-      "Red only for errors, denials and the high load level.",
+      "One voice colour, teal, in three steps, for JARVIS's atoms, the primary action, focus, the current item and the busy level.",
+      "Red only for errors, denials, a service that is down and the high load level.",
       "Flat atoms (fill, rim, crescent) and round-capped grey rods as the recurring motif.",
       "Segoe UI Variable for text, Cascadia Code for every number, path, model id and element symbol.",
-      "Motion is \"arrive and bond\": a scale-in for the atom, a draw-in for its rod. On the empty page only the core moves by itself; greeting, starters and machine line are still."
+      "Motion is \"arrive and bond\": a scale-in for the atom, a draw-in for its rod. On the empty page only the mesh moves."
     ],
     "rules": [
       {
         "name": "The One Plastic Rule",
-        "body": "Teal means JARVIS, the action you are about to take, or where you are. It never decorates a section, a heading or a chart series that carries no state.",
+        "body": "Teal means JARVIS, the action you are about to take, where you are, or that something is busy. It never decorates a section, a heading or a title (page titles carry no accent bar).",
         "section": "colors"
       },
       {
         "name": "The Red Atom Rule",
-        "body": "Red is for something that went wrong or was refused, and for the high load level. A warning that is only \"busy\" is teal, not red.",
+        "body": "Red is for something that went wrong or was refused, and for the high load level. A state that is only \"busy\" or \"waiting\" is teal, not red, and never amber.",
         "section": "colors"
       },
       {
         "name": "The Grey Rod Rule",
-        "body": "Bonds, idle bars and sparklines are grey. A bar or sparkline turns teal at the middle level and red at the high level; below that it stays grey.",
+        "body": "Bonds are grey. The rail's live readout bars are grey until 70 %, teal past it and red past 90 %.",
         "section": "colors"
       },
       {
@@ -1207,46 +1314,46 @@
       },
       {
         "name": "The Sentence Case Rule",
-        "body": "All labels, headings and buttons are sentence case. No uppercase labels, no letter-spaced small caps. The JARVIS wordmark is the one name set in capitals.",
+        "body": "All labels, headings and buttons are sentence case. No uppercase labels, no letter-spaced small caps; the nodes layer resets the shared styles that had them (dialog field names, usage labels, phone list heads). The JARVIS wordmark is the one name set in capitals.",
         "section": "typography"
       },
       {
         "name": "The Float Only Rule",
-        "body": "A shadow means \"this is above the page\": a menu, a sheet, a floating panel, the focused composer. Resting cards, tiles and tool steps have a border and no shadow.",
+        "body": "A large shadow means \"this is above the page\": a menu, a dialog, a floating panel, a toast. Resting cards, tiles, tool steps and the rail's controls have a border or a tone and no shadow.",
         "section": "elevation"
       },
       {
         "name": "The Flat Atom Rule",
-        "body": "Atoms are fill, rim and crescent; never a radial gradient, a drop shadow or a glow.",
+        "body": "Atoms are fill, rim and crescent; never a radial gradient, a drop shadow or a glow. The mesh shows depth in four flat tone steps.",
         "section": "shapes"
       },
       {
         "name": "The Straight Bond Rule",
-        "body": "Outside the core, a bond is straight and axis-aligned: vertical between steps, horizontal between services.",
+        "body": "Outside the mesh, a bond is straight and axis-aligned: vertical between steps, horizontal between services.",
         "section": "shapes"
       }
     ],
     "dos": [
-      "**Do** draw every atom with the flat recipe: fill, a 1.25 to 1.5 px inset rim in the darker shade, and a 1 to 1.5 px white crescent on the upper left (45 to 60 % white).",
-      "**Do** use teal-text, never teal, for teal text smaller than 18 px; keep teal for fills, rings, atoms and icons.",
-      "**Do** make every text colour reach 4.5:1 on ground, surface, sunk, sunk-2, bubble and teal-soft (and on rail, rail-hover and rail-active for rail text).",
-      "**Do** set numbers, paths, model ids and file types in Cascadia Code with tabular figures.",
+      "**Do** draw every atom with the flat recipe: fill, a 1 to 1.5 px inset rim in the darker shade, and a 1 to 1.5 px white crescent on the upper left.",
+      "**Do** use accent (teal ink), never accent-mid, for teal text; keep accent-mid for atoms, fills, borders and icons.",
+      "**Do** make every text colour reach 4.5:1 on bg, surface-1, surface-2 and surface-3 (and on rail, rail-hover and rail-active for rail text).",
+      "**Do** set numbers, paths, model ids and element symbols in Cascadia Code with tabular figures.",
       "**Do** animate an arriving atom with a 280 ms ease-out scale from 0.4, and draw its bond in after it (320 ms, 60 ms later).",
-      "**Do** keep motion within 120 to 320 ms for state changes on the ease-out curve (cubic-bezier(0.16, 1, 0.3, 1)), and remove it entirely under reduced motion; the core then stops spinning and swelling but still turns when dragged.",
-      "**Do** hand the core over in one piece on the first message: its snapshot flies into the first reply's atom (560 ms) while the live core fades in over the same span.",
-      "**Do** use inline SVG line icons from the shared icon set, including the close mark at 14 px; never a text glyph.",
-      "**Do** draw an artifact's type as an element tile with its symbol from the shared helper, and keep the type word readable to screen readers."
+      "**Do** keep state changes at 150 to 200 ms on the ease-out curve (cubic-bezier(0.16, 1, 0.3, 1)) and readout bars at 600 ms; under reduced motion remove the atom and bond animations and show the mesh as a still picture.",
+      "**Do** use inline SVG line icons from the shared icon set, including the close mark; never a text glyph.",
+      "**Do** draw an artifact's type as an element tile with its symbol from the shared helper, and keep the type word readable to screen readers.",
+      "**Do** keep the shared DOM ids and class names when styling the nodes design; change it through `src/nodes/tokens.css` and `src/nodes/nodes.css`, not the shared styles."
     ],
     "donts": [
-      "**Don't** use gradients anywhere, including radial shading on atoms or a ramp across the core; depth is stepped flat tones.",
-      "**Don't** add glow, coloured shadows or blur halos; the only shadows are the neutral rest and float shadows.",
-      "**Don't** colour a section, a heading or an idle chart: no per-section hues, no teal bars below the middle level.",
-      "**Don't** use green anywhere except the background of added diff lines.",
+      "**Don't** use gradients anywhere, including conic fills, radial shading on atoms or a ramp across the mesh; depth is stepped flat tones.",
+      "**Don't** add glow, focus halos, coloured shadows, blur or looping rings; focus is a teal line.",
+      "**Don't** colour a section, a heading or a page title: no per-section hues, no accent bar under a title.",
+      "**Don't** use amber; the busy and warning role is teal in this kit.",
+      "**Don't** use green except for finished and added things.",
       "**Don't** use uppercase labels or letter-spaced small caps; everything is sentence case.",
       "**Don't** load web fonts; Segoe UI Variable and Cascadia Code are system faces.",
       "**Don't** give resting cards, tiles or tool steps a shadow.",
-      "**Don't** box the System readings in tiles or fill a trace with an area; one hairline-divided row and a line are enough.",
-      "**Don't** describe the classic warm-grey interface (classic.html) as this system; it is a separate, frozen layout."
+      "**Don't** describe the classic interface (classic.html, mobile-classic.html, src/styles/tokens.css) as this system; it is a separate layout."
     ]
   }
 }
