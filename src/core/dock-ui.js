@@ -2,6 +2,7 @@
 import { getSwitches, onSwitchChange, setMic, setInternet, setLink } from './switches.js';
 import { addFile, removeAttachment, onAttachmentsChange } from './attachments.js';
 import { icon } from './icons.js';
+import { getThink, setThink, onEvent } from './llm-client.js';
 
 const $ = (id) => document.getElementById(id);
 const micBtn = $('dock-mic');
@@ -36,6 +37,16 @@ micBtn.addEventListener('click', async () => {
 });
 webBtn.addEventListener('click', () => setInternet(!getSwitches().internet));
 linkBtn.addEventListener('click', () => setLink(!getSwitches().link));
+
+// Think: off by default (Qwen overthinks); on, the reasoning is capped (models.json think_budget).
+const thinkBtn = $('think-btn');
+const paintThink = () => {
+  thinkBtn.setAttribute('aria-pressed', String(getThink()));
+  thinkBtn.title = getThink() ? 'Thinking on: JARVIS reasons first, up to a budget (click to turn off)' : 'Thinking off: fast answers (click to let JARVIS think first)';
+};
+thinkBtn.addEventListener('click', () => setThink(!getThink()));
+onEvent((e) => { if (e.type === 'think') paintThink(); });
+paintThink();
 
 // --- attachments ---------------------------------------------------------
 // Files that could not be read are shown in the attach row (in red) until clicked or until

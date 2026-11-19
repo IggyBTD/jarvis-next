@@ -426,7 +426,7 @@ async function compactNow(focus) {
   if (cut < 2) { addLine('system', 'Nothing to compact yet: the conversation is still short.', { meta: '' }); return ''; }
   const note = addLine('system', 'Compacting the conversation...', { meta: '' });
   try {
-    const { reply } = await chat(summaryRequest(history.slice(0, cut), focus), { tools: null });
+    const { reply } = await chat(summaryRequest(history.slice(0, cut), focus), { tools: null, think: false });
     if (!reply.trim()) throw new Error('the model wrote no summary');
     const removed = applySummary(history, cut, reply);
     for (const m of removed) {
@@ -612,7 +612,7 @@ function btw(question) {
   // Only the spoken text of the conversation: no tool traffic, so a turn in progress cannot leave a dangling call.
   const talk = history.filter((m) => (m.role === 'user' || m.role === 'assistant') && !m.tool_calls && messageText(m.content)).slice(-24);
   const messages = [...talk, { role: 'user', content: `(A side question. Answer briefly from the conversation so far. Do not use tools. It is not part of the conversation.)\n${question}` }];
-  chat(messages, { tools: null, onDelta: ({ content }) => { if (content) body.textContent = content; } })
+  chat(messages, { tools: null, think: false, onDelta: ({ content }) => { if (content) body.textContent = content; } })
     .then(({ reply }) => { body.textContent = reply || '(no answer)'; })
     .catch((e) => { body.textContent = `Could not answer: ${e.message ?? e}`; });
 }

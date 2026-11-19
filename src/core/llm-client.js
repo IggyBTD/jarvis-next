@@ -37,6 +37,19 @@ export function getPreset() {
   return { name: mode, ...config.models[mode] };
 }
 
+// --- thinking ------------------------------------------------------------
+// Off by default: Qwen overthinks. On, the reasoning is capped at config.think_budget tokens; past
+// that the reply is restarted with thinking off and the notes so far (see chat()).
+const THINK_KEY = 'jarvis.think';
+let think = false;
+try { think = localStorage.getItem(THINK_KEY) === '1'; } catch { /* storage blocked */ }
+export const getThink = () => think;
+export function setThink(on) {
+  think = !!on;
+  try { localStorage.setItem(THINK_KEY, think ? '1' : '0'); } catch { /* storage blocked */ }
+  emit({ type: 'think', on: think });
+}
+
 // --- native API ----------------------------------------------------------
 async function native(path, body) {
   const res = await fetch(`${NATIVE}${path}`, body
@@ -98,7 +111,7 @@ async function swapTo(key) {
 
   if (!keep) {
     emit({ type: 'phase', phase: 'loading', model: key });
-    await native('/models/load', { model: key });
+    await native('/models/load', { model: key, ...Object.values(config.models).find((m) => m.model === key)?.load }); // context_length etc. from models.json
   }
   const models = await waitFor((ms) => loadedInstances(ms).some((i) => i.key === key), 'load to finish');
   emit({ type: 'phase', phase: 'idle', model: key });
@@ -123,18 +136,27 @@ const visibleText = (text) => text.replace(/<think>[\s\S]*?(<\/think>|$)/g, '').
 // content is the visible reply so far, reasoning the model's thinking so far.
 // Resolves { reply, toolCalls, preset, stats }. With `tools` (OpenAI function definitions) the model
 // may answer with tool calls instead of, or after, text: toolCalls is [{ id, name, arguments }].
-export async function chat(messages, { signal, onDelta, context = '', reminder = '', tools = null } = {}) {
+// think: let the model reason first (default: the composer toggle). Internal calls pass false.
+export async function chat(messages, { signal, onDelta, context = '', reminder = '', tools = null, think: thinkOn = think, priorReasoning = '' } = {}) {
   const preset = getPreset();
+  // Qwen's soft switch rides on the newest user message; chat_template_kwargs is for servers that read it.
+  const turnReminder = [reminder, thinkOn ? '/think' : '/no_think'].filter(Boolean).join('\n\n');
+  const budgetChars = (config.think_budget ?? 1200) * 3.5;
+  const own = new AbortController(); // cuts a reasoning stream that runs past the budget
+  if (signal?.aborted) own.abort(signal.reason);
+  signal?.addEventListener('abort', () => own.abort(signal.reason), { once: true });
   const body = (instanceId) => JSON.stringify({
     model: instanceId,
     messages: [{ role: 'system', content: context ? `${systemPrompt}
 
-${context}` : systemPrompt }, ...withReminder(messages, reminder).map(({ summary, shown, ...m }) => m)], // "summary" and "shown" are our own bookkeeping, not part of the API
+${context}` : systemPrompt }, ...withReminder(messages, turnReminder).map(({ summary, shown, ...m }) => m)], // "summary" and "shown" are our own bookkeeping, not part of the API
     stream: true,
     stream_options: { include_usage: true },
+    chat_template_kwargs: { enable_thinking: thinkOn },
+    ...config.sampling?.[thinkOn ? 'think' : 'fast'],
     ...(tools?.length ? { tools, tool_choice: 'auto' } : {}),
   });
-  const post = (instanceId) => fetch(`${BASE}/chat/completions`, { method: 'POST', headers: JSON_HEADERS, body: body(instanceId), signal });
+  const post = (instanceId) => fetch(`${BASE}/chat/completions`, { method: 'POST', headers: JSON_HEADERS, body: body(instanceId), signal: own.signal });
 
   let res = await post(await syncModel());
   if (!res.ok && usedSeen) {
@@ -153,6 +175,8 @@ ${context}` : systemPrompt }, ...withReminder(messages, reminder).map(({ summary
   let buffer = '';
   const decoder = new TextDecoder();
 
+  let overBudget = false;
+  try {
   for await (const chunk of res.body) {
     buffer += decoder.decode(chunk, { stream: true });
     const lines = buffer.split('\n');
@@ -170,9 +194,19 @@ ${context}` : systemPrompt }, ...withReminder(messages, reminder).map(({ summary
       if (delta.reasoning_content) reasoning += delta.reasoning_content;
       if (hasToken) {
         const visible = visibleText(content);
-        onDelta?.({ content: visible, reasoning, thinking: !visible });
+        onDelta?.({ content: visible, reasoning: priorReasoning + reasoning, thinking: !visible });
+        if (!visible && reasoning.length + content.length > budgetChars) { overBudget = true; own.abort(); } // content: builds that inline <think>
       }
     }
+  }
+  } catch (e) {
+    if (!overBudget) throw e;
+  }
+  if (overBudget) {
+    // Thought too long: answer now from the notes, without thinking again.
+    const thought = reasoning || content.replace(/<\/?think>/g, '');
+    const notes = `<thinking-notes>\nYour reasoning so far (cut off because it ran too long):\n${thought}\n</thinking-notes>\nStop reasoning and answer now from these notes.`;
+    return chat(messages, { signal, onDelta, context, tools, reminder: [reminder, notes].filter(Boolean).join('\n\n'), think: false, priorReasoning: `${priorReasoning}${thought}\n\n[Thinking cut off at the budget.]\n\n` });
   }
 
   const tEnd = performance.now();

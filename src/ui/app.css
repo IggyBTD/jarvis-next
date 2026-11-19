@@ -267,6 +267,7 @@ body[data-page="code"] .ac-source { display: block; margin-bottom: var(--s-3); }
 .tool-btn { position: relative; width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: var(--r-2); background: transparent; color: var(--text-2); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
 .tool-btn:hover { background: var(--hover); color: var(--text-1); }
 .tool-btn.is-off { color: var(--text-3); }
+.tool-btn[aria-pressed="true"] { color: var(--accent); }
 .tool-btn.is-on#dock-mic, .tool-btn.is-on#dock-web, .tool-btn.is-on#dock-link { color: var(--accent); }
 .tool-btn.is-off#dock-web, .tool-btn.is-off#dock-link { color: var(--danger); }
 .tool-btn.recording { background: var(--danger); color: #fff; }

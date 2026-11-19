@@ -12,7 +12,7 @@ import {
   voicePhase, getVoicePrefs, voices, setVoice, setSpeed, setSpeakTyped, setLanguage, stopSpeaking, setPing, getAllowedLanguages,
 } from './voice.js';
 import modelConfig from '../../config/models.json';
-import { listModes, getMode, getPreset } from './llm-client.js';
+import { listModes, getMode, getPreset, getThink, setThink } from './llm-client.js';
 import { isWhiteboardMode, enterWhiteboardMode, exitWhiteboardMode } from './whiteboard-mode.js';
 import { openArtifact, openPanelIds } from './whiteboard.js';
 import { listArtifacts, getArtifact } from './artifacts.js';
@@ -158,6 +158,13 @@ const handlers = {
   async speed(args) {
     setSpeed(args.trim());
     return `Speaking speed ${getVoicePrefs().speed}x.`;
+  },
+
+  async think(args) {
+    const a = args.trim().toLowerCase();
+    if (a && a !== 'on' && a !== 'off') return 'Usage: /think [on|off]';
+    setThink(a ? a === 'on' : !getThink());
+    return `Thinking is ${getThink() ? 'on (capped at the budget in models.json)' : 'off'}.`;
   },
 
   async ping(args) {
@@ -376,6 +383,7 @@ export const hasCommand = (name) => !!handlers[String(name).toLowerCase()];
 export const COMMANDS = [
   { group: 'Conversation', name: 'clear', desc: 'Wipe the conversation on screen and start fresh' },
   { group: 'Conversation', name: 'new', desc: 'Same as /clear: start a new conversation' },
+  { group: 'Conversation', name: 'think', args: '[on|off]', desc: 'Let the model reason before answering (off by default; capped)' },
   { group: 'Conversation', name: 'retry', desc: 'Ask your last message again, dropping the old answer' },
   { group: 'Conversation', name: 'copy', args: '[all]', desc: 'Copy the last reply, or the whole conversation, to the clipboard' },
   { group: 'Conversation', name: 'stop', desc: 'End a running turn (works while JARVIS is busy)' },

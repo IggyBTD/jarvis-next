@@ -1,10 +1,46 @@
 {
+  "_readme": "Model presets. load: settings sent when LM Studio loads the model (context_length; LM Studio's own default is small). sampling: request settings for replies with thinking off (fast) and on (think), Qwen3's published recommendations. think_budget: the most reasoning tokens a reply may spend before it is cut off and answered from the notes so far (the composer's Think button turns thinking on; it is off by default because Qwen overthinks).",
   "default": "general",
   "endpoint": "http://localhost:1234/v1",
+  "think_budget": 1200,
+  "sampling": {
+    "fast": {
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "min_p": 0
+    },
+    "think": {
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0
+    }
+  },
   "models": {
-    "general": { "model": "qwen/qwen3-14b" },
-    "coding": { "model": "qwen/qwen3.8-27b" },
-    "visual": { "model": "qwen/qwen3-vl-8b" },
-    "abliterated": { "model": "huihui-ai_qwen3-14b-abliterated" }
+    "general": {
+      "model": "qwen/qwen3-14b",
+      "load": {
+        "context_length": 32768
+      }
+    },
+    "coding": {
+      "model": "qwen/qwen3.8-27b",
+      "load": {
+        "context_length": 32768
+      }
+    },
+    "visual": {
+      "model": "qwen/qwen3-vl-8b",
+      "load": {
+        "context_length": 32768
+      }
+    },
+    "abliterated": {
+      "model": "huihui-ai_qwen3-14b-abliterated",
+      "load": {
+        "context_length": 32768
+      }
+    }
   }
 }
