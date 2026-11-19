@@ -1,0 +1,4 @@
+{
+  "_readme": "Web tools (web_search, web_fetch). searxng: the address of your own SearXNG instance (for example http://localhost:8888) with JSON output enabled; empty means DuckDuckGo's plain HTML page, which needs no key but may refuse automated searches. The internet switch in the composer turns both tools off, in Rust as well as in the window.",
+  "searxng": ""
+}

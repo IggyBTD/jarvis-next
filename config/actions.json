@@ -353,6 +353,48 @@
           "name"
         ]
       }
+    },
+    {
+      "name": "web_search",
+      "description": "Search the web. Returns titles, addresses and short snippets. Use it for current events, facts you are unsure of, or anything after your training. Then read the best one or two pages with web_fetch.",
+      "tier": "auto",
+      "effect": "read",
+      "primary": "query",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "A short search query, like one typed into a search engine."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "web_fetch",
+      "description": "Read a web page as plain text (about 6000 characters at a time). Pages from web_search results or addresses the user gave run at once; any other address asks the user first. For a long page, call again with start set to continue.",
+      "tier": "auto",
+      "effect": "read",
+      "primary": "url",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The full http or https address."
+          },
+          "start": {
+            "type": "integer",
+            "description": "Character offset to continue from. Default 0."
+          }
+        },
+        "required": [
+          "url"
+        ]
+      }
     }
   ]
 }

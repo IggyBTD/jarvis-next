@@ -5,6 +5,7 @@ mod os_actions;
 mod sessions;
 mod telemetry;
 mod voice;
+mod web;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -69,6 +70,9 @@ pub fn run() {
       sessions::session_delete,
       sessions::session_search,
       os_actions::os_run_step,
+      web::web_set_allowed,
+      web::web_search,
+      web::web_fetch,
       sessions::session_export,
       sessions::skills_list,
     ])

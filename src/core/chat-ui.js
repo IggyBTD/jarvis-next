@@ -17,7 +17,7 @@ import { handleCommandKey } from './command-palette.js';
 import { buildContext } from './memory-client.js';
 import { openArtifact, applyBoardSpec } from './whiteboard.js';
 import { bindChat, beginTurn } from './voice.js';
-import { toolDefinitions, runToolCall, registerActionHost, undoEdit, loadLocalRules, getRoutines } from './actions.js';
+import { toolDefinitions, runToolCall, registerActionHost, undoEdit, loadLocalRules, getRoutines, noteUserUrls } from './actions.js';
 import { matchRoutine } from './routines.js';
 import { restoreProject } from './agent-client.js';
 import { actionCard, approvalCard, planCard } from './tool-cards.js';
@@ -266,6 +266,7 @@ async function send() {
   if (hasImages() && getMode() !== 'visual') selectMode('visual');
   const { content, names } = takeAsContent(skillText ?? text);
   lastSent = text;
+  noteUserUrls(text);
 
   setWorking(true);
   try { await maybeCompact(); } catch (e) { console.warn('[jarvis] compaction failed:', e); } // between turns, so no index shifts mid-turn

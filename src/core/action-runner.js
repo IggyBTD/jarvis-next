@@ -41,7 +41,8 @@ const auditArgs = (args) => Object.fromEntries(Object.entries(args).map(([k, v])
 // gate(name, args) returns a reason to refuse the call (plan mode), or null. hooks.before(name, args, primary)
 // returns a reason to refuse, hooks.after(name, args, primary) returns text to append to the result.
 // getMode() returns the permission mode ('normal' | 'careful'), which effectFloor reads.
-export function createActionRunner({ actions, handlers, getRules, blocked = [], approve, onAlways, audit, onEvent, gate = null, hooks = null, getMode = () => 'normal' }) {
+// askIf(name, args) returns a reason to ask about a call the rules would allow, or null.
+export function createActionRunner({ actions, handlers, getRules, blocked = [], approve, onAlways, audit, onEvent, gate = null, hooks = null, getMode = () => 'normal', askIf = null }) {
   const byName = new Map(actions.map((a) => [a.name, a]));
 
   const tools = () => actions.map((a) => ({
@@ -75,6 +76,8 @@ export function createActionRunner({ actions, handlers, getRules, blocked = [], 
     if (verdict.decision === 'allow' && effectFloor(action.effect, getMode()) === 'ask') {
       verdict = { decision: 'ask', reason: getMode() === 'careful' && action.effect === 'local-mutate' ? 'careful mode asks before changes' : `a ${action.effect ?? 'unclassified'} action always asks` };
     }
+    const extra = verdict.decision === 'allow' && verdict.reason === 'automatic action' ? askIf?.(action.name, args) : null;
+    if (extra) verdict = { decision: 'ask', reason: extra };
 
     if (verdict.decision === 'deny') return finish(call, action, args, 'deny', false, `Refused: ${verdict.reason}.`);
 

