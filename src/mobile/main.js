@@ -276,3 +276,5 @@ if (!hasToken()) {
   connect();
 }
 refreshSend();
+
+if (navigator.standalone) import('./lab.js'); // TEMPORARY: layout lab, remove with lab.js
