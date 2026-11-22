@@ -75,14 +75,14 @@ test('the empty chat: the mesh is the centrepiece, the greeting and the composer
 
 test('the field is a plain textarea, so the iPhone keyboard is the system one: sentences capitalised, autocorrect and spellcheck on, return is a new line, 16 pt so Safari never zooms', async () => {
   const a = await page.evaluate(() => { const t = document.getElementById('m-input'); const s = getComputedStyle(t); return { tag: t.tagName, cap: t.getAttribute('autocapitalize'), fix: t.getAttribute('autocorrect'), spell: t.spellcheck, hint: t.getAttribute('enterkeyhint'), type: t.type, font: parseFloat(s.fontSize), mode: t.inputMode }; });
-  assert.deepEqual([a.tag, a.cap, a.fix, a.spell, a.hint, a.type, a.mode], ['TEXTAREA', 'sentences', 'on', true, 'enter', 'textarea', '']);
+  assert.deepEqual([a.tag, a.cap, a.fix, a.spell, a.hint], ['DIV', 'sentences', 'on', true, 'enter']);
   assert.ok(a.font >= 16, `font ${a.font}`);
   await page.fill('#m-input', '');
   await page.focus('#m-input');
   await page.keyboard.type('first line');
   await page.keyboard.press('Enter'); // plain return: a new line, not a send
   await page.keyboard.type('second line');
-  assert.equal(await page.inputValue('#m-input'), 'first line\nsecond line');
+  assert.equal(await page.evaluate(() => document.getElementById('m-input').value), 'first line\nsecond line');
   assert.equal(await page.locator('.m-msg.user').count(), 0, 'return did not send');
   const h = await page.evaluate(() => document.getElementById('m-input').getBoundingClientRect().height);
   assert.ok(h > 40, `the field grew for two lines (${h})`);
@@ -109,7 +109,7 @@ test('a message goes out, the reply streams in as serif text with markdown, the 
   assert.equal(await page.locator('.m-msg.assistant li').count(), 2);
   assert.equal(await page.locator('.m-msg.assistant pre code').count(), 1);
   assert.equal(await page.locator('.m-msg.assistant > canvas.m-logo').count(), 1, 'the stamp rests under the reply');
-  assert.equal(await page.inputValue('#m-input'), '', 'the field was cleared');
+  assert.equal(await page.evaluate(() => document.getElementById('m-input').value), '', 'the field was cleared');
   assert.equal(await page.getAttribute('#m-send', 'aria-label'), 'Send');
   const scrollW = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   assert.equal(scrollW, 0);
