@@ -237,7 +237,7 @@ li[data-state="queued"] > .m-step > .m-step-line { color: var(--warm); }
 .m-send::before { inset: 0; }
 .m-composer { padding-bottom: var(--s-2); }
 
-.m-tabs { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-1); margin: 0 max(var(--s-4), env(safe-area-inset-right)) max(var(--s-2), env(safe-area-inset-bottom)) max(var(--s-4), env(safe-area-inset-left)); padding: var(--s-1); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-pill); }
+.m-tabs { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-1); margin: 0 max(var(--s-4), env(safe-area-inset-right)) max(var(--s-2), calc(env(safe-area-inset-bottom) - var(--s-3))) max(var(--s-4), env(safe-area-inset-left)); padding: var(--s-1); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-pill); }
 .m-tabs button { display: grid; justify-items: center; gap: 0; min-height: var(--s-7); padding: var(--s-1) 0; background: transparent; border: 0; border-radius: var(--r-pill); color: var(--text-3); font: 500 var(--fs-2)/var(--lh-xs) var(--sans); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform 160ms var(--ease-out); }
 .m-tabs button:active { transform: scale(0.97); }
 .m-tabs button .icon { --icon-size: var(--s-5); color: inherit; }
