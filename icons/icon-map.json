@@ -439,5 +439,14 @@
     "solar": "play",
     "lucide": "play",
     "ref": "phosphor:play"
+  },
+  "menu": {
+    "phosphor": "list",
+    "tabler": "menu-2",
+    "iconoir": "menu",
+    "remix": "menu",
+    "solar": "hamburger-menu",
+    "lucide": "align-left",
+    "ref": "lucide:align-left"
   }
 }

@@ -13,6 +13,8 @@ import { state, onLink, connect, retry, hasToken, sendChat, abort, newChat, open
 import * as chat from './chat.js';
 import { openChats, openSettings, openApproval } from './panels.js';
 import { sheetOpen } from './sheets.js';
+import { initDrawer, openDrawer, closeDrawer, drawerOpen } from './drawer.js';
+import { initPages, showPage, searchPage } from './pages.js';
 
 const $ = (id) => document.getElementById(id);
 const root = document.documentElement;
@@ -90,7 +92,7 @@ form.addEventListener('submit', (e) => {
   if (chat.isBusy()) { abort(); return; }
   const text = input.value.trim();
   if (!text) return;
-  const r = sendChat(text);
+  const r = sendChat(text, { code: codeMode });
   if (!r.ok) { toast(r.reason); return; } // your text stays in the field
   chat.addUser(text);
   chat.beginTurn();
@@ -108,6 +110,7 @@ function renderBar() {
   const machine = state.machines[state.target];
   const model = state.health?.model?.modelId;
   const bits = [label(state.target)];
+  if (codeMode) bits.unshift('Code');
   if (!state.machines[state.target]) bits.length = 0;
   else if (machine && !machine.online) bits.push('offline');
   else if (model) bits.push(prettyModelName(model));
@@ -175,10 +178,56 @@ onLink((e) => {
   }
 });
 
-// ---- the buttons ------------------------------------------------------------------------------------------------------------------------
-$('m-chats').addEventListener('click', () => openChats({ onOpen: (id) => openChat(id), onNew: () => { newChat(); input.focus(); } }));
-$('m-new').addEventListener('click', () => { newChat(); input.focus(); });
+// ---- the pages, the tab bar, the drawer ---------------------------------------------------------------------------------------------------
+// Four pages behind a floating tab bar (Chat, Projects, Code, Artifacts), like Claude's phone app. The bar goes away while you type.
+let codeMode = false; // a "New session" from the Code page: the next messages go to the coding agent
+const startChat = ({ code = false } = {}) => { codeMode = code; newChat(); setPage('chat'); input.placeholder = code ? 'Describe the coding task' : 'Message JARVIS'; input.focus(); };
+const goChat = (id) => { codeMode = false; input.placeholder = 'Message JARVIS'; openChat(id); setPage('chat'); };
+const openList = () => openChats({ onOpen: goChat, onNew: () => startChat() });
+
+const barRight = $('m-bar-right');
+const roundButton = (name, label, run) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'm-round'; b.setAttribute('aria-label', label);
+  b.innerHTML = '<span class="icon" aria-hidden="true"></span>';
+  b.firstChild.dataset.icon = name;
+  b.addEventListener('click', run);
+  return b;
+};
+function renderBarRight(page) {
+  const nodes = page === 'chat' ? [roundButton('edit', 'New chat', () => startChat())]
+    : page === 'artifacts' ? []
+      : [roundButton('search', page === 'projects' ? 'Search projects' : 'Search sessions', () => searchPage(page))];
+  barRight.replaceChildren(...nodes);
+  hydrateIcons(barRight);
+}
+let page = 'chat';
+let chatPos = { top: 0, atEnd: true }; // a hidden element forgets its scroll: the conversation is put back where it was
+function setPage(next) {
+  const sc = $('m-scroll');
+  if (page === 'chat' && next !== 'chat') chatPos = { top: sc.scrollTop, atEnd: sc.scrollHeight - sc.scrollTop - sc.clientHeight < 96 };
+  const back = next === 'chat' && page !== 'chat';
+  page = next;
+  app.dataset.page = next;
+  for (const p of ['projects', 'code', 'artifacts']) $(`m-p-${p}`).hidden = p !== next;
+  for (const b of document.querySelectorAll('#m-tabs [data-tab]')) { if (b.dataset.tab === next) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }
+  renderBarRight(next);
+  if (back) { if (chatPos.atEnd) chat.afterSend(); else sc.scrollTop = chatPos.top; }
+  if (next !== 'chat') showPage(next);
+  renderBar();
+}
+for (const b of document.querySelectorAll('#m-tabs [data-tab]')) b.addEventListener('click', () => setPage(b.dataset.tab));
+// typing hides the tab bar so the field sits right on the keyboard; it comes back when the keyboard goes
+input.addEventListener('focus', () => { app.dataset.typing = 'true'; });
+// (a beat later, so a tap on the conversation that ended the typing is not moved out from under the finger by the bar coming back)
+input.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== input) delete app.dataset.typing; }, 250));
+
+initDrawer({ onOpen: goChat, onNew: () => startChat(), onSettings: () => { if (!sheetOpen()) openSettings(); }, onViewAll: openList });
+initPages({ openChat: goChat, newSession: () => startChat({ code: true }) });
+$('m-menu').addEventListener('click', () => { if (!sheetOpen()) { if (drawerOpen()) closeDrawer(); else openDrawer(); } });
+$('m-plus').addEventListener('click', () => { if (!sheetOpen()) openSettings(); });
 $('m-title').addEventListener('click', () => { if (!sheetOpen()) openSettings(); });
+renderBarRight('chat');
 
 // ---- start ------------------------------------------------------------------------------------------------------------------------------------
 if (!hasToken()) {

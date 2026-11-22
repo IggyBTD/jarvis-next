@@ -38,12 +38,17 @@ const fromBottom = () => scroller.scrollHeight - scroller.scrollTop - scroller.c
 export function scrollToEnd({ smooth = false } = {}) {
   scroller.scrollTo({ top: scroller.scrollHeight, behavior: smooth && !calm.matches ? 'smooth' : 'auto' });
 }
+let settleUntil = 0; // after the jump button is tapped the glide down must not bring the button back
 scroller.addEventListener('scroll', () => {
   stick = fromBottom() < 96;
-  jump.hidden = stick || !log.children.length;
+  jump.hidden = stick || performance.now() < settleUntil || !log.children.length;
   app.dataset.scrolled = scroller.scrollTop > 8 ? 'true' : 'false';
 }, { passive: true });
-jump.addEventListener('click', () => { stick = true; jump.hidden = true; scrollToEnd({ smooth: true }); });
+jump.addEventListener('click', () => { stick = true; settleUntil = performance.now() + 800; jump.hidden = true; scrollToEnd({ smooth: true }); });
+// the scroll area changes size (the tab bar or the keyboard comes or goes): staying at the end keeps the newest message in view
+const sizes = new ResizeObserver(() => { if (stick || performance.now() < settleUntil) requestAnimationFrame(() => { if (stick || performance.now() < settleUntil) scrollToEnd(); }); }); // next frame: scrolling inside the callback can raise the browser's "loop" warning
+sizes.observe(scroller);
+sizes.observe(log); // the reply grows after its last scroll event (the final markdown render): at the end, stay at the end
 const follow = () => { if (stick) scrollToEnd(); };
 
 log.addEventListener('click', (e) => {

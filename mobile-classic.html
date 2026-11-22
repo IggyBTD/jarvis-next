@@ -26,14 +26,14 @@
   <link rel="stylesheet" href="/src/ui/mobile.css">
 </head>
 <body>
-<div id="m-app" data-state="connecting">
+<div id="m-app" data-state="connecting" data-page="chat" data-empty="true">
   <header class="m-bar">
-    <button type="button" id="m-chats" class="m-icon-btn" aria-label="Chats"><span class="icon" data-icon="sidebar" aria-hidden="true"></span></button>
+    <button type="button" id="m-menu" class="m-round" aria-label="Chats and settings" aria-haspopup="dialog"><span class="icon" data-icon="menu" aria-hidden="true"></span></button>
     <button type="button" id="m-title" class="m-title" aria-haspopup="dialog">
       <span class="m-title-row"><span class="m-title-main" id="m-title-main">JARVIS</span><span class="icon" data-icon="chevron-down" aria-hidden="true"></span></span>
       <span class="m-title-sub" id="m-title-sub"></span>
     </button>
-    <button type="button" id="m-new" class="m-icon-btn" aria-label="New chat"><span class="icon" data-icon="edit" aria-hidden="true"></span></button>
+    <div class="m-bar-right" id="m-bar-right"></div>
   </header>
 
   <div id="m-banner" class="m-banner" role="status" hidden>
@@ -53,11 +53,49 @@
 
   <form id="m-composer" class="m-composer" autocomplete="off">
     <div class="m-field">
+      <button type="button" id="m-plus" class="m-round" aria-label="Chat options"><span class="icon" data-icon="plus" aria-hidden="true"></span></button>
       <!-- A plain textarea: the iPhone's own keyboard, autocorrect, predictive text and dictation all work. Return makes a new line. -->
       <textarea id="m-input" rows="1" placeholder="Message JARVIS" aria-label="Message" enterkeyhint="enter" autocapitalize="sentences" autocorrect="on" spellcheck="true" autocomplete="off"></textarea>
       <button type="submit" id="m-send" class="m-send" aria-label="Send" aria-disabled="true"><span class="icon" data-icon="send" aria-hidden="true"></span></button>
     </div>
   </form>
+
+  <section id="m-p-projects" class="m-page" aria-label="Projects" hidden>
+    <input type="search" id="m-q-projects" class="m-search m-page-search" placeholder="Search projects" aria-label="Search projects" autocomplete="off" hidden>
+    <div id="m-projects" class="m-plist"></div>
+    <button type="button" id="m-fab-project" class="m-pill m-fab"><span class="icon" data-icon="plus" aria-hidden="true"></span>New project</button>
+  </section>
+  <section id="m-p-code" class="m-page" aria-label="Code" hidden>
+    <input type="search" id="m-q-code" class="m-search m-page-search" placeholder="Search sessions" aria-label="Search sessions" autocomplete="off" hidden>
+    <div id="m-code" class="m-plist"></div>
+    <button type="button" id="m-fab-session" class="m-pill m-fab"><span class="icon" data-icon="plus" aria-hidden="true"></span>New session</button>
+  </section>
+  <section id="m-p-artifacts" class="m-page" aria-label="Artifacts" hidden>
+    <div id="m-artifacts" class="m-plist"></div>
+  </section>
+
+  <nav id="m-tabs" class="m-tabs" aria-label="Sections">
+    <button type="button" data-tab="chat" aria-current="page"><span class="icon" data-icon="chat" aria-hidden="true"></span><span>Chat</span></button>
+    <button type="button" data-tab="projects"><span class="icon" data-icon="folder" aria-hidden="true"></span><span>Projects</span></button>
+    <button type="button" data-tab="code"><span class="icon" data-icon="code" aria-hidden="true"></span><span>Code</span></button>
+    <button type="button" data-tab="artifacts"><span class="icon" data-icon="artifacts" aria-hidden="true"></span><span>Artifacts</span></button>
+  </nav>
+</div>
+
+<div id="m-drawer" class="m-drawer" inert>
+  <div class="m-drawer-scrim" id="m-drawer-scrim"></div>
+  <aside class="m-drawer-panel" role="dialog" aria-label="Chats">
+    <div class="m-drawer-head">
+      <span class="m-drawer-brand">JARVIS</span>
+      <button type="button" id="m-d-search" class="m-round" aria-label="Search chats"><span class="icon" data-icon="search" aria-hidden="true"></span></button>
+    </div>
+    <input type="search" id="m-d-q" class="m-search" placeholder="Search chats" aria-label="Search chats" autocomplete="off" hidden>
+    <div id="m-d-list" class="m-d-list"></div>
+    <div class="m-drawer-foot">
+      <button type="button" id="m-d-me" class="m-round" aria-label="Settings"><span class="icon" data-icon="settings" aria-hidden="true"></span></button>
+      <button type="button" id="m-d-new" class="m-pill"><span class="icon" data-icon="plus" aria-hidden="true"></span>New chat</button>
+    </div>
+  </aside>
 </div>
 <div id="m-sheets"></div>
 <script type="module" src="/src/mobile/main.js"></script>

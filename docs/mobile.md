@@ -4,24 +4,32 @@ A second front end for the same server: `mobile.html` (served at `/mobile.html`)
 
 ## Reference
 
-The desktop JARVIS Next design (tokens, serif replies, the node mesh, the steps row) is the look. The behaviour is Apple's iPhone conventions (HIG): a navigation bar with 44 pt targets, content that scrolls under it, a composer in the thumb zone above the keyboard, sheets for everything secondary, no side drawer, no tab bar (there is one primary screen), safe areas respected. Claude's iOS app is the model for a chat: one conversation on screen, a composer at the bottom, a list of chats in a sheet.
+The desktop JARVIS Next design (tokens, serif replies, the node mesh, the steps row) is the look. The layout follows Claude's phone app: a round menu button top left that opens a drawer of chats, a round new-chat button top right, the greeting and the node mesh in the middle, one rounded input pill with a plus and a send button, and a floating tab bar under it with Chat, Projects, Code and Artifacts. Behaviour is Apple's iPhone conventions (HIG): 44 pt targets, safe areas, sheets for everything secondary, content that scrolls under the bar.
 
 ## What is in, what is out
 
 | In | Out (on purpose) |
 | --- | --- |
-| Chat with streaming replies, markdown, code, tables | Artifacts, the right-hand panel, Intel globe, the Code page, Projects, Scheduled, voice (dictation is the keyboard's), attachments |
+| Chat with streaming replies, markdown, code, tables | The right-hand panel, Intel globe, Scheduled, voice (dictation is the keyboard's), attachments |
 | The steps row (what JARVIS did, in plain words) | Settings pages beyond the one sheet |
 | Approvals as a sheet: approve or deny, with the exact request | Model switching (read-only here; pick it on the desktop) |
-| Chats list in a sheet: search, open, new, delete | Folders, pinning, export |
-| PC / Mac switch and effort, in one sheet | |
+| Drawer: pinned and recent chats, search, "View all" (delete lives there), Settings, New chat | Folders on the chat list, export |
+| Projects page: the server's project list, the chats in each, New project | Editing a project's instructions (desktop) |
+| Code page: the computers (tap to work on one), the coding agent's sessions, New session (the next messages go to the coding agent) | |
+| Artifacts page: says that artifacts open on the PC for now | Showing artifacts |
+| PC / Mac switch and effort, in one sheet (the plus, the title, or Settings in the drawer) | |
 | The node mesh: empty-chat centrepiece, loading icon, the stamp under the newest reply | |
+
+Projects live on the server (`GET` and `PUT /api/projects`, `data/projects.json`) and the desktop syncs its list there, so both show the same projects. Chats sync the same way: the server announces every change and the drawer and Projects page follow.
 
 ## Layout (portrait, 375 to 430 pt wide)
 
-- **Navigation bar** (44 pt plus the status bar): chats (left), the chat's title with `PC · model` under it (centre, opens the chat sheet), new chat (right).
+- **Bar** (44 pt plus the status bar): menu (left, opens the drawer), the chat's title with `PC · model` under it (centre, only once the chat has started; opens the chat sheet), and on the right new chat (Chat) or search (Projects, Code).
 - **Conversation:** scrolls under the bar; 16 pt side margins; your messages in a bubble on the right (82% wide at most), JARVIS's replies as plain serif text across the width, steps as one quiet line.
-- **Composer:** bottom, above the keyboard or the home indicator. One rounded field (grows to five lines) with the send button inside it at the right. Send becomes stop while JARVIS answers.
+- **Composer:** a pill above the tab bar: plus (chat options), the field (grows to five lines), send inside the pill at the right. Send becomes stop while JARVIS answers.
+- **Tab bar:** a floating pill with four tabs. It disappears while the input has focus (the field then sits on the keyboard) and comes back a beat after the keyboard goes.
+- **Drawer:** slides in from the left over a scrim; swipe left or tap the scrim to close. Pinned and Recents, a search button, Settings bottom left, New chat bottom right.
+- **Pages:** Projects, Code and Artifacts replace the conversation; the floating New project or New session button sits bottom right above the tab bar.
 - **Sheets:** slide up with the iOS drawer curve, a grabber, a close button, swipe down or tap outside to close (the approval sheet only closes with its two buttons). The Back swipe in Safari closes a sheet instead of leaving the page.
 
 ## The keyboard

@@ -165,22 +165,64 @@ test('an approval is a sheet that has to be answered: no close button, tapping o
 });
 
 test('the chat list: a sheet with search, the open chat marked, edit mode to delete, new chat', async () => {
-  await page.click('#m-chats');
+  await page.click('#m-menu'); // the drawer: recent chats, the open one marked; "View all" opens the full list sheet
+  await page.waitForSelector('.m-drawer.open .m-drow');
+  assert.equal(await page.locator('.m-drow[aria-current="true"]').count(), 1, 'the drawer marks the chat you are in');
+  await sheetSettled();
+  await shot('drawer-dark');
+  await page.getByRole('button', { name: 'View all' }).click();
   await page.waitForSelector('.m-sheet.open .m-row');
   assert.ok((await page.locator('.m-row').count()) >= 1);
   assert.equal(await page.locator('.m-row[aria-current="true"]').count(), 1, 'the chat you are in is marked');
-  const search = await page.evaluate(() => { const s = document.querySelector('.m-search'); return { size: parseFloat(getComputedStyle(s).fontSize), h: s.getBoundingClientRect().height, type: s.type }; });
+  const search = await page.evaluate(() => { const s = document.querySelector('.m-sheet .m-search'); return { size: parseFloat(getComputedStyle(s).fontSize), h: s.getBoundingClientRect().height, type: s.type }; });
   assert.ok(search.size >= 16 && search.h >= 44 && search.type === 'search');
   await sheetSettled();
   await shot('chats-dark');
-  await page.fill('.m-search', 'zzzz-no-such-chat');
+  await page.fill('.m-sheet .m-search', 'zzzz-no-such-chat');
   assert.match(await page.textContent('.m-list'), /No chats match/);
-  await page.fill('.m-search', '');
+  await page.fill('.m-sheet .m-search', '');
   await page.getByRole('button', { name: 'Edit' }).click();
   assert.ok((await page.locator('.m-danger-btn').count()) >= 1, 'edit mode shows a delete button per chat');
   await page.getByRole('button', { name: 'Done' }).click();
   await page.getByRole('button', { name: 'Close' }).click();
   await page.waitForSelector('.m-sheet', { state: 'detached' });
+});
+
+test('the tab bar: four pages, it goes away while you type and comes back; Projects lists and creates, Code lists the computers, Artifacts says where they are', async () => {
+  assert.equal(await page.locator('#m-tabs [data-tab]').count(), 4);
+  assert.equal(await page.getAttribute('#m-tabs [data-tab="chat"]', 'aria-current'), 'page');
+  await page.focus('#m-input');
+  assert.equal(await page.locator('#m-tabs').isHidden(), true, 'typing hides the bar');
+  await page.evaluate(() => document.getElementById('m-input').blur());
+  await page.waitForSelector('#m-tabs', { state: 'visible' });
+  const tab = await page.locator('#m-tabs [data-tab="projects"]').boundingBox();
+  assert.ok(tab.height >= 44, 'tabs are 44 pt or taller');
+
+  await page.click('#m-tabs [data-tab="projects"]');
+  await page.waitForSelector('#m-p-projects:not([hidden])');
+  assert.equal(await page.locator('#m-scroll').isHidden(), true, 'the conversation steps aside');
+  await page.waitForSelector('#m-projects .m-empty-list');
+  await page.click('#m-fab-project');
+  await page.waitForSelector('.m-sheet.open input');
+  await page.fill('.m-sheet.open input', 'Home lab');
+  await page.getByRole('button', { name: 'Create' }).click();
+  await page.waitForSelector('#m-projects .m-prow');
+  assert.match(await page.textContent('#m-projects'), /Home lab/);
+  assert.equal((await (await fetch(`${api.url}/api/projects`, { headers: { authorization: `Bearer ${api.uiToken}` } })).json()).projects[0].name, 'Home lab', 'the project is on the server, so every device sees it');
+  await sheetSettled();
+  await shot('projects-dark');
+
+  await page.click('#m-tabs [data-tab="code"]');
+  await page.waitForSelector('#m-p-code:not([hidden])');
+  assert.match(await page.textContent('#m-code'), /Computers/);
+  assert.ok((await page.locator('#m-code .m-prow').count()) >= 1, 'the computers are listed');
+  await shot('code-page-dark');
+
+  await page.click('#m-tabs [data-tab="artifacts"]');
+  assert.match(await page.textContent('#m-artifacts'), /open on your PC/);
+
+  await page.click('#m-tabs [data-tab="chat"]');
+  await page.waitForSelector('#m-scroll', { state: 'visible' });
 });
 
 test('the Back swipe closes a sheet instead of leaving the page', async () => {
@@ -266,7 +308,7 @@ test('scrolled away from the newest message, a jump button appears; it brings yo
   rig.model.script({ content: Array.from({ length: 40 }, (_, i) => `Line number ${i + 1} of a long answer.`).join('\n\n') });
   await typeAndSend('a long answer');
   await waitFor(async () => (await page.locator('#m-app[data-busy]').count()) === 0);
-  assert.equal(await page.locator('#m-jump').isHidden(), true, 'at the bottom: no button');
+  await waitFor(async () => await page.locator('#m-jump').isHidden()); // at the bottom (once the last render has settled): no button
   await page.evaluate(() => { document.getElementById('m-scroll').scrollTop = 0; });
   await page.waitForSelector('#m-jump:not([hidden])');
   const b = await page.locator('#m-jump').boundingBox();

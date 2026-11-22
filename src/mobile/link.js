@@ -130,9 +130,9 @@ function handle(m) {
 }
 
 // ---- what you do ------------------------------------------------------------------------------------------------------------------
-export function sendChat(text) {
+export function sendChat(text, { code = false } = {}) {
   if (!isOnline()) return { ok: false, reason: state.status === 'connecting' ? 'Still connecting.' : 'Not connected to the PC. Nothing was sent.' };
-  send({ type: 'chat.send', convId, text, effort: getEffort() });
+  send({ type: 'chat.send', convId, text, effort: getEffort(), ...(code ? { code: true } : {}) });
   return { ok: true };
 }
 export const abort = () => send({ type: 'chat.abort', convId });
@@ -160,6 +160,9 @@ export function openChat(id) {
   emit({ type: 'conversation' });
 }
 export const listChats = async () => (await api('/conversations')).conversations ?? [];
+// projects live on the server (the desktop keeps them there too), so the phone lists the same ones
+export const listProjects = async () => (await api('/projects')).projects ?? [];
+export const saveProjects = (projects) => api('/projects', { method: 'PUT', body: JSON.stringify({ projects }) });
 export const deleteChat = (id) => api(`/conversations/${id}`, { method: 'DELETE' });
 
 // iOS suspends sockets in the background: come back to a live link.

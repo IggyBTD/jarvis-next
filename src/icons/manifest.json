@@ -48,7 +48,8 @@
     "terminal",
     "bell",
     "mail",
-    "play"
+    "play",
+    "menu"
   ],
   "sets": {
     "phosphor": {
