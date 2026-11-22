@@ -37,7 +37,13 @@ function fit() {
   // Only with the keyboard up does the app follow the visual viewport. Closed, the CSS default (the full dynamic viewport) is used:
   // in a home-screen app iOS can report a visual viewport shorter than the screen, which left an empty strip at the bottom.
   if (open) { root.style.setProperty('--vvh', `${Math.round(h)}px`); root.style.setProperty('--vvt', `${Math.round(top)}px`); }
-  else { root.style.removeProperty('--vvh'); root.style.removeProperty('--vvt'); }
+  else {
+    // A home-screen app on iOS reports a page one status-bar inset shorter than the screen (793 of 852 pt on an iPhone 15 Pro); the app fills the whole screen.
+    const full = Math.max(screen.width, screen.height);
+    if (navigator.standalone && innerHeight > innerWidth && innerHeight < full) root.style.setProperty('--vvh', `${full}px`);
+    else root.style.removeProperty('--vvh');
+    root.style.removeProperty('--vvt');
+  }
   if ((app.dataset.kb === 'open') !== open) { app.dataset.kb = open ? 'open' : 'closed'; if (open) chat.afterSend(); }
 }
 fit();
@@ -287,6 +293,7 @@ refreshSend();
   probe.style.cssText = 'position:fixed;visibility:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0';
   document.body.append(dbg, probe);
   const r = (s) => { const n = document.querySelector(s); if (!n) return 'none'; const b = n.getBoundingClientRect(); return `${Math.round(b.top)}-${Math.round(b.bottom)}`; };
-  const show = () => { const c = getComputedStyle(probe); dbg.textContent = `inner ${innerWidth}x${innerHeight} vv ${vv ? Math.round(vv.height) : '-'}+${vv ? Math.round(vv.offsetTop) : '-'} screen ${screen.height} standalone ${navigator.standalone}\ninset top ${c.paddingTop} bottom ${c.paddingBottom}\napp ${r('#m-app')} tabs ${r('.m-tabs')} composer ${r('#m-composer')} body ${r('body')}`; };
+  const show = () => { const c = getComputedStyle(probe); dbg.textContent = `inner ${innerWidth}x${innerHeight} vv ${vv ? Math.round(vv.height) : '-'}+${vv ? Math.round(vv.offsetTop) : '-'} screen ${screen.height} standalone ${navigator.standalone}\ninset top ${c.paddingTop} bottom ${c.paddingBottom}\nvh ${[100,'100lvh','100svh','100dvh'].map((u)=>{probe.style.height=typeof u==='number'?'100vh':u;return Math.round(probe.getBoundingClientRect().height);}).join('/')}
+app ${r('#m-app')} tabs ${r('.m-tabs')} composer ${r('#m-composer')} body ${r('body')}`; };
   show(); setInterval(show, 1000);
 }
