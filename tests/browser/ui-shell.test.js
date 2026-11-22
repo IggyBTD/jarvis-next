@@ -119,6 +119,15 @@ test('folders: add one and name it, drag a chat into it, it opens to show the ch
 test('search narrows the list to every chat that matches, and Ctrl+K opens it', async () => {
   await page.keyboard.press('Escape');
   await page.keyboard.press('Control+k');
+  if (await page.locator('#page-chats').count()) { // the nodes design: Search is a page that lists every chat
+    await page.waitForSelector('#page-chats', { state: 'visible' });
+    await page.fill('#chats-q', 'zzzz-nothing');
+    assert.match(await page.textContent('#chats-list'), /No chats match/);
+    await page.fill('#chats-q', 'hello');
+    await waitFor(async () => (await page.locator('#chats-list .chats-row').count()) >= 1);
+    await page.click('.mode-btn[data-page="chat"]'); // back to the conversation for the next tests
+    return;
+  }
   await page.waitForSelector('#chat-search:not([hidden])');
   await page.fill('#chat-search', 'zzzz-nothing');
   assert.match(await page.textContent('#chat-list'), /No chat matches/);
@@ -171,7 +180,7 @@ test('the panel: one Overview tab that cannot be closed, with cards that fold; o
   assert.match(await page.textContent('#out-body'), /<h1>hi<\/h1>|&lt;h1&gt;|h1/);
   await page.click('#out-back');
   await page.waitForSelector('#out-list .out-file');
-  for (const [id, pane, text] of [['pc', '#pc-meters', /GPU temp[\s\S]*CPU temp[\s\S]*GPU compute load[\s\S]*CPU compute load/], ['llm', '#llm-ctx', /Context used/], ['tasks', '#bg-list', /Nothing running/], ['env', '#env-branch', /Current\s*main/]]) {
+  for (const [id, pane, text] of [['pc', '#pc-meters', /GPU temp[\s\S]*CPU temp[\s\S]*GPU compute load[\s\S]*GPU VRAM[\s\S]*CPU compute load/], ['llm', '#llm-ctx', /Context used/], ['tasks', '#bg-list', /Nothing running/], ['env', '#env-branch', /Current\s*main/]]) {
     await waitFor(async () => text.test(await page.textContent(pane)));
   }
   assert.match(await page.textContent('#env-remote'), /Status\s*on/);

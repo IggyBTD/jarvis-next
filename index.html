@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-mesh="kit">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <!-- R1-2: images and media from this page or data: and blob: only, also when the dev server (which sends no CSP) serves it -->
@@ -55,7 +55,7 @@
     </div>
     <div class="nav-group nav-main">
       <button type="button" id="new-chat" class="nav-item nav-new"><span class="icon" data-icon="plus"></span>New chat</button>
-      <button type="button" id="chat-search-btn" class="nav-item" aria-pressed="false" title="Search chats (Ctrl+K)"><span class="icon" data-icon="search"></span>Search</button>
+      <button type="button" id="chat-search-btn" class="nav-item" data-page="chats" aria-pressed="false" title="Search chats (Ctrl+K)"><span class="icon" data-icon="search"></span>Search</button>
       <button type="button" class="nav-item" data-page="customize" aria-pressed="false"><span class="icon" data-icon="sliders"></span>Customize</button>
     </div>
     <input type="search" id="chat-search" placeholder="Search chats" aria-label="Search chats" autocomplete="off" spellcheck="false" hidden>
@@ -209,6 +209,14 @@
     </section>
 
     
+
+    <section id="page-chats" class="page" aria-label="Chats">
+      <div class="page-inner">
+        <h1>Chats</h1>
+        <input type="search" id="chats-q" class="chats-q" placeholder="Search chats" aria-label="Search chats" autocomplete="off" spellcheck="false">
+        <div id="chats-list"></div>
+      </div>
+    </section>
 
     <section id="page-projects" class="page" aria-label="Projects">
       <div class="page-inner" id="proj-root"></div>

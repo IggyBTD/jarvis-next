@@ -59,6 +59,7 @@ export async function refreshChats() {
   try { all = (await listSessions()) ?? []; } catch { /* a plain browser has no session store */ }
   sessions = Array.isArray(all) ? all.sort((a, b) => b.updated - a.updated) : [];
   paint();
+  paintChats();
   syncHead();
 }
 
@@ -268,10 +269,34 @@ function setSearch(open) {
   searchBtn.setAttribute('aria-pressed', String(open));
   if (open) searchBox.focus(); else { searchBox.value = ''; query = ''; paint(); }
 }
-searchBtn.addEventListener('click', () => setSearch(searchBox.hidden));
+const chatsPage = $('page-chats'); // the nodes design has a Chats page; the classic one keeps the sidebar's search field
+if (!chatsPage) searchBtn.addEventListener('click', () => setSearch(searchBox.hidden));
 searchBox.addEventListener('input', () => { query = searchBox.value; paint(); });
 searchBox.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); setSearch(false); } });
-document.addEventListener('jarvis:search-chats', () => { setSearch(true); });
+document.addEventListener('jarvis:search-chats', () => { if (chatsPage) { setPage('chats'); $('chats-q').focus(); } else setSearch(true); });
+
+// --- the Chats page: every chat, newest first, with its summary when it has one ---------------------------------------------------
+function paintChats() {
+  if (!chatsPage || document.body.dataset.page !== 'chats') return;
+  const q = $('chats-q').value.trim().toLowerCase();
+  const box = $('chats-list');
+  const shown = sessions.filter((s) => !q || `${s.name ?? ''} ${s.summary ?? ''}`.toLowerCase().includes(q));
+  if (!shown.length) { box.replaceChildren(Object.assign(document.createElement('div'), { className: 'empty-note', textContent: q ? 'No chats match.' : 'No saved chats yet.' })); return; }
+  box.replaceChildren(...shown.map((s) => {
+    const b = Object.assign(document.createElement('button'), { type: 'button', className: 'chats-row' });
+    const top = Object.assign(document.createElement('span'), { className: 'chats-top' });
+    top.append(Object.assign(document.createElement('span'), { className: 'chats-name', textContent: s.name || 'Untitled' }),
+      Object.assign(document.createElement('span'), { className: 'chats-when', textContent: s.updated ? new Date(s.updated).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '' }));
+    b.append(top);
+    if (s.summary) b.append(Object.assign(document.createElement('span'), { className: 'chats-sum', textContent: s.summary })); // no summary, no space
+    b.addEventListener('click', () => openSession(s));
+    return b;
+  }));
+}
+if (chatsPage) {
+  $('chats-q').addEventListener('input', paintChats);
+  document.addEventListener('jarvis:page', paintChats);
+}
 
 // --- right-click on a chat ---------------------------------------------------------------------
 function chatMenu(s, el) {

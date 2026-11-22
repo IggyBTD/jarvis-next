@@ -128,7 +128,7 @@ body.dragging-chat { cursor: grabbing; user-select: none; }
 .page { position: absolute; inset: 0; display: none; min-width: 0; min-height: 0; }
 body[data-page="chat"] #page-chat, body[data-page="code"] #page-chat { display: grid; }
 body[data-page="intel"] #page-intel { display: flex; flex-direction: column; }
-body[data-page="projects"] #page-projects, body[data-page="artifacts"] #page-artifacts, body[data-page="settings"] #page-settings,
+body[data-page="chats"] #page-chats, body[data-page="projects"] #page-projects, body[data-page="artifacts"] #page-artifacts, body[data-page="settings"] #page-settings,
 body[data-page="accounts"] #page-accounts, body[data-page="scheduled"] #page-scheduled, body[data-page="customize"] #page-customize { display: block; overflow-y: auto; scrollbar-gutter: stable; }
 
 /* chat and code: conversation, a splitter, the panel. One 40 strip and one divider run across all three. */
