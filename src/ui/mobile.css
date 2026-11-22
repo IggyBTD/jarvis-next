@@ -331,3 +331,10 @@ button.m-art-card:active { transform: scale(0.98); background: var(--surface-3);
 @media (prefers-reduced-motion: reduce) {
   #m-app .m-page { animation: none; }
 }
+
+/* A home-screen app on iOS gets a full-height window (852 pt) but a layout viewport one status-bar inset shorter (793 pt), and draws nothing below it.
+   The large viewport unit is the real screen: size the page and the layers to it. With the keyboard up, --vvh (from main.js) still wins. */
+@media (display-mode: standalone) {
+  html, body { height: 100lvh; }
+  #m-app, #m-sheets, .m-drawer { bottom: auto; height: var(--vvh, 100lvh); }
+}
