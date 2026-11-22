@@ -279,4 +279,3 @@ if (!hasToken()) {
 }
 refreshSend();
 
-import('./lab.js'); // TEMPORARY: layout lab, remove with lab.js
