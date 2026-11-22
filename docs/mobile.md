@@ -19,7 +19,7 @@ The desktop JARVIS Next design (tokens, serif replies, the node mesh, the steps 
 | Artifacts: a card in the reply opens a full-height sandboxed viewer; the tab lists artifacts found in your recent chats | Editing artifacts, charts that need the desktop's libraries |
 | PC / Mac switch, effort and the approvals mode (Auto, Manual, Accept edits, Plan, Bypass), in one sheet (the title, the drawer's Settings, or the plus menu) | |
 | The plus: attach text files (code, notes, CSV, JSON) to a message | Photos and PDFs (the model reads text only) |
-| Approvals of every tier, as on the Mac. A T3 approval and the two admin modes ask for the owner's PIN from the phone | |
+| Approvals of every tier, as on the Mac (pair the phone with `node scripts/client-link.js phone --full` for the Mac's settings scope too). A T3 approval and the two admin modes always ask for the owner's PIN from a phone | |
 | The node mesh: empty-chat centrepiece, loading icon, the stamp under the newest reply | |
 
 Projects live on the server (`GET` and `PUT /api/projects`, `data/projects.json`) and the desktop syncs its list there, so both show the same projects. Chats sync the same way: the server announces every change and the drawer and Projects page follow.

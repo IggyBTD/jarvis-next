@@ -3,7 +3,8 @@
 // address is the PC's Tailscale name (F3-6): Tailscale authenticates the machine behind the name, while a raw address gives the token
 // to whatever answers there. With "tailscale serve" the same page is also reachable over HTTPS, which browsers require for the
 // microphone on anything but localhost.
-//   node scripts/client-link.js [phone|browser]
+//   node scripts/client-link.js [phone|browser] [--full]
+//   --full: pair with the Mac's power (chat, approve and settings). A phone is paired with chat and approve only, unless you ask for this.
 import { loadConfig } from '../server/core/config.js';
 import { isMain } from '../shared/util.js';
 import { runProgram } from '../agent/registry/common.js';
@@ -36,7 +37,7 @@ if (isMain(import.meta.url)) {
   // the phone needs two: the home-screen launcher (port + 1) and the app it opens keep separate storage, so each is paired once
   const devices = createDevices({ dataDir: cfg.dataDir, legacyToken: () => currentUiToken(cfg) });
   for (const what of kind === 'phone' ? ['the home-screen page', 'the app'] : ['this browser']) {
-    const r = devices.startPairing({ by: LOCAL, kind });
+    const r = devices.startPairing({ by: LOCAL, kind, ...(process.argv.includes('--full') ? { scopes: ['chat', 'approve', 'settings'] } : {}) });
     console.log(r.error ? `No pairing code: ${r.error}` : `Pairing code for ${what} (5 minutes, once): ${r.code.slice(0, 4)}-${r.code.slice(4)}`);
   }
   console.log('Build the app first on the PC if you have not: npm run build');
