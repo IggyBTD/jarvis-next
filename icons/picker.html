@@ -1,0 +1,191 @@
+<title>Jarvis Icon Picker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: one row per function, its options in a wrapping grid, a sticky bar with the count. Teal accent from the app. */
+  :root {
+    --bg: #F4F7F6; --surface: #FFFFFF; --surface-2: #E9EFED; --border: #D3DDDA; --fg: #131819; --fg-2: #4A5856; --fg-3: #6B7A77;
+    --accent: #0A8A7C; --accent-wash: rgba(10, 138, 124, 0.12); --on-accent: #FFFFFF; --warn: #9A5B00;
+    --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121718; --surface: #161C1D; --surface-2: #222A2C; --border: #2C3739; --fg: #E9EFED; --fg-2: #B3C0BE; --fg-3: #94A3A1;
+      --accent: #5FD6C6; --accent-wash: rgba(95, 214, 198, 0.14); --on-accent: #06201C; --warn: #E8B05A; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121718; --surface: #161C1D; --surface-2: #222A2C; --border: #2C3739; --fg: #E9EFED; --fg-2: #B3C0BE; --fg-3: #94A3A1;
+    --accent: #5FD6C6; --accent-wash: rgba(95, 214, 198, 0.14); --on-accent: #06201C; --warn: #E8B05A; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--font); padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--border); padding: 12px 0; margin-bottom: 8px; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  h1 { font-size: 20px; line-height: 1.2; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { margin: 0 0 12px; color: var(--fg-2); max-width: 65ch; }
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .count { font-family: var(--mono); font-size: 13px; color: var(--fg-2); margin-right: auto; font-variant-numeric: tabular-nums; }
+  .count b { color: var(--accent); font-weight: 600; }
+  input[type=search] { height: 32px; min-width: 0; width: 200px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); font: inherit; }
+  button { height: 32px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); font: inherit; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out; }
+  button:hover { background: var(--surface-2); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+  button.primary:hover { filter: brightness(1.06); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  label.chk { display: inline-flex; align-items: center; gap: 6px; color: var(--fg-2); }
+  .status { font-size: 12px; color: var(--fg-3); min-height: 18px; margin-top: 6px; }
+  .row { padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .row[hidden] { display: none; }
+  .row h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 12px; font-size: 14px; font-weight: 600; }
+  .row h2 .key { font-family: var(--mono); font-weight: 500; }
+  .row h2 .use { font-weight: 400; color: var(--fg-3); font-size: 12px; }
+  .row.done h2 .key::after { content: " chosen"; color: var(--accent); font-family: var(--font); font-weight: 600; font-size: 12px; }
+  .opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+  .opt { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 8px 8px; min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); cursor: pointer; transition: border-color 150ms ease-out, background-color 150ms ease-out; }
+  .opt:hover { border-color: var(--fg-3); }
+  .opt:has(input:checked) { border-color: var(--accent); background: var(--accent-wash); }
+  .opt input { position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+  .opt .glyph { width: 40px; height: 40px; display: grid; place-items: center; color: var(--fg); }
+  .opt .glyph svg { width: 32px; height: 32px; display: block; }
+  .opt .cap { max-width: 100%; text-align: center; font-family: var(--mono); font-size: 11px; line-height: 1.3; color: var(--fg-3); overflow-wrap: anywhere; }
+  .opt .badge { position: absolute; top: 6px; right: 6px; font-size: 10px; line-height: 1; padding: 3px 5px; border-radius: 6px; background: var(--surface-2); color: var(--fg-2); }
+  .opt .lic { color: var(--warn); }
+  .err { padding: 24px 0; color: var(--warn); }
+  @media (max-width: 480px) { input[type=search] { width: 100%; } .opts { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="bar">
+    <h1>Jarvis Icon Picker</h1>
+    <p class="sub">One row per function. Tick the icon you want in each row. Rows you leave alone keep the icon marked "in use".</p>
+    <div class="tools">
+      <span class="count" id="count" aria-live="polite"></span>
+      <input type="search" id="q" placeholder="Find a function" aria-label="Find a function" autocomplete="off">
+      <label class="chk"><input type="checkbox" id="onlyopen"> Only unchosen</label>
+      <button type="button" id="copy" class="primary">Copy my picks</button>
+      <button type="button" id="clear">Clear all</button>
+    </div>
+    <div class="status" id="status" role="status"></div>
+  </header>
+  <main id="rows"><div class="err" id="loading">Loading icons.</div></main>
+</div>
+
+<script>
+(() => {
+  // what each function is for in the app
+  const USE = {
+    chat: 'Chat mode button', code: 'Code mode button', sidebar: 'Show or hide the sidebar', plus: 'New, add', artifacts: 'Artifacts page',
+    system: 'System page', settings: 'Settings', attach: 'Attach a file', mic: 'Microphone', globe: 'Internet switch', wifi: 'Connection, remote',
+    send: 'Send message', stop: 'Stop a reply', 'chevron-down': 'Open a menu or fold', 'chevron-left': 'Back', 'chevron-right': 'Forward',
+    close: 'Close a tab or card', copy: 'Copy', save: 'Save', layers: 'Layers, stacked items', check: 'Done, selected', 'win-min': 'Window minimise',
+    'win-max': 'Window maximise', 'win-restore': 'Window restore', 'win-close': 'Window close', cpu: 'CPU readout', gpu: 'GPU readout',
+    ram: 'Memory readout', search: 'Search', folder: 'Folder', pin: 'Pin a chat', trash: 'Delete', edit: 'Rename, edit', eject: 'Open outside, eject',
+    refresh: 'Refresh, retry', spark: 'AI, thinking', clock: 'Scheduled', sliders: 'Customize', more: 'More actions', plug: 'Accounts, connections',
+    tasks: 'Background tasks', 'folder-plus': 'New folder', 'folder-open': 'Open folder', file: 'File', diff: 'Changes, diff', terminal: 'Terminal',
+    bell: 'Notifications', mail: 'Mail', play: 'Run, play'
+  };
+  const KEY = 'jarvis.icon-picks';
+  const $ = (id) => document.getElementById(id);
+  const picks = {};            // function -> "set:icon"
+  let data, db, saveTimer;
+  const say = (t) => { $('status').textContent = t; };
+  const store = { get() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; } }, set() { try { localStorage.setItem(KEY, JSON.stringify(picks)); } catch { /* storage blocked */ } } };
+
+  function svg(o) { return `<svg viewBox="${o.viewBox}" fill="none" aria-hidden="true">${o.body}</svg>`; }
+
+  function build() {
+    const rows = $('rows'); rows.replaceChildren();
+    for (const [name, opts] of Object.entries(data.icons)) {
+      const row = document.createElement('section'); row.className = 'row'; row.dataset.name = name;
+      const h = document.createElement('h2');
+      const key = document.createElement('span'); key.className = 'key'; key.textContent = `${name} icon:`;
+      const use = document.createElement('span'); use.className = 'use'; use.textContent = USE[name] || '';
+      h.append(key, use);
+      const grid = document.createElement('div'); grid.className = 'opts';
+      opts.forEach((o, i) => {
+        const lab = document.createElement('label'); lab.className = 'opt';
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = o.id; cb.name = name; cb.id = `${name}__${i}`;
+        cb.setAttribute('aria-label', `${name}: ${o.id}`);
+        cb.addEventListener('change', () => choose(name, cb.checked ? o.id : null));
+        const g = document.createElement('span'); g.className = 'glyph'; g.innerHTML = svg(o);
+        const cap = document.createElement('span'); cap.className = 'cap'; cap.textContent = o.id;
+        lab.append(cb, g, cap);
+        if (i === 0) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'in use'; lab.append(b); }
+        const lic = data.sets[o.id.split(':')[0]]?.licence || '';
+        if (/CC-BY/.test(lic)) lab.title = `Licence ${lic}: attribution required`; else lab.title = `${o.id} (${lic})`;
+        grid.append(lab);
+      });
+      row.append(h, grid); rows.append(row);
+    }
+  }
+
+  function paint() {
+    for (const row of document.querySelectorAll('.row')) {
+      const name = row.dataset.name;
+      row.classList.toggle('done', !!picks[name]);
+      for (const cb of row.querySelectorAll('input')) cb.checked = cb.value === picks[name];
+    }
+    const n = Object.keys(picks).length, total = Object.keys(data.icons).length;
+    $('count').innerHTML = `<b>${n}</b> of ${total} chosen`;
+    filter();
+  }
+
+  function filter() {
+    const q = $('q').value.trim().toLowerCase(), only = $('onlyopen').checked;
+    for (const row of document.querySelectorAll('.row')) {
+      const name = row.dataset.name;
+      row.hidden = (q && !(name + ' ' + (USE[name] || '')).toLowerCase().includes(q)) || (only && picks[name]);
+    }
+  }
+
+  function choose(name, id) {
+    if (id) picks[name] = id; else delete picks[name];
+    paint(); store.set();
+    if (db) {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(async () => {
+        try {
+          const doc = db.collection('picks').doc(name);
+          if (id) await doc.set({ choice: id, at: Date.now() }); else await doc.delete();
+          say('Saved.');
+        } catch { say('Saved on this device only. The shared copy could not be written.'); }
+      }, 250);
+    }
+  }
+
+  async function connectDb() {
+    try {
+      const c = window.claude && await window.claude.use('db');
+      if (!c) return;
+      db = c;
+      db.collection('picks').onSnapshot((snap) => {
+        const remote = {};
+        for (const d of snap.docs) { const v = d.data(); if (v && v.choice) remote[d.id] = v.choice; }
+        for (const k of Object.keys(picks)) delete picks[k];
+        Object.assign(picks, remote);
+        paint(); store.set();
+      }, () => { db = null; });
+    } catch { db = null; }
+  }
+
+  $('q').addEventListener('input', filter);
+  $('onlyopen').addEventListener('change', filter);
+  $('clear').addEventListener('click', () => {
+    if (!Object.keys(picks).length) return;
+    if ($('clear').dataset.sure !== '1') { $('clear').dataset.sure = '1'; $('clear').textContent = 'Click again to clear'; setTimeout(() => { $('clear').dataset.sure = ''; $('clear').textContent = 'Clear all'; }, 3000); return; }
+    $('clear').dataset.sure = ''; $('clear').textContent = 'Clear all';
+    for (const name of Object.keys(picks)) choose(name, null);
+  });
+  $('copy').addEventListener('click', async () => {
+    const text = Object.entries(picks).map(([k, v]) => `${k}: ${v}`).join('\n') || '(no picks yet)';
+    try { await navigator.clipboard.writeText(text); say('Copied. Paste it into the chat if you want to send it that way.'); }
+    catch { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;inset:0;opacity:.01'; document.body.append(ta); ta.select(); try { document.execCommand('copy'); say('Copied.'); } catch { say('Copy failed. Your picks are saved here and Claude can read them.'); } ta.remove(); }
+  });
+
+  fetch('candidates.json').then((r) => r.json()).then((j) => {
+    data = j; Object.assign(picks, store.get()); build(); paint(); connectDb();
+  }).catch(() => { $('loading').textContent = 'Could not load the icon list (candidates.json).'; });
+})();
+</script>

@@ -54,7 +54,7 @@ const $ = (id) => bar.querySelector(id);
 const sel = $('#isw-set');
 const stroke = $('#isw-stroke');
 const size = $('#isw-size');
-const isStroke = () => ['iconoir:regular', 'lucide:baseline'].includes(getIconSet()) || /^tabler:outline$/.test(getIconSet());
+const isStroke = () => ['iconoir:regular', 'lucide:baseline', 'ref:outline', 'tabler:outline'].includes(getIconSet());
 const sync = () => {
   sel.value = getIconSet();
   stroke.disabled = !isStroke(); // the other sets bake their weight into the shapes

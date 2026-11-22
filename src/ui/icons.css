@@ -45,7 +45,7 @@ button:hover .ic-wifi path:nth-of-type(2) { animation-delay: 180ms; }
 [aria-expanded="true"] .ic-chevron-down { rotate: 180deg; }
 
 /* copy and save confirm with a tick that draws itself */
-.ic-check path { stroke-dasharray: 20; stroke-dashoffset: 20; animation: tick-draw 320ms ease-out forwards; }
+.ic-check path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: tick-draw 320ms ease-out forwards; } /* 24: longer than any set's tick (Lucide's is 22.6), or its end is cut off */
 @keyframes tick-draw { to { stroke-dashoffset: 0; } }
 
 /* window controls */

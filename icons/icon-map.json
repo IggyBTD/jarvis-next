@@ -5,7 +5,8 @@
     "iconoir": "chat-bubble",
     "remix": "chat-3",
     "solar": "chat-round-dots",
-    "lucide": "message-circle"
+    "lucide": "message-circle",
+    "ref": "meteor-icons:messages"
   },
   "code": {
     "phosphor": "code",
@@ -13,7 +14,8 @@
     "iconoir": "code",
     "remix": "code-s-slash",
     "solar": "code",
-    "lucide": "code"
+    "lucide": "code",
+    "ref": "tabler:code"
   },
   "sidebar": {
     "phosphor": "sidebar-simple",
@@ -21,7 +23,8 @@
     "iconoir": "sidebar-collapse",
     "remix": "layout-left",
     "solar": "sidebar-code",
-    "lucide": "panel-left"
+    "lucide": "panel-left",
+    "ref": "custom:sidebar"
   },
   "plus": {
     "phosphor": "plus",
@@ -29,7 +32,8 @@
     "iconoir": "plus",
     "remix": "add",
     "solar": "add-circle",
-    "lucide": "plus"
+    "lucide": "plus",
+    "ref": "phosphor:plus"
   },
   "artifacts": {
     "phosphor": "cube",
@@ -37,7 +41,8 @@
     "iconoir": "box-iso",
     "remix": "box-3",
     "solar": "box",
-    "lucide": "box"
+    "lucide": "box",
+    "ref": "tabler:cards"
   },
   "system": {
     "phosphor": "cpu",
@@ -45,7 +50,8 @@
     "iconoir": "cpu",
     "remix": "cpu",
     "solar": "cpu",
-    "lucide": "cpu"
+    "lucide": "cpu",
+    "ref": "lucide:activity"
   },
   "settings": {
     "phosphor": "gear",
@@ -53,7 +59,8 @@
     "iconoir": "settings",
     "remix": "settings-3",
     "solar": "settings",
-    "lucide": "settings"
+    "lucide": "settings",
+    "ref": "hugeicons:settings-02"
   },
   "attach": {
     "phosphor": "paperclip",
@@ -61,7 +68,8 @@
     "iconoir": "attachment",
     "remix": "attachment",
     "solar": "paperclip",
-    "lucide": "paperclip"
+    "lucide": "paperclip",
+    "ref": "lucide:paperclip"
   },
   "mic": {
     "phosphor": "microphone",
@@ -69,7 +77,8 @@
     "iconoir": "microphone",
     "remix": "mic",
     "solar": "microphone",
-    "lucide": "mic"
+    "lucide": "mic",
+    "ref": "lucide:mic"
   },
   "globe": {
     "phosphor": "globe",
@@ -77,7 +86,8 @@
     "iconoir": "globe",
     "remix": "global",
     "solar": "global",
-    "lucide": "globe"
+    "lucide": "globe",
+    "ref": "lucide:globe"
   },
   "wifi": {
     "phosphor": "wifi-high",
@@ -85,7 +95,8 @@
     "iconoir": "wifi",
     "remix": "wifi",
     "solar": "wi-fi-router",
-    "lucide": "wifi"
+    "lucide": "wifi",
+    "ref": "tabler:wifi"
   },
   "send": {
     "phosphor": "paper-plane-right",
@@ -93,7 +104,8 @@
     "iconoir": "send",
     "remix": "send-plane",
     "solar": "plain",
-    "lucide": "send"
+    "lucide": "send",
+    "ref": "lucide:send"
   },
   "stop": {
     "phosphor": "stop",
@@ -101,7 +113,8 @@
     "iconoir": "square",
     "remix": "stop",
     "solar": "stop",
-    "lucide": "square"
+    "lucide": "square",
+    "ref": "tabler:player-stop"
   },
   "chevron-down": {
     "phosphor": "caret-down",
@@ -109,7 +122,8 @@
     "iconoir": "nav-arrow-down",
     "remix": "arrow-down-s",
     "solar": "alt-arrow-down",
-    "lucide": "chevron-down"
+    "lucide": "chevron-down",
+    "ref": "heroicons:chevron-down"
   },
   "chevron-left": {
     "phosphor": "caret-left",
@@ -117,7 +131,8 @@
     "iconoir": "nav-arrow-left",
     "remix": "arrow-left-s",
     "solar": "alt-arrow-left",
-    "lucide": "chevron-left"
+    "lucide": "chevron-left",
+    "ref": "heroicons:chevron-left"
   },
   "chevron-right": {
     "phosphor": "caret-right",
@@ -125,7 +140,8 @@
     "iconoir": "nav-arrow-right",
     "remix": "arrow-right-s",
     "solar": "alt-arrow-right",
-    "lucide": "chevron-right"
+    "lucide": "chevron-right",
+    "ref": "heroicons:chevron-right"
   },
   "close": {
     "phosphor": "x",
@@ -133,7 +149,8 @@
     "iconoir": "xmark",
     "remix": "close",
     "solar": "close-circle",
-    "lucide": "x"
+    "lucide": "x",
+    "ref": "heroicons:x-mark"
   },
   "copy": {
     "phosphor": "copy",
@@ -141,7 +158,8 @@
     "iconoir": "copy",
     "remix": "file-copy",
     "solar": "copy",
-    "lucide": "copy"
+    "lucide": "copy",
+    "ref": "proicons:copy"
   },
   "save": {
     "phosphor": "floppy-disk",
@@ -149,7 +167,8 @@
     "iconoir": "floppy-disk",
     "remix": "save",
     "solar": "diskette",
-    "lucide": "save"
+    "lucide": "save",
+    "ref": "lucide:save"
   },
   "layers": {
     "phosphor": "stack",
@@ -157,7 +176,8 @@
     "iconoir": "multi-window",
     "remix": "stack",
     "solar": "layers",
-    "lucide": "layers"
+    "lucide": "layers",
+    "ref": "tabler:stack-2"
   },
   "check": {
     "phosphor": "check",
@@ -165,7 +185,8 @@
     "iconoir": "check",
     "remix": "check",
     "solar": "check-circle",
-    "lucide": "check"
+    "lucide": "check",
+    "ref": "system-uicons:check"
   },
   "win-min": {
     "phosphor": "minus",
@@ -173,7 +194,8 @@
     "iconoir": "minus",
     "remix": "subtract",
     "solar": "minus-circle",
-    "lucide": "minus"
+    "lucide": "minus",
+    "ref": "tabler:minus"
   },
   "win-max": {
     "phosphor": "square",
@@ -181,7 +203,8 @@
     "iconoir": "square",
     "remix": "checkbox-blank",
     "solar": "maximize-square-minimalistic",
-    "lucide": "square"
+    "lucide": "square",
+    "ref": "lucide:square"
   },
   "win-restore": {
     "phosphor": "copy-simple",
@@ -189,7 +212,8 @@
     "iconoir": "copy",
     "remix": "file-copy",
     "solar": "copy",
-    "lucide": "copy"
+    "lucide": "copy",
+    "ref": "proicons:chrome-restore"
   },
   "win-close": {
     "phosphor": "x",
@@ -197,7 +221,8 @@
     "iconoir": "xmark",
     "remix": "close",
     "solar": "close-circle",
-    "lucide": "x"
+    "lucide": "x",
+    "ref": "hugeicons:cancel-01"
   },
   "cpu": {
     "phosphor": "cpu",
@@ -205,7 +230,8 @@
     "iconoir": "cpu",
     "remix": "cpu",
     "solar": "cpu",
-    "lucide": "cpu"
+    "lucide": "cpu",
+    "ref": "tabler:cpu"
   },
   "gpu": {
     "phosphor": "graphics-card",
@@ -213,7 +239,8 @@
     "iconoir": "cpu",
     "remix": "device",
     "solar": "monitor",
-    "lucide": "monitor"
+    "lucide": "monitor",
+    "ref": "tabler:gpu"
   },
   "ram": {
     "phosphor": "memory",
@@ -221,7 +248,8 @@
     "iconoir": "database",
     "remix": "database-2",
     "solar": "database",
-    "lucide": "memory-stick"
+    "lucide": "memory-stick",
+    "ref": "lucide:memory-stick"
   },
   "search": {
     "phosphor": "magnifying-glass",
@@ -229,7 +257,8 @@
     "iconoir": "search",
     "remix": "search",
     "solar": "minimalistic-magnifer",
-    "lucide": "search"
+    "lucide": "search",
+    "ref": "phosphor:magnifying-glass"
   },
   "folder": {
     "phosphor": "folder",
@@ -237,7 +266,8 @@
     "iconoir": "folder",
     "remix": "folder",
     "solar": "folder",
-    "lucide": "folder"
+    "lucide": "folder",
+    "ref": "lucide:folder"
   },
   "pin": {
     "phosphor": "push-pin",
@@ -245,7 +275,8 @@
     "iconoir": "pin",
     "remix": "pushpin",
     "solar": "pin",
-    "lucide": "pin"
+    "lucide": "pin",
+    "ref": "tabler:pin"
   },
   "trash": {
     "phosphor": "trash",
@@ -253,7 +284,8 @@
     "iconoir": "trash",
     "remix": "delete-bin",
     "solar": "trash-bin-minimalistic",
-    "lucide": "trash-2"
+    "lucide": "trash-2",
+    "ref": "hugeicons:delete-01"
   },
   "edit": {
     "phosphor": "pencil-simple",
@@ -261,7 +293,8 @@
     "iconoir": "edit-pencil",
     "remix": "pencil",
     "solar": "pen",
-    "lucide": "pencil"
+    "lucide": "pencil",
+    "ref": "tabler:pencil"
   },
   "eject": {
     "phosphor": "eject",
@@ -269,7 +302,8 @@
     "iconoir": "eject",
     "remix": "eject",
     "solar": "upload-minimalistic",
-    "lucide": "circle-arrow-out-up-right"
+    "lucide": "circle-arrow-out-up-right",
+    "ref": "f7:eject"
   },
   "refresh": {
     "phosphor": "arrow-clockwise",
@@ -277,7 +311,8 @@
     "iconoir": "refresh",
     "remix": "refresh",
     "solar": "refresh",
-    "lucide": "refresh-cw"
+    "lucide": "refresh-cw",
+    "ref": "remix:refresh"
   },
   "spark": {
     "phosphor": "sparkle",
@@ -285,7 +320,8 @@
     "iconoir": "sparks",
     "remix": "sparkling",
     "solar": "stars-minimalistic",
-    "lucide": "sparkles"
+    "lucide": "sparkles",
+    "ref": "hugeicons:sparkle"
   },
   "clock": {
     "phosphor": "clock",
@@ -293,7 +329,8 @@
     "iconoir": "clock",
     "remix": "time",
     "solar": "clock-circle",
-    "lucide": "clock"
+    "lucide": "clock",
+    "ref": "lucide:clock"
   },
   "sliders": {
     "phosphor": "sliders-horizontal",
@@ -301,7 +338,8 @@
     "iconoir": "control-slider",
     "remix": "equalizer-2",
     "solar": "tuning-2",
-    "lucide": "sliders-horizontal"
+    "lucide": "sliders-horizontal",
+    "ref": "hugeicons:sliders-horizontal"
   },
   "more": {
     "phosphor": "dots-three",
@@ -309,7 +347,8 @@
     "iconoir": "more-horiz",
     "remix": "more",
     "solar": "menu-dots",
-    "lucide": "ellipsis"
+    "lucide": "ellipsis",
+    "ref": "phosphor:dots-three"
   },
   "plug": {
     "phosphor": "plugs-connected",
@@ -317,7 +356,8 @@
     "iconoir": "plug-type-a",
     "remix": "plug",
     "solar": "plug-circle",
-    "lucide": "plug"
+    "lucide": "plug",
+    "ref": "tabler:plug-connected"
   },
   "tasks": {
     "phosphor": "list-checks",
@@ -325,7 +365,8 @@
     "iconoir": "task-list",
     "remix": "task",
     "solar": "checklist-minimalistic",
-    "lucide": "list-checks"
+    "lucide": "list-checks",
+    "ref": "lucide:list-todo"
   },
   "folder-plus": {
     "phosphor": "folder-plus",
@@ -333,7 +374,8 @@
     "iconoir": "folder-plus",
     "remix": "folder-add",
     "solar": "add-folder",
-    "lucide": "folder-plus"
+    "lucide": "folder-plus",
+    "ref": "tabler:folder-plus"
   },
   "folder-open": {
     "phosphor": "folder-open",
@@ -341,7 +383,8 @@
     "iconoir": "folder",
     "remix": "folder-open",
     "solar": "folder-open",
-    "lucide": "folder-open"
+    "lucide": "folder-open",
+    "ref": "lucide:folder-open"
   },
   "file": {
     "phosphor": "file",
@@ -349,7 +392,8 @@
     "iconoir": "page",
     "remix": "file",
     "solar": "file",
-    "lucide": "file"
+    "lucide": "file",
+    "ref": "lucide:file"
   },
   "diff": {
     "phosphor": "git-diff",
@@ -357,7 +401,8 @@
     "iconoir": "git-compare",
     "remix": "git-pull-request",
     "solar": "code-file",
-    "lucide": "git-compare"
+    "lucide": "git-compare",
+    "ref": "octicon:diff"
   },
   "terminal": {
     "phosphor": "terminal-window",
@@ -365,7 +410,8 @@
     "iconoir": "terminal",
     "remix": "terminal-box",
     "solar": "code-square",
-    "lucide": "terminal"
+    "lucide": "terminal",
+    "ref": "lucide:terminal"
   },
   "bell": {
     "phosphor": "bell",
@@ -373,7 +419,8 @@
     "iconoir": "bell",
     "remix": "notification",
     "solar": "bell",
-    "lucide": "bell"
+    "lucide": "bell",
+    "ref": "akar-icons:bell"
   },
   "mail": {
     "phosphor": "envelope-simple",
@@ -381,7 +428,8 @@
     "iconoir": "mail",
     "remix": "mail",
     "solar": "letter",
-    "lucide": "mail"
+    "lucide": "mail",
+    "ref": "lucide:mail"
   },
   "play": {
     "phosphor": "play",
@@ -389,6 +437,7 @@
     "iconoir": "play",
     "remix": "play",
     "solar": "play",
-    "lucide": "play"
+    "lucide": "play",
+    "ref": "phosphor:play"
   }
 }

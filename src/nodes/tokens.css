@@ -90,7 +90,7 @@
   --icon-lg: 20px;
   --icon-size: 18px;
   --icon-box: 32px;
-  --icon-stroke: 1.5;
+  --icon-stroke: 1.75;
 
   --dur-fast: 150ms; --dur: 200ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);

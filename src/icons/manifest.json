@@ -145,6 +145,18 @@
         "fill": "fill"
       },
       "missing": []
+    },
+    "ref": {
+      "name": "Jarvis mix (Tabler, Lucide, Phosphor)",
+      "variants": [
+        "outline"
+      ],
+      "active": null,
+      "kinds": {
+        "outline": "stroke",
+        "fill": "fill"
+      },
+      "missing": []
     }
   }
 }

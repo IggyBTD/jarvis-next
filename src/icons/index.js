@@ -5,7 +5,7 @@ import manifest from './manifest.json';
 
 const loaders = import.meta.glob('./sets/*.json');
 const KEY = 'jarvis.iconSet';
-export const DEFAULT_SET = 'iconoir:regular';
+export const DEFAULT_SET = 'ref:outline';
 
 // older names used by modules written before the switcher, and the Material glyph names dock-ui.js passes
 const ALIAS = { clip: 'attach', down: 'chevron-down', left: 'chevron-left', right: 'chevron-right', attach_file: 'attach', mic_off: 'mic-off', language: 'globe', public_off: 'globe-off', wifi_off: 'wifi-off', 'win-maximize': 'win-max' };

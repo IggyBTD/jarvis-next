@@ -34,7 +34,7 @@ body { background: var(--bg); }
 #sidebar .nav-item:active { transform: scale(0.985); }
 /* New chat: the plus sits in an atom */
 #sidebar .nav-new { color: var(--rail-ink-1); font-weight: 600; }
-#sidebar .nav-new .icon { width: 24px; height: 24px; margin-left: -3px; padding: 4px; border-radius: 50%; color: #06201C; background: var(--rail-atom); box-shadow: inset 1.5px 1.5px 0 var(--rail-shine), inset 0 0 0 1.5px var(--rail-atom-rim); }
+#sidebar .nav-new .icon { width: 24px; height: 24px; margin-left: -3px; padding: 4px; border-radius: 50%; color: #06201C; background: var(--rail-atom); box-shadow: inset 1.5px 1.5px 0 var(--rail-shine), inset 0 0 0 1.5px var(--rail-atom-rim); } /* optical: atom and bond geometry of the nodes design */
 #sidebar #chat-search { border-color: var(--rail-line); background: var(--rail-hover); color: var(--rail-ink-1); }
 #sidebar #chat-search::placeholder { color: var(--rail-ink-3); }
 #sidebar #chat-search:focus { border-color: var(--rail-teal); outline: none; }
@@ -50,7 +50,7 @@ body { background: var(--bg); }
 #sidebar .chat-item .icon, #sidebar .folder-item .icon, #sidebar .list-label .icon { color: var(--rail-ink-3); }
 #sidebar .chat-item:hover, #sidebar .folder-item:hover { background: var(--rail-hover); color: var(--rail-ink-1); }
 #sidebar .chat-item.current { background: var(--rail-active); color: var(--rail-ink-1); }
-#sidebar .chat-item.current::before { content: ""; flex: none; width: 8px; height: 8px; margin-left: -2px; border-radius: 50%; background: var(--rail-atom); box-shadow: inset 0 0 0 1px var(--rail-atom-rim); }
+#sidebar .chat-item.current::before { content: ""; flex: none; width: 8px; height: 8px; margin-left: -2px; border-radius: 50%; background: var(--rail-atom); box-shadow: inset 0 0 0 1px var(--rail-atom-rim); } /* optical: atom and bond geometry of the nodes design */
 #sidebar .chat-item .ci-tag, #sidebar .folder-item .ci-count { color: var(--rail-ink-3); }
 #sidebar .ci-more { background: var(--rail-active); color: var(--rail-ink-2); }
 #sidebar .ci-more .icon { color: inherit; }
@@ -66,7 +66,7 @@ body { background: var(--bg); }
 
 /* foot: the live readout, the services molecule, Settings */
 #sidebar #side-foot { gap: var(--s-2); border-top-color: var(--rail-line); }
-#mini-sys { display: flex; flex-direction: column; gap: 6px; padding: var(--s-1) var(--s-2) 0; }
+#mini-sys { display: flex; flex-direction: column; gap: 6px; padding: var(--s-1) var(--s-2) 0; } /* optical: atom and bond geometry of the nodes design */
 #mini-sys .mini-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) 64px; align-items: center; gap: var(--s-2); font-size: var(--fs-2); line-height: var(--lh-xs); color: var(--rail-ink-3); }
 #mini-sys .mini-row .mono-data { text-align: right; color: var(--rail-ink-2); }
 #mini-sys .mini-bar { background: var(--rail-active); }
@@ -75,23 +75,23 @@ body { background: var(--bg); }
 #mini-sys .mini-bar > i[data-level="high"] { background: var(--rail-danger); }
 /* services: one atom per service on a single horizontal bond */
 #sidebar #mini-services { position: relative; display: flex; flex-wrap: nowrap; gap: 0; min-height: 0; padding: var(--s-2) 0 var(--s-1); }
-#sidebar #mini-services::before { content: ""; position: absolute; top: 14px; left: 16.67%; right: 16.67%; height: 2px; border-radius: 1px; background: var(--rail-rod); }
+#sidebar #mini-services::before { content: ""; position: absolute; top: 14px; left: 16.67%; right: 16.67%; height: 2px; border-radius: 1px; background: var(--rail-rod); } /* optical: atom and bond geometry of the nodes design */
 #sidebar #mini-services:has(.svc:nth-child(4))::before { left: 12.5%; right: 12.5%; }
 #sidebar #mini-services:not(:has(.svc:nth-child(2)))::before { display: none; }
-#sidebar #mini-services .svc { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: var(--fs-2); line-height: var(--lh-xs); color: var(--rail-ink-3); text-align: center; text-wrap: balance; }
+#sidebar #mini-services .svc { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: var(--fs-2); line-height: var(--lh-xs); color: var(--rail-ink-3); text-align: center; text-wrap: balance; } /* optical: atom and bond geometry of the nodes design */
 #sidebar #mini-services .svc::before { position: relative; flex: none; width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--rail); box-shadow: inset 0 0 0 2px var(--rail-ink-3); }
 #sidebar #mini-services .svc[data-state="ok"] { color: var(--rail-ink-2); }
 #sidebar #mini-services .svc[data-state="ok"]::before { background: var(--rail-atom); box-shadow: inset 1.5px 1.5px 0 var(--rail-shine), inset 0 0 0 1.5px var(--rail-atom-rim); }
 #sidebar #mini-services .svc[data-state="error"] { color: var(--rail-danger); }
-#sidebar #mini-services .svc[data-state="error"]::before { border-radius: 2px; transform: rotate(45deg) scale(0.85); background: var(--rail-danger); box-shadow: inset 0 0 0 1.5px var(--rail-danger-rim); } /* a failed service is a diamond, not only a colour */
+#sidebar #mini-services .svc[data-state="error"]::before { border-radius: 2px; transform: rotate(45deg) scale(0.85); background: var(--rail-danger); box-shadow: inset 0 0 0 1.5px var(--rail-danger-rim); } /* a failed service is a diamond, not only a colour */ /* optical: atom and bond geometry of the nodes design */
 /* Settings lists the same services on the light ground */
 #set-services .svc::before { width: 12px; height: 12px; border: 0; background: var(--bg); box-shadow: inset 0 0 0 2px var(--rod); }
 #set-services .svc[data-state="ok"]::before { background: var(--accent-mid); box-shadow: inset 1px 1px 0 var(--atom-shine), inset 0 0 0 1.25px var(--atom-rim); }
-#set-services .svc[data-state="error"]::before { border-radius: 2px; transform: rotate(45deg) scale(0.85); background: var(--danger); box-shadow: none; }
+#set-services .svc[data-state="error"]::before { border-radius: 2px; transform: rotate(45deg) scale(0.85); background: var(--danger); box-shadow: none; } /* optical: atom and bond geometry of the nodes design */
 body.side-off #side-toggle { color: var(--text-2); }
 
 /* ---- the conversation: the step chain ------------------------------------------------------------------------------------------ */
-.chat-line.user .chat-text { background: var(--bubble); border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg); font-family: var(--sans); }
+.chat-line.user .chat-text { background: var(--bubble); border-radius: var(--r-lg) var(--r-lg) 6px var(--r-lg); font-family: var(--sans); } /* optical: atom and bond geometry of the nodes design */
 .chat-line.assistant { font: 400 var(--fs-5)/var(--lh-prose) var(--sans); }
 .chat-line:is(.assistant, .steps, .tool, .error) { padding-left: 36px; overflow-clip-margin: calc(var(--s-5) + var(--s-4)); }
 .chat-line.error { color: var(--danger); font-size: var(--fs-4); }
@@ -101,10 +101,10 @@ body.side-off #side-toggle { color: var(--text-2); }
   background: var(--accent-mid); box-shadow: inset 1.5px 1.5px 0 var(--atom-shine), inset 0 0 0 1.5px var(--atom-rim);
   animation: atom-in 280ms var(--ease-out) both;
 }
-.chat-line:is(.steps, .tool)::before { left: 7px; top: 7px; width: 10px; height: 10px; background: var(--rod-atom); box-shadow: inset 1px 1px 0 var(--atom-shine), inset 0 0 0 1.25px var(--rod-rim); }
+.chat-line:is(.steps, .tool)::before { left: 7px; top: 7px; width: 10px; height: 10px; background: var(--rod-atom); box-shadow: inset 1px 1px 0 var(--atom-shine), inset 0 0 0 1.25px var(--rod-rim); } /* optical: atom and bond geometry of the nodes design */
 .chat-line.tool::before { top: 12px; }
 .chat-line.error::before, .chat-line.steps.bad::before, .chat-line.tool:has(.bad, .denied)::before { background: var(--danger); box-shadow: inset 1px 1px 0 var(--atom-shine), inset 0 0 0 1.25px var(--danger); }
-.chat-line.tool:has(.approval:not(.approved):not(.denied))::before, .chat-line.steps:has(li[data-state="queued"])::before { left: 5px; top: 5px; width: 14px; height: 14px; background: var(--bg); box-shadow: inset 0 0 0 2px var(--accent-mid); }
+.chat-line.tool:has(.approval:not(.approved):not(.denied))::before, .chat-line.steps:has(li[data-state="queued"])::before { left: 5px; top: 5px; width: 14px; height: 14px; background: var(--bg); box-shadow: inset 0 0 0 2px var(--accent-mid); } /* optical: atom and bond geometry of the nodes design */
 .chat-line.tool:has(.approval:not(.approved):not(.denied))::before { top: 10px; }
 /* the node mesh rests ON the newest reply's atom, and is the atom of the reply being written */
 .chat-line:has(> .orb)::before, .chat-line.steps.live::before { visibility: hidden; }
@@ -115,15 +115,15 @@ body.side-off #side-toggle { color: var(--text-2); }
 .chat-line.steps .steps-lead .orb { --orb-size: 24px; }
 /* bonds: from this atom down to the next one in the turn, drawn under the atoms */
 .chat-line:is(.assistant, .steps, .tool, .error):has(+ .chat-line:is(.assistant, .steps, .tool, .error))::after {
-  content: ""; position: absolute; z-index: 0; left: 11px; width: 2px; top: 14px; bottom: calc(-1 * var(--s-5) - 14px);
-  border-radius: 1px; background: var(--rod); transform-origin: top;
+  content: ""; position: absolute; z-index: 0; left: 11px; width: 2px; top: 14px; bottom: calc(-1 * var(--s-5) - 14px); /* optical: atom and bond geometry of the nodes design */
+  border-radius: 1px; background: var(--rod); transform-origin: top; /* optical: atom and bond geometry of the nodes design */
   animation: bond-in 320ms 60ms var(--ease-out) both;
 }
 .chat-line:is(.assistant, .steps, .tool, .error) .chat-meta, .chat-line.assistant:has(> .orb) .chat-meta { left: 36px; line-height: var(--lh-xs); }
 
 /* inside a step row: each step is an atom on one rod */
 .steps-list { position: relative; margin: var(--s-1) 0 var(--s-1) 4px; padding-left: var(--s-4); border-left: 0; }
-.steps-list::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 2px; border-radius: 1px; background: var(--rod); }
+.steps-list::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 2px; border-radius: 1px; background: var(--rod); } /* optical: atom and bond geometry of the nodes design */
 .steps-list > li { position: relative; }
 .steps-list > li::before { content: ""; position: absolute; left: calc(-1 * var(--s-4) - 3px); top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--rod-atom); box-shadow: inset 0 0 0 1px var(--rod-rim); }
 .steps-list > li[data-state="ok"]::before { background: var(--accent-mid); box-shadow: inset 0 0 0 1px var(--atom-rim); }
@@ -137,7 +137,7 @@ li[data-state="queued"] > .step > .step-line, li[data-state="queued"] .step-flag
 #chat-output > .chat-line.assistant:last-child .chat-meta, #chat-output > .chat-line.assistant:last-child .chat-edit { opacity: 1; }
 
 /* reasoning: a quiet fold with a drawn chevron, no glyph */
-.thought summary::before { content: ""; width: 6px; height: 6px; margin: 0 var(--s-3) 2px 2px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; rotate: -45deg; }
+.thought summary::before { content: ""; width: 6px; height: 6px; margin: 0 var(--s-3) 2px 2px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; rotate: -45deg; } /* optical: atom and bond geometry of the nodes design */
 .thought[open] summary::before { rotate: 45deg; }
 
 /* ---- element tiles: an artifact's type as a symbol from the kit's periodic table -------------------------------------------------- */
@@ -151,7 +151,7 @@ li[data-state="queued"] > .step > .step-line, li[data-state="queued"] .step-flag
 .ac-state { grid-column: 2; grid-row: 2; font: 400 var(--fs-2)/var(--lh-xs) var(--sans); color: var(--text-3); }
 .ac-state[data-type]:not([data-type=""])::before, .art-tile .a-sub[data-type]::before { content: attr(data-type); margin-right: var(--s-2); color: var(--text-2); }
 .artifact-card.busy .ac-state { color: var(--accent); }
-.art-tile { display: grid; grid-template-columns: var(--h-lg) minmax(0, 1fr); grid-template-rows: auto auto; align-content: start; column-gap: var(--s-3); row-gap: 2px; }
+.art-tile { display: grid; grid-template-columns: var(--h-lg) minmax(0, 1fr); grid-template-rows: auto auto; align-content: start; column-gap: var(--s-3); row-gap: 2px; } /* optical: atom and bond geometry of the nodes design */
 .art-tile .a-title, .art-tile .a-sub { grid-column: 2; }
 .art-tile:hover { background: var(--surface-2); border-color: var(--accent-mid); }
 
@@ -178,7 +178,7 @@ li[data-state="queued"] > .step > .step-line, li[data-state="queued"] .step-flag
 /* starters on a new chat */
 #starters { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2); width: min(var(--measure), calc(100% - 2 * var(--chat-gutter))); margin: 0 auto var(--s-4); }
 #chat-stack:has(.chat-line) #starters, body[data-page="code"] #starters { display: none; }
-.starter { height: var(--h-md); padding: 0 14px; border: 1px solid var(--border-strong); border-radius: var(--r-pill); background: transparent; color: var(--text-2); font-size: var(--fs-3); transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
+.starter { height: var(--h-md); padding: 0 14px; border: 1px solid var(--border-strong); border-radius: var(--r-pill); background: transparent; color: var(--text-2); font-size: var(--fs-3); transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); } /* optical: atom and bond geometry of the nodes design */
 .starter:hover { background: var(--surface-2); border-color: var(--rod); color: var(--text); }
 .starter:active { transform: scale(0.97); }
 #chat-empty h2 { font: 400 32px/1.15 var(--display); letter-spacing: -0.015em; text-wrap: balance; }
