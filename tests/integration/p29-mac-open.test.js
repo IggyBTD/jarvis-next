@@ -127,7 +127,7 @@ test('the phone app is a second page of the same build, with a home-screen manif
   const html = fs.readFileSync(new URL('../../mobile.html', import.meta.url), 'utf8');
   assert.match(html, /viewport-fit=cover/);
   const viewport = html.match(/<meta name="viewport" content="([^"]*)"/)[1];
-  assert.doesNotMatch(viewport, /user-scalable|maximum-scale/, 'pinch zoom stays available');
+  assert.match(viewport, /maximum-scale=1/, 'a real app does not zoom');
   assert.match(html, /<textarea id="m-input"[^>]*autocapitalize="sentences"/);
   const manifest = JSON.parse(fs.readFileSync(new URL('../../public/manifest-mobile.webmanifest', import.meta.url), 'utf8'));
   assert.deepEqual([manifest.start_url, manifest.display, manifest.orientation], ['/mobile.html', 'standalone', 'portrait']);
