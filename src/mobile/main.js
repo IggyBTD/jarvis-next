@@ -21,7 +21,6 @@ const root = document.documentElement;
 const app = $('m-app');
 const input = $('m-input');
 const send = $('m-send');
-const form = $('m-composer');
 const label = (id) => state.machines[id]?.label ?? (id === 'mac' ? 'Mac' : 'PC');
 
 hydrateIcons(document);
@@ -81,7 +80,7 @@ chat.onBusyChange(refreshSend);
 input.addEventListener('input', () => { grow(); refreshSend(); });
 // the button does not take focus, so sending does not close the keyboard
 send.addEventListener('pointerdown', (e) => e.preventDefault());
-input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); form.requestSubmit(); } }); // a hardware keyboard: Cmd+Enter sends; plain Return is a new line
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submitMessage(); } }); // a hardware keyboard: Cmd+Enter sends; plain Return is a new line
 
 let toastTimer = 0;
 function toast(text) {
@@ -93,8 +92,8 @@ function toast(text) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
+send.addEventListener('click', submitMessage);
+function submitMessage() {
   if (chat.isBusy()) { abort(); return; }
   const text = input.value.trim();
   if (!text) return;
@@ -107,7 +106,7 @@ form.addEventListener('submit', (e) => {
   grow();
   refreshSend();
   renderBar();
-});
+}
 
 // ---- the bar, the banner, the greeting ----------------------------------------------------------------------------------------------
 function renderBar() {
