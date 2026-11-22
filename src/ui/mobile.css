@@ -19,7 +19,7 @@ button { -webkit-appearance: none; appearance: none; touch-action: manipulation;
 .m-secondary { background: var(--surface-3); color: var(--text); }
 
 /* ---- the bar ---- */
-.m-bar { flex: none; display: grid; grid-template-columns: var(--tap) 1fr var(--tap); align-items: center; min-height: calc(var(--tap) + env(safe-area-inset-top)); padding: env(safe-area-inset-top) max(var(--s-2), env(safe-area-inset-right)) 0 max(var(--s-2), env(safe-area-inset-left)); background: var(--bg); box-shadow: 0 1px 0 transparent; transition: box-shadow var(--dur-fast) var(--ease-out); }
+.m-bar { flex: none; display: grid; grid-template-columns: var(--tap) 1fr var(--tap); align-items: center; min-height: calc(var(--tap) + env(safe-area-inset-top) + var(--s-4)); padding: calc(env(safe-area-inset-top) + var(--s-4)) /* iOS 26 fades whatever sits in the first few points under the status bar of a home-screen app; the page cannot switch that off */ max(var(--s-2), env(safe-area-inset-right)) 0 max(var(--s-2), env(safe-area-inset-left)); background: var(--bg); box-shadow: 0 1px 0 transparent; transition: box-shadow var(--dur-fast) var(--ease-out); }
 #m-app[data-scrolled="true"] .m-bar { box-shadow: 0 1px 0 var(--border); } /* the hairline appears once the conversation has scrolled under the bar */
 .m-title { min-width: 0; height: var(--tap); display: grid; align-content: center; justify-items: center; padding: 0 var(--s-2); background: transparent; border: 0; border-radius: var(--r-md); color: var(--text); }
 .m-title-row { max-width: 100%; min-width: 0; display: flex; align-items: center; gap: var(--s-1); }
@@ -274,7 +274,7 @@ button.m-prow:active { background: var(--surface-3); }
 .m-drawer.open { pointer-events: auto; }
 .m-drawer-scrim { position: absolute; inset: 0; background: color-mix(in srgb, black 55%, transparent); opacity: 0; transition: opacity 200ms var(--ease-out); }
 .m-drawer.open .m-drawer-scrim { opacity: 1; }
-.m-drawer-panel { position: absolute; left: 0; top: 0; bottom: 0; width: 86%; max-width: calc(var(--s-8) * 6); display: flex; flex-direction: column; padding: env(safe-area-inset-top) var(--s-2) env(safe-area-inset-bottom) max(var(--s-2), env(safe-area-inset-left)); background: var(--bg); border-right: 1px solid var(--border); transform: translateX(-100%); transition: transform 280ms var(--ease-out); }
+.m-drawer-panel { position: absolute; left: 0; top: 0; bottom: 0; width: 86%; max-width: calc(var(--s-8) * 6); display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top) + var(--s-4)) var(--s-2) env(safe-area-inset-bottom) max(var(--s-2), env(safe-area-inset-left)); background: var(--bg); border-right: 1px solid var(--border); transform: translateX(-100%); transition: transform 280ms var(--ease-out); }
 .m-drawer.open .m-drawer-panel { transform: none; }
 .m-drawer-head { flex: none; display: flex; align-items: center; justify-content: space-between; min-height: var(--s-8); padding: 0 var(--s-2); }
 .m-drawer-brand { font: 600 var(--fs-6)/var(--lh-lg) var(--display, var(--sans)); }
