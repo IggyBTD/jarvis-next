@@ -75,7 +75,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   const policy = createPolicy(cfg.policy);
   const router = createToolRouter({ cfg, policy, gate, audit, tokens: (id) => tokens.machines[id]?.[0] ?? '' });
   const targetState = createTargetState({ dataDir: cfg.dataDir, machines: ids, bus });
-  const conversations = createConversations({ dir: dataPath(cfg, 'conversations') });
+  const conversations = createConversations({ dir: dataPath(cfg, 'conversations'), onChange: (id) => bus.publish('conversations.changed', { id }) });
   const memory = createMemory({ dataDir: cfg.dataDir });
   const prompts = createPromptBuilder({ prompts: cfg.prompts, machines, timezone: cfg.schedules.timezone, getInfo: (id) => router.info(id), notes: memory.prompt });
   const llm = createLlmClient({ config: cfg.models });

@@ -148,6 +148,7 @@ function ingestActive() {
   if (t && !t.offline) ingestTelemetry(t.metrics, state.target !== 'pc');
 }
 
+let listTimer = 0;
 function handle(m) {
   switch (m.type) {
     case 'state':
@@ -184,6 +185,11 @@ function handle(m) {
     case 'chat.delta': case 'chat.done': case 'chat.error': case 'tool.call': case 'tool.result':
       if (m.convId === convId) emit(m);
       else if (m.type === 'chat.done') { unseen.add(m.convId); emit({ type: 'chat-states' }); } // finished in a chat that is not open
+      return;
+    case 'conversations.changed': // a chat was saved, renamed, pinned or deleted, on this device or another: refresh the lists (one refresh per burst)
+      clearTimeout(listTimer);
+      listTimer = setTimeout(() => document.dispatchEvent(new CustomEvent('jarvis:sessions-changed')), 400);
+      emit({ type: 'conversations.changed', id: m.id });
       return;
     case 'clipboard.result': answer(m.id, m); return;
     case 'error': if (answer(m.id, { ok: false, message: m.reason })) return; emit({ type: 'server-error', reason: m.reason }); return;

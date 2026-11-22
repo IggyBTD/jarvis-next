@@ -9,7 +9,7 @@ import { stateOf, cleanState } from './taint.js';
 export const estimateTokens = (m) => Math.ceil((typeof m.content === 'string' ? m.content.length : JSON.stringify(m.content ?? '').length) / 3.5) + (m.tool_calls ? Math.ceil(JSON.stringify(m.tool_calls).length / 3.5) : 0) + 8;
 const ID_RE = /^[\w-]{1,64}$/;
 
-export function createConversations({ dir, now = () => new Date() }) {
+export function createConversations({ dir, now = () => new Date(), onChange = () => {} }) {
   fs.mkdirSync(dir, { recursive: true });
   const cache = new Map();
   const file = (id) => path.join(dir, `${id}.json`);
@@ -27,6 +27,7 @@ export function createConversations({ dir, now = () => new Date() }) {
   function save(c) {
     c.updatedAt = now().toISOString();
     writeJsonAtomic(file(c.id), { ...c, unlocked: [...c.unlocked] });
+    onChange(c.id); // other devices refresh their chat list
   }
   function create(id = newId('c-')) {
     if (!ID_RE.test(id)) throw new Error('bad conversation id');
@@ -56,6 +57,7 @@ export function createConversations({ dir, now = () => new Date() }) {
       if (!ID_RE.test(id)) throw new Error('bad conversation id');
       cache.delete(id);
       fs.rmSync(file(id), { force: true });
+      onChange(id);
     },
     // the whole spoken conversation, for opening a saved chat
     transcript: (c) => c.messages.filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content).map((m) => ({ role: m.role, content: m.content, target: m.target ?? null, ts: m.ts })),
