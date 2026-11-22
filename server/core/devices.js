@@ -16,7 +16,7 @@ export const LOCAL = Symbol('local');
 export const SCOPES = ['chat', 'approve', 'settings'];
 export const KINDS = ['desktop', 'browser', 'phone'];
 // desktop: the app window on the PC. browser: the Mac (or any other computer) in a browser. phone: the iPhone app.
-export const DEFAULT_SCOPES = { desktop: ['chat', 'approve', 'settings'], browser: ['chat', 'approve', 'settings'], phone: ['chat', 'approve'] };
+export const DEFAULT_SCOPES = { desktop: ['chat', 'approve', 'settings'], browser: ['chat', 'approve', 'settings'], phone: ['chat', 'approve', 'settings'] }; // the phone is a hub: the same scopes as the Mac. A T3 approval and the admin actions still need the PIN from here.
 export const LEGACY_SCOPES = ['chat', 'approve'];
 export const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTVWXYZ23456789'; // no I L O U 0 1
 

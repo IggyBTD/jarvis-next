@@ -9,9 +9,9 @@ import '@fontsource/jetbrains-mono/latin-400.css';
 import { hydrateIcons, setIcon } from '../icons/index.js';
 import { mountLogos } from '../core/node-mesh.js';
 import { prettyModelName } from '../core/model-name.js';
-import { state, onLink, connect, retry, hasToken, sendChat, abort, newChat, openChat, forgetNote, pair } from './link.js';
+import { state, onLink, connect, retry, hasToken, sendChat, abort, newChat, openChat, forgetNote, pair, patchChat, getConvId } from './link.js';
 import * as chat from './chat.js';
-import { openChats, openSettings, openApproval } from './panels.js';
+import { openChats, openSettings, openApproval, openAttach } from './panels.js';
 import { sheetOpen } from './sheets.js';
 import { initDrawer, openDrawer, closeDrawer, drawerOpen } from './drawer.js';
 import { initPages, showPage, searchPage } from './pages.js';
@@ -173,7 +173,7 @@ onLink((e) => {
     case 'chat.note': chat.onNote(e); break;
     case 'memory.added': case 'memory.removed': chat.onMemory(e, forgetNote); break;
     case 'security.alert': toast(`Security: ${e.reason}`); break;
-    case 'chat.done': chat.onDone(e); renderBar(); refreshSend(); break;
+    case 'chat.done': chat.onDone(e); renderBar(); refreshSend(); if (pendingProject) { patchChat(getConvId(), { project: pendingProject }).catch(() => {}); pendingProject = null; } break;
     case 'chat.error': chat.onError(e); refreshSend(); break;
     case 'title': case 'target': case 'health': renderBar(); break;
     case 'gate': case 'gate.resolved': syncApprovals(); break;
@@ -200,11 +200,19 @@ const roundButton = (name, label, run) => {
   return b;
 };
 function renderBarRight(page) {
-  const nodes = page === 'chat' ? [roundButton('edit', 'New chat', () => startChat())]
+  const nodes = page === 'chat' ? [composeButton()]
     : page === 'artifacts' ? []
       : [roundButton('search', page === 'projects' ? 'Search projects' : 'Search sessions', () => searchPage(page))];
   barRight.replaceChildren(...nodes);
   hydrateIcons(barRight);
+}
+// New chat: the chat icon with a small plus on its top right corner, drawn so the two never touch
+function composeButton() {
+  const b = roundButton('chat', 'New chat', () => startChat());
+  b.classList.add('m-compose');
+  const plus = document.createElement('span'); plus.className = 'icon m-compose-plus'; plus.dataset.icon = 'plus'; plus.setAttribute('aria-hidden', 'true');
+  b.append(plus);
+  return b;
 }
 let page = 'chat';
 let chatPos = { top: 0, atEnd: true }; // a hidden element forgets its scroll: the conversation is put back where it was
@@ -228,9 +236,10 @@ input.addEventListener('focus', () => { app.dataset.typing = 'true'; });
 input.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== input) delete app.dataset.typing; }, 250));
 
 initDrawer({ onOpen: goChat, onNew: () => startChat(), onSettings: () => { if (!sheetOpen()) openSettings(); }, onViewAll: openList });
-initPages({ openChat: goChat, newSession: () => startChat({ code: true }) });
+let pendingProject = null; // a "New chat in this project": filed as soon as the server has the chat
+initPages({ openChat: goChat, newSession: () => startChat({ code: true }), newChatIn: (p) => { startChat(); pendingProject = p.id; } });
 $('m-menu').addEventListener('click', () => { if (!sheetOpen()) { if (drawerOpen()) closeDrawer(); else openDrawer(); } });
-$('m-plus').addEventListener('click', () => { if (!sheetOpen()) openSettings(); });
+$('m-plus').addEventListener('click', () => { if (sheetOpen()) return; input.blur(); openAttach({ onText: (t) => { input.value = (input.value ? input.value + '\n\n' : '') + t; grow(); refreshSend(); input.focus(); }, onSettings: () => openSettings(), toast }); });
 $('m-title').addEventListener('click', () => { if (!sheetOpen()) openSettings(); });
 renderBarRight('chat');
 

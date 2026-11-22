@@ -293,3 +293,41 @@ button.m-prow:active { background: var(--surface-3); }
   .m-drawer-panel { transition: none; }
   .m-drawer-scrim { transition: opacity var(--dur-fast) linear; }
 }
+
+/* ---- the hub additions: compose button, artifacts, attach menu, approvals mode, project editor, page motion ---- */
+.m-compose { position: relative; }
+.m-compose .icon:first-child { --icon-size: calc(var(--s-5) - var(--s-1)); translate: calc(var(--s-2) * -0.75) calc(var(--s-2) * 0.75); } /* the chat icon sits low and left, so the plus has the top right corner to itself */
+.m-compose-plus { position: absolute; top: var(--s-1); right: var(--s-1); --icon-size: var(--s-3); color: var(--accent); }
+.m-drow-kind { flex: none; padding: 0 var(--s-2); background: var(--accent-wash); border-radius: var(--r-pill); color: var(--accent); font: 500 var(--fs-2)/var(--lh-xs) var(--sans); }
+.m-drow-icon { order: 3; }
+
+.m-art-card { display: flex; align-items: center; gap: var(--s-3); width: 100%; padding: var(--s-3); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text); text-align: left; font: inherit; transition: transform 160ms var(--ease-out), background-color var(--dur-fast) var(--ease-out); }
+button.m-art-card:active { transform: scale(0.98); background: var(--surface-3); }
+.m-art-card.working { color: var(--text-3); }
+.m-art-ic { flex: none; width: var(--s-7); height: var(--s-7); display: grid; place-items: center; background: var(--surface-3); border-radius: var(--r-md); color: var(--text-2); }
+.m-art-text { min-width: 0; display: grid; }
+.m-art-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 var(--fs-5)/var(--lh-md) var(--sans); }
+.m-art-sub { color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
+.m-sheet:has(.m-art-view) .m-panel { height: calc(100% - var(--s-5) - env(safe-area-inset-top)); }
+.m-sheet:has(.m-art-view) .m-sheet-body { padding: 0; display: flex; }
+.m-art-view { flex: 1; min-height: 0; display: flex; }
+.m-art-frame { flex: 1; width: 100%; border: 0; background: var(--bg); }
+.m-art-src { flex: 1; margin: 0; padding: var(--s-3); overflow: auto; font: 400 var(--fs-3)/var(--lh-sm) var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.m-arow { display: grid; width: 100%; min-height: var(--s-8); padding: var(--s-2) var(--s-4); background: transparent; border: 0; color: var(--text); text-align: left; }
+.m-arow:active { background: var(--surface-3); }
+.m-arow-title { font: 500 var(--fs-5)/var(--lh-md) var(--sans); }
+.m-arow-sub { color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
+.m-modes { display: grid; gap: var(--s-1); }
+.m-mode { min-height: var(--tap); padding: 0 var(--s-3); background: var(--surface-3); border: 1px solid transparent; border-radius: var(--r-sm); color: var(--text-2); text-align: left; font: 500 var(--fs-4)/var(--lh-sm) var(--sans); }
+.m-mode[aria-checked="true"] { background: var(--accent-wash); border-color: var(--accent-dim); color: var(--accent); }
+.m-textarea { width: 100%; margin: var(--s-2) 0; padding: var(--s-3); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text); font: 400 var(--fs-5)/var(--lh-md) var(--sans); resize: none; outline: 0; }
+.m-textarea:focus { border-color: var(--accent-dim); }
+.m-proj { display: grid; gap: var(--s-2); padding-bottom: var(--s-4); }
+
+/* motion, only where it says something: a page arrives (lists repaint often, so their rows stay still) */
+@keyframes m-page-in { from { opacity: 0; transform: translateY(var(--s-2)); } to { opacity: 1; transform: none; } }
+#m-app[data-page]:not([data-page="chat"]) .m-page:not([hidden]) { animation: m-page-in 220ms var(--ease-out); }
+@media (prefers-reduced-motion: reduce) {
+  #m-app .m-page { animation: none; }
+}

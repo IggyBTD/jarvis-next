@@ -219,10 +219,49 @@ test('the tab bar: four pages, it goes away while you type and comes back; Proje
   await shot('code-page-dark');
 
   await page.click('#m-tabs [data-tab="artifacts"]');
-  assert.match(await page.textContent('#m-artifacts'), /open on your PC/);
+  await page.waitForSelector('#m-artifacts .m-empty-list:has-text("No artifacts yet")');
 
   await page.click('#m-tabs [data-tab="chat"]');
   await page.waitForSelector('#m-scroll', { state: 'visible' });
+});
+
+test('artifacts: a reply that makes one shows a card, the card opens the viewer, and the Artifacts tab lists it; approvals and projects have their controls', async () => {
+  rig.model.script({ content: ['Here you go.', '<jarvis-artifact id="hello-page" type="html" title="Hello page">', '<h1>Hello from JARVIS</h1>', '</jarvis-artifact>', 'Done.'].join('\n') });
+  await typeAndSend('make a page');
+  await page.waitForSelector('.m-msg.assistant .m-art-card[data-art="hello-page"]');
+  assert.doesNotMatch(await page.textContent('#m-log'), /jarvis-artifact/, 'the tag is never shown as text');
+  await page.click('.m-art-card[data-art="hello-page"]');
+  await page.waitForSelector('.m-sheet.open iframe.m-art-frame');
+  assert.equal(await page.getAttribute('iframe.m-art-frame', 'sandbox'), 'allow-scripts', 'sandboxed, no same-origin');
+  await waitFor(async () => (await page.frameLocator('iframe.m-art-frame').locator('h1').count()) === 1);
+  await sheetSettled();
+  await shot('artifact-dark');
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.waitForSelector('.m-sheet', { state: 'detached' });
+  await page.click('#m-tabs [data-tab="artifacts"]');
+  await page.waitForSelector('#m-artifacts .m-prow');
+  assert.match(await page.textContent('#m-artifacts'), /Hello page/);
+  // the plus offers files; settings (with the approvals mode) are one more row
+  await page.click('#m-tabs [data-tab="chat"]');
+  await page.click('#m-plus');
+  await page.waitForSelector('.m-sheet.open .m-arow');
+  assert.match(await page.textContent('.m-sheet'), /Files/);
+  await page.getByRole('button', { name: /Chat settings/ }).click();
+  await page.waitForSelector('.m-mode');
+  assert.equal(await page.locator('.m-mode').count(), 5, 'the same five permission modes as the desktop');
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.waitForSelector('.m-sheet', { state: 'detached' });
+  // projects: open one, rename it, give it instructions
+  await page.click('#m-tabs [data-tab="projects"]');
+  await page.click('#m-projects .m-prow');
+  await page.waitForSelector('.m-sheet.open .m-textarea');
+  await page.fill('.m-sheet.open .m-search', 'Home lab 2');
+  await page.fill('.m-sheet.open .m-textarea', 'Be brief.');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await waitFor(async () => (await (await fetch(`${api.url}/api/projects`, { headers: { authorization: `Bearer ${api.uiToken}` } })).json()).projects[0].instructions === 'Be brief.');
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.waitForSelector('.m-sheet', { state: 'detached' });
+  await page.click('#m-tabs [data-tab="chat"]');
 });
 
 test('the Back swipe closes a sheet instead of leaving the page', async () => {

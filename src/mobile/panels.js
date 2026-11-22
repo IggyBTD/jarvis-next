@@ -1,11 +1,12 @@
 // What the sheets hold: the chat list, the chat settings (computer, effort, model, connection) and the approval prompt.
 import { openSheet } from './sheets.js';
-import { state, onLink, listChats, deleteChat, setTarget, getEffort, setEffort, forget, replyGate, getConvId, isOnline } from './link.js';
+import { state, onLink, listChats, deleteChat, setMode, setTarget, getEffort, setEffort, forget, replyGate, getConvId, isOnline } from './link.js';
 import { EFFORTS, EFFORT_LABELS, EFFORT_HINTS } from '../../shared/effort.js';
 import { describeCall } from '../../shared/steps.js';
 import { prettyModelName } from '../core/model-name.js';
 import { hydrateIcons } from '../icons/index.js';
 import { revealHidden, hasHidden } from '../../shared/reveal.js';
+import { MODES, MODE_LABELS, MODE_HINTS } from '../../shared/permission-modes.js';
 
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
 const label = (id) => state.machines[id]?.label ?? (id === 'mac' ? 'Mac' : 'PC');
@@ -135,9 +136,31 @@ export function openSettings() {
     setTimeout(() => { delete forgetBtn.dataset.sure; forgetBtn.textContent = 'Forget this phone'; }, 4000);
   });
 
+  // how much JARVIS may do without asking: the same control as the desktop. Accept edits and Bypass are admin actions, so they ask for the PIN.
+  const modeBox = el('div', 'm-pad');
+  const modeHint = el('p', 'm-hint', MODE_HINTS[state.permissionMode] ?? '');
+  const pin = el('input', 'm-pin'); Object.assign(pin, { type: 'password', inputMode: 'numeric', placeholder: 'PIN for this mode', autocomplete: 'off' }); pin.hidden = true;
+  pin.setAttribute('aria-label', 'Owner PIN');
+  const modeSeg = el('div', 'm-modes');
+  const paintModes = () => { for (const b of modeSeg.children) b.setAttribute('aria-checked', String(b.dataset.mode === state.permissionMode)); modeHint.textContent = MODE_HINTS[state.permissionMode] ?? ''; };
+  for (const m of MODES) {
+    const b = el('button', 'm-mode', MODE_LABELS[m]); b.type = 'button'; b.dataset.mode = m; b.setAttribute('role', 'radio');
+    b.addEventListener('click', () => {
+      const admin = m === 'bypass' || m === 'accept-edits';
+      pin.hidden = !admin;
+      if (admin && !pin.value) { pin.focus(); modeHint.textContent = 'Enter your PIN, then tap this mode again.'; return; }
+      setMode(m, admin ? pin.value : '');
+      state.permissionMode = m; paintModes();
+    });
+    modeSeg.append(b);
+  }
+  paintModes();
+  modeBox.append(modeSeg, pin, modeHint);
+
   content.append(
     group('Computer', comp),
     group('Effort', eff),
+    group('Approvals', modeBox, el('p', 'm-hint', 'Anything that asks shows up here as a sheet, on every computer, with the exact request. Destructive actions always ask and need your PIN.')),
     group('Model', staticRow('Running', modelId ? prettyModelName(modelId) : 'No model loaded'), el('p', 'm-hint', 'Choose a different model on the desktop.')),
     group('Connection', staticRow('Server', location.host), staticRow('Status', isOnline() ? 'Connected' : 'Not connected'), forgetBtn),
   );
@@ -184,4 +207,30 @@ export function openApproval(request, { index = 1, total = 1, onClose = null } =
   sheet.panel.focus({ preventScroll: true }); // nothing is focused by default: neither answer is the easy one
   hydrateIcons(sheet.root);
   return sheet;
+}
+
+// ---- the plus: what to add to a message --------------------------------------------------------------------------------------------
+// Text files (code, notes, CSV, JSON, Markdown) are read here and put in the message as a quoted block. The model reads text only, so
+// photos and PDFs are not offered yet.
+const TEXT_LIMIT = 200_000;
+export function openAttach({ onText, onSettings, toast }) {
+  const content = el('div', 'm-attach');
+  const input = el('input'); Object.assign(input, { type: 'file', multiple: true, accept: '.txt,.md,.csv,.json,.js,.ts,.py,.html,.css,.xml,.yml,.yaml,.log,.sh,.sql,.c,.cpp,.java,.go,.rs,text/*' }); input.hidden = true;
+  const row = (name, text, sub, run) => { const b = el('button', 'm-arow'); b.type = 'button'; b.append(el('span', 'm-arow-title', text), el('span', 'm-arow-sub', sub)); b.addEventListener('click', run); return b; };
+  const pick = row('files', 'Files', 'Text, code, notes, CSV and JSON', () => input.click());
+  const settings = row('settings', 'Chat settings', 'Computer, effort, approvals', () => { sheet.close(); setTimeout(onSettings, 260); }); // after the sheet has left
+  content.append(input, group(null, pick, settings), el('p', 'm-hint', 'JARVIS reads text only for now. Photos and PDFs need the desktop.'));
+  const sheet = openSheet({ title: 'Add to message', content, label: 'Add to message' });
+  input.addEventListener('change', async () => {
+    const out = [];
+    for (const f of input.files) {
+      if (f.size > TEXT_LIMIT) { toast(`${f.name} is over 200 KB: too long to put in a message.`); continue; }
+      let t = '';
+      try { t = await f.text(); } catch { toast(`${f.name} could not be read.`); continue; }
+      if (t.includes(String.fromCharCode(0))) { toast(`${f.name} is not a text file.`); continue; }
+      const fence = String.fromCharCode(96).repeat(3);
+      out.push('File: ' + f.name + '\n' + fence + '\n' + t.replace(/\s+$/, '') + '\n' + fence);
+    }
+    if (out.length) { sheet.close(); onText(out.join('\n\n')); }
+  });
 }

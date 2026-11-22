@@ -19,9 +19,12 @@ function row(c) {
   const b = el('button', 'm-drow');
   b.type = 'button';
   if (c.id === getConvId()) b.setAttribute('aria-current', 'true');
-  const ic = el('span', 'm-drow-icon'); ic.innerHTML = icon('chat', { size: 20 });
-  b.append(ic, el('span', 'm-drow-title', c.title || 'New chat'));
+  const code = c.mode === 'code';
+  const ic = el('span', 'm-drow-icon'); ic.innerHTML = icon(code ? 'code' : 'chat', { size: 20 }); // after the name, not before it
+  b.append(el('span', 'm-drow-title', c.title || 'New chat'));
   if (state.running.has(c.id)) { const d = el('span', 'm-drow-live'); d.setAttribute('aria-label', 'Working'); b.append(d); }
+  if (code) b.append(el('span', 'm-drow-kind', 'Code'));
+  b.append(ic);
   b.addEventListener('click', () => { closeDrawer(); handlers.onOpen(c.id); });
   return b;
 }

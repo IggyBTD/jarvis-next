@@ -41,7 +41,9 @@ export function createConversations({ dir, now = () => new Date(), onChange = ()
     ensure: (id) => (id && get(id)) || create(id && ID_RE.test(id) ? id : undefined),
     append(c, msg) { c.messages.push({ ts: now().toISOString(), ...msg }); save(c); return msg; },
     save,
-    list: () => fs.readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => readJson(path.join(dir, f))).filter(Boolean).map(({ id, title, updatedAt, lastTarget, pinned, project, messages }) => ({ id, title, updatedAt, lastTarget, pinned: !!pinned, messages: messages.filter((m) => m.role === 'user').length, project: project ?? null })).filter((c) => c.messages > 0).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    list: () => fs.readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => readJson(path.join(dir, f))).filter(Boolean).map(({ id, title, updatedAt, lastTarget, pinned, project, messages, mode }) => ({ id, title, updatedAt, lastTarget, pinned: !!pinned, messages: messages.filter((m) => m.role === 'user').length, project: project ?? null,
+      // a coding session: started as one (mode 'code'), or the model has run the coding agent in it
+      mode: mode === 'code' || messages.some((m) => m.tool_calls?.some((t) => t.function?.name === 'agent_task')) ? 'code' : 'chat' })).filter((c) => c.messages > 0).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
     // rename or pin from the sidebar; a name given by hand stops the automatic one
     patch(id, { title, pinned, project }) {
       const c = get(id);

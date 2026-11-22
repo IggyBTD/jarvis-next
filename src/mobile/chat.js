@@ -1,6 +1,8 @@
 // The conversation on the phone: your messages as bubbles, JARVIS's replies as plain serif text, one quiet steps line for what it did, the node
 // mesh as its loading icon, and the same mesh resting under the newest reply (it glides down to the next one when you send).
 import { renderBlocks } from '../core/markdown.js';
+import { parseReply } from '../core/tool-router.js';
+import { cardHtml, register, openArtifact } from './artifacts.js';
 import { meshIcon, feedMesh, resetMeshFeed, restMesh } from '../core/node-mesh.js';
 import { createSteps, agentEvent } from './steps.js';
 import { state } from './link.js';
@@ -62,6 +64,8 @@ sizes.observe(log); // the reply grows after its last scroll event (the final ma
 const follow = () => { if (stick) scrollToEnd(); };
 
 log.addEventListener('click', (e) => {
+  const card = e.target.closest('.m-art-card[data-art]');
+  if (card) { openArtifact(card.dataset.art); return; }
   const btn = e.target.closest('.copy-btn');
   const code = btn?.closest('.code-box')?.querySelector('code');
   if (!code) return;
@@ -110,7 +114,12 @@ function newAssistant() {
   return m;
 }
 function paintProse(m, text) {
-  const next = renderBlocks(text);
+  // artifact tags become a card that opens the viewer; the rest is markdown as before
+  const next = [];
+  for (const p of parseReply(text)) {
+    if (p.kind === 'text') next.push(...renderBlocks(p.text));
+    else if (p.kind === 'artifact') { register(p, state.conv.title); next.push(cardHtml(p)); }
+  }
   let i = 0;
   while (i < next.length && i < m.blocks.length && next[i] === m.blocks[i]) i++;
   while (m.prose.children.length > i) m.prose.lastChild.remove();

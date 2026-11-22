@@ -76,6 +76,7 @@ export function attachWs({ server, cfg, auth, bus, gate, orchestrator, targetSta
     'chat.send'(c, m) {
       const convId = m.convId ?? DEFAULT_CONV;
       if (orchestrator.isBusy(convId)) return send(c, { type: 'chat.error', convId, reason: 'The last message is still being answered.' });
+      if (m.code) { const conv = conversations.ensure(convId); if (conv.mode !== 'code') { conv.mode = 'code'; conversations.save(conv); } } // marks the chat as a coding session
       if (m.code && backend?.get() === 'claude') return codeTurn(c, convId, m.text);
       orchestrator.runTurn({ convId, text: m.text, source: 'user', effort: m.effort }).catch((e) => send(c, { type: 'chat.error', convId, reason: e instanceof BusyError ? e.message : 'internal error' }));
     },

@@ -39,7 +39,7 @@ export const setEffort = (e) => { if (EFFORTS.includes(e)) store.set(EFFORT_KEY,
 
 // 'connecting' | 'online' | 'offline' | 'refused' (the server said no: wrong token) | 'off' (no token)
 export const state = {
-  status: token ? 'connecting' : 'off', target: 'pc', machines: {}, health: null, pending: [], running: new Set(), agentTasks: [],
+  status: token ? 'connecting' : 'off', target: 'pc', machines: {}, health: null, pending: [], running: new Set(), agentTasks: [], permissionMode: 'auto',
   conv: { id: convId, title: '', messages: [], streaming: null }, attempts: 0, lastError: '',
 };
 
@@ -105,13 +105,14 @@ const reqId = () => Math.random().toString(36).slice(2, 10);
 function handle(m) {
   switch (m.type) {
     case 'state':
-      Object.assign(state, { target: m.target, machines: m.machines, health: m.health, pending: m.pendingApprovals ?? [], agentTasks: m.agentTasks ?? [] });
+      Object.assign(state, { target: m.target, machines: m.machines, health: m.health, pending: m.pendingApprovals ?? [], agentTasks: m.agentTasks ?? [], permissionMode: m.permissionMode ?? state.permissionMode });
       state.conv = { ...m.conversation, id: m.conversation?.id ?? convId };
       state.running = new Set(m.running ?? []);
       setStatus('online');
       emit({ type: 'state' });
       if (m.conversation?.streaming && m.conversation.id === convId) emit({ type: 'resume', text: m.conversation.streaming.text });
       return;
+    case 'mode': state.permissionMode = m.mode; emit({ type: 'mode' }); return;
     case 'target.changed': state.target = m.to; emit({ type: 'target' }); return;
     case 'target.rejected': state.target = m.target; emit({ type: 'target', rejected: true, reason: m.reason }); return;
     case 'health': state.health = m; for (const [id, v] of Object.entries(m.machines ?? {})) if (state.machines[id]) state.machines[id].online = v.online; emit({ type: 'health' }); return;
@@ -145,6 +146,10 @@ export function setTarget(target) {
   emit({ type: 'target', optimistic: true });
   send({ type: 'target.set', id: reqId(), target });
 }
+// How much JARVIS may do without asking. Accept edits and Bypass are admin actions: they need the owner's PIN from a phone.
+export const setMode = (mode, pin = '') => send({ type: 'mode.set', mode, ...(pin ? { pin } : {}) });
+export const patchChat = (id, patch) => api(`/conversations/${id}`, { method: 'PATCH', body: JSON.stringify(patch) });
+export const getChat = (id) => api(`/conversations/${id}`);
 export function newChat() {
   convId = newId();
   store.set(CONV_KEY, convId);

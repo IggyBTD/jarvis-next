@@ -14,10 +14,12 @@ The desktop JARVIS Next design (tokens, serif replies, the node mesh, the steps 
 | The steps row (what JARVIS did, in plain words) | Settings pages beyond the one sheet |
 | Approvals as a sheet: approve or deny, with the exact request | Model switching (read-only here; pick it on the desktop) |
 | Drawer: pinned and recent chats, search, "View all" (delete lives there), Settings, New chat | Folders on the chat list, export |
-| Projects page: the server's project list, the chats in each, New project | Editing a project's instructions (desktop) |
+| Projects page: full management (rename, instructions, add or remove chats, new chat in a project, delete) | |
 | Code page: the computers (tap to work on one), the coding agent's sessions, New session (the next messages go to the coding agent) | |
-| Artifacts page: says that artifacts open on the PC for now | Showing artifacts |
-| PC / Mac switch and effort, in one sheet (the plus, the title, or Settings in the drawer) | |
+| Artifacts: a card in the reply opens a full-height sandboxed viewer; the tab lists artifacts found in your recent chats | Editing artifacts, charts that need the desktop's libraries |
+| PC / Mac switch, effort and the approvals mode (Auto, Manual, Accept edits, Plan, Bypass), in one sheet (the title, the drawer's Settings, or the plus menu) | |
+| The plus: attach text files (code, notes, CSV, JSON) to a message | Photos and PDFs (the model reads text only) |
+| Approvals of every tier, as on the Mac. A T3 approval and the two admin modes ask for the owner's PIN from the phone | |
 | The node mesh: empty-chat centrepiece, loading icon, the stamp under the newest reply | |
 
 Projects live on the server (`GET` and `PUT /api/projects`, `data/projects.json`) and the desktop syncs its list there, so both show the same projects. Chats sync the same way: the server announces every change and the drawer and Projects page follow.
