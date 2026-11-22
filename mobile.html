@@ -5,8 +5,8 @@
   <!-- R1-2: images and media from this page or data: and blob: only, also when the dev server (which sends no CSP) serves it -->
   <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: blob:; media-src 'self' data: blob:; object-src 'none'">
   <!-- viewport-fit=cover: the app draws edge to edge and keeps clear of the notch and the home indicator itself (safe-area insets).
-       Zoom is off (a real app does not zoom); inputs are 16 pt anyway. -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+       Zoom is stopped in main.js (gesture events), not here: maximum-scale and user-scalable make a home-screen app on iOS 26 lay out 59 pt short, with nothing drawn below that line. Inputs are 16 pt anyway. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="">
   <meta name="apple-mobile-web-app-capable" content="yes">

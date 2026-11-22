@@ -278,22 +278,3 @@ if (!hasToken()) {
   connect();
 }
 refreshSend();
-
-// TEMPORARY: layout measurements, shown at the top of the screen so a screenshot says why there is space at the bottom. Remove once found.
-{
-  const dbg = Object.assign(document.createElement('pre'), { id: 'm-debug' });
-  dbg.style.cssText = 'position:fixed;z-index:99;left:8px;right:8px;top:50%;margin:0;padding:4px;pointer-events:none;font:11px/1.3 monospace;color:#fff;background:rgba(0,0,0,.7);white-space:pre-wrap';
-  const probe = Object.assign(document.createElement('div'), {});
-  probe.style.cssText = 'position:fixed;visibility:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0';
-  document.body.append(dbg, probe);
-  const r = (s) => { const n = document.querySelector(s); if (!n) return 'none'; const b = n.getBoundingClientRect(); return `${Math.round(b.top)}-${Math.round(b.bottom)}`; };
-  let show = () => { const c = getComputedStyle(probe); dbg.textContent = `inner ${innerWidth}x${innerHeight} vv ${vv ? Math.round(vv.height) : '-'}+${vv ? Math.round(vv.offsetTop) : '-'} screen ${screen.height} standalone ${navigator.standalone}\ninset top ${c.paddingTop} bottom ${c.paddingBottom}\napp ${r('#m-app')} tabs ${r('.m-tabs')} composer ${r('#m-composer')} body ${r('body')}`; };
-  const tried = [];
-  const metaV = document.querySelector('meta[name=viewport]');
-  const variants = ['width=device-width, initial-scale=1, viewport-fit=cover', 'width=device-width, initial-scale=1', 'width=device-width', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content'];
-  variants.forEach((c, i) => setTimeout(() => { metaV.content = c; setTimeout(() => tried.push(`${i + 1}: ${innerHeight}`), 500); }, 3000 + i * 1500));
-  const base = show;
-  show = () => { base(); dbg.textContent += `
-viewport variants (page height): ${tried.join('  ') || 'waiting'}`; };
-  show(); setInterval(show, 1000);
-}
