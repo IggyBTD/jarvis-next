@@ -3,7 +3,7 @@
 
 html, body { position: fixed; inset: 0; width: 100%; overflow: hidden; overscroll-behavior: none; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
 body { background: var(--bg); color: var(--text); font: 400 var(--fs-5)/var(--lh-md) var(--sans); }
-#m-app { position: fixed; left: 0; right: 0; top: var(--vvt, 0px); height: var(--vvh, 100dvh); display: flex; flex-direction: column; background: var(--bg); }
+#m-app { position: fixed; left: 0; right: 0; top: var(--vvt, 0px); bottom: 0; height: var(--vvh, auto); display: flex; flex-direction: column; background: var(--bg); }
 #m-app[inert], .m-sheet[inert] { pointer-events: none; }
 
 /* ---- pressable things: one feedback (a small press-in), 44 pt to hit ---- */
@@ -148,7 +148,7 @@ li[data-state="queued"] > .m-step > .m-step-line { color: var(--warm); }
 .m-toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* ---- sheets ---- */
-#m-sheets { position: fixed; left: 0; right: 0; top: var(--vvt, 0px); height: var(--vvh, 100dvh); z-index: 10; pointer-events: none; }
+#m-sheets { position: fixed; left: 0; right: 0; top: var(--vvt, 0px); bottom: 0; height: var(--vvh, auto); z-index: 10; pointer-events: none; }
 .m-sheet { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: auto; }
 .m-scrim { position: absolute; inset: 0; background: color-mix(in srgb, black 55%, transparent); opacity: 0; transition: opacity 200ms var(--ease-out); }
 .m-sheet.open .m-scrim { opacity: 1; }
@@ -237,7 +237,7 @@ li[data-state="queued"] > .m-step > .m-step-line { color: var(--warm); }
 .m-send::before { inset: 0; }
 .m-composer { padding-bottom: var(--s-2); }
 
-.m-tabs { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-1); margin: 0 max(var(--s-4), env(safe-area-inset-right)) max(var(--s-2), env(safe-area-inset-bottom)) max(var(--s-4), env(safe-area-inset-left)); padding: var(--s-1); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-pill); }
+.m-tabs { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-1); margin: 0 max(var(--s-4), env(safe-area-inset-right)) max(var(--s-2), calc(env(safe-area-inset-bottom) - var(--s-3))) max(var(--s-4), env(safe-area-inset-left)); padding: var(--s-1); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-pill); }
 .m-tabs button { display: grid; justify-items: center; gap: 0; min-height: var(--s-7); padding: var(--s-1) 0; background: transparent; border: 0; border-radius: var(--r-pill); color: var(--text-3); font: 500 var(--fs-2)/var(--lh-xs) var(--sans); transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform 160ms var(--ease-out); }
 .m-tabs button:active { transform: scale(0.97); }
 .m-tabs button .icon { --icon-size: var(--s-5); color: inherit; }
@@ -270,7 +270,7 @@ button.m-prow:active { background: var(--surface-3); }
 .m-fab { position: absolute; right: max(var(--s-4), env(safe-area-inset-right)); bottom: calc(var(--s-8) + var(--s-4) + max(var(--s-2), env(safe-area-inset-bottom))); } /* above the tab bar, bottom right, as in Claude's phone app */
 
 /* the drawer */
-.m-drawer { position: fixed; left: 0; right: 0; top: var(--vvt, 0px); height: var(--vvh, 100dvh); z-index: 9; pointer-events: none; }
+.m-drawer { position: fixed; left: 0; right: 0; top: var(--vvt, 0px); bottom: 0; height: var(--vvh, auto); z-index: 9; pointer-events: none; }
 .m-drawer.open { pointer-events: auto; }
 .m-drawer-scrim { position: absolute; inset: 0; background: color-mix(in srgb, black 55%, transparent); opacity: 0; transition: opacity 200ms var(--ease-out); }
 .m-drawer.open .m-drawer-scrim { opacity: 1; }
