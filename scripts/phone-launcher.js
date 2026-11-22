@@ -69,7 +69,7 @@ async function run() {
     await fetch('/start', { method: 'POST', headers: headers() }).catch(() => {});
     for (let i = 0; i < 60 && !(h && h.server); i++) { await sleep(2000); h = await status(); }
   }
-  if (h && h.server) location.replace(appUrl);
+  if (h && h.server) location.replace(appUrl + '?t=' + Date.now()); // a fresh address each time: Safari never shows a saved copy of the app
   else { say('JARVIS did not start', 'Check the PC.'); $('go').hidden = false; $('go').textContent = 'Try again'; $('go').onclick = () => location.reload(); }
 }
 
