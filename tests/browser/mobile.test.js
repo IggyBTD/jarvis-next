@@ -318,6 +318,17 @@ test('scrolled away from the newest message, a jump button appears; it brings yo
   assert.equal(await page.locator('#m-jump').isHidden(), true);
 });
 
+test('a small nudge upward lets go of the stream (it does not pull the reader back down)', async () => {
+  await page.waitForTimeout(900); // the previous test's glide down has finished
+  await page.evaluate(() => { const s = document.getElementById('m-scroll'); s.scrollTop = s.scrollHeight; });
+  await waitFor(async () => await page.locator('#m-jump').isHidden());
+  await page.waitForTimeout(150); // let the scroll to the end be seen before the nudge, as a real hand would
+  await page.evaluate(() => { const s = document.getElementById('m-scroll'); s.scrollTop -= 40; }); // well inside the old 96 px "near the bottom" band
+  await page.waitForSelector('#m-jump:not([hidden])');
+  await page.evaluate(() => { const s = document.getElementById('m-scroll'); s.scrollTop = s.scrollHeight; });
+  await waitFor(async () => await page.locator('#m-jump').isHidden());
+});
+
 test('light appearance follows the iPhone setting', async () => {
   await ctx.close();
   await open({ colorScheme: 'light' });

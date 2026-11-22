@@ -39,11 +39,21 @@ export function scrollToEnd({ smooth = false } = {}) {
   scroller.scrollTo({ top: scroller.scrollHeight, behavior: smooth && !calm.matches ? 'smooth' : 'auto' });
 }
 let settleUntil = 0; // after the jump button is tapped the glide down must not bring the button back
+// Moving up always lets go of the stream, however little (judging by distance alone put a small nudge back into "following" and the
+// next chunk pulled the view down: the jitter); only a move down that ends near the bottom follows again. A clamp from shrinking
+// content is not a move up.
+let lastTop = 0;
 scroller.addEventListener('scroll', () => {
-  stick = fromBottom() < 96;
+  const top = scroller.scrollTop;
+  const d = fromBottom();
+  if (top < lastTop && d > 2) stick = false;
+  else if (top > lastTop && d < 96) stick = true;
+  else if (d < 2) stick = true;
+  lastTop = top;
   jump.hidden = stick || performance.now() < settleUntil || !log.children.length;
   app.dataset.scrolled = scroller.scrollTop > 8 ? 'true' : 'false';
 }, { passive: true });
+for (const t of ['wheel', 'touchstart']) scroller.addEventListener(t, () => { settleUntil = 0; }, { passive: true }); // a hand on the conversation ends the glide's grace period
 jump.addEventListener('click', () => { stick = true; settleUntil = performance.now() + 800; jump.hidden = true; scrollToEnd({ smooth: true }); });
 // the scroll area changes size (the tab bar or the keyboard comes or goes): staying at the end keeps the newest message in view
 const sizes = new ResizeObserver(() => { if (stick || performance.now() < settleUntil) requestAnimationFrame(() => { if (stick || performance.now() < settleUntil) scrollToEnd(); }); }); // next frame: scrolling inside the callback can raise the browser's "loop" warning

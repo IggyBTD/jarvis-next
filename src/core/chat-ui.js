@@ -82,8 +82,18 @@ output.addEventListener('pointermove', (e) => { if (e.buttons & 1) noteUserScrol
 output.addEventListener('wheel', (e) => { if (e.deltaY < 0) following = false; }, { passive: true, capture: true });
 output.addEventListener('touchmove', () => { following = false; }, { passive: true, capture: true });
 output.addEventListener('keydown', (e) => { if (['ArrowUp', 'PageUp', 'Home'].includes(e.key)) following = false; }, { passive: true });
+// A reader who moves up stays free, however little: only a move DOWN that ends at the bottom follows again. (Judging by the
+// distance alone put a small upward nudge, under 48 px from the end, straight back into "following", and the next streamed
+// chunk pulled the view down again: the jitter.) A content change that merely clamps the scroll position is not a move up.
+let lastTop = 0;
 output.addEventListener('scroll', () => {
-  if (performance.now() - lastUserScroll < 400) following = distanceFromBottom() < 48;
+  const top = output.scrollTop;
+  const dist = distanceFromBottom();
+  if (performance.now() - lastUserScroll < 400) {
+    if (top < lastTop && dist > 2) following = false;
+    else if (top > lastTop && dist < 48) following = true;
+  }
+  lastTop = top;
 });
 // Whenever the transcript's box changes (window or panel resized, moved into the whiteboard),
 // stay on the newest text if that is where the reader was.
