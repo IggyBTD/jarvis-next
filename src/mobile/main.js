@@ -279,3 +279,16 @@ if (!hasToken()) {
 }
 refreshSend();
 
+
+// TEMPORARY: measurements while the keyboard is up (the input is cut off by the keyboard's bar in a home-screen app). Remove once the cause is found.
+{
+  const dbg = Object.assign(document.createElement('pre'), { id: 'm-debug' });
+  dbg.style.cssText = 'position:fixed;z-index:99;left:8px;right:8px;top:64px;margin:0;padding:4px;pointer-events:none;font:11px/1.3 monospace;color:#fff;background:rgba(0,0,0,.8);white-space:pre-wrap;display:none';
+  document.body.append(dbg);
+  const r = (s) => { const n = document.querySelector(s); if (!n) return 'none'; const b = n.getBoundingClientRect(); return `${Math.round(b.top)}-${Math.round(b.bottom)}`; };
+  const show = () => {
+    dbg.style.display = app.dataset.kb === 'open' || document.activeElement === input ? 'block' : 'none';
+    dbg.textContent = `inner ${innerWidth}x${innerHeight} outer ${outerHeight} screen ${screen.height}\nvv h ${vv ? Math.round(vv.height) : '-'} top ${vv ? Math.round(vv.offsetTop) : '-'} scrollY ${Math.round(scrollY)}\nvvh ${root.style.getPropertyValue('--vvh') || 'none'} vvt ${root.style.getPropertyValue('--vvt') || 'none'} kb ${app.dataset.kb}\napp ${r('#m-app')} composer ${r('#m-composer')} field ${r('.m-field')} html ${r('html')}`;
+  };
+  setInterval(show, 400);
+}
