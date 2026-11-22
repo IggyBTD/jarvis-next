@@ -295,9 +295,6 @@ button.m-prow:active { background: var(--surface-3); }
 }
 
 /* ---- the hub additions: compose button, artifacts, attach menu, approvals mode, project editor, page motion ---- */
-.m-compose { position: relative; }
-.m-compose .icon:first-child { --icon-size: calc(var(--s-5) - var(--s-1)); translate: calc(var(--s-2) * -0.75) calc(var(--s-2) * 0.75); } /* the chat icon sits low and left, so the plus has the top right corner to itself */
-.m-compose-plus { position: absolute; top: var(--s-1); right: var(--s-1); --icon-size: var(--s-3); color: var(--accent); }
 .m-drow-kind { flex: none; padding: 0 var(--s-2); background: var(--accent-wash); border-radius: var(--r-pill); color: var(--accent); font: 500 var(--fs-2)/var(--lh-xs) var(--sans); }
 .m-drow-icon { order: 3; }
 

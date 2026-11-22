@@ -212,14 +212,8 @@ function renderBarRight(page) {
   barRight.replaceChildren(...nodes);
   hydrateIcons(barRight);
 }
-// New chat: the chat icon with a small plus on its top right corner, drawn so the two never touch
-function composeButton() {
-  const b = roundButton('chat', 'New chat', () => startChat());
-  b.classList.add('m-compose');
-  const plus = document.createElement('span'); plus.className = 'icon m-compose-plus'; plus.dataset.icon = 'plus'; plus.setAttribute('aria-hidden', 'true');
-  b.append(plus);
-  return b;
-}
+// New chat: one chat bubble whose top right corner is a plus, the plus lined up with the bubble's top and right edges (icons/custom/new-chat.svg)
+const composeButton = () => roundButton('new-chat', 'New chat', () => startChat());
 let page = 'chat';
 let chatPos = { top: 0, atEnd: true }; // a hidden element forgets its scroll: the conversation is put back where it was
 function setPage(next) {

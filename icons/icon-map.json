@@ -8,6 +8,15 @@
     "lucide": "message-circle",
     "ref": "meteor-icons:messages"
   },
+  "new-chat": {
+    "phosphor": "chat-circle",
+    "tabler": "message-circle",
+    "iconoir": "chat-bubble",
+    "remix": "chat-3",
+    "solar": "chat-round-dots",
+    "lucide": "message-circle",
+    "ref": "custom:new-chat"
+  },
   "code": {
     "phosphor": "code",
     "tabler": "code",
