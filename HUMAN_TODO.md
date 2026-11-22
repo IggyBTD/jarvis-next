@@ -62,7 +62,7 @@ Then flip `enabled` to `true` in `config\server\actions.json` one category at a 
 Install the pinned version (see `config\server\policy.json`, `opencode.version`) and run `node scripts/opencode-verify.js` against it. It checks the permission endpoints and that `POST /session/:id/shell` is never needed. Acceptance: "clone this repo and run its tests" in the workspace, every non-allowlisted command asks.
 
 ## 9. Voice
-Run an OpenAI-compatible speech-to-text server on :8770 and text-to-speech on :8771 (the old JARVIS voice sidecar can be wrapped), set `enabled` to `true` in `config\server\voice.json`, then test with a real microphone in English, Spanish and French.
+The voice sidecar (`sidecars/voice`, port 8765) now serves the OpenAI-style routes the server uses, and `config\server\voice.json` points at it and is enabled. It must be running: the desktop app starts it, a server on its own needs `cd sidecars\voice && node server.mjs`. Still to do: test with a real microphone in English, Spanish and French (Spanish and French were weak when a synthetic voice was the speaker).
 
 ## 10. Other decisions
 - Decide whether the PC should wake for the 07:00 digest (BIOS wake timer) or stay on.

@@ -174,6 +174,32 @@ test('what Kokoro says, Nemotron hears (and the pause ends the utterance)', { sk
   assert.ok(!/\s{2,}/.test(finals[0].text), 'no double spaces');
 });
 
+// The JARVIS server's voice session talks to the sidecar over OpenAI-style http (config/server/voice.json): WAV in, text out; text in, PCM16 at 24 kHz out.
+test('the http routes: speech out, transcription back', { skip }, async () => {
+  const { wav } = await import('../../shared/voice-frames.js');
+  const base = process.env.JARVIS_VOICE_URL;
+  const sp = await fetch(`${base}/v1/audio/speech`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ input: 'Please open the pod bay doors.', voice: 'bm_george' }) });
+  assert.equal(sp.status, 200);
+  const rate = Number(sp.headers.get('x-sample-rate'));
+  const pcm24 = Buffer.from(await sp.arrayBuffer());
+  assert.equal(rate, 24000);
+  assert.ok(pcm24.length / 2 / rate > 1.5);
+  const floats = Float32Array.from({ length: pcm24.length / 2 }, (_, i) => pcm24.readInt16LE(i * 2) / 32768);
+  const f16 = helpers.resample(floats, rate, 16000);
+  const pcm16 = Buffer.alloc(f16.length * 2);
+  f16.forEach((v, i) => pcm16.writeInt16LE(Math.round(Math.max(-1, Math.min(1, v)) * 32767), i * 2));
+  const form = new FormData();
+  form.append('file', new Blob([wav(pcm16)], { type: 'audio/wav' }), 'speech.wav');
+  form.append('model', 'whisper-1');
+  const tr = await fetch(`${base}/v1/audio/transcriptions`, { method: 'POST', body: form });
+  assert.equal(tr.status, 200);
+  const j = await tr.json();
+  assert.match(j.text.toLowerCase(), /open the .*bay doors/);
+  assert.equal(j.language, 'en');
+  const bad = await fetch(`${base}/v1/audio/speech`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+  assert.equal(bad.status, 400);
+});
+
 test('cancel stops a long text part way', { skip }, async () => {
   const text = Array.from({ length: 8 }, (_, i) => `This is sentence number ${i + 1} of a long paragraph that keeps going.`).join(' ');
   const ws = new WebSocket(`ws://127.0.0.1:${PORT}/tts`);

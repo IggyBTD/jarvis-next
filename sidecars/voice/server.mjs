@@ -108,7 +108,11 @@ const server = http.createServer((req, res) => {
   const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
   if (origin) headers['Access-Control-Allow-Origin'] = origin;
   const url = new URL(req.url, 'http://localhost');
-  if (req.method === 'OPTIONS') { res.writeHead(204, { ...headers, 'Access-Control-Allow-Methods': 'GET' }).end(); return; }
+  if (req.method === 'OPTIONS') { res.writeHead(204, { ...headers, 'Access-Control-Allow-Methods': 'GET, POST' }).end(); return; }
+  if (req.method === 'POST' && (url.pathname === '/v1/audio/transcriptions' || url.pathname === '/v1/audio/speech')) {
+    openAiRoute(req, res, url.pathname, headers).catch((e) => { log('openai route failed:', e); if (!res.headersSent) res.writeHead(500, headers); res.end(JSON.stringify({ error: String(e?.message ?? e) })); });
+    return;
+  }
   if (req.method === 'GET' && url.pathname === '/health') {
     res.writeHead(200, headers).end(JSON.stringify({ ok: true, ...health }));
   } else if (req.method === 'GET' && url.pathname === '/voices') {
@@ -117,6 +121,51 @@ const server = http.createServer((req, res) => {
     res.writeHead(404, headers).end(JSON.stringify({ error: 'not found' }));
   }
 });
+
+// --- OpenAI-compatible routes for the JARVIS server's voice session (phone and Mac away from this PC) ----------------------------
+//   POST /v1/audio/transcriptions   multipart: file (WAV, PCM16 mono) -> { text, language }
+//   POST /v1/audio/speech           json: { input, voice } -> raw PCM16 mono at the engine's rate (24 kHz), what the server forwards
+const readBody = async (req, max = 32 << 20) => { const parts = []; let n = 0; for await (const c of req) { n += c.length; if (n > max) throw new Error('body too large'); parts.push(c); } return Buffer.concat(parts); };
+function wavSamples(buf) { // PCM16 mono WAV -> { sampleRate, samples }
+  if (buf.toString('latin1', 0, 4) !== 'RIFF') throw new Error('not a WAV file');
+  let off = 12; let sampleRate = 16000;
+  while (off + 8 <= buf.length) {
+    const id = buf.toString('latin1', off, off + 4); const size = buf.readUInt32LE(off + 4);
+    if (id === 'fmt ') sampleRate = buf.readUInt32LE(off + 12);
+    if (id === 'data') return { sampleRate, samples: pcm16ToFloat32(buf.subarray(off + 8, Math.min(buf.length, off + 8 + size))) };
+    off += 8 + size + (size % 2);
+  }
+  throw new Error('no audio in the WAV file');
+}
+async function openAiRoute(req, res, pathname, headers) {
+  const body = await readBody(req);
+  if (pathname === '/v1/audio/transcriptions') {
+    if (!recognizer) { res.writeHead(503, headers).end(JSON.stringify({ error: health.asr.message ?? `speech recognition is ${health.asr.state}` })); return; }
+    const form = await new Response(body, { headers: { 'content-type': req.headers['content-type'] ?? '' } }).formData();
+    const file = form.get('file');
+    if (!file || typeof file === 'string') { res.writeHead(400, headers).end(JSON.stringify({ error: 'no file' })); return; }
+    const { sampleRate, samples } = wavSamples(Buffer.from(await file.arrayBuffer()));
+    const stream = recognizer.createStream();
+    const want = String(form.get('language') ?? ''); // optional; empty means automatic detection
+    if (want && want !== 'auto' && stream.hasOption('language')) stream.setOption('language', want);
+    stream.acceptWaveform({ sampleRate, samples });
+    stream.acceptWaveform({ sampleRate: 16000, samples: new Float32Array(16000 * 0.6) }); // let the last words leave the look-ahead
+    while (recognizer.isReady(stream)) recognizer.decode(stream);
+    const text = stripForeignScript(recognizer.getResult(stream).text).replace(/\s+/g, ' ').trim();
+    const verdict = text ? languageVerdict(text, config.asr.languages) : { allowed: true, language: 'en' };
+    log(`http asr: ${(samples.length / sampleRate).toFixed(1)} s -> "${text}" (${verdict.language}${verdict.allowed ? '' : ', not allowed'})`);
+    res.writeHead(200, headers).end(JSON.stringify({ text: verdict.allowed ? text : '', language: verdict.language ?? 'en' }));
+    return;
+  }
+  if (!tts) { res.writeHead(503, headers).end(JSON.stringify({ error: health.tts.message ?? `speech synthesis is ${health.tts.state}` })); return; }
+  const { input, voice, speed } = JSON.parse(body.toString('utf8'));
+  if (!input || typeof input !== 'string') { res.writeHead(400, headers).end(JSON.stringify({ error: 'no input' })); return; }
+  const kokoro = await engine(ttsVariant(voice ?? config.tts.voice));
+  const audio = await kokoro.generateAsync({ text: input, enableExternalBuffer: true, generationConfig: new sherpa.GenerationConfig({ sid: voiceId(voice ?? config.tts.voice), speed: Number(speed) || config.tts.speed, silenceScale: 0.2 }) });
+  const f = audio.samples; const pcm = Buffer.alloc(f.length * 2);
+  for (let i = 0; i < f.length; i++) pcm.writeInt16LE(Math.round(Math.max(-1, Math.min(1, f[i])) * 32767), i * 2);
+  res.writeHead(200, { ...headers, 'Content-Type': 'application/octet-stream', 'X-Sample-Rate': String(audio.sampleRate ?? kokoro.sampleRate) }).end(pcm);
+}
 
 const wsAsr = new WebSocketServer({ noServer: true, maxPayload: 1 << 20 });
 const wsTts = new WebSocketServer({ noServer: true, maxPayload: 1 << 16 });
