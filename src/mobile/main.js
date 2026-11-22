@@ -287,6 +287,13 @@ refreshSend();
   probe.style.cssText = 'position:fixed;visibility:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0';
   document.body.append(dbg, probe);
   const r = (s) => { const n = document.querySelector(s); if (!n) return 'none'; const b = n.getBoundingClientRect(); return `${Math.round(b.top)}-${Math.round(b.bottom)}`; };
-  const show = () => { const c = getComputedStyle(probe); dbg.textContent = `inner ${innerWidth}x${innerHeight} vv ${vv ? Math.round(vv.height) : '-'}+${vv ? Math.round(vv.offsetTop) : '-'} screen ${screen.height} standalone ${navigator.standalone}\ninset top ${c.paddingTop} bottom ${c.paddingBottom}\napp ${r('#m-app')} tabs ${r('.m-tabs')} composer ${r('#m-composer')} body ${r('body')}`; };
+  let show = () => { const c = getComputedStyle(probe); dbg.textContent = `inner ${innerWidth}x${innerHeight} vv ${vv ? Math.round(vv.height) : '-'}+${vv ? Math.round(vv.offsetTop) : '-'} screen ${screen.height} standalone ${navigator.standalone}\ninset top ${c.paddingTop} bottom ${c.paddingBottom}\napp ${r('#m-app')} tabs ${r('.m-tabs')} composer ${r('#m-composer')} body ${r('body')}`; };
+  const tried = [];
+  const metaV = document.querySelector('meta[name=viewport]');
+  const variants = ['width=device-width, initial-scale=1, viewport-fit=cover', 'width=device-width, initial-scale=1', 'width=device-width', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content'];
+  variants.forEach((c, i) => setTimeout(() => { metaV.content = c; setTimeout(() => tried.push(`${i + 1}: ${innerHeight}`), 500); }, 3000 + i * 1500));
+  const base = show;
+  show = () => { base(); dbg.textContent += `
+viewport variants (page height): ${tried.join('  ') || 'waiting'}`; };
   show(); setInterval(show, 1000);
 }
