@@ -33,9 +33,11 @@ const vv = window.visualViewport;
 function fit() {
   const h = vv ? vv.height : innerHeight;
   const top = vv ? vv.offsetTop : 0;
-  root.style.setProperty('--vvh', `${Math.round(h)}px`);
-  root.style.setProperty('--vvt', `${Math.round(top)}px`);
   const open = innerHeight - h - top > 120;
+  // Only with the keyboard up does the app follow the visual viewport. Closed, the CSS default (the full dynamic viewport) is used:
+  // in a home-screen app iOS can report a visual viewport shorter than the screen, which left an empty strip at the bottom.
+  if (open) { root.style.setProperty('--vvh', `${Math.round(h)}px`); root.style.setProperty('--vvt', `${Math.round(top)}px`); }
+  else { root.style.removeProperty('--vvh'); root.style.removeProperty('--vvt'); }
   if ((app.dataset.kb === 'open') !== open) { app.dataset.kb = open ? 'open' : 'closed'; if (open) chat.afterSend(); }
 }
 fit();
