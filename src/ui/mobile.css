@@ -178,6 +178,7 @@ li[data-state="queued"] > .m-step > .m-step-line { color: var(--warm); }
 .m-row-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 var(--fs-5)/var(--lh-md) var(--sans); }
 .m-row-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
 .m-row-sub.live { color: var(--accent); }
+.m-row-sum { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
 .m-danger-btn { flex: none; height: var(--tap); padding: 0 var(--s-3); background: var(--danger-wash); border: 0; border-radius: var(--r-sm); color: var(--danger); font: 500 var(--fs-4)/var(--lh-sm) var(--sans); }
 .m-empty-list { padding: var(--s-6) var(--s-4); color: var(--text-3); font: 400 var(--fs-4)/var(--lh-sm) var(--sans); text-align: center; }
 

@@ -1,6 +1,6 @@
 // What the sheets hold: the chat list, the chat settings (computer, effort, model, connection) and the approval prompt.
 import { openSheet } from './sheets.js';
-import { state, listChats, deleteChat, setTarget, getEffort, setEffort, forget, replyGate, getConvId, isOnline } from './link.js';
+import { state, onLink, listChats, deleteChat, setTarget, getEffort, setEffort, forget, replyGate, getConvId, isOnline } from './link.js';
 import { EFFORTS, EFFORT_LABELS, EFFORT_HINTS } from '../../shared/effort.js';
 import { describeCall } from '../../shared/steps.js';
 import { prettyModelName } from '../core/model-name.js';
@@ -57,6 +57,7 @@ export function openChats({ onOpen, onNew }) {
       if (c.id === getConvId()) open.setAttribute('aria-current', 'true');
       const running = state.running.has(c.id);
       open.append(el('span', 'm-row-title', c.title || 'New chat'), el('span', running ? 'm-row-sub live' : 'm-row-sub', running ? 'Working...' : `${label(c.lastTarget ?? 'pc')} · ${ago(c.updatedAt)}`));
+      if (c.summary) open.append(el('span', 'm-row-sum', c.summary)); // a summary line only when the chat has one
       open.addEventListener('click', () => { if (editing) return; sheet.close(); onOpen(c.id); });
       row.append(open);
       if (editing) {
@@ -78,6 +79,14 @@ export function openChats({ onOpen, onNew }) {
 
   list.append(el('p', 'm-empty-list', 'Loading...'));
   listChats().then((c) => { items = c; draw(); }).catch(() => { list.replaceChildren(el('p', 'm-empty-list', 'The chat list could not be loaded.')); });
+  // another device saved, renamed, pinned or deleted a chat: the open list follows (the server announces it)
+  let refresh = 0;
+  const off = onLink((e) => {
+    if (!sheet.root.isConnected) { off(); clearTimeout(refresh); return; }
+    if (e.type !== 'conversations.changed') return;
+    clearTimeout(refresh);
+    refresh = setTimeout(() => listChats().then((c) => { items = c; draw(); }).catch(() => {}), 400);
+  });
   return sheet;
 }
 
