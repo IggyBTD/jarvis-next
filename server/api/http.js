@@ -29,7 +29,7 @@ function serveStatic(req, res, root, pathname) {
   if (!file.startsWith(root + path.sep) && file !== root) { res.writeHead(400); return res.end(); }
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(root, 'index.html');
   if (!fs.existsSync(file)) { res.writeHead(503, { 'content-type': 'text/plain' }); return res.end('The app is not built yet: run npm run build on the PC.'); }
-  res.writeHead(200, { 'content-type': TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream', 'cache-control': file.endsWith('index.html') ? 'no-cache' : 'public, max-age=3600', 'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY', 'referrer-policy': 'no-referrer', 'permissions-policy': 'microphone=(self), camera=(), geolocation=()', ...(file.endsWith('.html') ? { 'content-security-policy': pageCsp(req.headers.host) } : {}) });
+  res.writeHead(200, { 'content-type': TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream', 'cache-control': file.endsWith('.html') ? 'no-cache' : 'public, max-age=3600', 'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY', 'referrer-policy': 'no-referrer', 'permissions-policy': 'microphone=(self), camera=(), geolocation=()', ...(file.endsWith('.html') ? { 'content-security-policy': pageCsp(req.headers.host) } : {}) });
   return req.method === 'HEAD' ? res.end() : fs.createReadStream(file).pipe(res);
 }
 
