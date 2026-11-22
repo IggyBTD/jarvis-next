@@ -20,12 +20,6 @@ const $ = (id) => document.getElementById(id);
 const root = document.documentElement;
 const app = $('m-app');
 const input = $('m-input');
-// The field is an editable div (iOS shows its tick-and-arrows bar above the keyboard for textareas, not for this); value and placeholder behave as on a textarea.
-Object.defineProperties(input, {
-  value: { get: () => input.innerText.replace(/\n$/, ''), set: (v) => { input.textContent = v; } },
-  placeholder: { get: () => input.dataset.placeholder, set: (v) => { input.dataset.placeholder = v; } },
-});
-input.addEventListener('input', () => { if (!input.innerText.replace(/\n/g, '')) input.replaceChildren(); }); // an emptied field leaves a <br>: clear it so the placeholder returns
 const send = $('m-send');
 const label = (id) => state.machines[id]?.label ?? (id === 'mac' ? 'Mac' : 'PC');
 

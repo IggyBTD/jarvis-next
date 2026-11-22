@@ -136,8 +136,8 @@ li[data-state="queued"] > .m-step > .m-step-line { color: var(--warm); }
 #m-app[data-kb="open"] .m-composer { padding-bottom: var(--s-2); }
 .m-field { display: flex; align-items: flex-end; gap: var(--s-1); padding: var(--s-1); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-lg); transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out); }
 .m-field:focus-within { border-color: var(--accent-dim); box-shadow: 0 0 0 3px var(--accent-wash); /* optical: a 3 px focus halo */ }
-.m-field #m-input { white-space: pre-wrap; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; flex: 1; min-width: 0; padding: var(--s-2) var(--s-3); max-height: calc(var(--lh-md) * 5 + var(--s-4)); background: transparent; border: 0; outline: 0; resize: none; overflow-y: auto; color: var(--text); caret-color: var(--accent); font: 400 var(--fs-5)/var(--lh-md) var(--sans); /* 16 pt: Safari never zooms into the field */ }
-.m-field #m-input:empty::before { content: attr(data-placeholder); color: var(--text-3); pointer-events: none; }
+.m-field textarea { flex: 1; min-width: 0; padding: var(--s-2) var(--s-3); max-height: calc(var(--lh-md) * 5 + var(--s-4)); background: transparent; border: 0; outline: 0; resize: none; overflow-y: auto; color: var(--text); caret-color: var(--accent); font: 400 var(--fs-5)/var(--lh-md) var(--sans); /* 16 pt: Safari never zooms into the field */ }
+.m-field textarea::placeholder { color: var(--text-3); }
 .m-send { position: relative; flex: none; width: var(--tap); height: var(--tap); margin: calc(var(--s-1) * -1) calc(var(--s-1) * -1) calc(var(--s-1) * -1) 0; display: grid; place-items: center; background: transparent; border: 0; }
 .m-send::before { content: ""; position: absolute; inset: 6px; /* optical: a 32 pt disc inside a 44 pt target */ border-radius: 50%; background: var(--accent); transition: background-color var(--dur-fast) var(--ease-out); }
 .m-send .icon { --icon-size: var(--s-4); position: relative; color: var(--on-accent); }
@@ -232,7 +232,7 @@ li[data-state="queued"] > .m-step > .m-step-line { color: var(--warm); }
 
 /* the composer: [ + ] text [ send ] in one pill, the tab bar underneath */
 .m-field { align-items: center; padding: var(--s-2); border-radius: var(--r-pill); }
-.m-field #m-input { padding: var(--s-2) var(--s-1); }
+.m-field textarea { padding: var(--s-2) var(--s-1); }
 .m-send { margin: 0; }
 .m-send::before { inset: 0; }
 .m-composer { padding-bottom: var(--s-2); }
