@@ -50,7 +50,7 @@ export function createHealth({ llm, queue, router, machines, contextLength = nul
 
 const readBody = (req) => new Promise((resolve, reject) => { const c = []; let n = 0; req.on('data', (d) => { n += d.length; if (n > 20_000) { reject(Object.assign(new Error('body too large'), { status: 413 })); req.destroy(); } else c.push(d); }); req.on('end', () => { try { resolve(c.length ? JSON.parse(Buffer.concat(c).toString('utf8')) : {}); } catch { reject(Object.assign(new Error('body must be JSON'), { status: 400 })); } }); req.on('error', reject); });
 
-export function createHttpHandler({ cfg, auth, llmProxy, models, environment, setProject, health, audit, conversations, digest, osint, browserView, bundle, latex, accounts, msAccounts, buildState, devices = null, devicesChanged = () => {}, log = () => {} }) {
+export function createHttpHandler({ cfg, auth, llmProxy, models, environment, setProject, health, audit, conversations, projects = null, digest, osint, browserView, bundle, latex, accounts, msAccounts, buildState, devices = null, devicesChanged = () => {}, log = () => {} }) {
   const origins = cfg.machines.server.origins ?? [];
   return async function handle(req, res) {
     try {
@@ -141,6 +141,10 @@ export function createHttpHandler({ cfg, auth, llmProxy, models, environment, se
       if (acc && prov[2] === '/complete' && req.method === 'POST') { try { return json(res, 200, await acc.complete((await readBody(req)).url), cors); } catch (e) { return json(res, e.status ?? 500, { error: e.message }, cors); } }
       if (acc && prov[3] && req.method === 'DELETE') return json(res, 200, { removed: await acc.remove(prov[3]) }, cors);
       if (browserView && p === '/api/browser/do'&& req.method === 'POST') return json(res, 200, await browserView.act(await readBody(req)), cors);
+      if (projects && p === '/api/projects') {
+        if (req.method === 'GET') return json(res, 200, { projects: projects.list() }, cors);
+        if (req.method === 'PUT') { try { return json(res, 200, { projects: projects.set((await readBody(req)).projects) }, cors); } catch (e) { return json(res, e.status ?? 500, { error: e.message }, cors); } }
+      }
       if (req.method === 'GET' && p === '/api/conversations') return json(res, 200, { conversations: conversations.list() }, cors);
       const one = p.match(/^\/api\/conversations\/([\w-]{1,64})$/);
       if (one) {

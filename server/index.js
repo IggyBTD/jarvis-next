@@ -17,6 +17,7 @@ import { createBus } from './core/event-bus.js';
 import { createToolRouter } from './core/tool-router.js';
 import { createTargetState } from './core/target-state.js';
 import { createConversations } from './core/conversations.js';
+import { createProjects } from './core/projects.js';
 import { createPromptBuilder } from './core/prompt-builder.js';
 import { createLlmClient } from './core/llm-client.js';
 import { createQueue } from './core/llm-queue.js';
@@ -76,6 +77,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   const router = createToolRouter({ cfg, policy, gate, audit, tokens: (id) => tokens.machines[id]?.[0] ?? '' });
   const targetState = createTargetState({ dataDir: cfg.dataDir, machines: ids, bus });
   const conversations = createConversations({ dir: dataPath(cfg, 'conversations'), onChange: (id) => bus.publish('conversations.changed', { id }) });
+  const projects = createProjects({ dir: cfg.dataDir, onChange: () => bus.publish('projects.changed') });
   const memory = createMemory({ dataDir: cfg.dataDir });
   const prompts = createPromptBuilder({ prompts: cfg.prompts, machines, timezone: cfg.schedules.timezone, getInfo: (id) => router.info(id), notes: memory.prompt });
   const llm = createLlmClient({ config: cfg.models });
@@ -208,7 +210,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
       await health({ fresh: true }).catch(() => {}); // refreshes the cached health, so the next push to the app names the new model
       return r;
     },
-  }, health, audit, conversations, digest, osint, accounts, msAccounts, browserView, bundle, latex, buildState: () => wsApi.buildState(), log }));
+  }, health, audit, conversations, projects, digest, osint, accounts, msAccounts, browserView, bundle, latex, buildState: () => wsApi.buildState(), log }));
 
   // F3-7: a Host allowlist in front of every request and socket, here and on the loopback twin below (DNS rebinding)
   guardHost(server);
