@@ -3,6 +3,23 @@ import assert from 'node:assert/strict';
 import { createMemory } from '../../server/core/memory.js';
 import { createPromptBuilder } from '../../server/core/prompt-builder.js';
 import { tmpDir, rmDir } from '../helpers.js';
+import fs from 'node:fs';
+import path from 'node:path';
+
+test('memory: data/profile.md reaches the prompt, is capped, and an edit applies without a restart', () => {
+  const dir = tmpDir('prof');
+  try {
+    const m = createMemory({ dataDir: dir });
+    assert.equal(m.prompt(), '');
+    fs.writeFileSync(path.join(dir, 'profile.md'), 'Call him Iggy.\u0000');
+    assert.match(m.prompt(), /their own profile file[\s\S]*Call him Iggy\./);
+    assert.doesNotMatch(m.prompt(), /\u0000/);
+    fs.writeFileSync(path.join(dir, 'profile.md'), 'x'.repeat(5000));
+    assert.equal(m.prompt().split('\n').pop().length, 3000);
+    m.add('a note');
+    assert.match(m.prompt(), /About the user[\s\S]*Notes the user asked you to remember/);
+  } finally { rmDir(dir); }
+});
 
 test('memory: notes persist, de-duplicate, are capped, forgotten by text, and reach the prompt as data', async () => {
   const dir = tmpDir('mem');
