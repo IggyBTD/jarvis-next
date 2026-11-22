@@ -46,6 +46,12 @@ if (vv) {
 }
 window.addEventListener('orientationchange', () => setTimeout(fit, 200));
 
+// A real app does not zoom: iOS Safari ignores the viewport's no-zoom hint, so pinch and double-tap zoom are stopped here.
+for (const t of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(t, (e) => e.preventDefault());
+document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+let lastTap = 0;
+document.addEventListener('touchend', (e) => { const n = Date.now(); if (n - lastTap < 300) e.preventDefault(); lastTap = n; }, { passive: false });
+
 // the status bar colour of the home-screen app follows the page background
 const theme = document.querySelector('meta[name="theme-color"]');
 const paintTheme = () => { if (theme) theme.content = getComputedStyle(root).getPropertyValue('--bg').trim(); };

@@ -5,13 +5,13 @@
   <!-- R1-2: images and media from this page or data: and blob: only, also when the dev server (which sends no CSP) serves it -->
   <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: blob:; media-src 'self' data: blob:; object-src 'none'">
   <!-- viewport-fit=cover: the app draws edge to edge and keeps clear of the notch and the home indicator itself (safe-area insets).
-       No maximum-scale: pinch zoom stays available; inputs are 16 pt so Safari never zooms by itself. -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+       Zoom is off (a real app does not zoom); inputs are 16 pt anyway. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="JARVIS">
   <meta name="format-detection" content="telephone=no">
   <title>JARVIS</title>
