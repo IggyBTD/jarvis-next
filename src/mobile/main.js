@@ -46,6 +46,10 @@ if (vv) {
   vv.addEventListener('scroll', () => { window.scrollTo(0, 0); fit(); }); // iOS scrolls the page to show the field: put it back, the app is already placed
 }
 window.addEventListener('orientationchange', () => setTimeout(fit, 200));
+// In a home-screen app on iOS 26 the visual viewport does not always announce the keyboard (no resize event once the page root is not fixed): while the field has focus, look every 150 ms.
+let fitTimer = 0;
+input.addEventListener('focus', () => { fit(); clearInterval(fitTimer); fitTimer = setInterval(fit, 150); });
+input.addEventListener('blur', () => { setTimeout(fit, 100); setTimeout(() => { fit(); if (document.activeElement !== input) clearInterval(fitTimer); }, 600); });
 
 // A real app does not zoom: iOS Safari ignores the viewport's no-zoom hint, so pinch and double-tap zoom are stopped here.
 for (const t of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(t, (e) => e.preventDefault());
