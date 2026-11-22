@@ -200,8 +200,8 @@ li[data-state="queued"] > .m-step > .m-step-line { color: var(--warm); }
 /* an approval */
 .m-approval { padding: var(--s-4) var(--s-4) var(--s-2); }
 .m-appr-kicker { color: var(--text-3); font: 500 var(--fs-3)/var(--lh-sm) var(--sans); }
-.m-appr-action { margin-top: var(--s-1); font: 400 var(--fs-6)/var(--lh-lg) var(--serif); overflow-wrap: anywhere; }
-.m-appr-meta { margin-top: var(--s-2); color: var(--warm); font: 500 var(--fs-3)/var(--lh-sm) var(--sans); }
+.m-appr-action { margin-top: var(--s-1); font: 500 var(--fs-5)/var(--lh-md) var(--sans); overflow-wrap: anywhere; }
+.m-appr-meta { color: var(--text-3); font: 500 var(--fs-3)/var(--lh-sm) var(--sans); }
 .m-appr-note { margin-top: var(--s-2); color: var(--text-2); font: 400 var(--fs-4)/var(--lh-sm) var(--sans); overflow-wrap: anywhere; }
 .m-appr-details { margin-top: var(--s-3); color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
 .m-appr-details summary { display: flex; align-items: center; gap: var(--s-1); min-height: var(--tap); cursor: pointer; }
@@ -335,3 +335,11 @@ button.m-art-card:active { transform: scale(0.98); background: var(--surface-3);
   html, body { position: relative; inset: auto; height: 100lvh; } /* a fixed root makes iOS 26 lay the page out 59 pt short; found by trying fixes on the phone */
   #m-app, #m-sheets, .m-drawer { bottom: auto; height: var(--vvh, 100lvh); }
 }
+
+/* the compact approval: the sentence, the exact request in a small box, two buttons side by side */
+.m-appr-box { margin-top: var(--s-2); padding: var(--s-2) var(--s-3); background: var(--surface-1); border-radius: var(--r-sm); max-height: calc(var(--s-8) * 2); overflow: auto; color: var(--text-2); font: 400 var(--fs-3)/var(--lh-sm) var(--mono); }
+.m-appr-line { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.m-appr-key { margin-right: var(--s-2); color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--mono); }
+.m-appr-prompt { margin-right: var(--s-2); color: var(--accent); }
+.m-appr-warn { margin-top: var(--s-2); color: var(--warm); font: 500 var(--fs-3)/var(--lh-sm) var(--sans); }
+.m-appr-buttons { grid-template-columns: 1fr 1fr; }

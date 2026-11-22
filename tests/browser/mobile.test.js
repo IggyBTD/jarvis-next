@@ -147,7 +147,10 @@ test('an approval is a sheet that has to be answered: no close button, tapping o
   await typeAndSend('close notes');
   await page.waitForSelector('.m-sheet.modal.open .m-appr-action');
   assert.equal(await page.textContent('.m-appr-action'), 'Closing notes');
-  assert.match(await page.textContent('.m-appr-meta'), /on PC/);
+  assert.match(await page.textContent('.m-appr-meta'), /PC/);
+  const boxText = await page.textContent('.m-appr-box');
+  assert.ok(boxText.includes('close_app') && boxText.includes('notes'), `the exact request is in the box: ${boxText}`);
+  assert.equal(await page.getByRole('button', { name: 'Approve', exact: true }).isDisabled(), false, 'a short request is fully on screen, so Approve is ready');
   assert.equal(await page.locator('.m-sheet.modal .m-sheet-right button').count(), 0, 'no close button');
   await page.mouse.click(100, 60); // outside the sheet
   assert.equal(await page.locator('.m-sheet.modal.open').count(), 1, 'tapping outside did not dismiss it');
