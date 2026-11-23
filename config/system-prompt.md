@@ -15,6 +15,7 @@ Artifact types:
 - svg: one complete <svg> element.
 - mermaid: Mermaid diagram source only. Put every node label in double quotes, e.g. A["Add milk (optional)"], so parentheses and punctuation never break the syntax.
 - chart: a Chart.js config as plain JSON, {"type": "...", "data": {...}, "options": {...}}. JSON only, no functions or comments.
+  For the graph of a formula or function never list points: give the formulas and the app draws the curve itself, with a slider under it for every variable other than x: {"type": "function", "functions": ["a*sin(b*x)", "x^2"], "x": {"min": -10, "max": 10}, "y": {"min": -5, "max": 5}, "params": {"a": {"min": 0, "max": 5, "value": 2, "label": "Amplitude"}, "b": 1}}. Write each formula as an expression in x, optionally after "y =": + - * / ^ and brackets, the constants pi, e, tau, and the functions sin cos tan asin acos atan atan2 sinh cosh tanh sqrt cbrt abs exp ln log (natural) log10 log2 floor ceil round sign min max pow mod. Any other name is a variable. "params" is optional (set a range and start value where the default -5 to 5 is wrong), and so is "y" (it fits itself). Use a plain Chart.js config for data points that are not a formula.
 - markdown: a standalone document.
 - code: a source file; add lang="python" (or the right language) to the tag.
 - table: data as JSON, {"columns": ["Name", "Value"], "rows": [["a", "1"], ["b", "2"]]}. Cells are plain text.

@@ -15,6 +15,20 @@ const CHART = [
   '</jarvis-artifact>',
 ].join('\n');
 
+// A function plot: the formulas and the ranges of its sliders, no points (asked for with "formula").
+const FORMULA = [
+  'Here is the damped wave. Drag the sliders to change it.',
+  '',
+  '<jarvis-artifact id="damped-wave" type="chart" title="Damped wave">',
+  JSON.stringify({
+    type: 'function',
+    functions: ['A*exp(-k*x)*sin(w*x + phi)', { expr: 'A*exp(-k*x)', label: 'envelope' }],
+    x: { min: 0, max: 12, label: 't' },
+    params: { A: { min: 0, max: 5, value: 3, label: 'Amplitude' }, k: { min: 0, max: 1, value: 0.2, label: 'Decay' }, w: { min: 0.5, max: 10, value: 3, label: 'Frequency' }, phi: { min: -3.14, max: 3.14, value: 0 } },
+  }),
+  '</jarvis-artifact>',
+].join('\n');
+
 export async function install({ chat = true, telemetry = true } = {}) {
   window.__TAURI_INTERNALS__ = { transformCallback: (cb) => { window.__cbs = (window.__cbs || []).concat(cb); return window.__cbs.length; }, invoke: async (cmd, a) => {
     const db = (window.__sessions ||= new Map());
@@ -58,6 +72,7 @@ export async function install({ chat = true, telemetry = true } = {}) {
               c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return;
             }
             if (/plain/i.test(last)) { send({ content: titled.slice(0, 20) }); send({ content: `${titled.slice(20)}A plain answer.` }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
+            if (/formula/i.test(last)) { send({ content: FORMULA }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
             if (/chart/i.test(last)) { send({ content: CHART }); c.enqueue(enc.encode('data: [DONE]\n\n')); c.close(); return; }
             await new Promise((r) => setTimeout(r, 60000)); // stays "thinking"
             c.close();

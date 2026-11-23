@@ -35,6 +35,9 @@ async function cspStatic() {
 }
 
 import monoFont from '@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2?inline';
+import formulaSource from './formula.js?raw';
+import { isFormulaSpec } from './formula.js';
+import { formulaPlot } from './formula-plot.js';
 
 // Artifacts follow the app theme (the Settings choice, else Windows).
 const isDark = () => (document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches);
@@ -43,6 +46,7 @@ const pal = () => ({
   bg: token('--bg'), fg: token('--text'), muted: token('--text-2'), text3: token('--text-3'), line: token('--border'), lineStrong: token('--border-strong'),
   ctl: token('--surface-3'), ctlLine: token('--border-strong'), accent: token('--accent'), accentMid: token('--accent-mid'), accentDim: token('--accent-dim'),
   warm: token('--warm'), err: token('--danger'), sel: token('--accent-wash'),
+  atomRim: token('--atom-rim') || token('--accent'), mono: token('--mono') || "'JetBrains Mono', ui-monospace, monospace",
 });
 const baseCss = () => {
   const p = pal();
@@ -131,6 +135,11 @@ export async function buildSrcdoc(type, content) {
     case 'chart': {
       const lib = await chartLibrary();
       const p = pal();
+      // {"type":"function","functions":["a*sin(b*x)"],...}: drawn from the formulas here, with a slider per variable (formula-plot.js)
+      if (isFormulaSpec(content)) {
+        const { head, body, scripts } = formulaPlot({ content, chartLib: lib, formulaLib: formulaSource.replace(/^export /gm, ''), jsonForScript, p });
+        return wrap(body, { head, scripts, policy: CSP_SCRIPTS });
+      }
       const boot = `var P = ${JSON.stringify({ muted: p.muted, text3: p.text3, line: p.line, accentMid: p.accentMid, accentDim: p.accentDim, accent: p.accent, warm: p.warm, bg: p.bg, fg: p.fg })};`;
       return wrap('<div style="position:absolute;inset:0;padding:16px 16px 12px"><canvas id="c"></canvas></div>', {
         policy: CSP_SCRIPTS,
