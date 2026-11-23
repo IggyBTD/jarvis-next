@@ -36,7 +36,7 @@ const open = async (opts = {}) => {
 };
 const shot = (name, o = {}) => page.screenshot({ path: path.join(SHOTS, `${name}.png`), scale: 'css', ...o });
 const sheetSettled = () => page.waitForTimeout(450); // the entrance is 300 ms
-const typeAndSend = async (text) => { await page.fill('#m-input', text); await page.dispatchEvent('#m-send', 'click'); };
+const typeAndSend = async (text) => { await page.fill('#m-input', text); await page.dispatchEvent('#m-send', 'click'); await page.evaluate(() => document.getElementById('m-input').blur()); }; // blurred after sending: a focused field keeps the composer open, and clicking elsewhere would collapse it under the pointer (a phone does not blur on a tap)
 
 before(async () => {
   rig = await makeRig({ enableAll: true, edit: (f) => { f['machines.json'].server.origins.push(`http://localhost:${VITE_PORT}`); } });
@@ -292,6 +292,37 @@ test('chat settings: computer and effort are segmented controls (44 pt), the cho
   await shot('settings-dark');
   await page.getByRole('button', { name: 'Close' }).click();
   await page.waitForSelector('.m-sheet', { state: 'detached' });
+});
+
+test('the model sheet: the three everyday models only, and for the one in use a vision row and its context sizes, each a 44 pt reload', async () => {
+  const native = rig.model.native;
+  native.installed.add('qwen3.8-27b-text'); native.vision.add('unsloth/qwen3.8-27b'); // LM Studio lists the vision model and its text-only twin
+  native.log.length = 0;
+  await page.focus('#m-input'); // the model pill shows while the field has the keyboard
+  await page.click('#m-model');
+  await page.waitForSelector('.m-sheet.open .m-row');
+  assert.equal(await page.locator('.m-sheet.open .m-list .m-row:not(.m-vision)').count(), 1, 'the Coder is not one of the three, the twin is not a model');
+  assert.match(await page.textContent('.m-sheet.open .m-list .m-row:not(.m-vision) .m-row-title'), /Qwen 3\.8 27B/);
+  const vision = page.locator('.m-sheet.open .m-vision');
+  assert.equal(await vision.getAttribute('aria-pressed'), 'true');
+  assert.match(await vision.textContent(), /Vision on/);
+  const chips = await page.locator('.m-sheet.open .m-ctx-chip').evaluateAll((cs) => cs.map((c) => ({ text: c.textContent, h: c.getBoundingClientRect().height, over: c.dataset.over ?? null })));
+  assert.deepEqual(chips.map((c) => c.text), ['16K', '32K', '48K', '64K', '80K', '96K', '128K']);
+  assert.ok(chips.every((c) => c.h >= 44), 'every size is a 44 pt target');
+  assert.deepEqual(chips.filter((c) => c.over).map((c) => c.text), ['80K', '96K', '128K'], 'sizes past what fits with vision on are dashed');
+  await shot('models-sheet-dark');
+  await vision.tap();
+  await page.waitForSelector('.m-sheet', { state: 'detached' });
+  await waitFor(() => native.log.some((x) => x.path.endsWith('/load')));
+  assert.deepEqual(native.log.filter((x) => x.path.endsWith('/load')).map((x) => `${x.body.model} ${x.body.context_length}`), ['qwen3.8-27b-text 81920']);
+  await page.focus('#m-input');
+  await page.click('#m-model');
+  await page.waitForSelector('.m-sheet.open .m-vision');
+  assert.match(await page.textContent('.m-sheet.open .m-vision'), /Vision off/);
+  assert.equal(await page.locator('.m-sheet.open .m-ctx-chip[aria-pressed="true"]').textContent(), '80K');
+  await page.goBack(); // the Back swipe closes the sheet
+  await page.waitForSelector('.m-sheet', { state: 'detached' });
+  await page.evaluate(() => document.activeElement?.blur());
 });
 
 test('the keyboard: the composer rides on top of it and the conversation stays in view', async () => {

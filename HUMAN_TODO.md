@@ -81,3 +81,8 @@ The voice sidecar (`sidecars/voice`, port 8765) now serves the OpenAI-style rout
 1. Pair every device and end the old shared token: the six steps under "What changes for you" in docs/security-fixes-progress.md (PIN, desktop, phone, Mac, revoke legacy, delete dist-mac/jarvis-mac-with-tokens.zip).
 2. Run OpenCode as its own low-privilege user, so the commands it runs cannot read JARVIS's files or tokens: the plan in docs/security/secrets-design.md section 4 (it needs an administrator). Until then the clean child environment, the T3 patterns and the tripwire (an OpenCode permission answered outside JARVIS stops the task and shows a "Security:" message) are what stands in the way.
 3. Check on the real OpenCode 1.19.1 whether its server password can reach it other than through OPENCODE_SERVER_PASSWORD (opencode serve --help, the config schema), and whether its commands inherit that variable. If they do not, write it in docs/decisions.md.
+
+## 13. The vision eye (model switcher)
+
+1. On every PC that runs the server, once: `npm run vision-twin`. It hard-links the 27B's GGUF into a folder without the vision file, so the eye can load the model without vision. Without it the eye shows as on and cannot be switched off.
+2. Try it: pick Qwen 3.8 27B, click the eye (the model reloads, about a minute), and watch the context change from 64K to 80K in the model menu. It was tested against a fake LM Studio and read-only against the real one; no model was swapped on the real one.

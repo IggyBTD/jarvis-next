@@ -61,6 +61,17 @@ export async function api(path, init = {}) {
   return res.json();
 }
 
+// The model menu, as on the desktop: what LM Studio on the PC has installed, and picking one (the PC loads it and unloads the others).
+export const listModels = () => api('/models');
+export async function chooseModel(model, { vision, context } = {}) { // vision: true or false, context: tokens; either one reloads the model
+  try {
+    const res = await fetch(`${origin()}/api/model`, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` }, body: JSON.stringify({ model, vision, context }) });
+    const body = await res.json().catch(() => ({}));
+    if (res.ok) return { ok: true, ...body };
+    return { ok: false, error: res.status === 403 ? 'This phone is not allowed to change settings. Pair it again with: node scripts/client-link.js phone --full' : body.error ?? `HTTP ${res.status}` };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
 let ws = null;
 let timer = 0;
 let attempts = 0;

@@ -171,7 +171,7 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
    */
   async function chat({ messages, tools = null, signal, use = 'chat', maxTokens = config.maxOutputTokens, onDelta }) {
     const body = applyThinking({
-      model: config.modelId, messages: cleanMessages(messages), stream: true, stream_options: { include_usage: true },
+      model: config.requestModel ?? config.modelId, messages: cleanMessages(messages), stream: true, stream_options: { include_usage: true },
       ...(maxTokens ? { max_tokens: maxTokens } : {}),
       ...(tools?.length ? { tools, tool_choice: 'auto' } : {}),
       ...config.sampling, // temperature, top_p, top_k, min_p, presence_penalty, repeat_penalty from models.json; absent = LM Studio's preset
@@ -266,14 +266,14 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
       if (!res.ok) return { reachable: false, error: `HTTP ${res.status}`, tokensPerSec: last?.tokensPerSec ?? null };
       // LM Studio lists "qwen3.8-27b" for the key "unsloth/qwen3.8-27b", so the match below also accepts the part after the slash.
       const ids = ((await res.json()).data ?? []).map((m) => m.id);
-      const mine = await listModels().then((r) => r.models.find((m) => m.key === config.modelId)).catch(() => null); // size on disk and loaded context
-      return { reachable: true, sizeBytes: mine?.sizeBytes ?? null, loadedContext: mine?.loadedContext ?? null, modelId: config.modelId, settings: { thinking: config.thinking?.chat ?? false, temperature: config.sampling?.temperature ?? null, mtp: !!config.mtp?.enabled }, loaded: ids, modelPresent: ids.some((id) => id === config.modelId || config.modelId.endsWith(`/${id}`)), tokensPerSec: last?.tokensPerSec ?? null, lastRequestAt: last?.at ?? null };
+      const mine = await listModels().then((r) => r.models.find((m) => sameModel(m.key, config.modelId))).catch(() => null); // size on disk, loaded context, vision
+      return { reachable: true, sizeBytes: mine?.sizeBytes ?? null, loadedContext: mine?.loadedContext ?? null, vision: mine?.vision ?? null, contextChoices: mine?.contextChoices ?? null, contextFit: mine?.contextFit ?? null, contextLength: config.contextLength, modelId: config.modelId, settings: { thinking: config.thinking?.chat ?? false, temperature: config.sampling?.temperature ?? null, mtp: !!config.mtp?.enabled }, loaded: ids, modelPresent: ids.some((id) => id === (config.requestModel ?? config.modelId) || (config.requestModel ?? config.modelId).endsWith(`/${id}`)), tokensPerSec: last?.tokensPerSec ?? null, lastRequestAt: last?.at ?? null };
     } catch (e) { return { reachable: false, error: e.cause?.code ?? e.message, tokensPerSec: last?.tokensPerSec ?? null }; }
   }
 
   // For llm-proxy (OpenCode): same alias, same thinking policy, bounded output, raw streamed Response back.
   function prepareProxyBody(input) {
-    const body = { ...input, ...config.sampling, model: config.modelId };
+    const body = { ...input, ...config.sampling, model: config.requestModel ?? config.modelId };
     delete body.chat_template_kwargs; delete body.reasoning_effort;
     const cap = Math.floor(config.contextLength / 2);
     if (!Number.isFinite(body.max_tokens) || body.max_tokens > cap) body.max_tokens = cap;
@@ -291,29 +291,67 @@ export function createLlmClient({ config, fetchImpl = fetch, sleepFn = sleep, no
     if (!res.ok) throw new LlmError(`LM Studio ${p} answered ${res.status}`, { status: res.status });
     return res.json();
   };
-  async function listModels() {
+  // Vision and context. LM Studio turns vision on by the mmproj file beside the model and has no switch at load time, so a model whose
+  // profile has a "vision" block has a twin: the same GGUF hard-linked into a folder without the mmproj (npm run vision-twin), listed
+  // under vision.textOnly. Vision on loads the model, vision off loads the twin, and the app only ever sees the one model. Neither
+  // the context nor vision can change on a loaded model, so changing either is a reload (the chat history stays; the app keeps it).
+  const prefs = new Map(); // model key -> { vision, context } as last chosen
+  const DEFAULT_CHOICES = [8192, 16384, 32768, 49152, 65536, 81920, 98304, 131072];
+  async function rawModels() {
     const j = await native('/models', null, AbortSignal.timeout(5000));
-    const models = (j.models ?? []).filter((m) => m.type === 'llm').map((m) => ({ key: m.key, name: m.display_name ?? m.key, loaded: (m.loaded_instances?.length ?? 0) > 0, loadedContext: m.loaded_instances?.[0]?.config?.context_length ?? null, sizeBytes: m.size_bytes ?? null, instanceIds: (m.loaded_instances ?? []).map((i) => i.id) }));
+    return (j.models ?? []).filter((m) => m.type === 'llm').map((m) => ({ key: m.key, name: m.display_name ?? m.key, loaded: (m.loaded_instances?.length ?? 0) > 0, loadedContext: m.loaded_instances?.[0]?.config?.context_length ?? null, sizeBytes: m.size_bytes ?? null, instanceIds: (m.loaded_instances ?? []).map((i) => i.id), hasVision: !!m.capabilities?.vision, maxContext: m.max_context_length ?? null }));
+  }
+  const twinKeys = () => Object.values(config.profiles ?? {}).map((p) => p.vision?.textOnly).filter(Boolean);
+  function logical(all) {
+    const isTwin = (k) => twinKeys().some((t) => sameModel(t, k));
+    return all.filter((m) => !isTwin(m.key)).map((m) => {
+      const p = profileFor(m.key);
+      const twin = p.vision?.textOnly ? all.find((t) => sameModel(t.key, p.vision.textOnly)) : null;
+      const either = [m, twin].filter(Boolean);
+      const live = either.find((x) => x.loaded) ?? null;
+      const saved = prefs.get(m.key)?.vision;
+      // available: it has vision and there is a twin to switch it off with; on: what is loaded, else what was last chosen, else on
+      const vision = !m.hasVision ? null : { available: !!twin, on: !twin ? true : live ? live === m : saved ?? true };
+      return { key: m.key, name: m.name, loaded: !!live, loadedContext: live?.loadedContext ?? null, sizeBytes: m.sizeBytes, instanceIds: either.flatMap((x) => x.instanceIds), loadedKey: live?.key ?? null, vision, twinKey: twin?.key ?? null, contextFit: p.vision?.context ? p.vision.context[vision && !vision.on ? 'off' : 'on'] : p.contextLength ?? null, contextChoices: p.contextChoices ?? DEFAULT_CHOICES.filter((c) => !m.maxContext || c <= m.maxContext), maxContext: m.maxContext };
+    });
+  }
+  async function listModels() {
+    const models = logical(await rawModels());
     return { active: models.find((m) => sameModel(m.key, config.modelId))?.key ?? config.modelId, models };
   }
   // A model without a profile gets the safe request side: thinking off by the template switch, LM Studio's own sampling.
   // LM Studio lists a model as "qwen3.8-27b" where the config says "unsloth/qwen3.8-27b": the same model, with or without the publisher
   const sameModel = (a, b) => a === b || a.endsWith(`/${b}`) || b.endsWith(`/${a}`);
   const profileFor = (key) => config.profiles?.[key] ?? Object.entries(config.profiles ?? {}).find(([k]) => sameModel(k, key))?.[1] ?? { thinkingMethod: 'chat_template_kwargs', thinking: { chat: false, tools: false, digest: false, agent: false } };
-  function applyProfile(key) {
+  // vision false on a model with a twin sends the requests to the twin; context is the budget the app plans history by
+  function applyProfile(key, { vision, context } = {}) {
     const p = profileFor(key);
     config.modelId = key;
+    config.requestModel = vision === false && p.vision?.textOnly ? p.vision.textOnly : key;
     config.thinkingMethod = p.thinkingMethod ?? config.thinkingMethod;
     config.thinking = { ...config.thinking, ...p.thinking };
     config.sampling = p.sampling;
-    if (p.contextLength) config.contextLength = p.contextLength;
+    const ctx = context ?? (p.vision?.context ? p.vision.context[vision === false ? 'off' : 'on'] : null) ?? p.contextLength;
+    if (ctx) config.contextLength = ctx;
+    if (vision !== undefined || context !== undefined) prefs.set(key, { vision: vision ?? prefs.get(key)?.vision, context: context ?? prefs.get(key)?.context });
   }
-  async function selectModel(key) {
-    const { models } = await listModels();
-    if (!models.some((m) => m.key === key)) throw new LlmError('that model is not installed in LM Studio', { status: 404 });
-    for (const m of models) if (m.key !== key) for (const id of m.instanceIds) await native('/models/unload', { instance_id: id });
-    if (!models.find((m) => m.key === key).loaded) await native('/models/load', { model: key, context_length: profileFor(key).contextLength ?? config.contextLength });
-    applyProfile(key);
+  // Loads `key` with vision on or off and a context size. Anything not given comes from what was last chosen, then from the profile
+  // (profiles[key].vision.context holds the size for each state: without the vision encoder there is room for more). Loaded as it is
+  // already when nothing differs; otherwise everything is unloaded first (one model fits the card).
+  async function selectModel(key, { vision, context } = {}) {
+    const all = await rawModels();
+    const model = logical(all).find((m) => sameModel(m.key, key));
+    if (!model) throw new LlmError('that model is not installed in LM Studio', { status: 404 });
+    const p = profileFor(model.key);
+    const wantVision = model.vision?.available ? (vision ?? model.vision.on) : undefined; // undefined: this model has no switch
+    const target = wantVision === false ? model.twinKey : model.key;
+    const asked = Number(context);
+    const ctx = Number.isFinite(asked) && asked >= 2048 ? Math.min(Math.round(asked), model.maxContext ?? 1048576) : (p.vision?.context ? p.vision.context[wantVision === false ? 'off' : 'on'] : null) ?? p.contextLength ?? config.contextLength;
+    const live = all.find((m) => m.loaded && sameModel(m.key, target));
+    const keep = !!live && live.loadedContext === ctx; // already loaded just so: nothing to reload
+    for (const m of all) if (!(keep && m === live)) for (const id of m.instanceIds) await native('/models/unload', { instance_id: id });
+    if (!keep) await native('/models/load', { model: target, context_length: ctx }, AbortSignal.timeout(300_000));
+    applyProfile(model.key, { vision: wantVision, context: ctx });
     return listModels();
   }
 

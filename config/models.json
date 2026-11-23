@@ -1,12 +1,12 @@
 {
   "_readme": "Model presets for the app's local mode (JARVIS server off). think_budget: the most reasoning tokens a reply may spend when thinking is on before it is cut off and answered from the notes so far. Optional per preset: load (settings sent if the app has to load the model) and a top-level sampling object with fast and think request settings; both are left out on purpose so LM Studio's own per-model settings apply.",
-  "default": "general",
+  "default": "coding",
   "endpoint": "http://localhost:1234/v1",
   "think_budget": 1200,
   "models": {
     "general": { "model": "qwen/qwen3-14b" },
     "coding": { "model": "unsloth/qwen3.8-27b" },
-    "visual": { "model": "qwen/qwen3-vl-8b" },
-    "abliterated": { "model": "huihui-ai_qwen3-14b-abliterated" }
+    "visual": { "model": "unsloth/qwen3.8-27b" },
+    "abliterated": { "model": "huihui-qwen3.8-27b-abliterated" }
   }
 }

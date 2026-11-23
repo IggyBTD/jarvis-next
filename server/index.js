@@ -83,7 +83,7 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
   const llm = createLlmClient({ config: cfg.models });
   // The model picked in the app's model menu outlives a restart; models.json names the one to start with.
   const choiceFile = path.join(cfg.dataDir, 'active-model.json');
-  try { const key = JSON.parse(fs.readFileSync(choiceFile, 'utf8')).model; if (typeof key === 'string' && key) llm.applyProfile(key); } catch { /* no choice saved yet */ }
+  try { const c = JSON.parse(fs.readFileSync(choiceFile, 'utf8')); if (typeof c.model === 'string' && c.model) llm.applyProfile(c.model, { vision: typeof c.vision === 'boolean' ? c.vision : undefined, context: Number.isFinite(c.context) ? c.context : undefined }); } catch { /* no choice saved yet */ }
   const queue = createQueue({ concurrency: cfg.models.concurrency, preempt: !!cfg.models.preemptInteractive });
   const orchestrator = createOrchestrator({ llm, queue, router, prompts, conversations, targetState, bus, models: cfg.models });
   const llmProxy = createLlmProxy({ llm, queue, audit, modelId: cfg.models.modelId });
@@ -203,10 +203,11 @@ export async function createServerApp({ cfg = loadConfig(), log = (l) => console
     return { folder };
   }, models: {
     list: () => llm.listModels(),
-    select: async (key) => {
+    select: async (key, opts = {}) => {
       if (queue.depth() > 0) throw Object.assign(new Error('The model is answering right now. Try again when it has finished.'), { status: 409 });
-      const r = await llm.selectModel(key);
-      try { fs.writeFileSync(choiceFile, JSON.stringify({ model: key })); } catch (e) { log(`could not save the model choice: ${e.message}`); }
+      const r = await llm.selectModel(key, opts);
+      const now = r.models.find((m) => m.key === r.active); // what is loaded now, so a restart comes back to the same vision and context
+      try { fs.writeFileSync(choiceFile, JSON.stringify({ model: key, vision: now?.vision?.available ? now.vision.on : undefined, context: now?.loadedContext ?? undefined })); } catch (e) { log(`could not save the model choice: ${e.message}`); }
       await health({ fresh: true }).catch(() => {}); // refreshes the cached health, so the next push to the app names the new model
       return r;
     },

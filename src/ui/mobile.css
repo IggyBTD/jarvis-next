@@ -178,6 +178,14 @@ li[data-state="queued"] > .m-step > .m-step-line { color: var(--warm); }
 .m-row-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 var(--fs-5)/var(--lh-md) var(--sans); }
 .m-row-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
 .m-row-sub.live { color: var(--accent); }
+/* the loaded model's vision row and context sizes, in the model sheet */
+.m-vision[aria-pressed="true"] .m-row-title { color: var(--accent); }
+.m-vision:disabled { opacity: 0.6; }
+.m-ctx-title { margin: var(--s-3) var(--s-3) var(--s-2); }
+.m-ctx { display: flex; flex-wrap: wrap; gap: var(--s-2); padding: 0 var(--s-3); }
+.m-ctx-chip { min-width: var(--tap); height: var(--tap); padding: 0 var(--s-3); background: transparent; border: 1px solid var(--border-strong); border-radius: var(--r-md); color: var(--text-2); font: 400 var(--fs-3)/1 var(--mono); font-variant-numeric: tabular-nums; }
+.m-ctx-chip[aria-pressed="true"] { background: var(--accent-wash); border-color: var(--accent-mid); color: var(--accent); }
+.m-ctx-chip[data-over="true"] { border-style: dashed; }
 .m-row-sum { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--text-3); font: 400 var(--fs-3)/var(--lh-sm) var(--sans); }
 .m-danger-btn { flex: none; height: var(--tap); padding: 0 var(--s-3); background: var(--danger-wash); border: 0; border-radius: var(--r-sm); color: var(--danger); font: 500 var(--fs-4)/var(--lh-sm) var(--sans); }
 .m-empty-list { padding: var(--s-6) var(--s-4); color: var(--text-3); font: 400 var(--fs-4)/var(--lh-sm) var(--sans); text-align: center; }
@@ -231,8 +239,17 @@ li[data-state="queued"] > .m-step > .m-step-line { color: var(--warm); }
 #m-app:not([data-page="chat"]) #m-title, #m-app[data-empty="true"] #m-title { visibility: hidden; }
 
 /* the composer: [ + ] text [ send ] in one pill, the tab bar underneath */
-.m-field { align-items: center; padding: var(--s-2); border-radius: var(--r-pill); }
-.m-field textarea { padding: var(--s-2) var(--s-1); }
+/* the composer is one line when idle ([ + ] text [ send ]); focused or holding text, the text sits on top and one line of controls under it ([ + ] [ model ] ... [ send ]) */
+.m-field { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "plus text send"; align-items: center; column-gap: var(--s-1); padding: var(--s-2); border-radius: var(--r-pill); }
+#m-plus { grid-area: plus; }
+.m-field textarea { grid-area: text; padding: var(--s-2) var(--s-1); }
+.m-send { grid-area: send; }
+.m-model { grid-area: model; display: none; justify-self: start; align-items: center; gap: var(--s-1); min-width: 0; max-width: 100%; min-height: var(--tap); padding: 0 var(--s-3); background: var(--surface-3); border: 0; border-radius: var(--r-pill); color: var(--text); font: 500 var(--fs-4)/var(--lh-sm) var(--sans); }
+.m-model span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-model .icon { flex: none; --icon-size: var(--s-3); color: var(--text-3); }
+.m-field:focus-within, .m-field:has(textarea:not(:placeholder-shown)) { grid-template-areas: "text text text" "plus model send"; row-gap: var(--s-1); border-radius: var(--r-lg); }
+.m-field:focus-within textarea, .m-field:has(textarea:not(:placeholder-shown)) textarea { padding: var(--s-2) var(--s-2); }
+.m-field:focus-within .m-model, .m-field:has(textarea:not(:placeholder-shown)) .m-model { display: inline-flex; }
 .m-send { margin: 0; }
 .m-send::before { inset: 0; }
 .m-composer { padding-bottom: var(--s-2); }

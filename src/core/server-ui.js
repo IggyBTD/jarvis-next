@@ -1,7 +1,8 @@
 // The interface for the JARVIS server: target switcher (title strip) and target tag (composer), the approval dialog,
 // the Server tab (connection, approvals waiting, agent tasks, digest, recent activity), reminders, and the settings card.
 // Everything here reads server-link.js; nothing here talks to the network or decides anything.
-import { isShown } from './models-shown.js';
+import { isShown, shownOrder } from './models-shown.js';
+import { setIcon } from '../icons/index.js';
 import { setCodeBackend, state, onLink, serverMode, setTarget, replyGate, getSettings, saveSettings, requestDigest, fetchAudit, wakePc, abortAgentTask, dismissReminder, newConversation, isOnline, fetchModels, chooseModel } from './server-link.js';
 import { reportService } from './service-status.js';
 import { renderMarkdown } from './markdown.js';
@@ -28,6 +29,7 @@ const navServer = $('nav-server');
 // The rows carry state in attributes, not classes: shell.js re-reads the preset buttons whenever a class changes in the menu.
 let switching = null;
 const ctxK = (n) => (n ? ` · ${Math.round(n / 1024)}k context` : '');
+const kLabel = (n) => `${Math.round(n / 1024)}K`;
 
 async function renderModelList() {
   let box = $('model-server-list');
@@ -41,37 +43,96 @@ async function renderModelList() {
   if (state.codeBackend === 'claude') claude.setAttribute('aria-current', 'true');
   claude.append(Object.assign(document.createElement('span'), { className: 'm-name', textContent: 'Claude Code' }), Object.assign(document.createElement('span'), { className: 'm-sub', textContent: 'Writes the code in Code, on your Claude subscription' }));
   claude.addEventListener('click', () => { setCodeBackend('claude'); $('model-menu').hidden = true; $('model-chip').setAttribute('aria-expanded', 'false'); paintModelChip(true); });
-  box.replaceChildren(claude, ...data.models.filter((m) => isShown(m.key)).map((m) => {
+  const shown = data.models.filter((m) => isShown(m.key)).sort((a, b) => shownOrder(a.key) - shownOrder(b.key));
+  box.replaceChildren(claude, ...shown.map((m) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'matrix-btn'; b.setAttribute('role', 'menuitem');
     b.dataset.loaded = String(m.loaded);
     if (m.key === data.active) b.setAttribute('aria-current', 'true');
     const name = document.createElement('span'); name.className = 'm-name'; name.textContent = prettyModelName(m.name);
-    const sub = document.createElement('span'); sub.className = 'm-sub'; sub.textContent = `${m.key === data.active ? 'active, ' : ''}${m.loaded ? `loaded${ctxK(m.loadedContext)}` : 'not loaded'}`;
+    const sub = document.createElement('span'); sub.className = 'm-sub'; sub.textContent = `${m.key === data.active ? 'active, ' : ''}${m.loaded ? `loaded${ctxK(m.loadedContext)}` : 'not loaded'}${m.vision ? (m.vision.on ? ' · vision on' : ' · vision off') : ''}`;
     b.append(name, sub);
     b.addEventListener('click', () => pickModel(m));
     return b;
   }));
+  // the sizes sit in a box of their own under the list, so the list stays one button per model
+  let ctx = $('model-context');
+  if (!ctx) { ctx = document.createElement('div'); ctx.id = 'model-context'; $('model-menu').append(ctx); }
+  const row = contextRow(data.models.find((m) => m.key === data.active));
+  ctx.replaceChildren(...(row ? [row] : []));
 }
 
-async function pickModel(m) {
+// The context sizes the active model can be loaded with. A size is a reload (LM Studio cannot grow a loaded context), the chat stays.
+// Sizes past what profiles.vision.context says fits the card are drawn dashed and say so.
+function contextRow(a) {
+  if (!a?.contextChoices?.length) return null;
+  const now = a.loadedContext ?? state.health?.model?.contextLength ?? null;
+  const row = el('div', { className: 'ctx-row', role: 'group' });
+  row.setAttribute('aria-label', 'Context size');
+  row.append(el('span', { className: 'ctx-title', textContent: a.loaded ? 'Context' : 'Context when loaded' }));
+  const chips = el('span', { className: 'ctx-chips' });
+  a.contextChoices.forEach((n) => {
+    const over = a.contextFit && n > a.contextFit;
+    const chip = el('button', { type: 'button', className: 'ctx-chip', textContent: kLabel(n), title: over ? 'More than the card is expected to hold with these settings: it may load slowly, spill to the CPU or fail.' : `Reload with ${n.toLocaleString()} tokens of context` });
+    chip.setAttribute('aria-pressed', String(n === now));
+    if (over) chip.dataset.over = 'true';
+    chip.addEventListener('click', () => { if (n !== now) pickModel(a, { context: n }); });
+    chips.append(chip);
+  });
+  row.append(chips);
+  return row;
+}
+
+// opts: { vision: true | false, context: tokens }, either one reloads the model; without opts it is the plain switch to another model
+async function pickModel(m, opts = {}) {
   setCodeBackend('local');
   $('model-menu').hidden = true; $('model-chip').setAttribute('aria-expanded', 'false');
-  switching = prettyModelName(m.name); paintModelChip(true);
-  toast(`Loading ${prettyModelName(m.name)} on the PC. This can take a minute.`);
-  const r = await chooseModel(m.key);
+  const name = prettyModelName(m.name);
+  const how = opts.vision === false ? ' without vision' : opts.vision === true ? ' with vision' : opts.context ? ` with ${kLabel(opts.context)} context` : '';
+  switching = name; paintModelChip(true);
+  toast(`Loading ${name}${how} on the PC. This can take a minute.`);
+  const r = await chooseModel(m.key, opts);
   switching = null;
-  if (r.ok && state.health?.model) Object.assign(state.health.model, { modelId: r.active, modelPresent: true, reachable: true }); // until the next health push (a few seconds)
-  toast(r.ok ? `${prettyModelName(m.name)} is ready.` : `Could not switch: ${r.error}`);
+  if (r.ok && state.health?.model) { // until the next health push (a few seconds)
+    const a = r.models?.find((x) => x.key === r.active);
+    Object.assign(state.health.model, { modelId: r.active, modelPresent: true, reachable: true, ...(a ? { vision: a.vision, loadedContext: a.loadedContext, contextChoices: a.contextChoices, contextFit: a.contextFit } : {}) });
+  }
+  toast(r.ok ? `${name} is ready${how}.` : `Could not switch: ${r.error}`);
   paintModelChip(true);
 }
+
+// The eye next to the other switches: vision on or off for the loaded model (only models with vision show it). Vision costs about 1 GB of
+// the card's memory, so off leaves room for more context (profiles.vision.context); either way it is a reload of the model.
+const eye = $('dock-vision');
+function paintVision(on) {
+  if (!eye) return;
+  const m = state.health?.model;
+  const v = on && state.codeBackend !== 'claude' ? m?.vision : null;
+  eye.hidden = !v;
+  if (!v) return;
+  setIcon(eye.firstElementChild, v.on ? 'eye' : 'eye-off');
+  eye.setAttribute('aria-pressed', String(v.on));
+  eye.disabled = !!switching || !v.available;
+  eye.title = switching ? 'The model is loading'
+    : !v.available ? 'Vision is on. This model has no text-only copy to turn it off with (npm run vision-twin makes one)'
+    : v.on ? `Vision on: JARVIS can read images, which takes about 1 GB of the card. Click to turn it off and get more context (reloads the model)`
+    : 'Vision off: more room for context. Click to turn it on again (reloads the model)';
+  eye.setAttribute('aria-label', eye.title);
+}
+eye?.addEventListener('click', () => {
+  const m = state.health?.model;
+  if (!m?.vision?.available || switching) return;
+  pickModel({ key: m.modelId, name: m.modelId }, { vision: !m.vision.on });
+});
 
 function paintModelChip(on) {
   const chipEl = $('model-chip');
   const menu = $('model-menu');
+  paintVision(on);
   menu.querySelectorAll('[data-preset]').forEach((b) => { b.hidden = on; });
   if (!on) {
     $('model-server-list')?.remove();
+    $('model-context')?.remove();
     if (chipEl.dataset.loaded !== undefined) { delete chipEl.dataset.loaded; chipEl.title = ''; $('model-chip-label').textContent = menu.querySelector('[data-preset].active-mode .m-name')?.textContent ?? 'General'; }
     return;
   }

@@ -137,6 +137,57 @@ test('the model menu lists the PC\'s models with the loaded one marked; picking 
   assert.equal(await page.locator('#model-menu:not([hidden])').count(), 0);
 });
 
+test('the eye: only a model with vision shows it; a click reloads that model without vision and with more context, the sizes in the menu reload it too', async () => {
+  const native = rig.model.native;
+  native.installed.add('qwen3.8-27b-text'); native.vision.add('unsloth/qwen3.8-27b'); // LM Studio lists the vision model and its text-only twin
+  native.log.length = 0;
+  const loads = () => native.log.filter((x) => x.path.endsWith('/load')).map((x) => `${x.body.model} ${x.body.context_length}`);
+  const eye = page.locator('#dock-vision');
+  // the Coder (the active model here) has no vision, so there is no eye
+  assert.equal(await eye.isVisible(), false);
+  await page.click('#model-chip');
+  await page.click('#model-server-list button:not(#model-claude)'); // the 27B is the first row
+  await waitFor(async () => (await page.textContent('#model-chip-label')).trim() === 'Qwen 3.8 27B');
+  await waitFor(() => eye.isVisible());
+  assert.equal(await eye.getAttribute('aria-pressed'), 'true');
+  assert.match(await eye.getAttribute('aria-label'), /Vision on/); // the title is moved into a tooltip by native-chrome.js, the label stays
+  assert.equal(await eye.locator('.icon svg').count(), 1);
+  assert.deepEqual(loads(), ['unsloth/qwen3.8-27b 65536']);
+  // the eye sits with the other switches, in the same row
+  const rows = await page.evaluate(() => ['dock-web', 'dock-link', 'dock-vision'].map((id) => Math.round(document.getElementById(id).getBoundingClientRect().top)));
+  assert.equal(new Set(rows).size, 1, 'one row');
+
+  // off: the text-only twin, with the bigger context
+  await eye.click();
+  await waitFor(async () => (await eye.getAttribute('aria-pressed')) === 'false');
+  assert.deepEqual(loads(), ['unsloth/qwen3.8-27b 65536', 'qwen3.8-27b-text 81920']);
+  assert.match(await eye.getAttribute('aria-label'), /Vision off/);
+  assert.equal((await page.textContent('#model-chip-label')).trim(), 'Qwen 3.8 27B'); // still the one model
+
+  // the menu: the active model's sizes, the loaded one pressed, one past what fits dashed
+  await page.click('#model-chip');
+  await page.waitForSelector('#model-context .ctx-chip');
+  const chips = await page.locator('#model-context .ctx-chip').evaluateAll((cs) => cs.map((c) => ({ text: c.textContent, on: c.getAttribute('aria-pressed'), over: c.dataset.over ?? null })));
+  assert.deepEqual(chips.map((c) => c.text), ['16K', '32K', '48K', '64K', '80K', '96K', '128K']);
+  assert.deepEqual(chips.filter((c) => c.on === 'true').map((c) => c.text), ['80K']);
+  assert.deepEqual(chips.filter((c) => c.over).map((c) => c.text), ['96K', '128K']);
+  assert.match(await page.textContent('#model-server-list'), /loaded · 80k context · vision off/);
+  await page.screenshot({ path: path.join(SHOTS, 'server-model-menu-vision.png'), clip: { x: 0, y: 0, width: 1440, height: 900 } });
+  await page.locator('#model-context .ctx-chip', { hasText: '96K' }).click();
+  await waitFor(async () => loads().length === 3);
+  assert.equal(loads()[2], 'qwen3.8-27b-text 98304'); // vision stays off
+  assert.equal(await eye.getAttribute('aria-pressed'), 'false');
+
+  // on again: the model itself, with its own context
+  await eye.click();
+  await waitFor(async () => (await eye.getAttribute('aria-pressed')) === 'true');
+  assert.equal(loads().at(-1), 'unsloth/qwen3.8-27b 65536');
+
+  // a model with no vision: the eye goes
+  await page.click('#model-chip');
+  await page.locator('#model-server-list button:not(#model-claude)', { hasText: 'Qwen 3 Coder' }).click().catch(() => {});
+});
+
 test('a reply streams in and carries the PC tag', async () => {
   rig.model.script({ content: 'Hello from the server.', chunk: 3 });
   await send('hello');

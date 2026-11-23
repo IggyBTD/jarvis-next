@@ -1,9 +1,10 @@
 // What the sheets hold: the chat list, the chat settings (computer, effort, model, connection) and the approval prompt.
 import { openSheet } from './sheets.js';
-import { state, onLink, listChats, deleteChat, setMode, setTarget, getEffort, setEffort, forget, replyGate, getConvId, isOnline } from './link.js';
+import { state, onLink, listChats, deleteChat, setMode, setTarget, getEffort, setEffort, forget, replyGate, getConvId, isOnline, listModels, chooseModel } from './link.js';
 import { EFFORTS, EFFORT_LABELS, EFFORT_HINTS } from '../../shared/effort.js';
 import { describeCall } from '../../shared/steps.js';
 import { prettyModelName } from '../core/model-name.js';
+import { DEFAULT_SHOWN, sameKey, shownOrder } from '../../shared/shown-models.js';
 import { hydrateIcons } from '../icons/index.js';
 import { revealHidden, hasHidden } from '../../shared/reveal.js';
 import { MODES, MODE_LABELS, MODE_HINTS } from '../../shared/permission-modes.js';
@@ -228,6 +229,63 @@ export function openApproval(request, { index = 1, total = 1, onClose = null } =
   sheet.panel.focus({ preventScroll: true }); // nothing is focused by default: neither answer is the easy one
   hydrateIcons(sheet.root);
   return sheet;
+}
+
+// ---- the model: what the PC has installed, and picking one ---------------------------------------------------------------------------
+const ctxK = (n) => (n ? ` · ${Math.round(n / 1024)}k context` : '');
+// onSwitching(name | null): the pill says the name while the PC swaps models (a minute or so, the others are unloaded)
+export function openModels({ toast, onSwitching }) {
+  const box = el('div', 'm-list');
+  box.append(el('p', 'm-empty-list', 'Asking the PC for its models...'));
+  const sheet = openSheet({ title: 'Model', content: box, label: 'Model' });
+  listModels().then((data) => {
+    // the three everyday models, in order (what the desktop lists until other models are ticked in its Settings)
+    const shown = (data.models ?? []).filter((m) => DEFAULT_SHOWN.some((k) => sameKey(k, m.key))).sort((a, b) => shownOrder(a.key) - shownOrder(b.key));
+    // a reload: another model, vision on or off for the loaded one, or another context size
+    const reload = async (m, opts, how) => {
+      sheet.close();
+      const name = prettyModelName(m.name);
+      onSwitching(name);
+      toast(`Loading ${name}${how} on the PC. This can take a minute.`);
+      const r = await chooseModel(m.key, opts);
+      if (r.ok && state.health?.model) {
+        const a = r.models?.find((x) => x.key === r.active);
+        Object.assign(state.health.model, { modelId: r.active, modelPresent: true, reachable: true, ...(a ? { vision: a.vision, loadedContext: a.loadedContext, contextChoices: a.contextChoices, contextFit: a.contextFit } : {}) });
+      }
+      onSwitching(null);
+      toast(r.ok ? `${name} is ready${how}.` : `Could not switch: ${r.error}`);
+    };
+    const rows = shown.map((m) => {
+      const b = el('button', 'm-row'); b.type = 'button';
+      if (m.key === data.active) b.setAttribute('aria-current', 'true');
+      b.append(el('span', 'm-row-title', prettyModelName(m.name)), el('span', 'm-row-sub', `${m.key === data.active ? 'In use' : m.loaded ? 'Loaded' : 'Not loaded: takes about a minute'}${m.loaded ? ctxK(m.loadedContext) : ''}${m.vision ? (m.vision.on ? ' · vision on' : ' · vision off') : ''}`));
+      b.addEventListener('click', () => { if (m.key !== data.active) reload(m, {}, ''); });
+      return b;
+    });
+    // for the model in use: the eye (vision on or off) and its context sizes, each one a reload
+    const a = shown.find((m) => m.key === data.active);
+    const extra = [];
+    if (a?.vision) {
+      const v = el('button', 'm-row m-vision'); v.type = 'button'; v.disabled = !a.vision.available;
+      v.setAttribute('aria-pressed', String(a.vision.on));
+      v.append(el('span', 'm-row-title', a.vision.on ? 'Vision on' : 'Vision off'), el('span', 'm-row-sub', a.vision.available ? (a.vision.on ? 'Reads images, uses about 1 GB. Turn off for more context.' : 'More room for context. Turn on to read images.') : 'There is no text-only copy of this model to turn it off with.'));
+      v.addEventListener('click', () => reload(a, { vision: !a.vision.on }, a.vision.on ? ' without vision' : ' with vision'));
+      extra.push(v);
+    }
+    if (a?.contextChoices?.length) {
+      const now = a.loadedContext;
+      const chips = el('div', 'm-ctx'); chips.setAttribute('role', 'group'); chips.setAttribute('aria-label', 'Context size');
+      a.contextChoices.forEach((n) => {
+        const c = el('button', 'm-ctx-chip', `${Math.round(n / 1024)}K`); c.type = 'button';
+        c.setAttribute('aria-pressed', String(n === now));
+        if (a.contextFit && n > a.contextFit) c.dataset.over = 'true';
+        c.addEventListener('click', () => { if (n !== now) reload(a, { context: n }, ` with ${Math.round(n / 1024)}K context`); });
+        chips.append(c);
+      });
+      extra.push(el('p', 'm-hint m-ctx-title', 'Context size. Dashed sizes may not fit the card.'), chips);
+    }
+    box.replaceChildren(...(rows.length ? rows : [el('p', 'm-empty-list', 'The PC has none of the usual models installed in LM Studio.')]), ...extra, el('p', 'm-hint', 'Choosing a model, vision or a size has the PC load it again, which takes about a minute.'));
+  }).catch(() => box.replaceChildren(el('p', 'm-empty-list', isOnline() ? 'The PC did not answer the model list. Try again in a moment.' : 'Cannot reach your PC.')));
 }
 
 // ---- the plus: what to add to a message --------------------------------------------------------------------------------------------

@@ -321,3 +321,85 @@ test('system messages are only ever first: later ones become user notes so stric
     assert.match(sent[3].content, /^\[note from JARVIS\] Target changed/);
   } finally { await r.close(); }
 });
+
+test('vision: the model with a text-only twin loads as the twin when vision is off, with more context; everything else follows the one model', async () => {
+  const thinking = { chat: false, tools: false, digest: false, agent: false };
+  const profiles = {
+    'unsloth/qwen3.8-27b': { thinkingMethod: 'request_field', thinking, sampling: { temperature: 0.3 }, contextLength: 65536, contextChoices: [16384, 65536, 81920, 98304], vision: { textOnly: 'qwen3.8-27b-text', context: { on: 65536, off: 81920 } } },
+    'qwen/qwen3-coder-30b': { thinkingMethod: 'chat_template_kwargs', thinking, sampling: { temperature: 0.7 }, contextLength: 32768 },
+  };
+  const r = await rig({ modelId: 'qwen/qwen3-coder-30b', thinkingMethod: 'chat_template_kwargs', sampling: profiles['qwen/qwen3-coder-30b'].sampling, profiles });
+  try {
+    r.fake.native.installed.add('qwen3.8-27b-text');
+    r.fake.native.vision.add('unsloth/qwen3.8-27b');
+    const log = () => r.fake.native.log.map((x) => `${x.path.split('/').pop()} ${x.body.model ?? x.body.instance_id}${x.body.context_length ? ` ${x.body.context_length}` : ''}`);
+    const mine = (l) => l.models.find((m) => m.key === 'unsloth/qwen3.8-27b');
+
+    // the twin is not a model of its own; the 27B has a vision switch, the Coder has none
+    const first = await r.llm.listModels();
+    assert.deepEqual(first.models.map((m) => m.key), ['unsloth/qwen3.8-27b', 'qwen/qwen3-coder-30b']);
+    assert.deepEqual(mine(first).vision, { available: true, on: true });
+    assert.equal(first.models.find((m) => m.key === 'qwen/qwen3-coder-30b').vision, null);
+    assert.deepEqual(mine(first).contextChoices, [16384, 65536, 81920, 98304]);
+
+    // plain pick: with vision, the context of the profile
+    await r.llm.selectModel('unsloth/qwen3.8-27b');
+    assert.deepEqual(log(), ['unload qwen/qwen3-coder-30b', 'load unsloth/qwen3.8-27b 65536']);
+    assert.equal(mine(await r.llm.listModels()).contextFit, 65536);
+
+    // vision off: the twin loads, with the larger context of the off state, and the requests go to the twin
+    r.fake.native.log.length = 0;
+    const off = await r.llm.selectModel('unsloth/qwen3.8-27b', { vision: false });
+    assert.deepEqual(log(), ['unload unsloth/qwen3.8-27b', 'load qwen3.8-27b-text 81920']);
+    assert.deepEqual([mine(off).loaded, mine(off).vision, mine(off).loadedContext, mine(off).contextFit], [true, { available: true, on: false }, 81920, 81920]);
+    assert.equal(off.active, 'unsloth/qwen3.8-27b');
+    await r.llm.chat({ messages: user('q'), use: 'chat' });
+    assert.equal(r.fake.requests.at(-1).body.model, 'qwen3.8-27b-text');
+    assert.equal(r.llm.contextLength, 81920);
+    const h = await r.llm.health();
+    assert.deepEqual([h.modelId, h.modelPresent, h.vision, h.loadedContext], ['unsloth/qwen3.8-27b', true, { available: true, on: false }, 81920]);
+
+    // a size without a vision change keeps vision as it is
+    r.fake.native.log.length = 0;
+    await r.llm.selectModel('unsloth/qwen3.8-27b', { context: 98304 });
+    assert.deepEqual(log(), ['unload qwen3.8-27b-text', 'load qwen3.8-27b-text 98304']);
+    assert.equal(r.llm.contextLength, 98304);
+
+    // asking for what is already loaded reloads nothing
+    r.fake.native.log.length = 0;
+    await r.llm.selectModel('unsloth/qwen3.8-27b', { context: 98304 });
+    assert.deepEqual(log(), []);
+
+    // vision on again: the model itself, with the context of the on state
+    r.fake.native.log.length = 0;
+    const on = await r.llm.selectModel('unsloth/qwen3.8-27b', { vision: true });
+    assert.deepEqual(log(), ['unload qwen3.8-27b-text', 'load unsloth/qwen3.8-27b 65536']);
+    assert.deepEqual(mine(on).vision, { available: true, on: true });
+    await r.llm.chat({ messages: user('q'), use: 'chat' });
+    assert.equal(r.fake.requests.at(-1).body.model, 'unsloth/qwen3.8-27b');
+
+    // a model with no vision switch ignores the request; a context past the model's own limit is cut to it
+    r.fake.native.log.length = 0;
+    await r.llm.selectModel('qwen/qwen3-coder-30b', { vision: false, context: 9999999 });
+    assert.deepEqual(log(), ['unload unsloth/qwen3.8-27b', 'load qwen/qwen3-coder-30b 262144']);
+    assert.equal(r.llm.modelId, 'qwen/qwen3-coder-30b');
+  } finally { await r.close(); }
+});
+
+test('vision: a model with vision and no twin shows the eye as on and fixed; the last choice survives a restart through applyProfile', async () => {
+  const thinking = { chat: false, tools: false, digest: false, agent: false };
+  const profiles = { 'unsloth/qwen3.8-27b': { thinkingMethod: 'request_field', thinking, sampling: { temperature: 0.3 }, contextLength: 65536, vision: { textOnly: 'qwen3.8-27b-text', context: { on: 65536, off: 81920 } } } };
+  const r = await rig({ modelId: 'unsloth/qwen3.8-27b', profiles });
+  try {
+    r.fake.native.vision.add('unsloth/qwen3.8-27b'); // no twin installed
+    assert.deepEqual((await r.llm.listModels()).models.find((m) => m.key === 'unsloth/qwen3.8-27b').vision, { available: false, on: true });
+    r.fake.native.log.length = 0;
+    await r.llm.selectModel('unsloth/qwen3.8-27b', { vision: false }); // nothing to turn it off with: it loads as it is
+    assert.deepEqual(r.fake.native.log.map((x) => x.body.model ?? x.body.instance_id), ['qwen/qwen3-coder-30b', 'unsloth/qwen3.8-27b']);
+    // restart: server/index.js hands the saved choice to applyProfile, and requests go to the twin
+    r.llm.applyProfile('unsloth/qwen3.8-27b', { vision: false, context: 90000 });
+    await r.llm.chat({ messages: user('q'), use: 'chat' });
+    assert.equal(r.fake.requests.at(-1).body.model, 'qwen3.8-27b-text');
+    assert.equal(r.llm.contextLength, 90000);
+  } finally { await r.close(); }
+});

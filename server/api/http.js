@@ -42,7 +42,7 @@ export function createHealth({ llm, queue, router, machines, contextLength = nul
     const ids = Object.keys(machines);
     const [model, ...agents] = await Promise.all([llm.health(), ...ids.map((id) => router.health(id).then((h) => ({ online: h?.ok === true, os: h?.os ?? machines[id].os, sidecars: h?.sidecars ?? {} })).catch(() => ({ online: false, os: machines[id].os, sidecars: {} })))]);
     const last = llm.lastStats?.() ?? null;
-    const value = { model: { reachable: model.reachable, modelId: model.modelId ?? null, modelPresent: model.modelPresent ?? false, error: model.error ?? null, settings: model.settings ?? null, sizeBytes: model.sizeBytes ?? null, contextLength: llm.contextLength ?? contextLength ?? null }, last: last ? { tokensPerSec: last.tokensPerSec, promptTokens: last.promptTokens, completionTokens: last.completionTokens, ttftMs: last.ttftMs } : null, queueDepth: queue.depth(), tokensPerSec: model.tokensPerSec, machines: Object.fromEntries(ids.map((id, i) => [id, { label: machines[id].label, ...agents[i] }])), ts: now() };
+    const value = { model: { reachable: model.reachable, modelId: model.modelId ?? null, modelPresent: model.modelPresent ?? false, error: model.error ?? null, settings: model.settings ?? null, sizeBytes: model.sizeBytes ?? null, vision: model.vision ?? null, loadedContext: model.loadedContext ?? null, contextChoices: model.contextChoices ?? null, contextFit: model.contextFit ?? null, contextLength: llm.contextLength ?? contextLength ?? null }, last: last ? { tokensPerSec: last.tokensPerSec, promptTokens: last.promptTokens, completionTokens: last.completionTokens, ttftMs: last.ttftMs } : null, queueDepth: queue.depth(), tokensPerSec: model.tokensPerSec, machines: Object.fromEntries(ids.map((id, i) => [id, { label: machines[id].label, ...agents[i] }])), ts: now() };
     cached = { at: now(), value };
     return value;
   };
@@ -114,8 +114,9 @@ export function createHttpHandler({ cfg, auth, llmProxy, models, environment, se
       if (req.method === 'GET' && p === '/api/state') return json(res, 200, await buildState(), cors);
       if (models && p === '/api/models' && req.method === 'GET') { try { return json(res, 200, await models.list(), cors); } catch { return json(res, 502, { error: 'the model server could not be reached' }, cors); } }
       if (models && p === '/api/model' && req.method === 'POST') { // the model menu: load the chosen model (the others are unloaded) and switch the request settings to its profile
-        const key = String((await readBody(req)).model ?? '');
-        try { return json(res, 200, await models.select(key), cors); } catch (e) { return json(res, e.status === 409 || e.status === 404 ? e.status : 502, { error: e.message }, cors); }
+        const b = await readBody(req);
+        const key = String(b.model ?? '');
+        try { return json(res, 200, await models.select(key, { vision: typeof b.vision === 'boolean' ? b.vision : undefined, context: Number.isFinite(b.context) ? b.context : undefined }), cors); } catch (e) { return json(res, e.status === 409 || e.status === 404 ? e.status : 502, { error: e.message }, cors); }
       }
       if (environment && p === '/api/environment' && req.method === 'GET') return json(res, 200, await environment(), cors);
       if (setProject && p === '/api/project' && req.method === 'POST') { try { const b = await readBody(req); const ok = may('admin', { pin: b.pin }); if (!ok.ok) return refused(ok); return json(res, 200, setProject(b.folder), cors); } catch (e) { return json(res, e.status ?? 500, { error: e.message }, cors); } }

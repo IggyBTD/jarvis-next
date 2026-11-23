@@ -8,7 +8,7 @@ import { zoomBy, zoomReset } from './zoom.js';
 import { toggleLatexMode } from './latex-mode.js';
 
 const input = document.getElementById('hud-chat-input');
-const PRESETS = ['btn-general', 'btn-code', 'btn-visual', 'btn-abliterated'];
+const PRESETS = ['btn-code', 'btn-abliterated', 'btn-general']; // the model menu, top to bottom
 
 export const SHORTCUTS = [
   { keys: 'Ctrl+B', does: 'Show or hide the workspace beside the chat' },
@@ -24,7 +24,7 @@ export const SHORTCUTS = [
   { keys: 'Ctrl+M', does: 'Microphone on or off' },
   { keys: 'F8 (hold)', does: 'Talk while held, release to send (keys are in config/voice.json)' },
   { keys: 'F9', does: 'Press to start talking, press again to send' },
-  { keys: 'Ctrl+Shift+1 to 4', does: 'Mode: general, coding / finance, visual, abliterated' },
+  { keys: 'Ctrl+Shift+1 to 3', does: 'Model: Qwen 3.8 27B, Qwen 3.8 27B Abliterated, Qwen 3 14B' },
   { keys: 'Shift+Tab (in the message field)', does: 'Permission mode: normal, careful (asks before every change), plan' },
   ];
 

@@ -11,7 +11,7 @@ import { mountLogos } from '../core/node-mesh.js';
 import { prettyModelName } from '../core/model-name.js';
 import { state, onLink, connect, retry, hasToken, sendChat, abort, newChat, openChat, forgetNote, pair, patchChat, getConvId } from './link.js';
 import * as chat from './chat.js';
-import { openChats, openSettings, openApproval, openAttach } from './panels.js';
+import { openChats, openSettings, openApproval, openAttach, openModels } from './panels.js';
 import { sheetOpen } from './sheets.js';
 import { initDrawer, openDrawer, closeDrawer, drawerOpen } from './drawer.js';
 import { initPages, showPage, searchPage } from './pages.js';
@@ -85,7 +85,8 @@ function refreshSend() {
 chat.onBusyChange(refreshSend);
 input.addEventListener('input', () => { grow(); refreshSend(); });
 // the button does not take focus, so sending does not close the keyboard
-send.addEventListener('pointerdown', (e) => e.preventDefault());
+for (const b of [send, $('m-plus'), $('m-model')]) b.addEventListener('pointerdown', (e) => e.preventDefault()); // none of them takes focus, so the keyboard stays and the layout does not move before the tap lands
+$('m-model').addEventListener('click', () => { if (sheetOpen()) return; input.blur(); openModels({ toast, onSwitching: (n) => { switching = n; renderBar(); } }); });
 input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submitMessage(); } }); // a hardware keyboard: Cmd+Enter sends; plain Return is a new line
 
 let toastTimer = 0;
@@ -115,6 +116,7 @@ function submitMessage() {
 }
 
 // ---- the bar, the banner, the greeting ----------------------------------------------------------------------------------------------
+let switching = null; // the name of the model the PC is loading, while it does
 function renderBar() {
   const empty = app.dataset.empty === 'true';
   $('m-title-main').textContent = empty ? 'JARVIS' : (state.conv.title || 'New chat');
@@ -127,6 +129,7 @@ function renderBar() {
   else if (model) bits.push(prettyModelName(model));
   $('m-title-sub').textContent = bits.join(' · ');
   $('m-title-sub').dataset.warn = machine && !machine.online ? 'true' : 'false';
+  $('m-model-name').textContent = switching ?? (model ? prettyModelName(model) : 'Model');
   const hour = new Date().getHours();
   $('m-greet').textContent = hour < 5 ? 'Good evening' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   $('m-greet-sub').textContent = `Running on your ${label(state.target)}.`;

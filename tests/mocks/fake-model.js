@@ -10,18 +10,18 @@ export async function startFakeModel({ port = 0 } = {}) {
   const queue = [];
   let defaultReply = (body) => ({ content: `echo: ${body.messages.at(-1)?.content ?? ''}` });
   const sockets = new Set();
-  const native = { installed: new Set(['unsloth/qwen3.8-27b', 'qwen/qwen3-coder-30b']), loaded: new Map([['qwen/qwen3-coder-30b', 32768]]), log: [] };
+  const native = { installed: new Set(['unsloth/qwen3.8-27b', 'qwen/qwen3-coder-30b']), loaded: new Map([['qwen/qwen3-coder-30b', 32768]]), log: [], vision: new Set() }; // vision: keys LM Studio reports a vision capability for
 
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://x');
     if (req.method === 'GET' && url.pathname === '/v1/models') {
       res.writeHead(200, { 'content-type': 'application/json' });
-      return res.end(JSON.stringify({ data: [{ id: 'local', object: 'model' }, { id: 'qwen3.8-27b', object: 'model' }, { id: 'unsloth/qwen3.8-27b', object: 'model' }, { id: 'qwen/qwen3-coder-30b', object: 'model' }] }));
+      return res.end(JSON.stringify({ data: [{ id: 'local', object: 'model' }, { id: 'qwen3.8-27b', object: 'model' }, { id: 'unsloth/qwen3.8-27b', object: 'model' }, { id: 'qwen/qwen3-coder-30b', object: 'model' }, { id: 'qwen3.8-27b-text', object: 'model' }] }));
     }
     // LM Studio's native API: which models exist and which are loaded (the app's model menu)
     if (req.method === 'GET' && url.pathname === '/api/v1/models') {
       res.writeHead(200, { 'content-type': 'application/json' });
-      return res.end(JSON.stringify({ models: [...native.installed].map((key) => ({ type: 'llm', key, display_name: key.split('/').pop(), size_bytes: 1e9, loaded_instances: native.loaded.has(key) ? [{ id: key, config: { context_length: native.loaded.get(key) } }] : [] })).concat([{ type: 'embedding', key: 'embed', loaded_instances: [] }]) }));
+      return res.end(JSON.stringify({ models: [...native.installed].map((key) => ({ type: 'llm', key, display_name: key.split('/').pop(), size_bytes: 1e9, max_context_length: 262144, capabilities: { vision: native.vision.has(key) }, loaded_instances: native.loaded.has(key) ? [{ id: key, config: { context_length: native.loaded.get(key) } }] : [] })).concat([{ type: 'embedding', key: 'embed', loaded_instances: [] }]) }));
     }
     if (req.method === 'POST' && url.pathname.startsWith('/api/v1/models/')) {
       const chunks = [];

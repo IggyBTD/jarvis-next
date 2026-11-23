@@ -416,7 +416,7 @@ export const COMMANDS = [
   { group: 'Sessions', name: 'branch', args: '[name]', desc: 'Keep this conversation as it is and carry on in a copy' },
   { group: 'Sessions', name: 'export', desc: 'Save this conversation as a markdown file' },
 
-  { group: 'View', name: 'mode', args: '[general|coding|visual|abliterated]', desc: 'Show or switch the mode (the model JARVIS answers with)' },
+  { group: 'View', name: 'mode', args: '[general|coding|abliterated]', desc: 'Show or switch the mode (the model JARVIS answers with)' },
   { group: 'View', name: 'modes', desc: 'List the modes and the model behind each' },
   { group: 'View', name: 'whiteboard', desc: 'Open or close the whiteboard' },
   { group: 'View', name: 'panels', desc: 'List the panels open on the whiteboard' },

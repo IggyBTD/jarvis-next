@@ -457,5 +457,23 @@
     "solar": "hamburger-menu",
     "lucide": "align-left",
     "ref": "lucide:align-left"
+  },
+  "eye": {
+    "phosphor": "eye",
+    "tabler": "eye",
+    "iconoir": "eye",
+    "remix": "eye",
+    "solar": "eye",
+    "lucide": "eye",
+    "ref": "lucide:eye"
+  },
+  "eye-off": {
+    "phosphor": "eye-slash",
+    "tabler": "eye-off",
+    "iconoir": "eye-closed",
+    "remix": "eye-off",
+    "solar": "eye-closed",
+    "lucide": "eye-off",
+    "ref": "lucide:eye-off"
   }
 }

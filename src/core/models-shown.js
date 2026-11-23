@@ -1,14 +1,13 @@
-// Which of the PC's models the model switcher lists. Until you change it, only the three everyday models are shown. The Settings page
+// Which of the PC's models the model switcher lists. Until you change it, only the three everyday models are shown, in the order of DEFAULT_SHOWN. The Settings page
 // (the Models card) is where each model is ticked or not. Kept on this device.
 import { fetchModels } from './server-link.js';
 import { prettyModelName } from './model-name.js';
 import { currentPage } from './whiteboard-mode.js';
 
 const KEY = 'jarvis.models.shown';
-export const DEFAULT_SHOWN = ['unsloth/qwen3.8-27b', 'huihui-ai_qwen3-14b-abliterated']; // the 27B and the abliterated 14B; the others are ticked in Settings
+import { DEFAULT_SHOWN, sameKey as same, shownOrder } from '../../shared/shown-models.js'; // the 27B, the abliterated 27B and the 14B, in this order; the others are ticked in Settings
+export { DEFAULT_SHOWN, shownOrder };
 const saved = () => { try { const v = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(v) ? v : null; } catch { return null; } };
-// LM Studio lists the 27B as "qwen3.8-27b", the config calls it "unsloth/qwen3.8-27b": a key matches with or without its publisher
-const same = (a, b) => a === b || a.endsWith(`/${b}`) || b.endsWith(`/${a}`);
 export const isShown = (key) => (saved() ?? DEFAULT_SHOWN).some((k) => same(k, key));
 function setShown(key, on) {
   const now = new Set(saved() ?? DEFAULT_SHOWN);

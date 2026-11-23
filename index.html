@@ -127,6 +127,7 @@
                 </div>
                 <button id="dock-web" class="tool-btn" type="button" title="Internet access" aria-label="Internet access"><span class="icon" data-icon="globe"></span></button>
                 <button id="dock-link" class="tool-btn" type="button" title="Network link" aria-label="Network link"><span class="icon" data-icon="wifi"></span></button>
+                <button id="dock-vision" class="tool-btn" type="button" title="Vision" aria-label="Vision" aria-pressed="true" hidden><span class="icon" data-icon="eye"></span></button>
                 <button id="think-btn" class="tool-btn" type="button" aria-pressed="false" aria-label="Think before answering"><span class="icon" data-icon="spark"></span></button>
                 <span class="grow"></span>
                 <span id="target-tag" class="target-tag" hidden title="The computer JARVIS controls"></span>
@@ -134,11 +135,9 @@
                 <div id="model-wrap">
                   <button type="button" class="chip-btn" id="model-chip" aria-haspopup="true" aria-expanded="false" title="Model"><span id="model-chip-label" class="val">General</span></button>
                   <div id="model-menu" hidden role="menu">
-                    <button type="button" id="btn-general" class="matrix-btn active-mode" data-preset="general" role="menuitem"><span class="m-name">General</span><span class="m-sub">qwen3-14b</span></button>
-                    <button type="button" id="btn-code" class="matrix-btn" data-preset="coding" role="menuitem"><span class="m-name">Coding and finance</span><span class="m-sub">qwen3.8-27b q3_k_xl</span></button>
-                    <button type="button" id="btn-visual" class="matrix-btn" data-preset="visual" role="menuitem"><span class="m-name">Visual</span><span class="m-sub">qwen3-vl-8b</span></button>
-                    <button type="button" id="btn-abliterated" class="matrix-btn" data-preset="abliterated" role="menuitem"><span class="m-name">Abliterated</span><span class="m-sub">qwen3-14b, no refusals</span></button>
-                    <button type="button" id="btn-auto" class="matrix-btn" data-preset="auto" role="menuitem" disabled><span class="m-name">Auto router</span><span class="m-sub">not available yet</span></button>
+                    <button type="button" id="btn-code" class="matrix-btn active-mode" data-preset="coding" role="menuitem"><span class="m-name">Qwen 3.8 27B</span><span class="m-sub">q3_k_xl, with vision</span></button>
+                    <button type="button" id="btn-abliterated" class="matrix-btn" data-preset="abliterated" role="menuitem"><span class="m-name">Qwen 3.8 27B Abliterated</span><span class="m-sub">iq3_s, no refusals</span></button>
+                    <button type="button" id="btn-general" class="matrix-btn" data-preset="general" role="menuitem"><span class="m-name">Qwen 3 14B</span><span class="m-sub">q6_k</span></button>
                   </div>
                 </div>
                 <div id="effort-wrap">

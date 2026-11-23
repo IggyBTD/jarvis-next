@@ -256,9 +256,9 @@ export async function fetchModels() {
     return res.ok ? await res.json() : null;
   } catch { return null; }
 }
-export async function chooseModel(model) {
+export async function chooseModel(model, { vision, context } = {}) { // vision: true or false, context: tokens; either one reloads the model
   try {
-    const res = await fetch(`${apiBase()}/api/model`, { method: 'POST', headers: { authorization: `Bearer ${settings.token}`, 'content-type': 'application/json' }, body: JSON.stringify({ model }) });
+    const res = await fetch(`${apiBase()}/api/model`, { method: 'POST', headers: { authorization: `Bearer ${settings.token}`, 'content-type': 'application/json' }, body: JSON.stringify({ model, vision, context }) });
     const body = await res.json().catch(() => ({}));
     return res.ok ? { ok: true, ...body } : { ok: false, error: body.error ?? `HTTP ${res.status}` };
   } catch (e) { return { ok: false, error: e.message }; }

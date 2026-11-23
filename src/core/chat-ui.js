@@ -580,8 +580,8 @@ async function send() {
     return;
   }
 
-  // Images only work on the vision model.
-  if (hasImages() && getMode() !== 'visual') selectMode('visual');
+  // Images only work on a model with vision: the Qwen 3.8 27B.
+  if (hasImages() && getMode() !== 'coding') selectMode('coding');
   const { content, names } = takeAsContent(skillText ?? text);
   lastSent = text;
   document.dispatchEvent(new CustomEvent('jarvis:message-sent'));

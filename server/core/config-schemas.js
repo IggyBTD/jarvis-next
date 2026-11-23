@@ -32,7 +32,11 @@ export const SCHEMAS = {
     thinkingMethod: thinkingMethodSchema,
     sampling: samplingSchema,
     // Settings that go with a model when it is picked in the app: the request side of what the benchmarks found best for it.
-    profiles: { type: 'object', additionalProperties: obj({ thinkingMethod: thinkingMethodSchema, thinking: thinkingSchema, sampling: samplingSchema, contextLength: { type: 'integer', minimum: 2048 } }, []) },
+    profiles: { type: 'object', additionalProperties: obj({ thinkingMethod: thinkingMethodSchema, thinking: thinkingSchema, sampling: samplingSchema, contextLength: { type: 'integer', minimum: 2048 },
+      // contextChoices: the context sizes the app offers for this model. vision.textOnly: the LM Studio key of the same model without its
+      // vision encoder (npm run vision-twin makes it), and vision.context the size to load with vision on and off.
+      contextChoices: { type: 'array', items: { type: 'integer', minimum: 2048 }, minItems: 1 },
+      vision: obj({ textOnly: str, context: obj({ on: { type: 'integer', minimum: 2048 }, off: { type: 'integer', minimum: 2048 } }, ['on', 'off']) }, ['textOnly']) }, []) },
     requestTimeoutMs: { type: 'integer', minimum: 1000 }, maxOutputTokens: { type: 'integer', minimum: 16 },
     preemptInteractive: { type: 'boolean' }, keepThinkInHistory: { type: 'boolean' },
     maxIterations: { type: 'integer', minimum: 1, maximum: 500 }, maxToolCalls: { type: 'integer', minimum: 1, maximum: 1000 },

@@ -50,7 +50,9 @@
     "bell",
     "mail",
     "play",
-    "menu"
+    "menu",
+    "eye",
+    "eye-off"
   ],
   "sets": {
     "phosphor": {
